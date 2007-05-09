@@ -1,0 +1,30 @@
+KNOWN ISSUES
+
+express: totally broken!
+independent: split out the sunday independent
+dailymail: split out the mail on sunday
+
+
+
+SCRAPERS TO WRITE:
+
+National Daily Newspapers:
+ The Financial Times (subscription)
+ The Daily Star
+
+Sunday Papers:
+ News of the World
+ Sunday People
+
+Scottish Papers:
+ Scotsman, Herald, Daily Record
+
+National magazines:
+ New Statesman
+ Prospect (subscription)
+
+Major blogs:
+ Iain Dale
+ Guido Fawkes
+ More blogs to come
+

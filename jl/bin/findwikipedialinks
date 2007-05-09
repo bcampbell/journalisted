@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+#
+# Add weblinks to wikipedia pages for all journos with matching names.
+#
+# Works like this:
+# 1) grab a list of all pages in the "British Journalists" category
+# 2) look up each one in our database, and if the names match, add a
+#    link for that journo.
+#
+
+
+import sys
+import os
+import re
+
+sys.path.append( "../pylib" )
+
+from JL import DB
+
+def FetchWikipediaJournos():
+	f = os.popen( './pockbot.hacked "British journalists"' )
+	# could just cache pockbot results...
+#	f = os.popen( 'cat wikipages.txt' )
+
+	journos = []
+	for line in f:
+		journos.append( line.strip() )
+
+	ret = f.close()
+	if ret is not None:
+		print "pockbot.hacked failed"
+		sys.exit(1)
+
+	return journos
+
+
+def main():
+	conn = DB.Connect()
+	c = conn.cursor()
+
+	cnt_total = 0
+	cnt_found = 0
+
+	pages = FetchWikipediaJournos()
+	for pagename in pages:
+		#
+		rawname = re.sub( "\\s+\\(.*\)$", "", pagename ).lower()
+
+		c.execute( 'SELECT alias, journo_id FROM journo_alias WHERE alias=%s', rawname )
+		j = c.fetchone()
+		if j:
+			cnt_found = cnt_found + 1
+#			print "%s: found in db as '%s'" % ( pagename, j['alias'] )
+			AddWebLink( conn, j['journo_id'], pagename )
+
+		cnt_total = cnt_total + 1
+
+	print "matches: %d out of %d" % ( cnt_found, cnt_total )
+
+
+def AddWebLink( conn, journo_id, wikipediapage ):
+	url = 'http://wikipedia.org/wiki/' + wikipediapage.replace( ' ', '_' )
+	desc = wikipediapage + " on Wikipedia"
+
+	c = conn.cursor()
+	c.execute( "INSERT INTO journo_weblink (journo_id, url, description ) "
+		"VALUES (%s,%s,%s)",
+		journo_id, url,desc )
+	conn.commit()
+	print "added: %s (%d)" %(url,journo_id)
+
+main()
+

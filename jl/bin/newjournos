@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+# newjournos
+#
+# scan bylines and:
+#  - add any new journalists found
+#  - attribute articles to journalists
+#  - attribute job titles to journalists
+
+
+import sys
+
+sys.path.append( "../pylib" )
+
+from JL import DB,Byline,Journo
+
+
+def main():
+	conn = DB.Connect()
+	conn2 = DB.Connect()
+
+	c = conn2.cursor()
+	c.execute( 'SELECT id,byline,pubdate FROM article' )
+
+	while 1:
+		row = c.fetchone()
+		if not row:
+			break
+		article_id = row[0]
+		byline = row[1].decode( 'utf-8' ).strip()
+		if not byline:
+			continue		# blank byline
+
+		details = Byline.CrackByline( byline )
+		if details is None:
+			print "FAIL: article_id: %s '%s'" % (article_id,byline)
+			continue
+
+		#print byline.encode('utf-8')
+
+		for d in details:
+			ProcessJourno( conn, d, article_id, row['pubdate'] )
+
+
+def ProcessJourno( conn, d, article_id, whenseen ):
+	journo_id = Journo.FindJourno( conn, d['name'] )
+	if not journo_id:
+		journo_id = Journo.CreateNewJourno( conn, d['name'] )
+		print "NEW %s (id: %s)" %(d['name'],journo_id)
+
+	Journo.AttributeArticle( conn, journo_id, article_id )
+
+	if d.has_key('title'):
+		Journo.SeenJobTitle( conn, journo_id, d['title'], whenseen )
+
+	conn.commit()
+
+if __name__ == "__main__":
+    sys.exit(main())
+

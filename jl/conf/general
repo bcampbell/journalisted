@@ -1,0 +1,20 @@
+<?php
+
+// PostgreSQL database for Journa-List
+//define('OPTION_JL_DB_HOST', 'localhost');
+//define('OPTION_JL_DB_PORT', '5432');
+define('OPTION_JL_DB_NAME', 'journa-list');
+define('OPTION_JL_DB_USER', 'journa-list');
+define('OPTION_JL_DB_PASS', '');
+define('OPTION_JL_DB_PERSISTENT', false);
+define('OPTION_PHP_MAINDB', 'JL');
+
+// Default hostname and domain name for the website.
+define('OPTION_WEB_HOST', 'www');
+define('OPTION_WEB_DOMAIN', 'journa-list.dev');
+
+// Top-level URL of current website, without trailing /
+define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
+
+
+?>

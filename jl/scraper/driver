@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+./dailymail.py
+./express.py
+./guardian.py
+./independent.py
+./mirror.py
+./sun.py
+./telegraph.py
+./times.py
+./bbcnews.py
+echo "DONE!"
+

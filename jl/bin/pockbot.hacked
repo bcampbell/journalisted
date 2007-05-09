@@ -1,0 +1,428 @@
+#!/usr/bin/perl --
+
+# This script is a drastically cut-down version of PockBot, a wikipedia bot
+# by Dan Adams (User:PocklingtonDan)
+#
+#______________________________________________________________________________#
+# WHAT THE SCRIPT DOES                                                         #
+#                                                                              #
+# It acts as a web spider. Given a wikipedia                                   #
+# category, it finds all articles listed in that category                      #
+# as well as all subcategories of that category. For every subcategory it      #
+# pulls a list of articles. It then prints the article list to stdout.         #
+#                                                                              #
+# INTENDED USE                                                                 #
+#                                                                              #
+# To grab a list of articles under a given category on wikipedia               #
+#                                                                              #
+# eg:                                                                          #
+# $ ./pockbot.hacked "British journalists"                                     #
+#                                                                              #
+#______________________________________________________________________________#
+
+#______________________________________________________________________________#
+# PACKAGES TO IMPORT (must be installed on your server)                        #
+#______________________________________________________________________________#
+
+use strict;
+#use warnings;
+use LWP::Simple;
+use LWP::UserAgent;
+use HTTP::Request;
+use HTTP::Request::Common qw(GET);
+use HTTP::Response;
+
+#______________________________________________________________________________#
+# SETTINGS                                                                     #
+#______________________________________________________________________________#
+
+$|=1; #Disable buffering to allow progress bar to work.
+
+#______________________________________________________________________________#
+# MAIN ROUTINE                                                                 #
+#______________________________________________________________________________#
+
+if( $#ARGV+1 != 1 ) {
+	print "usage: pockbot.hacked <categoryname>\n";
+	exit -1;
+}
+
+getMainCategory( $ARGV[0] );
+
+exit;
+
+#______________________________________________________________________________#
+# SUBROUTINES                                                                  #
+#______________________________________________________________________________#
+
+
+
+#______________________________________________________________________________#
+
+sub getArticlesinCategory {
+    my $content_articles = $_[0];
+
+   # if its not a wikipedia category page, return empty array
+   unless ($content_articles =~ m/<div id="mw-pages">/){
+       $content_articles = "";
+       my @found_articles = split(/\|/,$content_articles);
+       return (@found_articles);
+   }
+
+   # empty array if no articles, else populate with article names
+   if ($content_articles =~ m/There are 0 pages in this section of this category/){
+       $content_articles = "";
+   }
+   else {
+       $content_articles =~ s/[\s\S]*<div id="mw-pages">//;
+       $content_articles =~ s/<\/div>[\s\S]*/<\/div>/;
+       $content_articles =~ s/[\s\S]*?<ul>/<ul>/;
+       $content_articles =~ s/<h3>[\s\S]*?<\/h3>//g;
+       $content_articles =~ s/<ul>//g;
+       $content_articles =~ s/<\/ul>//g;
+       $content_articles =~ s/<td>//g;
+       $content_articles =~ s/<\/td>//g;
+       $content_articles =~ s/<\/div>//g;
+       $content_articles =~ s/<\/tr>//g;
+       $content_articles =~ s/<\/table>//g;
+       $content_articles =~ s/<\/li>/|/g;
+       $content_articles =~ s/<li>/|/g;
+       $content_articles =~ s/\n//g;
+       $content_articles =~ s/\|\|/\|/g;
+       $content_articles =~ s/<a[\s\S]*?>//g;
+       $content_articles =~ s/<\/a>//g;
+       $content_articles =~ s/\|$//;
+       $content_articles =~ s/^\|//;
+       $content_articles =~ s/_/ /g;
+       $content_articles =~ s/\s\|/\|/g;
+   }
+   
+    my @found_articles = split(/\|/,$content_articles);
+    return (@found_articles);
+}
+
+#______________________________________________________________________________#
+
+
+sub getSubCatsinCategory {
+    my $content_subcats = $_[0];
+
+   # if its not a wikipedia category page, empty array
+   unless ($content_subcats =~ m/<div id="mw-subcategories">/){
+       $content_subcats = "";
+       my @found_subcats = split(/\|/,$content_subcats);
+       return (@found_subcats);
+   }
+
+   # empty array if no subcats, else populate with subcat names
+   if ($content_subcats =~ m/There are 0 subcategories to this category/){
+       $content_subcats = "";
+   }
+   else {
+       $content_subcats =~ s/[\s\S]*<div id="mw-subcategories">//;
+       $content_subcats =~ s/<div id="mw-pages">[\s\S]*//;
+       $content_subcats =~ s/<h3>[\s\S]*?<\/h3>//g;
+       $content_subcats =~ s/<div[\s\S]*?>//g;
+       $content_subcats =~ s/<\/div>//g;
+       $content_subcats =~ s/<span[\s\S]*?<\/span>//g;
+       $content_subcats =~ s/[\s\S]*?<ul>/<ul>/;
+       $content_subcats =~ s/<ul>//g;
+       $content_subcats =~ s/<\/ul>//g;
+       $content_subcats =~ s/<\/li>/|/g;
+       $content_subcats =~ s/<li>/|/g;
+       $content_subcats =~ s/<a[\s\S]*?>//g;
+       $content_subcats =~ s/<\/a>//g;
+       $content_subcats =~ s/\n//g;
+       $content_subcats =~ s/\|\|/\|/g;
+       $content_subcats =~ s/<td>//g;
+       $content_subcats =~ s/<\/td>//g;
+       $content_subcats =~ s/<\/tr>//g;
+       $content_subcats =~ s/<\/table>//g;
+       $content_subcats =~ s/[\s]*?\|/\|/g;
+       $content_subcats =~ s/\|$//;
+       $content_subcats =~ s/^\|//;
+       $content_subcats =~ s/\|\|/\|/g;
+    }
+
+    my @found_subcats = split(/\|/,$content_subcats);
+    return (@found_subcats);
+}
+
+#______________________________________________________________________________#
+
+sub processContents {
+    my $category = $_[0];
+    my $contents = $_[1];
+    my $userRunningBot = $_[2];
+    my $userIPAddress = $_[3];
+    $category =~ s/_/ /g;
+
+    #Check to make sure category is valid
+    my ($testcategory, $testcontents) = fetchContents($category);
+    if ($testcontents =~ m/noarticletext/) {
+        &error("You specified an invalid category. Please check your spelling and capitalization and try again.");
+    }
+    else {
+        #Seperate the page generation from spider work
+        use threads;
+        use threads::shared;
+        use Config;
+    
+        if ($Config{useithreads}) {
+            # We have threads
+        
+            # Set spider to work on requested category, in separate thread
+            my $threadForSpidering = threads->new(\&workthread, $category, $contents, $userRunningBot,$userIPAddress);
+            $threadForSpidering->join;
+            
+			#sleep(6);
+        }
+        else {
+            &error("PockBot requires threads. This perl installation is not built with threads activated. PockBot cannot run.");
+        }
+    }
+}
+
+#______________________________________________________________________________#
+
+sub removeDuplicates {
+    my @articles = @_;
+    my @articles_no_duplicates = ();
+    
+    foreach my $suggested_article (@articles) {
+        my $already_exists = 0;
+        foreach my $existing_article (@articles_no_duplicates) {
+            if ($suggested_article eq $existing_article) {
+                $already_exists = 1;
+            }
+        }
+        if ($already_exists == 0) {
+            push(@articles_no_duplicates, $suggested_article);
+        }
+    }
+    return (@articles_no_duplicates);
+}
+
+#______________________________________________________________________________#
+
+sub getAllArticlesIn {
+    my @subcats = @_;
+    my @new_articles = ();
+    
+    foreach my $individual_subcat (@subcats) {
+    
+        my ($subcategory, $subcategorycontents) = fetchContents($individual_subcat);
+        my @found_articles = getArticlesinCategory($subcategorycontents);
+        foreach my $found_article (@found_articles) {
+            push(@new_articles, $found_article);
+        }
+    }
+    return (@new_articles);
+}
+
+#______________________________________________________________________________#
+
+sub removeImages {
+    my @articles_no_duplicates = @_;
+    my @articles_no_images = ();
+        foreach my $article (@articles_no_duplicates) {
+            # don't count iamges, categories or templates
+            unless (($article =~ m/Image:/) || ($article =~ m/Category/) || ($article =~ m/Template/)) {
+                push(@articles_no_images, $article);
+            }
+        }
+    return (@articles_no_images);
+}
+
+
+
+#______________________________________________________________________________#
+
+sub getTimeStamp {
+    my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+    my @weekDays = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
+    my ($second, $minute, $hour, $dayOfMonth, $month, $yearOffset, $dayOfWeek, $dayOfYear, $daylightSavings) = localtime();
+    my $year = 1900 + $yearOffset;
+    my $timeNow = "$hour:$minute:$second, $weekDays[$dayOfWeek] $months[$month] $dayOfMonth, $year";
+    return ($timeNow);
+}
+
+#______________________________________________________________________________#
+
+
+sub workthread {
+
+    my $category = $_[0];
+    my $contents = $_[1];
+    my $userRunningBot = $_[2];
+    my $userIPAddress = $_[3];
+    
+    my $tagWhoRequestedEdit = "";
+    if ($userRunningBot eq "") {
+        $tagWhoRequestedEdit = "on behalf of an anonymous user";
+    }
+    else {
+        $tagWhoRequestedEdit = "on behalf of [[User:$userRunningBot|$userRunningBot]]";
+    }
+    
+    my @subcats = getSubCatsinCategory($contents);
+    my @articles = getArticlesinCategory($contents);
+    my $new_subcats_found_this_round = 1;
+    my @subcats_searched_aleady = ();
+    my $subCatLimit = 500;
+    my $hitSubcatLimit = "false";
+
+    # Keep searching until no new subcats are found.in any categories searched
+    while (($new_subcats_found_this_round > 0) && ($hitSubcatLimit eq "false")) {
+     
+        $new_subcats_found_this_round = 0;
+        my @proposed_extra_subcats = ();
+        
+        # Perform a search of every category we currently know of
+        foreach my $existing_subcat (@subcats) {
+            my $already_searched = 0;
+            
+            # If already searched this category in an earlier pass, skip it.
+            foreach my $searched_subcat (@subcats_searched_aleady) {
+                if ($existing_subcat eq $searched_subcat) {
+                    $already_searched = 1;
+                }
+            }
+
+            # If not already searched, get all subcats of that category
+            if ($already_searched == 0) {
+
+                my ($subcategory, $subcategorycontents) = fetchContents($existing_subcat);
+                my @additional_subcats = getSubCatsinCategory($subcategorycontents);
+                foreach my $proposed_additional_subcat (@additional_subcats) {
+                    push(@proposed_extra_subcats, $proposed_additional_subcat);
+                }
+                push(@subcats_searched_aleady, $existing_subcat);
+            }
+            else {
+                  #do nothing     
+            }
+        }
+
+        # If this new found subcat isn't a duplicate of one we already know about...
+        foreach my $proposed_new_subcat (@proposed_extra_subcats) {
+            my $already_exists = 0;
+            foreach my $existing_subcat (@subcats) {
+                if ($proposed_new_subcat eq $existing_subcat) {
+                    $already_exists = 1;
+                }
+            }
+            
+            # then add it to our master list
+            if ($already_exists == 0) {
+                push(@subcats, $proposed_new_subcat);
+                $new_subcats_found_this_round++;
+                
+                if ($#subcats > $subCatLimit) {
+                    $hitSubcatLimit = "true";
+                }
+            }
+            else {
+                #do nothing
+            }
+        }
+    }
+    
+    # And now get a list of every article in every subcat
+    my @new_articles = getAllArticlesIn(@subcats);
+    my @articles = (@articles, @new_articles);
+
+    # Remove duplicates and images from article list.
+    my @articles_no_duplicates = removeDuplicates(@articles);
+    my @articles_no_images = removeImages(@articles_no_duplicates);
+
+    # Search talk pages for each article to find "class=X" classification
+	#my %classes = getArticleClasses(@articles_no_images);
+
+    my $explainReducedResultsSet = "";
+    if ($hitSubcatLimit eq "true") {
+        $explainReducedResultsSet = "'''Note: this category had more than $subCatLimit sub-categories. Only data from the first $subCatLimit sub-categories has been returned.'''<br><br>";
+    }
+    else{
+        $explainReducedResultsSet = "";
+    }
+
+    # Prepare text to print to results file
+    my $text_to_print = "\n";
+ 
+    $text_to_print = "";
+ 
+    foreach my $article_title (@articles_no_images) {
+        $text_to_print .= "$article_title\n";
+    }
+
+    # write results to results.htm
+#    my $successfuledit = writeResultsToFile($text_to_print,$category,$tagWhoRequestedEdit,$userIPAddress);
+	print $text_to_print;
+}
+
+#______________________________________________________________________________#
+
+sub fetchContents {
+    my $category = $_[0];
+    $category =~ s/\s/_/g;
+    my $category_url = "http://en.wikipedia.org/wiki/Category:" . $category;
+    my $browser = LWP::UserAgent->new();
+    $browser->timeout(60);
+    my $request = HTTP::Request->new(GET => $category_url);
+    my $response = $browser->request($request);
+    #if ($response->is_error()) {printf "%s\n", $response->status_line;}
+    my $contents = $response->content();
+    sleep(1); # don't hammer the server! One read request every 1 second.
+    return($category,$contents);
+}
+
+#______________________________________________________________________________#
+
+sub fetchTalkContents {
+    my $article = $_[0];
+    $article =~ s/\s/_/g;
+    my $article_url = "http://en.wikipedia.org/wiki/Talk:$article";
+    my $browser = LWP::UserAgent->new();
+    $browser->timeout(60);
+    my $request = HTTP::Request->new(GET => $article_url);
+    my $response = $browser->request($request);
+    if ($response->is_error()) {printf "%s\n", $response->status_line;}
+    my $contents = $response->content();
+    sleep(1); # don't hammer the server! One read request every 1 second.
+    return($article,$contents);
+}
+
+#______________________________________________________________________________#
+
+sub finishedRunning {
+}
+
+#______________________________________________________________________________#
+
+sub getMainCategory{
+
+
+    my $category = $_[0];
+    my $userRunningBot = '';
+    my $userIPAddress = '';
+    
+    if ($category eq "BLANK") {
+        &error("Error receiving category name");
+    }
+    else {
+        my ($category, $contents) = fetchContents($category);
+        &processContents($category,$contents,$userRunningBot,$userIPAddress);
+        &finishedRunning($category);
+    }
+    
+    
+}
+
+
+#______________________________________________________________________________#
+
+sub error {
+    print "ERROR: $_[0]\n";
+    exit -1;
+}
