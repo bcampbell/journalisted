@@ -45,7 +45,7 @@ def Extract( html, context ):
 	soup = BeautifulSoup( html )
 
 	meta = soup.find( 'meta', { 'name': 'Headline' } )
-	art['title'] = ukmedia.DescapeHTML( meta[ 'content' ] )
+	art['title'] = ukmedia.DescapeHTML( meta[ 'content' ] ).strip()
 
 	meta = soup.find( 'meta', { 'name': 'OriginalPublicationDate' } )
 	art['pubdate'] = ukmedia.ParseDateTime( meta['content'] )

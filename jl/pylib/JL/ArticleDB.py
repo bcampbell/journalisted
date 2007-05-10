@@ -1,4 +1,6 @@
 import sys
+import re
+
 import DB
 
 
@@ -135,11 +137,37 @@ class DummyArticleDB:
 		return 0
 
 
+tagpat = re.compile( "<.*?>", re.UNICODE )
+entpat = re.compile( "&(([a-zA-Z0-9]+)|([0-9]+)|([xX][0-9a-fA-F]));", re.UNICODE )
+
 def CheckArticle(art):
 
+	# make sure assorted fields are unicode
 	for f in ( 'title', 'byline', 'description',
 			'content', 'permalink', 'srcurl','srcid' ):
 		if not isinstance( art[f], unicode ):
 			raise FieldNotUnicodeError(f)
+
+	# check title and byline are single-line
+	for f in ( 'title','byline' ):
+		s = art[f]
+		if s != s.strip():
+			raise Exception, ( "%s has leading/trailing whitespace" % (f) )
+		if s.find("\n") != -1:
+			raise Exception, ( "multi-line %s" % (f) )
+
+	# check for miisng/blank fields
+	for f in ('title','description','content' ):
+		s= art[f]
+		if s.strip() == '':
+			raise Exception, ( "missing '%s' field!" % (f) )
+
+	# check for unwanted html tags & entities
+	for f in ( 'title','byline','description' ):
+		s = art[f]
+		if entpat.search( s ):
+			raise Exception, ( "%s contains html entities" % (f) )
+		if tagpat.search( s ):
+			raise Exception, ( "%s contains html tags" % (f) )
 
 

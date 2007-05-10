@@ -43,7 +43,7 @@ def FindArticles():
 	# and extract a link to each day
 	ukmedia.DBUG( "fetching /tol/newspapers/the_times...\n" )
 	html = ukmedia.FetchURL( siteroot + '/tol/newspapers/the_times' )
-	ukmedia.DBUG( "  got it.\n" )
+#	ukmedia.DBUG( "  got it.\n" )
 	soup = BeautifulSoup.BeautifulSoup(html)
 
 	# (one day of the week will always be missing, as it'll have
@@ -61,7 +61,7 @@ def FindArticles():
 
 		ukmedia.DBUG( "fetching " + day + "\n" )
 		html = ukmedia.FetchURL( url )
-		ukmedia.DBUG( " got " + day + "\n" )
+#		ukmedia.DBUG( " got " + day + "\n" )
 		fetchtime = datetime.now()
 		soup = BeautifulSoup.BeautifulSoup(html)
 
@@ -131,7 +131,7 @@ def Extract( html, context ):
 		authdiv = soup.find( 'div', {'class':'article-author'} )
 		byline = authdiv.find( 'span', { 'class': 'byline' } )
 		if byline:
-			art['byline'] = byline.renderContents( None )
+			art['byline'] = byline.renderContents( None ).strip()
 		else:
 			art['byline'] = byline = u''
 

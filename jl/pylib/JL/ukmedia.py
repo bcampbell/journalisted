@@ -192,7 +192,7 @@ del name, codepoint
 #----------------------------------------------------------------------------
 # DEBUGGING STUFF
 
-debuglevel = int( os.getenv( 'UKMEDIA_DEBUG' ,'1' ) )
+debuglevel = int( os.getenv( 'UKMEDIA_DEBUG' ,'0' ) )
 
 def DBUG( msg ):
 	if debuglevel > 0:
@@ -214,6 +214,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
 	DBUG( "*** %s ***: reading rss feeds..." % (srcorgname) )
 	for feedname, feedurl in rssfeeds.iteritems():
+
 		r = feedparser.parse( feedurl )
 		lastseen = datetime.now()
 		for entry in r.entries:
@@ -288,12 +289,14 @@ def ProcessArticles( foundarticles, store, extractfn ):
 				msg = u"FAILED: (%s):" % (context['srcurl'])
 
 			print >>sys.stderr, msg.encode( 'utf-8' )
+
+			if isinstance( err, KeyboardInterrupt ):
+				raise
+
 			print >>sys.stderr, '-'*60
 			traceback.print_exc()
 			print >>sys.stderr, '-'*60
 
-			if isinstance( err, KeyboardInterrupt ):
-				raise
 
 			errorcount = errorcount + 1
 			if errorcount >= maxerrors:

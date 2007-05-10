@@ -65,8 +65,7 @@ def Extract( html, context ):
 	preamble = a.b.renderContents(None)
 	m = namedatepat.search( preamble )
 	if m:
-		
-		art[ 'byline' ] = m.group(1)
+		art[ 'byline' ] = m.group(1).strip()
 		art[ 'pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
 
 		# sanity check - check that we've guessed correct newspaper!
@@ -121,6 +120,13 @@ def ScrubFunc( context, entry ):
 	context['permalink'] = url;
 	context['srcurl'] = url;
 	context['srcid'] = url;
+
+
+	# some items don't have pubdate
+	# (they're probably special-case duds (eg flash pages), but try and
+	# parse them anyway)
+	if not context.has_key( 'pubdate' ):
+		context['pubdate'] = datetime.now()
 
 	# just take all articles on a sunday as being in the observer
 	# (article itself should be able to tell us, but we'd like to know
