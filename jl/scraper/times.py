@@ -122,7 +122,7 @@ def Extract( html, context ):
 
 	h1 = soup.find( 'h1', {'class':'heading'} )
 	art['title'] = h1.renderContents(None).strip()
-	art['title'] = ukmedia.DescapeHTML( art['title'] )
+	art['title'] = ukmedia.DescapeHTML( ukmedia.StripHTML( art['title'] ) )
 
 	# times stuffs up bylines for obituaries (used for date span instead)
 	if art['srcurl'].find( '/obituaries/' ) != -1:
@@ -131,7 +131,9 @@ def Extract( html, context ):
 		authdiv = soup.find( 'div', {'class':'article-author'} )
 		byline = authdiv.find( 'span', { 'class': 'byline' } )
 		if byline:
-			art['byline'] = byline.renderContents( None ).strip()
+			art['byline'] = byline.renderContents( None )
+			art['byline'] = ukmedia.StripHTML( art['byline'] )
+			art['byline'] = ukmedia.DescapeHTML( art['byline'] ).strip()
 		else:
 			art['byline'] = byline = u''
 

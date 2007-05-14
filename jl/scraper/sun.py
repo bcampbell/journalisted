@@ -86,6 +86,7 @@ def Extract( html, context ):
 
 	# first child should be navigable string...
 	art['description'] = unicode(contentsoup.contents[0])
+	art['description'] = ukmedia.StripHTML( art['description'] )
 	art['description'] = ukmedia.DescapeHTML( art['description'] )
 
 	return art

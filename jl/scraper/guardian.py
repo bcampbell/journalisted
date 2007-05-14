@@ -65,7 +65,8 @@ def Extract( html, context ):
 	preamble = a.b.renderContents(None)
 	m = namedatepat.search( preamble )
 	if m:
-		art[ 'byline' ] = m.group(1).strip()
+		art[ 'byline' ] = m.group(1)
+		art[ 'byline' ] = ukmedia.DescapeHTML( art['byline'] ).strip()
 		art[ 'pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
 
 		# sanity check - check that we've guessed correct newspaper!
