@@ -87,6 +87,9 @@ jobtitlepats = [
 emailpat = re.compile( """\\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\\b""", re.UNICODE )
 
 def CrackByline( byline ):
+	if not isinstance( byline, unicode ):
+		raise Exception, "byline not unicode"
+
 	byline = byline.strip()
 
 	# compress whitespace

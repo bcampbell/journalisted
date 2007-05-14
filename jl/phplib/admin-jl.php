@@ -23,16 +23,16 @@ class ADMIN_PAGE_JL_ARTICLELIST {
     }
 
     function display() {
-        $articles = db_getOne ('SELECT COUNT(*) FROM article' );
-        print "<p>$articles Articles in database</p>";
 
+        print "<p>articles scraped in last 24 hours</p>\n";
+ 
         $orgs = array();
         $foo = db_getAll('SELECT id,shortname FROM organisation' );
         foreach( $foo as $f ) {
             $orgs[ $f['id'] ] = $f['shortname'];
         }
  
-        $q = db_query( 'SELECT id,title,byline,description,pubdate,firstseen,lastseen,permalink,srcurl,srcorg,srcid FROM article ORDER BY firstseen DESC' );
+        $q = db_query( "SELECT id,title,byline,description,pubdate,firstseen,lastseen,permalink,srcurl,srcorg,srcid FROM article WHERE age(lastscraped) < '24 hours' ORDER BY firstseen DESC" );
  
         print "<table border=1>\n";
         while( $r=db_fetch_array($q) ) {

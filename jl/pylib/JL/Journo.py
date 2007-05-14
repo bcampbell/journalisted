@@ -1,7 +1,9 @@
 import DB
 
+from datetime import datetime
+
 # table to convert various latin accented chars into rough ascii
-# equivalents
+# equivalents (used to create journo URLs without latin chars)
 xlate_delatinise = {
 	u'\N{LATIN CAPITAL LETTER A WITH ACUTE}': u'A',
 	u'\N{LATIN CAPITAL LETTER A WITH CIRCUMFLEX}': u'A',
@@ -162,17 +164,18 @@ def CreateNewJourno( conn, rawname ):
 
 	ref = GenerateUniqueRef( conn, prettyname )
 
+
 	# TODO: maybe need to filter out some chars from ref?
 	q = conn.cursor()
 	q.execute( "select nextval('journo_id_seq')" )
 	(journo_id,) = q.fetchone()
 	q.execute( "INSERT INTO journo (id,ref,prettyname,lastname,"
-			"firstname) VALUES (%s,%s,%s,%s,%s)",
-			journo_id,
+			"firstname,created) VALUES (%s,%s,%s,%s,%s,now())",
+			( journo_id,
 			ref.encode('utf-8'),
 			prettyname.encode('utf-8'),
 			lastname.encode('utf-8'),
-			firstname.encode('utf-8') )
+			firstname.encode('utf-8') ) )
 	q.execute( "INSERT INTO journo_alias (journo_id,alias) VALUES (%s,%s)",
 			journo_id,
 			alias.encode('utf-8') )
@@ -200,8 +203,7 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen ):
 	q.execute( "SELECT jobtitle, firstseen, lastseen "
 		"FROM journo_jobtitle "
 		"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s)",
-		journo_id,
-		jobtitle )
+		journo_id,jobtitle )
 
 	row = q.fetchone()
 	if not row:
@@ -216,9 +218,11 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen ):
 		q.execute( "UPDATE journo_jobtitle "
 			"SET lastseen=%s "
 			"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s)",
-		whenseen,
-		journo_id,
-		jobtitle )
+			whenseen, journo_id, jobtitle )
 
 	q.close()
+
+
+
+
 

@@ -155,7 +155,7 @@ def descape_entity(m):
 		numm = descape_decpat.match( m.group(1) )
 		if numm:
 			return unichr( int( numm.group(1) ) )
-		print( u"defeated on '%s'" % (m.group(0) ) )
+		#print( u"defeated on '%s'" % (m.group(0) ) )
 		return m.group(0) # use as is
 
 # un-escape HTML entities

@@ -146,10 +146,8 @@ function emit_block_stats( $journo_id )
 	$sql = "SELECT SUM(s.wordcount) AS wc_sum, ".
 			"AVG(s.wordcount) AS wc_avg, ".
 			"MIN(s.wordcount) AS wc_min, ".
-			"MAX(s.wordcount) AS wc_max, ".
-   			"SUM(s.icount) AS i_sum, ".
-   			"AVG(s.icount) AS i_avg ".
-		"FROM (journo_attr a INNER JOIN article_stats s ON (a.article_id=s.article_id) ) ".
+			"MAX(s.wordcount) AS wc_max ".
+		"FROM (journo_attr a INNER JOIN article s ON (a.article_id=s.id) ) ".
 		"WHERE a.journo_id=?";
 	$row = db_getRow( $sql, $journo_id );
 
@@ -157,7 +155,6 @@ function emit_block_stats( $journo_id )
 	printf( "<li>%d average words per article</li>\n", $row['wc_avg'] );
 	printf( "<li>%d words maximum</li>\n", $row['wc_max'] );
 	printf( "<li>%d words minimum</li>\n", $row['wc_min'] );
-//	printf( "<li>%d uses of 'I' (average %.1f per article)</li>\n", $row['i_sum'], $row['i_avg'] );
 	print( "</ul>\n" );
 
 ?>
