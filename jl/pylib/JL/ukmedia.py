@@ -196,11 +196,11 @@ debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
 def DBUG( msg ):
 	if debuglevel > 0:
-		print msg,
+		print msg.encode( 'utf-8' ),
 
 def DBUG2( msg ):
 	if debuglevel > 1:
-		print msg,
+		print msg.encode( 'utf-8' ),
 
 
 
