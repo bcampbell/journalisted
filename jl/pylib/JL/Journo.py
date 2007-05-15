@@ -211,14 +211,14 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen ):
 		q.execute( "INSERT INTO journo_jobtitle (journo_id,jobtitle,firstseen,lastseen) VALUES (%s,%s,%s,%s)",
 			journo_id,
 			jobtitle,
-			whenseen,
-			whenseen )
+			str(whenseen),
+			str(whenseen) )
 	else:
 		# already got it - extend out the time period
 		q.execute( "UPDATE journo_jobtitle "
 			"SET lastseen=%s "
 			"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s)",
-			whenseen, journo_id, jobtitle )
+			str(whenseen), journo_id, jobtitle )
 
 	q.close()
 

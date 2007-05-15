@@ -192,7 +192,7 @@ del name, codepoint
 #----------------------------------------------------------------------------
 # DEBUGGING STUFF
 
-debuglevel = int( os.getenv( 'UKMEDIA_DEBUG' ,'0' ) )
+debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
 def DBUG( msg ):
 	if debuglevel > 0:
@@ -212,7 +212,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
 	socket.setdefaulttimeout( defaulttimeout )	# in seconds
 
-	DBUG( "*** %s ***: reading rss feeds..." % (srcorgname) )
+	DBUG2( "*** %s ***: reading rss feeds..." % (srcorgname) )
 	for feedname, feedurl in rssfeeds.iteritems():
 
 		r = feedparser.parse( feedurl )
@@ -250,7 +250,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 					continue
 
 			foundarticles.append( context )
-	DBUG( "found %d articles.\n" % ( len(foundarticles) ) )
+	DBUG2( "found %d articles.\n" % ( len(foundarticles) ) )
 	return foundarticles
 
 
@@ -265,6 +265,7 @@ def ProcessArticles( foundarticles, store, extractfn ):
 
 	errorcount = 0
 	maxerrors = 10
+	newcount = 0
 
 	for context in foundarticles:
 		try:
@@ -280,7 +281,8 @@ def ProcessArticles( foundarticles, store, extractfn ):
 
 			if art:
 				store.Add( art )
-				DBUG( "%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
+				DBUG2( "%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
+				newcount = newcount + 1
 
 		except Exception, err:
 			if context.has_key( 'title' ):
@@ -303,6 +305,9 @@ def ProcessArticles( foundarticles, store, extractfn ):
 				print >>sys.stderr, "Too many errors - ABORTING"
 				raise
 			#else just skip this one and go on to the next...
+
+	DBUG( "%s: %d new, %d failed" % (sys.argv[0], newcount, errorcount ) )
+	return (newcount,errorcount)
 
 
 def FetchURL( url, timeout=defaulttimeout ):

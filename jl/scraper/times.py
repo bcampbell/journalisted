@@ -36,14 +36,14 @@ siteroot = "http://timesonline.co.uk"
 
 def FindArticles():
 
-	ukmedia.DBUG( "*** times ***: looking for articles...\n" )
+	ukmedia.DBUG2( "*** times ***: looking for articles...\n" )
 	foundarticles = []
 
 	# hit the page which shows the covers of the papers for the week
 	# and extract a link to each day
-	ukmedia.DBUG( "fetching /tol/newspapers/the_times...\n" )
+	ukmedia.DBUG2( "fetching /tol/newspapers/the_times...\n" )
 	html = ukmedia.FetchURL( siteroot + '/tol/newspapers/the_times' )
-#	ukmedia.DBUG( "  got it.\n" )
+#	ukmedia.DBUG2( "  got it.\n" )
 	soup = BeautifulSoup.BeautifulSoup(html)
 
 	# (one day of the week will always be missing, as it'll have
@@ -59,7 +59,7 @@ def FindArticles():
 	# go through each days page and extract links to articles
 	for day, url in daypages.iteritems():
 
-		ukmedia.DBUG( "fetching " + day + "\n" )
+		ukmedia.DBUG2( "fetching " + day + "\n" )
 		html = ukmedia.FetchURL( url )
 #		ukmedia.DBUG( " got " + day + "\n" )
 		fetchtime = datetime.now()
@@ -96,7 +96,7 @@ def FindArticles():
 
 				foundarticles.append( context )
 
-	ukmedia.DBUG( "Found %d articles\n" % ( len(foundarticles) ) )
+	ukmedia.DBUG2( "Found %d articles\n" % ( len(foundarticles) ) )
 	return foundarticles
 
 
