@@ -12,6 +12,8 @@
 
 require_once "../conf/general";
 require_once "../phplib/admin-jl.php";
+require_once "../phplib/admin-jl-summary.php";
+require_once "../phplib/admin-jl-checkscrapers.php";
 require_once "../../phplib/template.php";
 require_once "../../phplib/admin-phpinfo.php";
 require_once "../../phplib/admin-serverinfo.php";
@@ -19,10 +21,10 @@ require_once "../../phplib/admin-configinfo.php";
 require_once "../../phplib/admin.php";
 
 $pages = array(
+	new ADMIN_PAGE_JL_SUMMARY,
 	new ADMIN_PAGE_JL_ARTICLES,
 	new ADMIN_PAGE_JL_ARTICLE,
-	new ADMIN_PAGE_JL_CHECKARTICLE,
-	new ADMIN_PAGE_JL_SUMMARY,
+	new ADMIN_PAGE_JL_CHECKSCRAPERS,
 	null,
     new ADMIN_PAGE_SERVERINFO,
     new ADMIN_PAGE_CONFIGINFO,
@@ -55,7 +57,7 @@ function jl_admin_page_display($site_name, $pages ) {
 
 		jl_admin_show_navbar( $pages );
 
-		print "<h1>$title</h1>";
+		print "<h1>$title</h1>\n";
 	}
 	$self_link = "?page=$id";
 	$page->self_link = $self_link;
@@ -81,6 +83,7 @@ function jl_admin_show_navbar( &$pages ) {
 	}
 	$navlinks .= '';
 	print $navlinks;
+	print "\n";
 }
 
 ?>

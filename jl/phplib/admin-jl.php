@@ -6,24 +6,13 @@ require_once '../../phplib/utility.php';
 
 require_once '../phplib/misc.php';
 
-class ADMIN_PAGE_JL_SUMMARY {
-    function ADMIN_PAGE_JL_SUMMARY() {
-        $this->id = 'summary';
-        $this->navname = 'Summary';
-    }
 
-    function display() {
-        $articles = db_getOne ('SELECT COUNT(*) FROM article' );
-        print "$articles Articles in database";
-
-    }
-}
 
 
 class ADMIN_PAGE_JL_ARTICLES {
     function ADMIN_PAGE_JL_ARTICLES() {
         $this->id = 'articles';
-        $this->navname = 'Search Articles';
+        $this->navname = 'Articles';
     }
 
     function display() {
@@ -73,7 +62,7 @@ function process_article_query( $values )
         $params[] = $srcorg;
     }
 
-    $sql = 'SELECT id,title,byline,description,permalink,srcorg,lastscraped ' .
+    $sql = "SELECT id,title,byline,description,permalink,srcorg,to_char(lastscraped, 'YYYY-MM-DD HH24:MI:SS') as scrapetime " .
        'FROM article';
 
     if( $conds ) {
@@ -93,13 +82,14 @@ function process_article_query( $values )
     print "<table border=1>\n";
     while( $r=db_fetch_array($q) ) {
 
-        $artlink = "?page=checkarticle&article_id={$r['id']}";
+        $arturl = "?page=article&article_id={$r['id']}";
+        $checkurl = "?page=checkscrapers&article_id={$r['id']}";
 
         $out = '';
-        $out .= "<td>" . prettify($r['lastscraped']) . "</td>";
+        $out .= "<td>{$r['scrapetime']}</td>";
         $out .= "<td>{$orgs[$r['srcorg']] }</td>";
-        $out .= "<td><a href=\"{$artlink}\">{$r['id']}</a></td>";
-        $out .= "<td>{$r['title']}</td>";
+        $out .= "<td>{$r['id']}</td>";
+        $out .= "<td>\"<a href=\"{$arturl}\">{$r['title']}\"</a> <small>(<a href=\"{$checkurl}\">check</a>)</small></td>";
         $out .= "<td>{$r['byline']}</td>";
         print "<tr>$out</tr>\n";
     }
@@ -174,46 +164,4 @@ class ADMIN_PAGE_JL_ARTICLE {
 
 
 
-class ADMIN_PAGE_JL_CHECKARTICLE {
-    function ADMIN_PAGE_JL_CHECKARTICLE() {
-        $this->id = 'checkarticle';
-        $this->navname = 'Check Article';
-        $this->notnavbar = TRUE;
-    }
-
-    function display() {
-
-        $article_id = get_http_var( 'article_id' );
-
-        $q = db_query( 'SELECT title,byline,description,content,srcurl FROM article WHERE id=?', $article_id );
-
-        $art = db_fetch_array($q);
-?>
-<div>
-
-<div style="float:right; width:60%; height:550px;">
-<h2>Original Article</h2>
-<p>
-<?php
-        print "<iframe width=\"100%\" height=\"500px\" src=\"{$art['srcurl']}\" scrolling=\"auto\"></iframe>\n";
-?>
-</p>
-</div>
-<div style="float:left; width:38%;">
-
-
-<h2>Scraped Article</h2>
-<div style="height:500px; overflow:auto; border: 1px solid black;">
-<?php
-        print "<p><strong>Title:</strong>{$art['title']}</p>\n";
-        print "<p><strong>Byline:</strong><em>{$art['byline']}</em></p>\n";
-        print "<div style=\"font:x-small;\">\n{$art['content']}\n</div>\n";
-?>
-</div>
-</div>
-</div>
-<?php
-        
-    }
-}
 ?>
