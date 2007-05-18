@@ -19,19 +19,68 @@ require_once "../../phplib/admin-configinfo.php";
 require_once "../../phplib/admin.php";
 
 $pages = array(
-//    new ADMIN_PAGE_PB_LATEST,
-  //  new ADMIN_PAGE_PB_MAIN,
-  //  new ADMIN_PAGE_PB_STATS,
-    # new ADMIN_PAGE_EMBED('pbwebstats', 'Log Analysis', OPTION_ blah ),
-//    null, // space separator on menu
-	new ADMIN_PAGE_JL_ARTICLELIST,
+	new ADMIN_PAGE_JL_ARTICLES,
 	new ADMIN_PAGE_JL_ARTICLE,
+	new ADMIN_PAGE_JL_CHECKARTICLE,
 	new ADMIN_PAGE_JL_SUMMARY,
+	null,
     new ADMIN_PAGE_SERVERINFO,
     new ADMIN_PAGE_CONFIGINFO,
     new ADMIN_PAGE_PHPINFO,
 );
 
-admin_page_display(str_replace("http://", "", OPTION_BASE_URL), $pages, new ADMIN_PAGE_JL_ARTICLELIST );
+
+jl_admin_page_display(str_replace("http://", "", OPTION_BASE_URL), $pages, new ADMIN_PAGE_JL_ARTICLES );
+
+
+function jl_admin_page_display($site_name, $pages ) {
+    $maintitle = "$site_name admin";
+    $id = get_http_var("page");
+	if( !$id )
+		$id = $pages[0]->id;
+	foreach ($pages as $page) {
+		if (isset($page) && $page->id == $id) {
+			break;
+		}
+	}
+
+	// display
+	ob_start();
+	if (isset($page->contenttype)) {
+		header($page->contenttype);
+	} else {
+		header("Content-Type: text/html; charset=utf-8");
+		$title = $page->navname . " - $maintitle";
+		admin_html_header($title);
+
+		jl_admin_show_navbar( $pages );
+
+		print "<h1>$title</h1>";
+	}
+	$self_link = "?page=$id";
+	$page->self_link = $self_link;
+	$page->display($self_link); # TODO remove this as parameter, use class member
+	if (!isset($page->contenttype)) {
+		admin_html_footer();
+	}
+}
+
+function jl_admin_show_navbar( &$pages ) {
+	// generate navigation bar
+	$navlinks = "";
+	foreach ($pages as $page) {
+		if (isset($page) && !isset($page->notnavbar)) {
+			if (isset($page->url)) {
+				$navlinks .= "<a href=\"". $page->url."\">" . $page->navname. "</a> |";
+			} else {
+				$navlinks .= "<a href=\"?page=". $page->id."\">" . $page->navname. "</a> |";
+			}
+		} else {
+			$navlinks .= '';
+		}
+	}
+	$navlinks .= '';
+	print $navlinks;
+}
 
 ?>
