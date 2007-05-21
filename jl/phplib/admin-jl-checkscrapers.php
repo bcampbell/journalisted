@@ -1,5 +1,10 @@
 <?php
 /* vim:set expandtab tabstop=4 shiftwidth=4 autoindent smartindent: */
+/*
+ * Admin page for checking scrapers.
+ * Shows some random articles for manual checking, and displays scraped
+ * data side-by-side with the original page.
+ */
 
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
@@ -23,6 +28,7 @@ class ADMIN_PAGE_JL_CHECKSCRAPERS {
             return;
         }
 
+        /* show an article side-by-side with the orignal page (in an iframe) */
         $q = db_query( 'SELECT title,byline,description,content,srcurl FROM article WHERE id=?', $article_id );
 
         $art = db_fetch_array($q);

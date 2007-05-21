@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 
 import re
 from datetime import datetime
@@ -170,25 +170,6 @@ def main():
 
 	return 0
 
-
-
-def OLDmain():
-	url = sys.argv[1]
-
-	#f= open(url,"rt")
-	#html= f.read()
-	#f.close()
-	html = ukmedia.FetchURL( url )
-
-	context = {
-	}
-	art = Extract( html, context )
-
-	print art['content'].encode( 'utf-8' )
-	print "---"
-	print art['description'].encode( 'utf-8' )
-	print "---"
-	print art['byline'].encode( 'utf-8' )
 
 
 if __name__ == "__main__":

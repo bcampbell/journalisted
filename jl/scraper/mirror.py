@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 #
 # Scraper for Mirror and Sunday Mirror
 #
@@ -49,7 +49,7 @@ sundaymirror_rssfeeds = {
 	'columnists': 'http://www.sundaymirror.co.uk/news/columnists/rss.xml',
 	'your money': 'http://www.sundaymirror.co.uk/news/yourmoney/rss.xml',
 	'motoring': 'http://www.sundaymirror.co.uk/news/motoring/rss.xml',
-	'homes and holidays': 'http://www.sundaymirror.co.uk/news/homesandholidays/rss.xml',
+	#'homes and holidays': 'http://www.sundaymirror.co.uk/news/homesandholidays/rss.xml',
 	'weather': 'http://www.sundaymirror.co.uk/news/weather/rss.xml',
 	# ignoring sport and showbiz feeds for now
 	}
@@ -67,7 +67,7 @@ def PrettifyTitle( title ):
 	# "Title'S Apostrophe Badness" => "Title's Apostrophe Badness"
 	pat = re.compile( "(\w)('S\\b)", re.UNICODE );
 	title = pat.sub( "\\1's", title );
-	return title
+	return title.strip()
 
 
 
@@ -93,11 +93,11 @@ def Extract( html, context ):
 	# use first paragraph as description
 	firstpara = maindiv.find( 'p', {'class': 'art-p'} );
 	art['description'] = firstpara.renderContents(None)
-	art['description'] = ukmedia.SanitiseHTML( art['description'] )
+	art['description'] = ukmedia.FromHTML( art['description'] )
 
 	art['content'] = unicode();
 	for para in maindiv.findAll( 'p', {'class': 'art-p'} ):
-		art['content'] = art['content'] + para.renderContents(None)
+		art['content'] = art['content'] + u'<p>' + para.renderContents(None) + '</p>\n';
 	art['content'] = ukmedia.SanitiseHTML( art['content'] )
 
 	return art
