@@ -126,7 +126,7 @@ class DummyArticleDB:
 
 def CheckArticle(art):
 	tagpat = re.compile( "<.*?>", re.UNICODE )
-	entpat = re.compile( "&(([a-zA-Z0-9]+)|(#[0-9]+)|(#[xX][0-9a-fA-F]));", re.UNICODE )
+	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
 	# make sure assorted fields are unicode
 	for f in ( 'title', 'byline', 'description',
@@ -138,9 +138,9 @@ def CheckArticle(art):
 	for f in ( 'title','byline' ):
 		s = art[f]
 		if s != s.strip():
-			raise Exception, ( "%s has leading/trailing whitespace" % (f) )
+			raise Exception, ( "%s has leading/trailing whitespace ('%s')" % (f,s) )
 		if s.find("\n") != -1:
-			raise Exception, ( "multi-line %s" % (f) )
+			raise Exception, ( "multi-line %s ('%s')" % (f,s) )
 
 	# check for missng/blank fields
 	for f in ('title','description','content' ):

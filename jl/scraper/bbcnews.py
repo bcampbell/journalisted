@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 #
 # Scraper for BBC News site
 #
@@ -52,7 +52,7 @@ def Extract( html, context ):
 
 	# TODO: could use first paragraph for a more verbose description
 	meta = soup.find( 'meta', { 'name': 'Description' } )
-	art['description'] = ukmedia.DescapeHTML( meta[ 'content' ] )
+	art['description'] = ukmedia.DescapeHTML( meta[ 'content' ] ).strip()
 
 	# byline
 	byline = u''
@@ -62,7 +62,7 @@ def Extract( html, context ):
 	spanbyd = soup.find( 'span', {'class':'byd'} )
 	if spanbyd:	# eg "Science reporter, BBC News, Houston"
 		byline = byline + u', ' + spanbyd.renderContents(None).strip()
-	art['byline'] = byline
+	art['byline'] = ukmedia.FromHTML( byline )
 
 	# just use regexes to extract the article text
 	txt = soup.renderContents(None)
@@ -104,7 +104,7 @@ idpat = re.compile( '/(\d+)\.stm$' )
 def ScrubFunc( context, entry ):
 	m = idpat.search( context['srcurl'] )
 	if not m:
-		ukmedia.DBUG2( "SUPPRESS " + context['title'] + " -- " + context['srcurl'] )
+#		ukmedia.DBUG2( "SUPPRESS " + context['title'] + " -- " + context['srcurl'] + "\n" )
 		return None		# suppress this article (probably a blog)
 
 	# Also we use this number as the unique id for the beeb, as a story

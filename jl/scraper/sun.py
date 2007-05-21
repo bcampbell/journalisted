@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 
 import re
 from datetime import datetime
@@ -48,7 +48,7 @@ def Extract( html, context ):
 		b = byline.renderContents( None )
 		b = ukmedia.StripHTML( b )
 		b = ukmedia.DescapeHTML( b )
-		art['byline'] = b
+		art['byline'] = b.strip()
 
 		# date follows
 		pubdate = byline.findNextSibling( 'span', { 'class': 'black12' } )

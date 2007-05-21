@@ -7,18 +7,13 @@ import mysociety.config
 mysociety.config.set_file("../conf/general")
 
 def Connect():
-#	print "user: "+mysociety.config.get('JL_DB_USER')
-#	print "pass: "+mysociety.config.get('JL_DB_PASS')
-#	print "name: "+mysociety.config.get('JL_DB_NAME')
+	u = mysociety.config.get('JL_DB_USER')
+	pwd = mysociety.config.get('JL_DB_PASS')
+	db = mysociety.config.get('JL_DB_NAME')
 
-#	conn = PgSQL.connect(
-#			database=mysociety.config.get('JL_DB_NAME'),
-#			user=mysociety.config.get('JL_DB_USER') )
-
-
-	conn = PgSQL.connect(
-		user = mysociety.config.get('JL_DB_USER'),
-		password = mysociety.config.get('JL_DB_PASS'),
-		database = mysociety.config.get('JL_DB_NAME') )
+	if pwd == '':
+		conn = PgSQL.connect( user=u, database=db )
+	else:
+		conn = PgSQL.connect( user=u, password=pwd, database=db )
 	return conn
 

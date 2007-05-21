@@ -129,14 +129,11 @@ def SanitiseHTML( html ):
 
 
 
-def RemoveTags( html ):
-	removetagpat = re.compile( u"(\s*<.*?>\s*)+", re.UNICODE | re.DOTALL );
-	return removetagpat.sub( u' ', html ).strip()
 
 #----------------------------------------------------------------------------
 
 # match html entities
-descapepat = re.compile( "&([#\w]+?);", re.UNICODE )
+descapepat = re.compile( "&([#\w][\w]+?);", re.UNICODE )
 descape_hexpat = re.compile( u'#x([0-9a-fA-F]+)', re.UNICODE )
 descape_decpat = re.compile( u'#([0-9]+)', re.UNICODE )
 
@@ -175,7 +172,21 @@ strippat = re.compile( u'<.*?>', re.UNICODE|re.DOTALL )
 def StripHTML(s):
 	return strippat.sub( u' ', s )
 
+# TODO: Strip? Remove? kill one!
+def RemoveTags( html ):
+	removetagpat = re.compile( u"(\s*<.*?>\s*)+", re.UNICODE | re.DOTALL );
+	return removetagpat.sub( u' ', html ).strip()
 
+
+
+def FromHTML( s ):
+	"""Convert from HTML to plain unicode string (strip tags, convert entities etc)"""
+	s = RemoveTags(s)
+	s = DescapeHTML(s)
+	s = s.strip()
+	if s == '':
+		s=u''
+	return s
 
 # build up a unicode version of the htmlentitydefs.entitydefs table
 # for DescapeHTML()
