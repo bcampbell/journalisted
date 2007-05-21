@@ -65,8 +65,14 @@ class ADMIN_PAGE_JL_SUMMARY {
 		$total_articles = 0;
 		$total_nonblank_bylines = 0;
 		foreach( $orgs as $org_id=>$org_name ) {
-			$artcount = $article_counts[$org_id]['count'];
-			$nonblanks = $nonblank_bylines[$org_id]['count'];
+            if( array_key_exists( $org_id, $article_counts ) ) {
+    			$artcount = $article_counts[$org_id]['count'];
+	    		$nonblanks = $nonblank_bylines[$org_id]['count'];
+            } else {
+                $artcount = 0;
+                $nonblanks = 0;
+            }
+
 			$valid_byline_percent = 0;
 			if( $artcount > 0 )
 				$valid_byline_percent = ($nonblanks * 100 ) / $artcount;
