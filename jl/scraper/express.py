@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 
 import sys
 import re
@@ -6,16 +6,44 @@ from datetime import datetime
 import sys
 
 sys.path.append("../pylib")
-from BeautifulSoup import BeautifulStoneSoup
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ArticleDB
 
 
 expressroot = u'http://www.express.co.uk'
 
-frontpages = {
-	'Breaking News':'http://www.express.co.uk/news_breaking.html',
-	'News':'http://www.express.co.uk/news.html'
+
+rssfeeds = {
+	'News / Showbiz': 'http://www.express.co.uk/rss/news.xml',
+#	'Sport': 'http://www.express.co.uk/rss/sport.xml',
+#	'Features (All Areas)': 'http://www.express.co.uk/rss/features.xml',
+#	'Day & Night': 'http://www.express.co.uk/rss/dayandnight.xml',
+#	'Express Yourself': 'http://www.express.co.uk/rss/expressyourself.xml',
+#	'Health': 'http://www.express.co.uk/rss/health.xml',
+#	'Fashion & Beauty': 'http://www.express.co.uk/rss/fashionandbeauty.xml',
+#	'Gardening': 'http://www.express.co.uk/rss/gardening.xml',
+#	'Food & Recipes': 'http://www.express.co.uk/rss/food.xml',
+#	'Have Your Say': 'http://www.express.co.uk/rss/haveyoursay.xml',
+#	'Express Comment': 'http://www.express.co.uk/rss/expresscomment.xml',
+#	'Entertainment(All Areas)': 'http://www.express.co.uk/rss/entertainment.xml',
+#	'Music Reviews': 'http://www.express.co.uk/rss/music.xml',
+#	'DVD Reviews': 'http://www.express.co.uk/rss/dvd.xml',
+#	'Film Reviews': 'http://www.express.co.uk/rss/films.xml',
+#	'Theatre Reviews': 'http://www.express.co.uk/rss/theatre.xml',
+#	'Book Reviews': 'http://www.express.co.uk/rss/books.xml',
+#	'TV Guide': 'http://www.express.co.uk/rss/tv.xml',
+#	'The Crusader': 'http://www.express.co.uk/rss/crusader.xml',
+#	'Money (All Areas)': 'http://www.express.co.uk/rss/money.xml',
+#	'City & Business': 'http://www.express.co.uk/rss/city.xml',
+#	'Your Money': 'http://www.express.co.uk/rss/yourmoney.xml',
+#	'Columnists (All)': 'http://www.express.co.uk/rss/columnists.xml',
+#	'Motoring': 'http://www.express.co.uk/rss/motoring.xml',
+#	'Travel': 'http://www.express.co.uk/rss/travel.xml',
+#	'Competitions': 'http://www.express.co.uk/rss/competitions.xml',
+#	'Express BLOGS': 'http://www.express.co.uk/rss/blogs.xml',
 }
+
+
 
 # eg '02/09/06'
 def CrackDate( raw ):
@@ -34,60 +62,52 @@ def Extract( html, context ):
 
 	soup = BeautifulStoneSoup( html )
 
-	articletd = soup.find( 'td', { 'class':'article' } )
-
-	headline = articletd.find( 'h1' )
-	art['title'] = headline.renderContents( None ).strip()
-	art['title'] = ukmedia.DescapeHTML( art['title' ] )
-
-	pubdate = articletd.find( 'h4' )
-	art['pubdate'] = CrackDate( pubdate.renderContents() )
-
-	content = articletd.find( 'h2' )
 
 
-	if articletd.find( 'span', {'class':'pa'} ):
-		art['byline'] = u'pa'	# Press Association
+	headline = soup.find( 'h1', { 'class':'articleHeading' } )
+	art['title'] = headline.renderContents( None )
+	art['title'] = ukmedia.FromHTML( art['title' ] )
+	art['title'] = ukmedia.UncapsTitle( art['title'] )		# don't like ALL CAPS HEADLINES!  
+
+	datepara = soup.find( 'p', {'class':'date'} )
+	art['pubdate'] = ukmedia.ParseDateTime( datepara.renderContents(None).strip() )
+
+	bylineh4 = soup.find( 'h4' )
+	if bylineh4:
+		art['byline'] = ukmedia.FromHTML(bylineh4.renderContents(None))
 	else:
 		art['byline'] = u''
 
-	art['content'] = content.renderContents( None )
+	introcopypara = soup.find( 'p', {'class': 'introcopy' } )
+	art['description'] = ukmedia.FromHTML( introcopypara.renderContents(None) )
 
-	# first child should be navigable string...
-	art['description'] = unicode(content.contents[0])
+	textpart = BeautifulSoup()
+	textpart.insert( len(textpart.contents), introcopypara )
+
+	for para in soup.findAll( 'p', {'class':'storycopy'} ):
+		# kill off some stuff we might accidentally pick up as text
+		# (search form embedded in article)
+		for cruft in para.findAll( 'form', {'action':'/search/'} ):
+			cruft.extract()
+		textpart.append( para )
+
+	content = textpart.prettify( None )
+	content = ukmedia.DescapeHTML( content )
+	# stonesoup matches <br> tags - replace them with single <br> instead
+	content = re.sub( u'<br>\s*', u'', content )
+	content = content.replace( u'</br>', u'<br>' )
+	content = ukmedia.SanitiseHTML( content )
+	art['content'] = content
 
 	return art
 
 
-def FindArticles():
-	""" Find articles by just grepping the front pages for links """
-	foundarticles = []
-	
-	articlepat = re.compile( u'href="(\\w*?\\.html\\?sku=[^"]*)"><b>(Read )?More..</b></a></td>', re.UNICODE )
-
-	for pagename, pageurl in frontpages.iteritems():
-		ukmedia.DBUG( '---Express: scraping %s page\n' % (pagename) )
-		pagehtml = ukmedia.FetchURL( pageurl ).decode( "iso-8859-1" )
-		fetchtime = datetime.now()
-
-		for m in articlepat.finditer( pagehtml ):
-			context = {}
-			context['srcid'] = m.group(1)
-			context['srcurl'] = expressroot + u'/' + m.group(1)
-			context['permalink'] = context['srcurl']
-			context['srcorgname'] = u'express'
-			context['lastseen'] = fetchtime
-
-			foundarticles.append( context )
-
-	return foundarticles
-
 
 
 def main():
-	found = FindArticles()
+	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'express' )
 
-	store = ArticleDB.DummyArticleDB()
+	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0

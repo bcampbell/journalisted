@@ -45,8 +45,8 @@ datecrackers = [
 	# "09-Apr-2007 00:00"
 	re.compile( """(?P<day>\d\d)-(?P<month>\w{3})-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
-	# "Friday    August    11, 2006" (guardian/observer)
-	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),\s+(?P<year>\d{4})""", re.UNICODE ),
+	# "Friday    August    11, 2006" (guardian/observer, express)
+	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),\s*(?P<year>\d{4})""", re.UNICODE ),
 
 	]
 
@@ -327,4 +327,20 @@ def FetchURL( url, timeout=defaulttimeout ):
 	f = urllib2.urlopen(url)
 	dat = f.read()
 	return dat
+
+
+
+def UncapsTitle( title ):
+	"""Try and produce a prettier version of AN ALL CAPS TITLE"""
+	title = title.title()
+
+	# "Title'S Apostrophe Badness" => "Title's Apostrophe Badness"
+	# I'Ll I'M I'D Don'T We'Ll I'Ve...
+	for suffix in ( u'Ve', u'S', u'L', u'T', u'Ll', u'M', u'D' ):
+		pat = re.compile( "(\w)('%s\\b)" % (suffix), re.UNICODE );
+		title = pat.sub( "\\1'%s" % (suffix.lower() ), title );
+	return title.strip()
+
+
+
 

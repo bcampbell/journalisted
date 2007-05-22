@@ -2,9 +2,6 @@
 #
 # Scraper for Mirror and Sunday Mirror
 #
-# TODO:
-# - improve headline case prettifing (all mirror headlines are IN CAPS)
-#
 #
 
 import re
@@ -61,17 +58,6 @@ bylinetidypat = re.compile( """\s*(.*?)\s*\d{2}/\d{2}/\d{4}\s*""", re.UNICODE )
 
 
 
-def PrettifyTitle( title ):
-	"""Try and produce a prettier version of AN ALL CAPS TITLE"""
-	title = title.title()
-	# "Title'S Apostrophe Badness" => "Title's Apostrophe Badness"
-	pat = re.compile( "(\w)('S\\b)", re.UNICODE );
-	title = pat.sub( "\\1's", title );
-	return title.strip()
-
-
-
-
 def Extract( html, context ):
 	"""extract article from a mirror.co.uk page"""
 
@@ -83,7 +69,7 @@ def Extract( html, context ):
 	headlinediv = maindiv.find( 'h1', { 'class': 'art-headline' } )
 	art['title'] = headlinediv.renderContents(None)
 	art['title'] = ukmedia.DescapeHTML( art['title'] )
-	art['title'] = PrettifyTitle( art['title'] )		# don't like ALL CAPS HEADLINES!  
+	art['title'] = ukmedia.UncapsTitle( art['title'] )		# don't like ALL CAPS HEADLINES!  
 
 	bylinediv = maindiv.find( 'h2', { 'class': 'art-byline' } )
 	rawbyline = bylinediv.renderContents(None)
@@ -106,9 +92,22 @@ def Extract( html, context ):
 
 def ScrubFunc( context, entry ):
 	title = context['title']
-	title = string.capwords(title)	# all mirror headlines are caps. sigh.
 	title = ukmedia.DescapeHTML( title )
+	title = ukmedia.UncapsTitle( title )	# all mirror headlines are caps. sigh.
 	context['title'] = title
+
+	# mirror feeds go through mediafeed.com. sigh.
+	# Luckily the guid has proper link (marked as non-permalink)
+	url = entry.guid
+
+	# just in case they decide to change it...
+	if url.find( 'mirror.co.uk' ) == -1:
+		raise Exception, "URL not from mirror.co.uk or sundaymirror.co.uk ('%s')" % (url)
+
+	context[ 'srcid' ] = url
+	context[ 'srcurl' ] = url
+	context[ 'permalink'] = url
+
 	return context
 
 
