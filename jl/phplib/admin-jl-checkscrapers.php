@@ -29,7 +29,7 @@ class ADMIN_PAGE_JL_CHECKSCRAPERS {
         }
 
         /* show an article side-by-side with the orignal page (in an iframe) */
-        $q = db_query( 'SELECT title,byline,description,content,srcurl FROM article WHERE id=?', $article_id );
+        $q = db_query( 'SELECT title,byline,description,content,srcurl,lastscraped,pubdate FROM article WHERE id=?', $article_id );
 
         $art = db_fetch_array($q);
 ?>
@@ -45,12 +45,13 @@ class ADMIN_PAGE_JL_CHECKSCRAPERS {
 </div>
 <div style="float:left; width:38%;">
 
-
 <h2>Scraped Article</h2>
 <div style="height:500px; overflow:auto; border: 1px solid black;">
 <?php
         print "<p><strong>Title:</strong>{$art['title']}</p>\n";
         print "<p><strong>Byline:</strong><em>{$art['byline']}</em></p>\n";
+        print "<p><strong>PubDate:</strong><em>{$art['pubdate']}</em></p>\n";
+        print "<p><strong>SrcURL:</strong><a href=\"{$art['srcurl']}\">{$art['srcurl']}</a></p>\n";
         print "<div style=\"font:x-small;\">\n{$art['content']}\n</div>\n";
 ?>
 </div>
