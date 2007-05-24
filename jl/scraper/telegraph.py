@@ -33,7 +33,12 @@ rssfeeds = {
 	'Health': 'http://www.telegraph.co.uk/newsfeed/rss/health.xml',
 	'Motoring': 'http://www.telegraph.co.uk/newsfeed/rss/motoring.xml',
 #	'Property': 'http://www.telegraph.co.uk/newsfeed/rss/property.xml',
-	'Travel': 'http://www.telegraph.co.uk/newsfeed/rss/travel.xml',
+
+	# scraper handles travel articles OK, but they often have huge bylines with descriptions in them... so leave em out for now...
+	# eg "The scooter holiday is an exhilarating way to catch the sights, sounds and smells of Italy, as Gregory Peck demonstrated 50 years ago. In Chianti, Charles Starmer-Smith follows his lead."
+	# sigh.
+
+#	'Travel': 'http://www.telegraph.co.uk/newsfeed/rss/travel.xml',
 	'Wine': 'http://www.telegraph.co.uk/newsfeed/rss/wine.xml',
 }
 
@@ -68,11 +73,20 @@ def Extract( html, context ):
 	soup = BeautifulSoup( html )
 
 	headline = soup.find( 'h1' )
-	art['title'] = ukmedia.DescapeHTML( headline.renderContents(None) ).strip()
+
+	title = ukmedia.DescapeHTML( headline.renderContents(None) )
+	# strip out excess whitespace (and compress to one line)
+	title = u' '.join( title.split() )
+	art['title'] = title
+
 	# we just use pubdate passed in from RSS, but might be better getting
 	# it from the page (it has a 'last updated' item)
 	# filedspan = soup.find( 'span', { 'class': 'filed' } )
 	#    Last Updated: <span style="color:#000">2:43pm BST</span>&nbsp;16/04/2007
+
+	# NOTE: in a lot of arts, motoring etc... we could get writer from
+	# the first paragraph ("... Fred Smith reports",
+	# "... talks to Fred Smith" etc)
 
 	bylinespan = soup.find( 'span', { 'class': 'storyby' } )
 	byline = u''
@@ -89,6 +103,9 @@ def Extract( html, context ):
 
 		# don't need ", Sunday Telegraph" on end of byline
 		byline = re.sub( u',\\s+Sunday\\s+Telegraph\\s*$', u'', byline )
+		byline = ukmedia.FromHTML(byline)
+		# single line, compress whitespace, strip leading/trailing space
+		byline = u' '.join( byline.split() )
 
 	art['byline'] = byline
 
@@ -97,11 +114,11 @@ def Extract( html, context ):
 	# build up a new soup with only the story text in it
 	textpart = BeautifulSoup()
 
-	ExtractParas( soup, textpart )
+	art['description'] = ExtractParas( soup, textpart )
+
 	# TODO: support multi-page articles
 	# check for and grab other pages here!!!
 	# (note: printable version no good - only displays 1st page)
-
 
 	if textpart.find('p') == None:
 		# no text!
@@ -111,26 +128,21 @@ def Extract( html, context ):
 		else:
 			raise Exception, 'No text found'
 
+
 	content = textpart.prettify(None)
 	content = ukmedia.DescapeHTML( content )
 	content = ukmedia.SanitiseHTML( content )
 	art['content'] = content
 
-	# we'll use first paragraph as description
-	# NOTE: in a lot of arts, motoring etc... we could get writer from
-	# the first paragraph ("... Fred Smith reports",
-	# "... talks to Fred Smith" etc)
-	desc = textpart.p.renderContents( None )
-	desc = ukmedia.DescapeHTML( desc )
-	desc = ukmedia.StripHTML( desc )
-	art['description'] = desc
 
 
 	return art
 
 
 # pull out the article body paragraphs in soup and append to textpart
+# returns description (taken from first nonblank paragraph)
 def ExtractParas( soup, textpart ):
+	desc = u''
 	for para in soup.findAll( 'p', { 'class': re.compile( 'story2?' ) } ):
 
 		# skip title/byline
@@ -143,7 +155,10 @@ def ExtractParas( soup, textpart ):
 
 		textpart.insert( len(textpart.contents), para )
 
-
+		# we'll use first nonblank paragraph as description
+		if desc == u'':
+			desc = ukmedia.FromHTML( para.renderContents(None) )
+	return desc
 
 
 def ScrubFunc( context, entry ):

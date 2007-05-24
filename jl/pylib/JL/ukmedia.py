@@ -317,7 +317,7 @@ def ProcessArticles( foundarticles, store, extractfn ):
 				raise
 			#else just skip this one and go on to the next...
 
-	DBUG( "%s: %d new, %d failed" % (sys.argv[0], newcount, errorcount ) )
+	DBUG( "%s: %d new, %d failed\n" % (sys.argv[0], newcount, errorcount ) )
 	return (newcount,errorcount)
 
 
