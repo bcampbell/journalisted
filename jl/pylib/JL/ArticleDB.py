@@ -129,8 +129,7 @@ def CheckArticle(art):
 	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
 	# make sure assorted fields are unicode
-	for f in ( 'title', 'byline', 'description',
-			'content', 'permalink', 'srcurl','srcid' ):
+	for f in ( 'title', 'byline', 'description', 'content' ):	#, 'permalink', 'srcurl','srcid' ):
 		if not isinstance( art[f], unicode ):
 			raise FieldNotUnicodeError(f)
 

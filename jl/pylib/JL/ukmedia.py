@@ -48,6 +48,9 @@ datecrackers = [
 	# "Friday    August    11, 2006" (guardian/observer, express)
 	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),\s*(?P<year>\d{4})""", re.UNICODE ),
 
+	# "26 May 2007, 02:10:36 BST" (newsoftheworld)
+	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
+
 	]
 
 
