@@ -43,7 +43,10 @@ datecrackers = [
 	re.compile( """((?P<month>\w{3}) (?P<day>\d+), (?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
 	# "09-Apr-2007 00:00"
-	re.compile( """(?P<day>\d\d)-(?P<month>\w{3})-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
+	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
+
+	# "09-Apr-07 00:00" (scotsman)
+	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{2}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
 	# "Friday    August    11, 2006" (guardian/observer, express)
 	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),\s*(?P<year>\d{4})""", re.UNICODE ),
