@@ -14,6 +14,14 @@ import time
 
 import feedparser
 
+class NonFatal(Exception):
+	"""A NonFatal article-extraction error (eg article is subscription-only)
+
+	A NonFatal error thrown during article extraction will still be logged
+	as an error, but won't cause processing to cease. The offending article
+	will just be skipped.
+	"""
+	pass
 
 defaulttimeout=120	# socket timeout, in secs
 
@@ -279,8 +287,8 @@ def ProcessArticles( foundarticles, store, extractfn ):
 		srcurl, srcorgname, srcid
 	Assumes entire article can be grabbed from srcurl.
 	"""
-
-	errorcount = 0
+	failcount = 0
+	abortcount = 0
 	maxerrors = 10
 	newcount = 0
 
@@ -316,15 +324,17 @@ def ProcessArticles( foundarticles, store, extractfn ):
 			traceback.print_exc()
 			print >>sys.stderr, '-'*60
 
+			failcount = failcount+1
+			# if it's a NonFatal don't increase abortcount)
+			if not isinstance( err, NonFatal ):
+				abortcount = abortcount + 1
+				if abortcount >= maxerrors:
+					print >>sys.stderr, "Too many errors - ABORTING"
+					raise
+				#else just skip this one and go on to the next...
 
-			errorcount = errorcount + 1
-			if errorcount >= maxerrors:
-				print >>sys.stderr, "Too many errors - ABORTING"
-				raise
-			#else just skip this one and go on to the next...
-
-	DBUG( "%s: %d new, %d failed\n" % (sys.argv[0], newcount, errorcount ) )
-	return (newcount,errorcount)
+	DBUG( "%s: %d new, %d failed\n" % (sys.argv[0], newcount, failcount ) )
+	return (newcount,failcount)
 
 
 def FetchURL( url, timeout=defaulttimeout ):
