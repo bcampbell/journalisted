@@ -63,7 +63,12 @@ def Extract( html, context ):
 
 	# pattern to pull out just the main article, without all the menus and cruft
 	contentpat = re.compile( "<!--- XML stuff BOF --->\\s*(.*?)\\s*<!--- XML stuff EOF --->", re.UNICODE | re.DOTALL )
-	mainhtml = contentpat.search( html ).group(1)
+	m = contentpat.search( html )
+	if m == None and html.find( u"Sorry your request produced an error!" ) != -1:
+		raise Exception, "Page is broken"
+
+	mainhtml = m.group(1)
+
 
 	soup = BeautifulSoup( mainhtml )
 	td = soup.table.tr.td
