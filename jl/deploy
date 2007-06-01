@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Full deploy script for journa-list
+# To be run on seagrass. Needs bulletproofing.
+
+set -e
+
+ROOT=/data/vhost/journa-list.dyndns.org
+
+# grab new one
+echo "Grab new site from svn..."
+svn export http://journa-list.googlecode.com/svn/trunk/jl "$ROOT/jl.NEW"
+
+
+
+# install site-specific bits and bobs
+echo "Install site-specific stuff..."
+cp general "$ROOT/jl.NEW/conf/"
+cp "$ROOT/jl.NEW/conf/httpd.conf" "$ROOT/jl.NEW/web/.htaccess"
+
+
+# back up old one
+echo "backup old site to jl.OLD..."
+rm -rf "$ROOT/jl.OLD"
+mv "$ROOT/jl" "$ROOT/jl.OLD"
+
+# replace with new
+echo "put new site in place..."
+mv "$ROOT/jl.NEW" "$ROOT/jl"
+
+echo "done."
+
