@@ -114,7 +114,7 @@ def ExtractText( articlediv ):
 
 
 
-urltrimpat = re.compile( u'\?gusrc=rss&feed=[0-9]+$', re.UNICODE )
+urltrimpat = re.compile( u'\?gusrc=rss&feed=.*$', re.UNICODE )
 
 def ScrubFunc( context, entry ):
 	url = urltrimpat.sub( '', context['permalink'] )
