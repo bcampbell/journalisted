@@ -49,12 +49,8 @@ function emit_article_info( $art )
 <h3>Tags</h3>
 
 <?php
-	$tags = db_getAll( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
-	foreach( $tags as $t )
-	{
-		$tag = $t['tag'];
-		printf( "<a href=\"/list?tag=%s\">%s</a>  ", urlencode($tag), $tag );
-	}
+	$q = db_query( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
+	tags_cloud_from_query( $q );
 ?>
 </div>
 <?php

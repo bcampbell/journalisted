@@ -36,4 +36,47 @@ function pretty_date( $t )
 		return strftime('%a %e %B %Y',$t);
 }
 
+
+function tags_display_cloud( &$tags )
+{
+	$minsize = 10;
+	$maxsize = 30;
+
+	$total = 0;
+	$low = 9999;
+	$high = 0;
+	foreach( $tags as $freq ) {
+		if( $freq > $high )
+			$high = $freq;
+		if( $freq < $low )
+			$low = $freq;
+	}
+
+	foreach( $tags as $tag=>$freq )
+	{
+		if( $high != $low )
+			$size = $minsize + (( $freq * ($maxsize-$minsize) ) / ($high-$low)  );
+		else
+			$size = $minsize + ($maxsize-$minsize)/4;	// quarter-size seems about right
+
+		printf( "&nbsp;<a href=\"/list?tag=%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", urlencode($tag), $size, $tag);
+	}
+
+}
+
+
+
+function tags_cloud_from_query( &$q )
+{
+	$tags = array();
+	while( ($row = db_fetch_array( $q )) )
+	{
+		$tag = $row['tag'];
+		$freq = $row['freq'];
+		$tags[ $tag ] = intval( $freq );
+	}
+	ksort( $tags );
+	tags_display_cloud( $tags );
+}
+
 ?>

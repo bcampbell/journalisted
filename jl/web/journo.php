@@ -171,27 +171,25 @@ function emit_block_tags( $journo_id )
 <div class="block">
 <h3>Tags</h3>
 <?php
+	$maxtags = 50;
 
-	$sql = "SELECT t.tag AS tagname, SUM(t.freq) ".
+	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 		"FROM ( journo_attr a INNER JOIN article_tag t ON a.article_id=t.article_id ) ".
 		"WHERE a.journo_id=? ".
 		"GROUP BY t.tag ".
-		"ORDER BY sum DESC";
-	$q = db_query( $sql, $journo_id );
+		"ORDER BY freq DESC " .
+		"LIMIT ?";
+	$q = db_query( $sql, $journo_id, $maxtags );
 
-	$cnt =0;
-	while( ($row = db_fetch_array( $q )) && $cnt <5)
-	{
-		$tag = $row['tagname'];
-		printf( "<a href=\"/list?tag=%s\">%s</a>  ", urlencode($tag), $tag );
-		++$cnt;
-	}
+	tags_cloud_from_query( $q );
+
 
 ?>
 </div>
 <?php
 
 }
+
 
 
 function emit_block_links( $journo_id )
