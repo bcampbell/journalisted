@@ -22,6 +22,11 @@ if( $name )
 }
 else if( $tag )
 {
+	$journo_id = get_http_var( 'journo_id', null );
+	if( $journo_id )
+	{
+		FindByTagAndJourno( $tag, $journo_id );
+	}
 	FindByTag( $tag );
 }
 else if( $outlet )
@@ -146,6 +151,7 @@ Find a journalist by name:
 
 function FindByTag( $tag )
 {
+
 	print "<h2>Journalists matching tag \"{$tag}\"</h2>";
 
 	$sql = "SELECT SUM(freq), j.ref, j.prettyname ".
@@ -168,6 +174,33 @@ function FindByTag( $tag )
 
 }
 
+function FindByTagAndJourno( $tag, $journo_id )
+{
+	$journo = db_getRow( "SELECT prettyname FROM journo WHERE id=?", $journo_id );
+
+	printf ("<h2>Other articles by %s containing '%s'</h2>", $journo['prettyname'], $tag );
+
+	$sql = "SELECT SUM(t.freq) AS tag_freq, art.id AS art_id, art.title AS art_title " .
+		"FROM (article art INNER JOIN journo_attr attr " .
+				"ON (art.id=attr.article_id AND attr.journo_id=7850))" .
+			" INNER JOIN article_tag t " .
+			"ON (art.id=t.article_id)" .
+		"WHERE t.tag=? " .
+		"GROUP BY art.id,art.title " .
+		"ORDER BY tag_freq DESC";
+
+	$q = db_query( $sql, $tag );
+
+	print "<ul>\n";
+	while( $art = db_fetch_array($q) )
+	{
+		$title = $art['art_title'];
+		$freq = $art['tag_freq'];
+		printf( "<li>%s (%d mentions)</li>\n", $title, $freq );
+	}
+	print "</ul>\n";
+
+}
 
 
 function FindByOutlet( $outlet )
