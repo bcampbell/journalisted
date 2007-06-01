@@ -22,11 +22,11 @@ if( $name )
 }
 else if( $tag )
 {
+	// if a journo is also specified, show all articles by that journo with the tag.
 	$journo_id = get_http_var( 'journo_id', null );
 	if( $journo_id )
-	{
 		FindByTagAndJourno( $tag, $journo_id );
-	}
+
 	FindByTag( $tag );
 }
 else if( $outlet )
@@ -35,6 +35,7 @@ else if( $outlet )
 }
 else
 {
+	// default - alphabetical list of all journos in system
 	AlphabeticalList();
 }
 
@@ -151,8 +152,7 @@ Find a journalist by name:
 
 function FindByTag( $tag )
 {
-
-	print "<h2>Journalists matching tag \"{$tag}\"</h2>";
+	print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
 
 	$sql = "SELECT SUM(freq), j.ref, j.prettyname ".
 		"FROM (journo j INNER JOIN journo_attr a ON (j.id=a.journo_id) ) INNER JOIN article_tag t ON (t.article_id=a.article_id) ".
@@ -174,32 +174,38 @@ function FindByTag( $tag )
 
 }
 
+
+// show a list of all the articles by a particular journo containing $tag
 function FindByTagAndJourno( $tag, $journo_id )
 {
 	$journo = db_getRow( "SELECT prettyname FROM journo WHERE id=?", $journo_id );
 
-	printf ("<h2>Other articles by %s containing '%s'</h2>", $journo['prettyname'], $tag );
+	printf ("<h2>Articles by %s mentioning \"%s\"</h2>", $journo['prettyname'], $tag );
 
 	$sql = "SELECT SUM(t.freq) AS tag_freq, art.id AS art_id, art.title AS art_title " .
 		"FROM (article art INNER JOIN journo_attr attr " .
-				"ON (art.id=attr.article_id AND attr.journo_id=7850))" .
+				"ON (art.id=attr.article_id ))" .
 			" INNER JOIN article_tag t " .
 			"ON (art.id=t.article_id)" .
-		"WHERE t.tag=? " .
+		"WHERE t.tag=? AND attr.journo_id=?" .
 		"GROUP BY art.id,art.title " .
 		"ORDER BY tag_freq DESC";
 
-	$q = db_query( $sql, $tag );
+	$q = db_query( $sql, $tag, $journo_id );
 
+	$cnt = 0;
 	print "<ul>\n";
 	while( $art = db_fetch_array($q) )
 	{
 		$title = $art['art_title'];
 		$freq = $art['tag_freq'];
-		printf( "<li>%s (%d mentions)</li>\n", $title, $freq );
+		$link = sprintf( "/article?id=%d", intval($art['art_id']) );
+		printf( "<li><a href=\"%s\">%s</a> (%d mentions)</li>\n", $link, $title, $freq );
+		++$cnt;
 	}
 	print "</ul>\n";
 
+	print "<p>{$cnt} Matches</p>";
 }
 
 

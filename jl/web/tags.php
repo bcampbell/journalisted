@@ -28,7 +28,7 @@ $sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 	"ORDER BY freq DESC " .
 	"LIMIT 64";
 $q = db_query( $sql );
-tags_cloud_from_query( $q );
+tag_cloud_from_query( $q );
 
 ?>
 </div>
@@ -44,7 +44,7 @@ $sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 	"ORDER BY freq DESC " .
 	"LIMIT 64";
 $q = db_query( $sql );
-tags_cloud_from_query( $q );
+tag_cloud_from_query( $q );
 
 ?>
 </div>
@@ -60,7 +60,7 @@ $sql = "SELECT tag, SUM(freq) AS freq ".
 	"LIMIT 128";
 $q = db_query( $sql );
 
-tags_cloud_from_query( $q );
+tag_cloud_from_query( $q );
 
 ?>
 </div>

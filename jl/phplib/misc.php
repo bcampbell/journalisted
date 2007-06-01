@@ -37,10 +37,20 @@ function pretty_date( $t )
 }
 
 
-function tags_display_cloud( &$tags )
+function tag_gen_link( $tag, $journo_id=null )
+{
+    if( $journo_id )
+        return sprintf( "/list?tag=%s&journo_id=%d", urlencode($tag), $journo_id );
+    else
+        return sprintf( "/list?tag=%s", urlencode($tag));
+}
+
+
+function tag_display_cloud( &$tags, $journo_id=null )
 {
 	$minsize = 10;
 	$maxsize = 30;
+    // map most frequent to maxsize and least frequent to minsize
 
 	$total = 0;
 	$low = 9999;
@@ -51,22 +61,18 @@ function tags_display_cloud( &$tags )
 		if( $freq < $low )
 			$low = $freq;
 	}
-
 	foreach( $tags as $tag=>$freq )
 	{
-		if( $high != $low )
-			$size = $minsize + (( $freq * ($maxsize-$minsize) ) / ($high-$low)  );
-		else
-			$size = $minsize + ($maxsize-$minsize)/4;	// quarter-size seems about right
+		$size = $minsize + ( (($freq-$low)*($maxsize-$minsize)) / ($high-$low)  );
 
-		printf( "&nbsp;<a href=\"/list?tag=%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", urlencode($tag), $size, $tag);
+		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_id ), $size, $tag);
 	}
 
 }
 
 
 
-function tags_cloud_from_query( &$q )
+function tag_cloud_from_query( &$q, $journo_id=null )
 {
 	$tags = array();
 	while( ($row = db_fetch_array( $q )) )
@@ -76,7 +82,7 @@ function tags_cloud_from_query( &$q )
 		$tags[ $tag ] = intval( $freq );
 	}
 	ksort( $tags );
-	tags_display_cloud( $tags );
+	tag_display_cloud( $tags, $journo_id );
 }
 
 ?>

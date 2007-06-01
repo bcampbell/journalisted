@@ -181,7 +181,7 @@ function emit_block_tags( $journo_id )
 		"LIMIT ?";
 	$q = db_query( $sql, $journo_id, $maxtags );
 
-	tags_cloud_from_query( $q );
+	tag_cloud_from_query( $q, $journo_id );
 
 
 ?>

@@ -50,7 +50,7 @@ function emit_article_info( $art )
 
 <?php
 	$q = db_query( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
-	tags_cloud_from_query( $q );
+	tag_cloud_from_query( $q );
 ?>
 </div>
 <?php
