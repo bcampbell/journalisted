@@ -97,10 +97,14 @@ ul.hnav li {
   border: 1px solid #ddd;
 }
 
-.block h1,
-.block h2,
-.block h3,
-.block h4 {
+.block h2 {
+  margin: 0;
+  background-color: #ddd;
+  color: black;
+  font-size: 1.2em;
+}
+
+.block h3 {
   margin: 0;
   background-color: #ddd;
   color: black;

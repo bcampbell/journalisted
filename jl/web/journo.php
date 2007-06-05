@@ -41,30 +41,32 @@ function emit_journo( $journo )
 {
 	$orgs = get_org_names();
 	$journo_id = $journo['id'];
-	$titles = db_getAll( "SELECT jobtitle FROM journo_jobtitle WHERE journo_id=?", $journo_id );
-	print "<h2>{$journo['prettyname']}</h2>";
+
+	emit_block_general( $journo );
+
+	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
+	emit_block_tags( $journo_id );
+	emit_block_stats( $journo_id );
+	emit_block_links( $journo_id );
+
+}
+
+
+function emit_blocks_articles( $journo, $allarticles )
+{
 
 ?>
-<ul>
-<?php
-	
-	foreach( $titles as $t )
-	{
-		print "  <li>{$t['jobtitle']}</li>\n";
-	}
-
-?>
-</ul>
-
 <div class="block">
 <h3>Most recent article</h3>
 <?php
+
+	$journo_id = $journo['id'];
+	$orgs = get_org_names();
 
 	$sql = "SELECT a.id,a.title,a.description,a.pubdate,a.permalink,a.srcorg FROM article a,journo_attr j WHERE a.id = j.article_id AND j.journo_id=? ORDER BY a.pubdate DESC";
 	$sqlparams = array( $journo_id );
 
 	$maxprev = 10;	/* max number of previous articles to list by default*/
-	$allarticles = get_http_var( 'allarticles', 'no' );
 	if( $allarticles != 'yes' )
 	{
 		$sql .= ' LIMIT ?';
@@ -126,14 +128,7 @@ function emit_journo( $journo )
 </div>
 <?php
 
-
-emit_block_stats( $journo_id );
-emit_block_tags( $journo_id );
-emit_block_links( $journo_id );
-
 }
-
-
 
 function emit_block_stats( $journo_id )
 {
@@ -143,15 +138,19 @@ function emit_block_stats( $journo_id )
 <h3>Journa-list by numbers:</h3>
 <?php
 
+	print( "<ul>\n" );
+
 	$sql = "SELECT SUM(s.wordcount) AS wc_sum, ".
 			"AVG(s.wordcount) AS wc_avg, ".
 			"MIN(s.wordcount) AS wc_min, ".
-			"MAX(s.wordcount) AS wc_max ".
+			"MAX(s.wordcount) AS wc_max, ".
+			"to_char( MIN(s.pubdate), 'Month YYYY') AS first_pubdate, ".
+			"COUNT(*) AS num_articles ".
 		"FROM (journo_attr a INNER JOIN article s ON (a.article_id=s.id) ) ".
 		"WHERE a.journo_id=?";
 	$row = db_getRow( $sql, $journo_id );
 
-	print( "<ul>\n" );
+	printf( "<li>%d articles (since %s)</li>\n", $row['num_articles'], $row['first_pubdate'] );
 	printf( "<li>%d average words per article</li>\n", $row['wc_avg'] );
 	printf( "<li>%d words maximum</li>\n", $row['wc_max'] );
 	printf( "<li>%d words minimum</li>\n", $row['wc_min'] );
@@ -169,7 +168,7 @@ function emit_block_tags( $journo_id )
 
 ?>
 <div class="block">
-<h3>Tags</h3>
+<h3>Most cited [Tag cloud]</h3>
 <?php
 	$maxtags = 50;
 
@@ -219,6 +218,35 @@ function emit_block_links( $journo_id )
 </ul>
 </div>
 <?php
+
+}
+
+
+
+function emit_block_general( $journo )
+{
+
+
+	printf( "<h2>Journalist: %s</h2>\n", $journo['prettyname'] );
+	$journo_id = $journo['id'];
+	$orgs = get_org_names();
+
+	$writtenfor = db_getAll( "SELECT DISTINCT a.srcorg " .
+		"FROM article a INNER JOIN journo_attr j ON (a.id=j.article_id) ".
+		"WHERE j.journo_id=?",
+		$journo_id );
+
+	print "<div class=\"block\">\n";
+	print "<h3>Written for:</h3>\n";
+	print "<ul>\n";
+	foreach( $writtenfor as $row )
+	{
+		$orgname = $orgs[ $row['srcorg'] ];
+		print "<li>$orgname</li>\n";
+	}
+	print "</ul>\n";
+	print "</div>\n";
+
 
 }
 

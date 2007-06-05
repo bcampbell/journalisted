@@ -28,7 +28,6 @@ function page_header( $params=array() )
 <ul class="hnav">
 <li><a href="/">Home</a></li>
 <li><a href="/list">All Journalists</a></li>
-<li>All News Outlets</li>
 </ul>
 </div>
 
