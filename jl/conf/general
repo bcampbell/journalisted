@@ -1,11 +1,11 @@
 <?php
 
 // PostgreSQL database for Journa-List
-//define('OPTION_JL_DB_HOST', 'localhost');
-//define('OPTION_JL_DB_PORT', '5432');
-define('OPTION_JL_DB_NAME', 'journa-list');
-define('OPTION_JL_DB_USER', 'journa-list');
-define('OPTION_JL_DB_PASS', '');
+//define('OPTION_JL_DB_HOST', 'localhost' );
+define('OPTION_JL_DB_PORT', '5433');
+define('OPTION_JL_DB_NAME', 'mst');
+define('OPTION_JL_DB_USER', 'mst');
+//define('OPTION_JL_DB_PASS', '');
 define('OPTION_JL_DB_PERSISTENT', false);
 define('OPTION_PHP_MAINDB', 'JL');
 

@@ -154,6 +154,7 @@ function FindByTag( $tag )
 {
 	print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
 
+	// TODO: should only include active articles (ie article.status='a')
 	$sql = "SELECT SUM(freq), j.ref, j.prettyname ".
 		"FROM (journo j INNER JOIN journo_attr a ON (j.id=a.journo_id) ) INNER JOIN article_tag t ON (t.article_id=a.article_id) ".
 		"WHERE t.tag=? ".
@@ -184,7 +185,7 @@ function FindByTagAndJourno( $tag, $journo_id )
 
 	$sql = "SELECT SUM(t.freq) AS tag_freq, art.id AS art_id, art.title AS art_title " .
 		"FROM (article art INNER JOIN journo_attr attr " .
-				"ON (art.id=attr.article_id ))" .
+				"ON (art.status='a' AND art.id=attr.article_id ))" .
 			" INNER JOIN article_tag t " .
 			"ON (art.id=t.article_id)" .
 		"WHERE t.tag=? AND attr.journo_id=?" .
@@ -216,7 +217,12 @@ function FindByOutlet( $outlet )
 	printf( "<h2>Journalists who have written for %s</h2>",
    		$org['prettyname'] );
 
-	$sql = "SELECT j.ref, j.prettyname, j.lastname, count(a.id) FROM (( article a INNER JOIN journo_attr ja ON a.id=ja.article_id ) INNER JOIN journo j ON j.id=ja.journo_id ) WHERE a.srcorg=? GROUP BY j.ref,j.prettyname,j.lastname ORDER BY count DESC";
+	$sql = "SELECT j.ref, j.prettyname, j.lastname, count(a.id) " .
+		"FROM (( article a INNER JOIN journo_attr ja ON (a.status='a' AND a.id=ja.article_id) ) " .
+			"INNER JOIN journo j ON j.id=ja.journo_id ) " .
+		"WHERE a.srcorg=? " .
+		"GROUP BY j.ref,j.prettyname,j.lastname " .
+		"ORDER BY count DESC";
 
 	$q = db_query( $sql, $org['id'] );
 

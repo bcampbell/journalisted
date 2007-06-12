@@ -63,7 +63,10 @@ function emit_blocks_articles( $journo, $allarticles )
 	$journo_id = $journo['id'];
 	$orgs = get_org_names();
 
-	$sql = "SELECT a.id,a.title,a.description,a.pubdate,a.permalink,a.srcorg FROM article a,journo_attr j WHERE a.id = j.article_id AND j.journo_id=? ORDER BY a.pubdate DESC";
+	$sql = "SELECT a.id,a.title,a.description,a.pubdate,a.permalink,a.srcorg " .
+		"FROM article a,journo_attr j " .
+		"WHERE a.status='a' AND a.id=j.article_id AND j.journo_id=? " .
+		"ORDER BY a.pubdate DESC";
 	$sqlparams = array( $journo_id );
 
 	$maxprev = 10;	/* max number of previous articles to list by default*/
@@ -146,7 +149,7 @@ function emit_block_stats( $journo_id )
 			"MAX(s.wordcount) AS wc_max, ".
 			"to_char( MIN(s.pubdate), 'Month YYYY') AS first_pubdate, ".
 			"COUNT(*) AS num_articles ".
-		"FROM (journo_attr a INNER JOIN article s ON (a.article_id=s.id) ) ".
+		"FROM (journo_attr a INNER JOIN article s ON (a.status='a' AND a.article_id=s.id) ) ".
 		"WHERE a.journo_id=?";
 	$row = db_getRow( $sql, $journo_id );
 
@@ -172,6 +175,7 @@ function emit_block_tags( $journo_id )
 <?php
 	$maxtags = 50;
 
+	# TODO: should only include active articles (ie where article.status='a')
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 		"FROM ( journo_attr a INNER JOIN article_tag t ON a.article_id=t.article_id ) ".
 		"WHERE a.journo_id=? ".
@@ -232,7 +236,7 @@ function emit_block_general( $journo )
 	$orgs = get_org_names();
 
 	$writtenfor = db_getAll( "SELECT DISTINCT a.srcorg " .
-		"FROM article a INNER JOIN journo_attr j ON (a.id=j.article_id) ".
+		"FROM article a INNER JOIN journo_attr j ON (a.status='a' AND a.id=j.article_id) ".
 		"WHERE j.journo_id=?",
 		$journo_id );
 
