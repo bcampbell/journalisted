@@ -141,8 +141,8 @@ def CheckArticle(art):
 		if s.find("\n") != -1:
 			raise Exception, ( "multi-line %s ('%s')" % (f,s) )
 
-	# check for missng/blank fields
-	for f in ('title','description','content' ):
+	# check for missing/blank fields
+	for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
 		s= art[f]
 		if s.strip() == '':
 			raise Exception, ( "missing '%s' field!" % (f) )

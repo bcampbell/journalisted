@@ -41,14 +41,16 @@ class ADMIN_PAGE_JL_DUPES {
             $masters[$masterid]['DUPES'][] = $row;
         }
 
+        print "<table border='1'>\n";
         foreach( $masters as $art ) {
-            print "<p>\n";
+            print "<tr><td>\n";
             printf( "[%d] %s (%s)<br>\n", intval( $art['id']), $art['title'], $art['byline'] );
             foreach( $art['DUPES'] as $dupe ) {
                 printf( "&nbsp;&nbsp;<small>[%d] %s (%s)</small><br>\n", intval( $dupe['id']), $dupe['title'], $dupe['byline'] );
             }
-            print "</p>\n";
+            print "</td></tr>\n";
         }
+        print "</table>\n";
     }
 
 }

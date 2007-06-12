@@ -115,13 +115,19 @@ def ExtractText( articlediv ):
 
 
 urltrimpat = re.compile( u'\?gusrc=rss&feed=.*$', re.UNICODE )
+idpat = re.compile( u'.*[/](.*)[.]html$', re.UNICODE )
 
 def ScrubFunc( context, entry ):
 	url = urltrimpat.sub( '', context['permalink'] )
 	context['permalink'] = url;
 	context['srcurl'] = url;
-	context['srcid'] = url;
 
+	m = idpat.search( url )
+	if m:
+		context['srcid'] = m.group(1)
+	else:
+		context['srcid'] = None
+#		raise Exception, "couldn't extract srcid from url (%s)" % (url)
 
 	# some items don't have pubdate
 	# (they're probably special-case duds (eg flash pages), but try and
