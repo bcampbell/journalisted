@@ -14,7 +14,7 @@ from JL import DB,Byline,Journo
 def TrimSrcIDs():
 	conn = DB.Connect()
 
-	idpat = re.compile( ".*[/](.*)[.]html$" )
+	idpat = re.compile( ".*[/](.*)[.]html([?]gusrc=.*)?$" )
 
 	c1= conn.cursor()
 	c1.execute( "SELECT id,title,srcorg,srcid FROM article WHERE (srcorg=4 OR srcorg=11)" )
@@ -27,6 +27,9 @@ def TrimSrcIDs():
 		srcid = row[3]
 
 		m = idpat.search( srcid )
+		if not m:
+			raise Exception, "Couldn't get srcid out of '%s'" %(srcid)
+
 		newsrcid = m.group(1)
 
 		c2 = conn.cursor()
