@@ -11,6 +11,7 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 
+
 /* get journo identifier (eg 'fred-bloggs') */
 
 $ref = strtolower( get_http_var( 'ref' ) );
@@ -18,11 +19,20 @@ $ref = strtolower( get_http_var( 'ref' ) );
 $journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
 
 if($journo)
-	$pagetitle = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
-else
-	$pagetitle = "Unknown journalist - " . OPTION_WEB_DOMAIN;
+{
+	$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
 
-page_header( array( 'title'=>$pagetitle ));
+	$pageparams = array(
+		'title'=>$journo['prettyname'] . " - " . OPTION_WEB_DOMAIN,
+		'rss'=>array( 'Recent Articles'=>$rssurl )
+	);
+}
+else
+{
+	$pageparams = array( 'title'=>"Unknown journalist - " . OPTION_WEB_DOMAIN );
+}
+
+page_header( $pageparams );
 
 if( $journo )
 	emit_journo( $journo );
@@ -55,9 +65,14 @@ function emit_journo( $journo )
 function emit_blocks_articles( $journo, $allarticles )
 {
 
+
 ?>
+
 <div class="block">
-<h3>Most recent article</h3>
+<h3>Most recent article<?php
+
+
+?></h3>
 <?php
 
 	$journo_id = $journo['id'];
@@ -93,6 +108,9 @@ function emit_blocks_articles( $journo, $allarticles )
 
 	}
 
+	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\"></a>\n",
+		OPTION_WEB_DOMAIN,
+		$journo['ref'] );
 ?>
 </div>
 

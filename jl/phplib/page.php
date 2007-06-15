@@ -17,6 +17,17 @@ function page_header( $params=array() )
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title><?=$title ?></title>
 <link href="style.css" rel="stylesheet" type="text/css">
+<?php
+
+	if (array_key_exists('rss', $params))
+	{
+		foreach ($params['rss'] as $rss_title => $rss_url)
+		{
+			printf( "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"%s\" href=\"%s\">\n", $rss_title, $rss_url );
+		}
+	}
+
+?>
 </head>
 
 <body>
