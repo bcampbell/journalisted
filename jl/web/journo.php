@@ -167,7 +167,7 @@ function emit_block_stats( $journo_id )
 			"MAX(s.wordcount) AS wc_max, ".
 			"to_char( MIN(s.pubdate), 'Month YYYY') AS first_pubdate, ".
 			"COUNT(*) AS num_articles ".
-		"FROM (journo_attr a INNER JOIN article s ON (a.status='a' AND a.article_id=s.id) ) ".
+		"FROM (journo_attr a INNER JOIN article s ON (s.status='a' AND a.article_id=s.id) ) ".
 		"WHERE a.journo_id=?";
 	$row = db_getRow( $sql, $journo_id );
 
