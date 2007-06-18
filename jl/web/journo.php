@@ -263,8 +263,25 @@ function emit_block_general( $journo )
 	print "<ul>\n";
 	foreach( $writtenfor as $row )
 	{
-		$orgname = $orgs[ $row['srcorg'] ];
-		print "<li>$orgname</li>\n";
+		$srcorg = $row['srcorg'];
+
+		// get jobtitles seen for this org:	
+		$titles = db_getAll( "SELECT jobtitle FROM journo_jobtitle WHERE journo_id=? AND org_id=?",
+			$journo_id, $srcorg );
+
+		$orgname = $orgs[ $srcorg ];
+
+		print "<li>\n";
+		print "$orgname\n";
+
+		if( $titles )
+		{
+			print "<ul>\n";
+			foreach( $titles as $t )
+				printf( "<li>%s</li>\n", $t['jobtitle']);
+			print "</ul>\n";
+		}
+		print "</li>\n";
 	}
 	print "</ul>\n";
 	print "</div>\n";

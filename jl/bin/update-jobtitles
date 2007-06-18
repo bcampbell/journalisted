@@ -1,0 +1,50 @@
+#!/usr/bin/env python2.4
+#
+# Run through all the bylines in the system and try and update jobtitles
+#
+
+
+import sys
+
+sys.path.append( "../pylib" )
+
+from JL import DB,Byline,Journo
+
+
+def UpdateJobTitles():
+	""" run through all the bylines in the system looking for jobtitles """
+	conn = DB.Connect()
+
+	src = conn.cursor()
+	src.execute( "SELECT byline,srcorg,pubdate FROM article WHERE byline != ''" )
+	while 1:
+		row = src.fetchone()
+		if not row:
+			break
+
+		byline = row['byline'].decode( 'utf-8' )
+		pubdate = row['pubdate']
+		srcorg = row['srcorg']
+
+		details = Byline.CrackByline( byline )
+
+		if details is None:
+#			print "FAIL: %s" % (byline)
+			continue
+
+		for j in details:
+			if j.has_key('title'):
+				journo_id = Journo.FindJourno( conn, j['name'] )
+				if journo_id:
+#					print "%s: %s (%s)" % (j['name'],j['title'],srcorg )
+					Journo.SeenJobTitle( conn, journo_id, j['title'], pubdate, srcorg )
+
+	conn.commit()
+
+
+
+def main():
+	UpdateJobTitles()
+
+main()
+

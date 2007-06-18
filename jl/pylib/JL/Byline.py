@@ -15,16 +15,21 @@ bylinecrackers = [
 	{ 'fmt': '(n)(n)(n)', 'pat': '(?:by |from |)(.+), (.+) and (.+)$' },
 	{ 'fmt': '(n)(n)(nl)', 'pat': '(?:by |from |)(.+), (.+) and (.+) in (.+)$' },
 	{ 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+) and (.+)$' },
+	# note: ignore email addr here as we don't know which person it's for
+	{ 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+) and (\S+ \S+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})$' },
 	{ 'fmt': '(n)(nl)', 'pat': '(?:by |from |)(.+) and (.+) in (.+)$' },
 	{ 'fmt': '(nal)', 'pat': '(?:by |from |)(.+), of (.+), in (.+)$' },
 	{ 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?)[,]? (?:in|at|reports from) (.+)$' },
 	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?), (.+)$' },
+	{ 'fmt': '(nte)', 'pat': """(?:by |from |)(\S+ \S+) (.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
 	{ 'fmt': '(ne)', 'pat': """(?:by |from |)(.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
 	{ 'fmt': '(n)(na)', 'pat': '(?:by |from |)(.+?) and (.+?), (.+)$' },
 	{ 'fmt': '(na)', 'pat': '(?:by |from |)(.+?), (.+)$' },
 	{ 'fmt': '(ns)', 'pat': '(?:by |from |)(.+?): (.+)$' },
 	{ 'fmt': '(sn)', 'pat': '(?:by |from |)(.+?): (.+)$' },
 	{ 'fmt': '(ntl)', 'pat': '(?:by |from |)(\S+ \S+?) (.+) in (.+)$' },
+	{ 'fmt': '(ntl)', 'pat': '(?:by |from |)(\S+ \S+?) (.+), in (.+)$' },
+#	{ 'fmt': '(nta)', 'pat': '(?:by |from |)(\S+ \S+?)[,]? (.+), (.+)$' },
 	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(\S+ \S+?)\s+(\S+ \S+)$' },
 	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?): (.+)$' },
 	{ 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?), (.+)$' },
@@ -68,19 +73,23 @@ agencypats = [
 	re.compile( """\\bap\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bpa\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """bbc news""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """bbc scotland""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """bbc wales""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """sunday telegraph""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bmirror[.]co[.]uk\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bagencies\\b""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """\\bagences\\b""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """\\bexpress.co.uk\\b""", re.IGNORECASE|re.UNICODE ),
 	]
 
 jobtitlepats = [
-	re.compile( """editor""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """reporter""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """correspondent""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """corespondent""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """director""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """writer""", re.IGNORECASE|re.UNICODE ),
-	re.compile( """commentator""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """editor$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """reporter$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """correspondent$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """corespondent$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """director$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """writer$""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """commentator$""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """nutritionist""", re.IGNORECASE|re.UNICODE ),
 	]
 
@@ -201,7 +210,7 @@ def CouldBeName( nm ):
 	for c in nm:
 		if c in u',:@0123456789':
 			return False
-	if re.search( """\\b(a|by|and|the|staff)\\b""", nm, re.UNICODE|re.IGNORECASE ):
+	if re.search( """\\b(a|by|and|the|staff|in)\\b""", nm, re.UNICODE|re.IGNORECASE ):
 		return False
 
 	return True

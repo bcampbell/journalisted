@@ -193,8 +193,13 @@ def AttributeArticle( conn, journo_id, article_id ):
 	q.close()
 
 
-def SeenJobTitle( conn, journo_id, jobtitle, whenseen ):
+def SeenJobTitle( conn, journo_id, jobtitle, whenseen, srcorg ):
 	""" add a link to assign a jobtitle to a journo """
+
+
+	if not isinstance( jobtitle, unicode ):
+		raise Exception, "jobtitle not unicode"
+
 
 	jobtitle = jobtitle.strip()
 
@@ -202,23 +207,29 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen ):
 
 	q.execute( "SELECT jobtitle, firstseen, lastseen "
 		"FROM journo_jobtitle "
-		"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s)",
-		journo_id,jobtitle )
+		"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s) AND org_id=%s",
+		journo_id,
+		jobtitle.encode('utf-8'),
+		srcorg )
 
 	row = q.fetchone()
 	if not row:
 		# it's new
-		q.execute( "INSERT INTO journo_jobtitle (journo_id,jobtitle,firstseen,lastseen) VALUES (%s,%s,%s,%s)",
+		q.execute( "INSERT INTO journo_jobtitle (journo_id,jobtitle,firstseen,lastseen,org_id) VALUES (%s,%s,%s,%s,%s)",
 			journo_id,
-			jobtitle,
+			jobtitle.encode('utf-8'),
 			str(whenseen),
-			str(whenseen) )
+			str(whenseen),
+			srcorg )
 	else:
 		# already got it - extend out the time period
 		q.execute( "UPDATE journo_jobtitle "
 			"SET lastseen=%s "
-			"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s)",
-			str(whenseen), journo_id, jobtitle )
+			"WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s) AND org_id=%s",
+			str(whenseen),
+			journo_id,
+			jobtitle.encode('utf-8'),
+			srcorg )
 
 	q.close()
 

@@ -87,7 +87,7 @@ class ArticleDB:
 		self.conn.commit()
 
 		# parse byline to assign/create journos
-		ProcessByline( id, art['byline'] )
+		ProcessByline( id, srcorg, art['byline'] )
 
 		# TODO: rollback on error!
 		return id
@@ -159,7 +159,7 @@ def CheckArticle(art):
 
 
 
-def ProcessByline( article_id, byline ):
+def ProcessByline( article_id, srcorg, byline ):
 	""" Parse byline and assign to journos (creates journos along the way) """
 	details = Byline.CrackByline( byline )
 	if details is None:
@@ -182,7 +182,7 @@ def ProcessByline( article_id, byline ):
 		attributed.append( journo_id )
 
 		if d.has_key('title'):
-			Journo.SeenJobTitle( conn, journo_id, d['title'], datetime.now() )
+			Journo.SeenJobTitle( conn, journo_id, d['title'], datetime.now(), srcorg )
 		conn.commit()
 
 	return attributed

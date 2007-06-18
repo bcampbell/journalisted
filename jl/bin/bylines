@@ -1,5 +1,8 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python2.4
+#
+# Byline dev tool
+# Print out all the bylines that won't correctly parse
+#
 
 import sys
 
@@ -12,14 +15,6 @@ def main():
 	conn = DB.Connect()
 
 	c = conn.cursor()
-
-	c.execute( 'SELECT id,shortname,prettyname FROM organisation' )
-	orgs = {}
-	while 1:
-		row = c.fetchone()
-		if not row:
-			break
-		orgs[ row['id'] ] = row['shortname']
 
 	c.execute( 'SELECT id,byline,srcorg FROM article' )
 
@@ -42,14 +37,15 @@ def main():
 		details = Byline.CrackByline( byline )
 
 		if details is None:
+			print "%s -- FAIL" %(byline)
 			failcnt = failcnt + 1
-			print "FAIL: %s" % (byline)
 			continue
 
-#		for d in details:
-#			print d['name']
+		foo = ''
+		for d in details:
+			foo = foo + str(d)
 
-#		print "%s: %s" % (byline,details)
+#		print "%s -- %s" % (byline,foo)
 
 	print "Summary:"
 	print "%d total" % (cnt)
