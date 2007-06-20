@@ -46,12 +46,12 @@ function emit_journo( $journo )
 	$orgs = get_org_names();
 	$journo_id = $journo['id'];
 
-	emit_block_general( $journo );
+	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
+	emit_block_overview( $journo );
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 	emit_block_tags( $journo );
 	emit_block_stats( $journo_id );
-	emit_block_links( $journo_id );
 
 }
 
@@ -63,11 +63,10 @@ function emit_blocks_articles( $journo, $allarticles )
 ?>
 
 <div class="block">
-<h3>Most recent article<?php
-
-
-?></h3>
+<h3>Most recent article</h3>
 <?php
+
+
 
 	$journo_id = $journo['id'];
 	$orgs = get_org_names();
@@ -95,16 +94,18 @@ function emit_blocks_articles( $journo, $allarticles )
 		$org = $orgs[ $r['srcorg'] ];
 		$pubdate = pretty_date(strtotime($r['pubdate']));
 		$desc = $r['description'];
-
+		print "<p>\n";
 		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\", {$pubdate}, <em>{$org}</em>\n";
 		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
 		print "<blockquote>{$desc}</blockquote>\n";
+		print "</p>\n";
 
 	}
 
 	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\"></a>\n",
 		OPTION_WEB_DOMAIN,
 		$journo['ref'] );
+
 ?>
 </div>
 
@@ -209,7 +210,7 @@ function emit_block_tags( $journo )
 
 
 
-function emit_block_links( $journo_id )
+function emit_links( $journo_id )
 {
 	$q = db_query( "SELECT url, description " .
 		"FROM journo_weblink " .
@@ -219,43 +220,47 @@ function emit_block_links( $journo_id )
 	$row = db_fetch_array($q);
 	if( !$row )
 		return;		/* no links to show */
-
-?>
-<div class="block">
-<h3>Links</h3>
-<ul>
-<?php
-
+	print "<p>Elsewhere on the web:\n<ul>";
 	while( $row )
 	{
-		printf( "<li><a href=\"%s\">%s</a></li>\n", $row['url'], $row['description'] );
+		printf( "<li><a href=\"%s\">%s</a></li>\n",
+			$row['url'],
+			$row['description'] );
 		$row = db_fetch_array($q);
 	}
+	print "</ul></p>\n";
+}
 
-?>
-</ul>
-</div>
-<?php
+
+
+function emit_block_overview( $journo )
+{
+	$journo_id = $journo['id'];
+
+
+	print "<div class=\"block\">\n";
+	print "<h3>Overview</h3>\n";
+
+	emit_writtenfor( $journo );
+
+	emit_links( $journo_id );
+
+	print "</div>\n";
+
 
 }
 
 
 
-function emit_block_general( $journo )
+function emit_writtenfor( $journo )
 {
-
-
-	printf( "<h2>Journalist: %s</h2>\n", $journo['prettyname'] );
-	$journo_id = $journo['id'];
 	$orgs = get_org_names();
-
+	$journo_id = $journo['id'];
 	$writtenfor = db_getAll( "SELECT DISTINCT a.srcorg " .
 		"FROM article a INNER JOIN journo_attr j ON (a.status='a' AND a.id=j.article_id) ".
 		"WHERE j.journo_id=?",
 		$journo_id );
-
-	print "<div class=\"block\">\n";
-	print "<h3>Written for:</h3>\n";
+	printf( "<p>\n%s has written for:\n", $journo['prettyname'] );
 	print "<ul>\n";
 	foreach( $writtenfor as $row )
 	{
@@ -279,10 +284,6 @@ function emit_block_general( $journo )
 		}
 		print "</li>\n";
 	}
-	print "</ul>\n";
-	print "</div>\n";
-
-
+	print "</ul>\n</p>\n";
 }
-
 ?>
