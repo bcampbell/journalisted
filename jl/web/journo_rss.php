@@ -17,11 +17,6 @@ $ref = strtolower( get_http_var( 'ref' ) );
 
 $journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
 
-if($journo)
-	$pagetitle = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
-else
-	$pagetitle = "Unknown journalist - " . OPTION_WEB_DOMAIN;
-
 header('Content-type: text/xml;');
 
 emit_recent_articles( $journo );

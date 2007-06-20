@@ -16,7 +16,7 @@ function page_header( $params=array() )
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title><?=$title ?></title>
-<link href="style.css" rel="stylesheet" type="text/css">
+<link href="/style.css" rel="stylesheet" type="text/css">
 <?php
 
 	if (array_key_exists('rss', $params))
@@ -43,7 +43,7 @@ function page_header( $params=array() )
 </div>
 
 </div>
-
+<!--
 <div id="sidebar">
 <h4>About Journa-list</h4>
 <p>
@@ -56,7 +56,7 @@ blah blah blah blah blah
 blah blah blah blah blah
 </p>
 </div>
-
+-->
 <div id="content">
 <?php
 

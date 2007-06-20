@@ -18,27 +18,21 @@ $ref = strtolower( get_http_var( 'ref' ) );
 
 $journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
 
-if($journo)
+if(!$journo)
 {
-	$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
+	header("HTTP/1.0 404 Not Found");
+	exit(1);
+}
 
-	$pageparams = array(
-		'title'=>$journo['prettyname'] . " - " . OPTION_WEB_DOMAIN,
-		'rss'=>array( 'Recent Articles'=>$rssurl )
-	);
-}
-else
-{
-	$pageparams = array( 'title'=>"Unknown journalist - " . OPTION_WEB_DOMAIN );
-}
+$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
+
+$pageparams = array(
+	'title'=>$journo['prettyname'] . " - " . OPTION_WEB_DOMAIN,
+	'rss'=>array( 'Recent Articles'=>$rssurl )
+);
 
 page_header( $pageparams );
-
-if( $journo )
-	emit_journo( $journo );
-else
-	print "Not found";
-
+emit_journo( $journo );
 page_footer();
 
 
@@ -55,7 +49,7 @@ function emit_journo( $journo )
 	emit_block_general( $journo );
 
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
-	emit_block_tags( $journo_id );
+	emit_block_tags( $journo );
 	emit_block_stats( $journo_id );
 	emit_block_links( $journo_id );
 
@@ -184,14 +178,16 @@ function emit_block_stats( $journo_id )
 
 
 
-function emit_block_tags( $journo_id )
+function emit_block_tags( $journo )
 {
 
+	$journo_id = $journo['id'];
+	$ref = $journo['ref'];
 ?>
 <div class="block">
 <h3>Most cited [Tag cloud]</h3>
 <?php
-	$maxtags = 50;
+	$maxtags = 20;
 
 	# TODO: should only include active articles (ie where article.status='a')
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
@@ -202,7 +198,7 @@ function emit_block_tags( $journo_id )
 		"LIMIT ?";
 	$q = db_query( $sql, $journo_id, $maxtags );
 
-	tag_cloud_from_query( $q, $journo_id );
+	tag_cloud_from_query( $q, $ref );
 
 
 ?>

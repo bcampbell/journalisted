@@ -6,6 +6,7 @@
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
+require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -14,20 +15,10 @@ page_header();
 db_connect();
 
 $name = get_http_var( 'name', null );
-$tag = get_http_var( 'tag', null );
 $outlet = get_http_var( 'outlet', null );
 if( $name )
 {
 	FindByName( $name );
-}
-else if( $tag )
-{
-	// if a journo is also specified, show all articles by that journo with the tag.
-	$journo_id = get_http_var( 'journo_id', null );
-	if( $journo_id )
-		FindByTagAndJourno( $tag, $journo_id );
-
-	FindByTag( $tag );
 }
 else if( $outlet )
 {
@@ -150,64 +141,7 @@ Find a journalist by name:
 
 
 
-function FindByTag( $tag )
-{
-	print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
 
-	// TODO: should only include active articles (ie article.status='a')
-	$sql = "SELECT SUM(freq), j.ref, j.prettyname ".
-		"FROM (journo j INNER JOIN journo_attr a ON (j.id=a.journo_id) ) INNER JOIN article_tag t ON (t.article_id=a.article_id) ".
-		"WHERE t.tag=? ".
-		"GROUP BY j.id,j.ref,j.prettyname ".
-		"ORDER BY SUM DESC";
-	$q = db_query( $sql, $tag );
-
-	$cnt = 0;
-	print "<ul>\n";
-	while( $j = db_fetch_array($q) )
-	{
-		$cnt++;
-		$url = $j['ref'];
-		print "<li><a href=\"{$url}\">{$j['prettyname']}</a> ({$j['sum']} mentions)</li>\n";
-	}
-	print "</ul>\n";
-	print "<p>{$cnt} Matches</p>";
-
-}
-
-
-// show a list of all the articles by a particular journo containing $tag
-function FindByTagAndJourno( $tag, $journo_id )
-{
-	$journo = db_getRow( "SELECT prettyname FROM journo WHERE id=?", $journo_id );
-
-	printf ("<h2>Articles by %s mentioning \"%s\"</h2>", $journo['prettyname'], $tag );
-
-	$sql = "SELECT SUM(t.freq) AS tag_freq, art.id AS art_id, art.title AS art_title " .
-		"FROM (article art INNER JOIN journo_attr attr " .
-				"ON (art.status='a' AND art.id=attr.article_id ))" .
-			" INNER JOIN article_tag t " .
-			"ON (art.id=t.article_id)" .
-		"WHERE t.tag=? AND attr.journo_id=?" .
-		"GROUP BY art.id,art.title " .
-		"ORDER BY tag_freq DESC";
-
-	$q = db_query( $sql, $tag, $journo_id );
-
-	$cnt = 0;
-	print "<ul>\n";
-	while( $art = db_fetch_array($q) )
-	{
-		$title = $art['art_title'];
-		$freq = $art['tag_freq'];
-		$link = sprintf( "/article?id=%d", intval($art['art_id']) );
-		printf( "<li><a href=\"%s\">%s</a> (%d mentions)</li>\n", $link, $title, $freq );
-		++$cnt;
-	}
-	print "</ul>\n";
-
-	print "<p>{$cnt} Matches</p>";
-}
 
 
 function FindByOutlet( $outlet )

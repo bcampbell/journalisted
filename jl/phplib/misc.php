@@ -37,16 +37,16 @@ function pretty_date( $t )
 }
 
 
-function tag_gen_link( $tag, $journo_id=null )
+function tag_gen_link( $tag, $journo_ref=null )
 {
-    if( $journo_id )
-        return sprintf( "/list?tag=%s&journo_id=%d", urlencode($tag), $journo_id );
+    if( $journo_ref )
+        return sprintf( "/%s/%s", $journo_ref, urlencode($tag) );
     else
-        return sprintf( "/list?tag=%s", urlencode($tag));
+        return sprintf( "/tags/%s", urlencode($tag));
 }
 
 
-function tag_display_cloud( &$tags, $journo_id=null )
+function tag_display_cloud( &$tags, $journo_ref=null )
 {
 	$minsize = 10;
 	$maxsize = 30;
@@ -65,14 +65,14 @@ function tag_display_cloud( &$tags, $journo_id=null )
 	{
 		$size = $minsize + ( (($freq-$low)*($maxsize-$minsize)) / ($high-$low)  );
 
-		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_id ), $size, $tag);
+		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_ref ), $size, $tag);
 	}
 
 }
 
 
 
-function tag_cloud_from_query( &$q, $journo_id=null )
+function tag_cloud_from_query( &$q, $journo_ref=null )
 {
 	$tags = array();
 	while( ($row = db_fetch_array( $q )) )
@@ -82,7 +82,82 @@ function tag_cloud_from_query( &$q, $journo_id=null )
 		$tags[ $tag ] = intval( $freq );
 	}
 	ksort( $tags );
-	tag_display_cloud( $tags, $journo_id );
+	tag_display_cloud( $tags, $journo_ref );
 }
+
+
+// emit a list of links to journos who use this tag
+function tag_emit_journo_list( $tag, $excludejourno_id=null )
+{
+	// TODO: should only include active articles (ie article.status='a')
+	$sql = "SELECT SUM(freq), j.id, j.ref, j.prettyname ".
+		"FROM (journo j INNER JOIN journo_attr a ON (j.id=a.journo_id) ) ".
+            "INNER JOIN article_tag t ON (t.article_id=a.article_id) ".
+		"WHERE t.tag=? ".
+		"GROUP BY j.id,j.ref,j.prettyname ".
+		"ORDER BY SUM DESC";
+	$q = db_query( $sql, $tag );
+
+	$cnt = 0;
+	print "<ul>\n";
+	while( $j = db_fetch_array($q) )
+	{
+        if( $excludejourno_id == $j['id'] )
+            continue;
+		$cnt++;
+		$journo_url = '/' . $j['ref'];
+		$tagurl = $journo_url . '/' . urlencode( $tag );
+		printf( "<li><a href=\"%s\">%s</a> (<a href=\"%s\">%d %s</a>)</li>\n",
+           $journo_url,
+           $j['prettyname'],
+           $tagurl,
+           $j['sum'],
+           $j['sum']==1 ? 'mention':'mentions' );
+	}
+	print "</ul>\n";
+    printf( "<p>%d %s</p>\n",
+        $cnt, $cnt==1 ? 'journalist':'journalists' );
+}
+
+
+// emit list of articles by a particular journo matching a tag.
+function tag_emit_matching_articles( $tag, $journo_id )
+{
+	$sql = "SELECT a.id,a.title,a.description,a.pubdate,a.permalink,a.srcorg " .
+		"FROM (article a INNER JOIN journo_attr j ON (a.id=j.article_id)) " .
+			"INNER JOIN article_tag t ON (a.id=t.article_id) " .
+		"WHERE a.status='a' AND j.journo_id=? AND t.tag=? " .
+		"ORDER BY a.pubdate DESC";
+
+	$r = db_query( $sql, $journo_id, $tag );
+
+    $cnt = 0;
+	print "<ul>\n";
+	while( $row = db_fetch_array( $r ) )
+	{
+		printf( "<li>%s</li>\n", article_link( $row ) );
+        ++$cnt;
+	}
+	print "</ul>\n";
+
+    printf( "<p>%d %s</p>\n",
+        $cnt, $cnt==1 ? 'article':'articles' );
+}
+
+
+function article_link( $art )
+{
+	$orgs = get_org_names();
+	$htmlfrag = sprintf( "<a href=\"/article?id=%s\">%s</a>, %s, <em>%s</em> ".
+		"<small>(<a href=\"%s\">original article</a>)</small>",
+		$art['id'],
+		$art['title'],
+		pretty_date( strtotime($art['pubdate']) ),
+		$org = $orgs[ $art['srcorg'] ],
+		$art['permalink'] );
+
+	return $htmlfrag;
+}
+
 
 ?>
