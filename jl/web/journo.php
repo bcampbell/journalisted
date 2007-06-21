@@ -156,7 +156,7 @@ function emit_block_stats( $journo_id )
 
 	print( "<ul>\n" );
 
-	$sql = "SELECT SUM(s.wordcount) AS wc_sum, ".
+	$sql = "SELECT SUM(s.wordcount) AS wc_total, ".
 			"AVG(s.wordcount) AS wc_avg, ".
 			"MIN(s.wordcount) AS wc_min, ".
 			"MAX(s.wordcount) AS wc_max, ".
@@ -170,6 +170,7 @@ function emit_block_stats( $journo_id )
 	printf( "<li>%d average words per article</li>\n", $row['wc_avg'] );
 	printf( "<li>%d words maximum</li>\n", $row['wc_max'] );
 	printf( "<li>%d words minimum</li>\n", $row['wc_min'] );
+	printf( "<li>%d words total</li>\n", $row['wc_total'] );
 	print( "</ul>\n" );
 
 ?>

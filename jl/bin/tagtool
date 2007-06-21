@@ -1,0 +1,50 @@
+#!/usr/bin/env python2.4
+
+import sys
+
+sys.path.append( "../pylib" )
+from JL import Tags,DB
+
+
+
+def RemoveBlacklistedTags():
+	conn = DB.Connect()
+
+	src = conn.cursor()
+	src.execute( "SELECT article_id, tag, freq FROM article_tag" )
+
+	c2 = conn.cursor()
+
+	cnt = 0
+	tot = 0
+	while 1:
+		row = src.fetchone()
+		if not row:
+			break
+
+		tag = row['tag']
+		tag = tag.lower()
+
+		if tag in Tags.blacklist:
+			c2.execute( "DELETE FROM article_tag WHERE article_id=%s AND tag=%s", row['article_id'], row['tag'] )
+
+			cnt = cnt + 1
+		tot = tot + 1
+
+	conn.commit()
+	print "%d removed (out of %d)" % (cnt,tot)
+
+def Usage():
+	print "Usage:"
+	print "tagtool remove-blacklisted"
+	sys.exit(0)
+
+
+def main():
+	if len(sys.argv) > 1 and sys.argv[1] == 'remove-blacklisted':
+		RemoveBlacklistedTags()
+	else:
+		Usage()
+
+main()
+

@@ -6,6 +6,7 @@ import DB
 import Journo
 import Byline
 import ukmedia
+import Tags
 
 class Error(Exception):
 	pass
@@ -193,18 +194,7 @@ def GenerateTags( conn, article_id, article_content ):
 	""" Generate tags for an article """
 	txt = ukmedia.StripHTML( article_content )
 
-	# extract phrases with the first letter of each word capitalised,
-	# but not at the beginning of a sentance.
-	tagpat = re.compile( u'[^.\\s]\\s*(([A-Z]\\w+)(\\s+([A-Z]\\w+))*)', re.UNICODE|re.DOTALL )
-
-	# calculate tags using noddy Crapitisation algorithm
-	tags = {}
-	for m in tagpat.findall(txt):
-		t = ' '.join( m[0].split() )
-		# ignore short tags unless they look like acronymns
-		if len(t)<=3 and t != t.upper():
-			continue
-		tags[t] = tags.get(t,0) + 1
+	tags = Tags.ExtractFromText( txt )
 
 	# write the tags into the DB
 	c2 = conn.cursor()
