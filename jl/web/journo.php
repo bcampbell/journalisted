@@ -51,7 +51,7 @@ function emit_journo( $journo )
 	emit_block_overview( $journo );
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 	emit_block_tags( $journo );
-	emit_block_stats( $journo_id );
+	emit_block_stats( $journo );
 
 }
 
@@ -146,7 +146,7 @@ function emit_blocks_articles( $journo, $allarticles )
 
 }
 
-function emit_block_stats( $journo_id )
+function emit_block_stats( $journo )
 {
 
 ?>
@@ -154,7 +154,9 @@ function emit_block_stats( $journo_id )
 <h3>Journa-list by numbers:</h3>
 <?php
 
-	print( "<ul>\n" );
+	$journo_id = $journo['id'];
+
+	$avg = FetchAverages();
 
 	$sql = "SELECT SUM(s.wordcount) AS wc_total, ".
 			"AVG(s.wordcount) AS wc_avg, ".
@@ -166,12 +168,22 @@ function emit_block_stats( $journo_id )
 		"WHERE a.journo_id=?";
 	$row = db_getRow( $sql, $journo_id );
 
-	printf( "<li>%d articles (since %s)</li>\n", $row['num_articles'], $row['first_pubdate'] );
-	printf( "<li>%d average words per article</li>\n", $row['wc_avg'] );
-	printf( "<li>%d words maximum</li>\n", $row['wc_max'] );
-	printf( "<li>%d words minimum</li>\n", $row['wc_min'] );
-	printf( "<li>%d words total</li>\n", $row['wc_total'] );
-	print( "</ul>\n" );
+
+	print "<table>\n";
+	printf( "<tr><th></th><th>%s</th><th>Average for all journalists</th></tr>",
+		$journo['prettyname'] );
+
+	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.1f</td></tr>\n",
+		$row['num_articles'], $row['first_pubdate'], $avg['num_articles'] );
+	printf( "<tr><th>Total words written</th><td>%d</td><td>%.0f</td></tr>\n",
+		$row['wc_total'], $avg['wc_total'] );
+	printf( "<tr><th>Average article length</th><td>%d words</td><td>%.0f words</td></tr>\n",
+		$row['wc_avg'], $avg['wc_avg'] );
+	printf( "<tr><th>Shortest article</th><td>%d words</td><td>%.0f words</td></tr>\n",
+		$row['wc_min'], $avg['wc_min'] );
+	printf( "<tr><th>Longest article</th><td>%d words</td><td>%.0f words</td></tr>\n",
+		$row['wc_max'], $avg['wc_max'] );
+	print "</table>\n";
 
 ?>
 </div>
@@ -287,4 +299,68 @@ function emit_writtenfor( $journo )
 	}
 	print "</ul>\n</p>\n";
 }
+
+
+
+function FetchAverages()
+{
+	$refreshinterval = 60*60*2;		// 2 hours
+
+	$avgs = db_getRow( "SELECT date_part('epoch', now()-last_updated) AS elapsed, ".
+			"wc_total, wc_avg, wc_min, wc_max, num_articles ".
+		"FROM journo_average_cache" );
+
+	if( !$avgs || $avgs['elapsed'] > $refreshinterval )
+	{
+		$avgs = CalcAverages();
+		StoreAverages( $avgs );
+	}
+	return $avgs;
+}
+
+
+function CalcAverages()
+{
+	$q = db_query( "SELECT ".
+				"SUM(art.wordcount) AS wc_total, ".
+				"AVG(art.wordcount) AS wc_avg, ".
+				"MIN(art.wordcount) AS wc_min, ".
+				"MAX(art.wordcount) AS wc_max, ".
+				"COUNT(*) as num_articles ".
+			"FROM article art INNER JOIN journo_attr attr ".
+				"ON (attr.article_id=art.id) GROUP BY journo_id" );
+
+	$fields = array('wc_total','wc_avg','wc_min','wc_max','num_articles');
+	$runningtotal = array();
+	foreach( $fields as $f )
+		$runningtotal[$f] = 0.0;
+	$rowcnt = 0;
+	while( $row = db_fetch_array( $q ) )
+	{
+		++$rowcnt;
+		foreach( $fields as $f )
+			$runningtotal[$f] += $row[$f];
+	}
+
+	$averages = array();
+	foreach( $fields as $f )
+		$averages[$f] = $runningtotal[$f] / $rowcnt;
+
+	return $averages;
+}
+
+function StoreAverages( $avgs )
+{
+	db_do( "DELETE FROM journo_average_cache" );
+	db_do( "INSERT INTO journo_average_cache ".
+			"(last_updated,wc_total,wc_avg,wc_min,wc_max,num_articles) ".
+		"VALUES (now(),?,?,?,?,?)",
+		$avgs['wc_total'],
+		$avgs['wc_avg'],
+		$avgs['wc_min'],
+		$avgs['wc_max'],
+		$avgs['num_articles'] );
+	db_commit();
+}
+
 ?>
