@@ -19,8 +19,9 @@ from JL import DB
 
 def FetchWikipediaJournos():
 	f = os.popen( './pockbot.hacked "British journalists"' )
+	# TODO: do "British journalist stubs" and "British editors" (newspaper editos?)
 	# could just cache pockbot results...
-#	f = os.popen( 'cat wikipages.txt' )
+	#f = os.popen( 'cat britstubs.txt britjournos.txt' )
 
 	journos = []
 	for line in f:
@@ -63,6 +64,13 @@ def AddWebLink( conn, journo_id, wikipediapage ):
 	desc = wikipediapage + " on Wikipedia"
 
 	c = conn.cursor()
+
+	c.execute( "SELECT count(*) FROM journo_weblink WHERE journo_id=%s AND url=%s", journo_id, url )
+	count = c.fetchone()[0]
+	if count > 0:
+		print "already got " + wikipediapage
+		return
+
 	c.execute( "INSERT INTO journo_weblink (journo_id, url, description ) "
 		"VALUES (%s,%s,%s)",
 		journo_id, url,desc )
