@@ -8,14 +8,16 @@ sys.path.append("../pylib")
 import BeautifulSoup
 from JL import ArticleDB,ukmedia
 
-
-# The times RSS feeds seem a bit rubbish, and only have 5 articles
-# each at anytime.
-# So better bet is to scrape links from the pages. The times has a page for
+# NOTES:
+#
+# The Times website seems a little crap and stalls regularly, so
+# we timeout. Should handle it a bit more gracefully...
+#
+# The Times RSS feeds seem a bit rubbish, and only have 5 articles
+# each.
+# So we scrape links from the html pages. The Times has a page for
 # each days edition which contains links to all the headlines for that day.
 # That's what we want.
-
-
 
 
 linkpat = re.compile( '^/.*?/article[0-9]+\.ece$' )
@@ -65,12 +67,13 @@ def FindArticles():
 		fetchtime = datetime.now()
 		soup = BeautifulSoup.BeautifulSoup(html)
 
-		pagetitle = soup.find( 'title' )
-		if pagetitle.find( text=re.compile('Sunday Times') ):
+
+		# Which newspaper?
+		if re.search( "/?days=Sunday$", url ):
 			srcorgname = "sundaytimes"
 		else:
 			srcorgname = "times"
-		#print "** PAPER: " + srcorgname
+		ukmedia.DBUG2( "** PAPER: " + srcorgname + "\n" )
 
 		# go through by section
 		for heading in soup.findAll( 'h3', {'class': 'section-heading' } ):
