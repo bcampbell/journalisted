@@ -49,7 +49,7 @@ function tag_gen_link( $tag, $journo_ref=null )
 function tag_display_cloud( &$tags, $journo_ref=null )
 {
 	$minsize = 10;
-	$maxsize = 30;
+	$maxsize = 24;
     // map most frequent to maxsize and least frequent to minsize
 
 	$total = 0;

@@ -18,6 +18,7 @@ $art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
 
 $pagetitle = $art['title'];
 page_header( array( 'title'=>$pagetitle ));
+
 emit_article_info( $art );
 
 page_footer();

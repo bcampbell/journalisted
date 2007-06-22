@@ -27,6 +27,8 @@ $pageparams = array(
 	);
 
 page_header( $pageparams );
+
+
 $tag = get_http_var( 'tag', '' );
 
 printf( "<h2>Articles by <a href=\"%s\">%s</a> mentioning \"%s\"</h2>",

@@ -26,6 +26,7 @@ else
 	// no tag specified - display summary
 	emit_tag_summaries();
 }
+
 page_footer();
 
 

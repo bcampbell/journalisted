@@ -32,7 +32,37 @@ $pageparams = array(
 );
 
 page_header( $pageparams );
-emit_journo( $journo );
+
+
+printf( "<h2>%s</h2>\n", $journo['prettyname'] );
+
+/* main pane */
+
+print "<div id=\"mainpane\"\n";
+emit_block_overview( $journo );
+emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
+//emit_block_tags( $journo );
+emit_block_stats( $journo );
+print "</div>\n";
+
+/* side pane */
+
+?>
+<div id="sidepane">
+
+<div class="block">
+<h3>Newsfeed</h3>
+
+<a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
+Recent articles by <?php print $journo['prettyname']; ?>
+</div>
+
+<?php
+
+emit_block_tags( $journo );
+print "</div>\n";
+
+
 page_footer();
 
 
@@ -43,15 +73,6 @@ page_footer();
 
 function emit_journo( $journo )
 {
-	$orgs = get_org_names();
-	$journo_id = $journo['id'];
-
-	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
-
-	emit_block_overview( $journo );
-	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
-	emit_block_tags( $journo );
-	emit_block_stats( $journo );
 
 }
 
@@ -102,9 +123,9 @@ function emit_blocks_articles( $journo, $allarticles )
 
 	}
 
-	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\"></a>\n",
-		OPTION_WEB_DOMAIN,
-		$journo['ref'] );
+//	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\"></a>\n",
+//		OPTION_WEB_DOMAIN,
+//		$journo['ref'] );
 
 ?>
 </div>
@@ -170,7 +191,7 @@ function emit_block_stats( $journo )
 
 
 	print "<table>\n";
-	printf( "<tr><th></th><th>%s</th><th>Average for all journalists</th></tr>",
+	printf( "<tr><th></th><th>%s&nbsp;&nbsp;</th><th>Average for all journalists</th></tr>",
 		$journo['prettyname'] );
 
 	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.1f</td></tr>\n",

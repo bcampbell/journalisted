@@ -6,13 +6,11 @@ require_once '../../phplib/db.php';
 
 
 page_header();
-
 db_connect();
-
-//
 $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
 ?>
+
 <h2>At Journa-list, you can:</h2>
 
 <p>

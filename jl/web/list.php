@@ -12,6 +12,7 @@ require_once '../../phplib/utility.php';
 
 
 page_header();
+
 db_connect();
 
 $name = get_http_var( 'name', null );

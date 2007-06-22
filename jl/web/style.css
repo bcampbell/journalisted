@@ -6,18 +6,15 @@ font-family: Verdana, Arial, Sans-Serif;
 
 #container
 {
-width: 100%;
-margin: 0px;
-padding: 0px;
-/*margin: 10px auto;*/
+margin: 2em;
+padding: 0;
 background-color: #fff;
 color: #333;
 font-family: Verdana, Arial, Sans-Serif;
-/*border: 1px solid gray;*/
 line-height: 130%;
 }
 
-
+/*****************************************/
 #top
 {
 padding: 1em;
@@ -31,32 +28,45 @@ padding: 0;
 margin: 0;
 }
 
-
-#sidebar
-{
-float: right;
-width: 160px;
-margin: 1em;
-padding: 1em;
-/* background-color: #ddd; */
-border: 1px solid gray;
-}
-
-#sidebar p { margin: 0 0 1em 0; }
-
-
+/*****************************************/
 
 #content
 {
-margin-right: 200px;
-padding: 1em;
+	margin: 0;
+	padding: 1em .5em .5em .5em;
+}
+
+/*****************************************/
+
+#sidepane
+{
+float: left;
+width: 23%;
+margin: 0;
+padding: 0;
+/* background-color: #ddd; */
+/* border: 1px solid green; */
+}
+
+
+/*****************************************/
+
+#mainpane
+{
+/*margin-right: 200px;*/
 /*max-width: 36em;*/
+float: left;
+margin: 0;
+padding: 0;
+width: 75%;
+/* border: 1px solid red; */
 }
 
 #content h2 { margin: 0 0 .5em 0; }
 
 
 
+/*****************************************/
 #footer
 {
 clear: both;
@@ -68,7 +78,7 @@ border: 1px solid gray;
 }
 
 
-/* */
+/*****************************************/
 
 ul.hnav
 {
@@ -87,13 +97,15 @@ ul.hnav li {
 }
 
 
-/*  */
+
+/*****************************************/
 
 
 .block {
-  margin: 0 10px 10px 10px; /* moved from paragraph */
+  margin: .2em .2em .8em .2em;
+  padding: 0;
   color: black;
-  background-color: white;
+  background-color: #eee;	/*white;*/
   border: 1px solid #ddd;
 }
 

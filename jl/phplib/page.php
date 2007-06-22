@@ -33,6 +33,7 @@ function page_header( $params=array() )
 <body>
 
 <div id="container">
+
 <div id="top">
 <h1>Journa-list</h1>
 
@@ -42,21 +43,6 @@ function page_header( $params=array() )
 </ul>
 </div>
 
-</div>
-<!--
-<div id="sidebar">
-<h4>About Journa-list</h4>
-<p>
-Blurb goes here...<br>
-blah blah blah blah blah
-blah blah blah blah blah
-blah blah blah blah blah
-blah blah blah blah blah
-blah blah blah blah blah
-blah blah blah blah blah
-</p>
-</div>
--->
 <div id="content">
 <?php
 
