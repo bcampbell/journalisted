@@ -1,0 +1,93 @@
+#!/usr/bin/env python2.4
+#
+
+import sys
+import re
+
+sys.path.append( "../pylib" )
+from JL import DB
+
+
+def FindBadOnes( whichone ):
+
+	if whichone != 'sundaytimes' and whichone != 'times':
+		raise Exception, "Poo."
+
+
+	conn = DB.Connect()
+	c = conn.cursor()
+
+	# 8=times, 9=sundaytimes
+	if whichone == 'sundaytimes':
+		# get all sundaytimes articles _not_ published on a sunday
+		c.execute( "SELECT id,title,srcid,'sundaytimes' AS srcorgname FROM article WHERE date_part( 'dow', pubdate )<>0 AND srcorg=9" )
+	else:
+		# get all times articles published on a sunday	
+		c.execute( "SELECT id,title,srcid,'times' AS srcorgname FROM article WHERE date_part( 'dow', pubdate )=0 AND srcorg=8" )
+
+	baduns= c.fetchall()
+
+	thedoomed = []
+	badcnt = 0
+	delcnt = 0
+	for b in baduns:
+		if whichone == 'sundaytimes':
+			# make sure the times has that exact article
+			c.execute( "SELECT id,title,srcid FROM article WHERE srcorg=8 AND srcid=%s AND title=%s", b['srcid'],b['title'] )
+		else:
+			# make sure the sunday times has that exact article 
+			c.execute( "SELECT id,title,srcid FROM article WHERE srcorg=9 AND srcid=%s AND title=%s", b['srcid'],b['title'] )
+
+		m = c.fetchall()
+
+		if len(m)==1:
+			# there is a single correct one! mark the bad one for deletion.
+			delcnt = delcnt + 1
+			thedoomed.append( b )
+
+	conn.commit()
+	return thedoomed
+
+
+def FixSundayBadness():
+	timesbad = FindBadOnes( 'times' )
+	sundaytimesbad = FindBadOnes( 'sundaytimes' )
+
+	allbad = timesbad + sundaytimesbad
+	for b in allbad:
+		#TODO: MARK EM DELETED!
+	print "times bad: %d\nsundaytimes bad: %d\n" % ( len(timesbad), len(sundaytimesbad) )
+
+
+
+def Usage():
+	print "Usage:"
+	print "timestool find-sunday-badness"
+	print "timestool fix-sunday-badness"
+
+
+def main():
+	if len(sys.argv) <= 1:
+		Usage()
+		sys.exit(0)
+		
+	if sys.argv[1] == 'find-sunday-badness':
+		timesbad = FindBadOnes( 'times' )
+		sundaytimesbad = FindBadOnes( 'sundaytimes' )
+		for b in timesbad:
+			print "%s [%s]" %(b['title'],b['srcorgname'])
+		for b in sundaytimesbad:
+			print "%s [%s]" %(b['title'],b['srcorgname'])
+		print "times bad: %d\nsundaytimes bad: %d\n" % ( len(timesbad), len(sundaytimesbad) )
+
+		sys.exit(0)
+
+	if sys.argv[1] == 'fix-sunday-badness':
+		FixSundayBadness()
+		sys.exit(0)
+
+	Usage()
+	sys.exit(1)
+
+main()
+
