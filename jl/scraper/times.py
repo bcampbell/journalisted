@@ -175,11 +175,9 @@ def Extract( html, context ):
 	art['description' ] = desc
 
 	# There is some javascript with a likely-looking pubdate:
-	# """ var pubDate = new Date("Mar 3, 2007 12:00 AM")"""
-	#
-	# UPDATE: new format seems to be: '09-Apr-2007 00:00'
+	# var tempDate="02-Jan-2006 00:00";
 
-	datepat = re.compile( u"""\s*var pubDate = new Date\("(.*?)"\)""", re.UNICODE )
+	datepat = re.compile( u"\s*var tempDate=\"(.*?)\";", re.UNICODE )
 
 	m = datepat.search(html)
 	art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
