@@ -9,6 +9,7 @@ from JL import DB
 
 
 def FindBadOnes( whichone ):
+	""" find article which are under both the times and sundaytimes, and return a list of the bad ones"""
 
 	if whichone != 'sundaytimes' and whichone != 'times':
 		raise Exception, "Poo."
@@ -50,12 +51,17 @@ def FindBadOnes( whichone ):
 
 
 def FixSundayBadness():
+	""" mark for deletion all articles which are repeats, under the wrong paper (eg sunday times articles also stores as articles in the times) """
 	timesbad = FindBadOnes( 'times' )
 	sundaytimesbad = FindBadOnes( 'sundaytimes' )
 
 	allbad = timesbad + sundaytimesbad
+
+	conn = DB.Connect()
+	c2 = conn.cursor()
 	for b in allbad:
-		#TODO: MARK EM DELETED!
+		c2.execute( "UPDATE article SET status='d' WHERE id=%s", b['id'] )
+	conn.commit()
 	print "times bad: %d\nsundaytimes bad: %d\n" % ( len(timesbad), len(sundaytimesbad) )
 
 
