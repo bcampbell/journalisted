@@ -38,7 +38,7 @@ printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 /* main pane */
 
-print "<div id=\"mainpane\"\n";
+print "<div id=\"mainpane\">\n";
 emit_block_overview( $journo );
 emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 //emit_block_tags( $journo );
