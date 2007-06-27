@@ -87,9 +87,9 @@ def ParseDateTime( datestring ):
 			year = year+2000
 
 		hour = GetGroup(m,'hour')
-		hour = int( hour )
 		if not hour:
 			return datetime( year,month,day )
+		hour = int( hour )
 
 		# convert to 24 hour time
 		# if no am/pm, assume 24hr
