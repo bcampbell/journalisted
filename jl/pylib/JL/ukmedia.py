@@ -50,7 +50,7 @@ datecrackers = [
 	# "Mar 3, 2007 12:00 AM"
 	re.compile( """((?P<month>\w{3}) (?P<day>\d+), (?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
-	# "09-Apr-2007 00:00"
+	# "09-Apr-2007 00:00" (times, sundaytimes)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
 	# "09-Apr-07 00:00" (scotsman)
@@ -83,12 +83,13 @@ def ParseDateTime( datestring ):
 		day = int( m.group( 'day' ) )
 		month = MonthNumber( m.group( 'month' ) )
 		year = int( m.group( 'year' ) )
-
+		if year < 100:
+			year = year+2000
 
 		hour = GetGroup(m,'hour')
+		hour = int( hour )
 		if not hour:
 			return datetime( year,month,day )
-		hour = int( hour )
 
 		# convert to 24 hour time
 		# if no am/pm, assume 24hr
