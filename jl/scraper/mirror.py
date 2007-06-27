@@ -90,13 +90,16 @@ def Extract( html, context ):
 
 
 
+# to get unique id out of url
+srcid_extract_pat = re.compile( "%26objectid=([0-9]+)%26""" );
+
 def ScrubFunc( context, entry ):
 	title = context['title']
 	title = ukmedia.DescapeHTML( title )
 	title = ukmedia.UncapsTitle( title )	# all mirror headlines are caps. sigh.
 	context['title'] = title
 
-	# mirror feeds go through mediafeed.com. sigh.
+	# mirror feeds go through mediafed.com. sigh.
 	# Luckily the guid has proper link (marked as non-permalink)
 	url = entry.guid
 
@@ -104,7 +107,13 @@ def ScrubFunc( context, entry ):
 	if url.find( 'mirror.co.uk' ) == -1:
 		raise Exception, "URL not from mirror.co.uk or sundaymirror.co.uk ('%s')" % (url)
 
-	context[ 'srcid' ] = url
+
+	m = srcid_extract_pat.search( url );
+	if not m:
+		raise Exception, "Couldn't extract srcid from url ('%s')" % (url)
+	srcid = m.group(1)
+
+	context[ 'srcid' ] = srcid
 	context[ 'srcurl' ] = url
 	context[ 'permalink'] = url
 
