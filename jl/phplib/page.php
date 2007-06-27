@@ -56,7 +56,7 @@ function page_footer( $params=array() )
 </div>
 
 <div id="footer">
-<p>This is the footer</p>
+Journa-list is a project of the <a href="http://www.mediastandardstrust.com">Media Standards Trust</a>
 </div>
 
 </div>

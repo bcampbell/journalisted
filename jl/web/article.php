@@ -13,15 +13,53 @@ require_once '../../phplib/utility.php';
 
 
 $article_id = get_http_var( 'id' );
-$art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
+$findtext = get_http_var( 'find' );
+
+if( $findtext )
+	emit_page_findarticles( $findtext );
+else
+	emit_page_article( $article_id );
 
 
-$pagetitle = $art['title'];
-page_header( array( 'title'=>$pagetitle ));
+function emit_page_article( $article_id )
+{
+	$art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
 
-emit_article_info( $art );
+	$pagetitle = $art['title'];
+	page_header( array( 'title'=>$pagetitle ));
 
-page_footer();
+	emit_article_info( $art );
+
+	page_footer();
+}
+
+function emit_page_findarticles( $findtext )
+{
+	$orgs = get_org_names();
+	$pagetitle = "Articles containing \"$findtext\"";
+	page_header( array( 'title'=>$pagetitle ));
+
+	printf( "<h2>Articles within the last week containing \"%s\"</h2>", $findtext );
+
+	$q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content LIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
+	print "<ul>\n";
+	$cnt = 0;
+	while( $r=db_fetch_array($q) )
+	{
+		++$cnt;
+		$org = $orgs[ $r['srcorg'] ];
+		$pubdate = pretty_date(strtotime($r['pubdate']));
+		print "<li>\n";
+		print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>, {$pubdate}, <em>{$org}</em>\n";
+		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
+		print "</li>\n";
+	}
+	print "</ul>\n";
+
+	printf( "<p>Found %d matching articles</p>", $cnt );
+	page_footer();
+}
+
 
 
 function emit_article_info( $art )

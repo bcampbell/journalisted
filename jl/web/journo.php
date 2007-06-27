@@ -149,7 +149,7 @@ function emit_blocks_articles( $journo, $allarticles )
 		$pubdate = pretty_date(strtotime($r['pubdate']));
 		$desc = $r['description'];
 		print "<li>\n";
-		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\", {$pubdate}, <em>{$org}</em>\n";
+		print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>, {$pubdate}, <em>{$org}</em>\n";
 		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
 		print "</li>\n";
 
