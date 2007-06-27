@@ -34,7 +34,7 @@ function emit_tag_summaries()
 {
 
 ?>
-<h2>Most Frequent Tags</h2>
+<h2>Most Frequent Terms</h2>
 
 <div class="block">
 <h3>Last 24 hours</h3>

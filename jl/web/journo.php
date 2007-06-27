@@ -57,11 +57,21 @@ print "</div>\n";
 Recent articles by <?php print $journo['prettyname']; ?>
 </div>
 
+
 <?php
 
 emit_block_tags( $journo );
-print "</div>\n";
 
+?>
+<div class="block">
+<h3>Something wrong/missing?</h3>
+<p>
+Have we got the wrong information about this journalist?
+<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page!">Let us know!</a>
+</p>
+</div>
+<?php
+print "</div>\n";
 
 page_footer();
 

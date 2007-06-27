@@ -23,16 +23,8 @@ Find a journalist by name:
 </p>
 
 <p>
-<form action="article" method="get">
-Find articles containing:
-<input type="text" name="find" value=""/>
-<input type="submit" value="Find" />
-</form>
-</p>
-
-<p>
 <form action="/list" method="get">
-Search Journalists by news outlet:
+Browse Journalists by news outlet:
 <select name="outlet">
 <?php
 
@@ -45,13 +37,23 @@ Search Journalists by news outlet:
 </select>
 <input type="submit" value="Find">
 </form>
+
+<p>
+<form action="article" method="get">
+Find articles containing:
+<input type="text" name="find" value=""/>
+<input type="submit" value="Find" />
+</form>
 </p>
 
-<br />
-<hr>
-<br />
-<p>During the last 24 Hours, the most frequently cited terms were:</p>
+<br>
+<br>
 <div class="block">
+<h3>Who's writing about what?</h3>
+<p>
+Here are some terms which have appeared frequently in recent articles:
+</p>
+
 <?php
 
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
@@ -64,6 +66,7 @@ Search Journalists by news outlet:
 	tag_cloud_from_query( $q );
 
 ?>
+<p>Click one to see who writes about it!</p>
 </div>
 <?php
 

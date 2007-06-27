@@ -39,7 +39,8 @@ function page_header( $params=array() )
 
 <ul class="hnav">
 <li><a href="/">Home</a></li>
-<li><a href="/list">All Journalists</a></li>
+<li><a href="/list">All journalists</a></li>
+<li><a href="/tags">Browse terms</a></li>
 </ul>
 </div>
 
@@ -56,7 +57,8 @@ function page_footer( $params=array() )
 </div>
 
 <div id="footer">
-Journa-list is a project of the <a href="http://www.mediastandardstrust.com">Media Standards Trust</a>
+Journa-list is a <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> project.<br>
+Questions? Comments? Suggestions? <a href="mailto:team@journa-list.dyndns.org">Let us know!</a>
 </div>
 
 </div>
