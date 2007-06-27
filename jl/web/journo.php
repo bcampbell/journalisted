@@ -63,6 +63,19 @@ Recent articles by <?php print $journo['prettyname']; ?>
 emit_block_tags( $journo );
 
 ?>
+
+<div class="block">
+<h3>Find</h3>
+<p>
+<form action="article" method="get">
+<input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
+Find articles by <?php echo $journo['prettyname'];?> containing:
+<input type="text" name="find" value=""/>
+<input type="submit" value="Find" />
+</form>
+</p>
+</div>
+
 <div class="block">
 <h3>Something wrong/missing?</h3>
 <p>

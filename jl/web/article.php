@@ -14,9 +14,10 @@ require_once '../../phplib/utility.php';
 
 $article_id = get_http_var( 'id' );
 $findtext = get_http_var( 'find' );
+$ref = get_http_var( 'ref' );
 
 if( $findtext )
-	emit_page_findarticles( $findtext );
+	emit_page_findarticles( $findtext, $ref );
 else
 	emit_page_article( $article_id );
 
@@ -33,17 +34,36 @@ function emit_page_article( $article_id )
 	page_footer();
 }
 
-function emit_page_findarticles( $findtext )
+function emit_page_findarticles( $findtext,$ref=null )
 {
-	$orgs = get_org_names();
-	$pagetitle = "Articles containing \"$findtext\"";
+	if( $ref )
+	{
+		$journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+		$pagetitle = sprintf( "Articles by %s containing \"%s\"", $journo['prettyname'], $findtext );
+	}
+	else
+		$pagetitle = "Articles containing \"$findtext\"";
 	page_header( array( 'title'=>$pagetitle ));
 
-	printf( "<h2>Articles within the last week containing \"%s\"</h2>", $findtext );
+	if( $ref )
+	{
+		$q = db_query( "SELECT id,title,description,pubdate,permalink,srcorg " .
+		"FROM article,journo_attr j " .
+		"WHERE status='a' AND id=j.article_id AND j.journo_id=? " .
+			"AND content ILIKE ? " .
+		"ORDER BY pubdate DESC", $journo['id'], '%'.$findtext.'%' );
+		printf( "<h2>Articles by %s containing \"%s\"</h2>", $journo['prettyname'], $findtext );
+	}
+	else
+	{
+		printf( "<h2>Articles within the last week containing \"%s\"</h2>", $findtext );
+		$q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content ILIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
+	}
 
-	$q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content ILIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
 	print "<ul>\n";
+
 	$cnt = 0;
+	$orgs = get_org_names();
 	while( $r=db_fetch_array($q) )
 	{
 		++$cnt;
