@@ -1,0 +1,67 @@
+#!/usr/bin/env python2.4
+
+import sys
+
+sys.path.append( "../pylib" )
+from JL import Tags,DB
+
+
+
+
+
+def FindDupeGroups( conn ):
+
+	c = conn.cursor()
+	c.execute( """select srcorg,title,count(*) as cnt FROM article GROUP BY title,srcorg HAVING count(*)>1 AND max(pubdate)-min(pubdate)<=interval '1 day'""" )
+
+	dupegroups = []
+	while 1:
+		row = c.fetchone()
+		if not row:
+			break
+
+		dupegroups.append( {'srcorg': row['srcorg'], 'title':row['title'], 'cnt':row['cnt'] } )
+
+	return dupegroups
+
+
+
+def HandleDupeGroup( conn, dg ):
+
+	(srcorg,title,cnt) = ( dg['srcorg'],dg['title'],dg['cnt'] )
+
+	c = conn.cursor()
+	c.execute( """SELECT id,srcid FROM article WHERE srcorg=%s AND title=%s ORDER BY srcid DESC""", srcorg, title )
+	found = c.fetchall()
+
+	if len( found ) != cnt:
+		raise Exception, "uh-oh! (%d %s)" % (srcorg, title)
+	
+	c2 = conn.cursor()
+	print "%d %s" %(srcorg, title)
+	print " keep %s" %( found[0]['srcid'] )
+	c2.execute( "UPDATE article SET status='a' WHERE id=%s", found[0]['id'] )
+
+	for f in found[1:]:
+		c2.execute( "UPDATE article SET status='d' WHERE id =%s", f['id'] )
+		print " discard %s" %( f['srcid'] )
+
+def Usage():
+	print "Usage:"
+	sys.exit(0)
+
+
+def main():
+	if len(sys.argv) > 1 and sys.argv[1] == 'hidedupes':
+		conn = DB.Connect()
+		dupegroups = FindDupeGroups(conn)
+		print "%d groups found" % len(dupegroups)
+		for d in dupegroups:
+			HandleDupeGroup( conn, d )
+	#		print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
+		conn.commit()
+	else:
+		Usage()
+
+main()
+
