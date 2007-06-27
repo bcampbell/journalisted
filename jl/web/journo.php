@@ -317,7 +317,7 @@ function emit_writtenfor( $journo )
 		"FROM article a INNER JOIN journo_attr j ON (a.status='a' AND a.id=j.article_id) ".
 		"WHERE j.journo_id=?",
 		$journo_id );
-	printf( "<p>\n%s has written for:\n", $journo['prettyname'] );
+	printf( "<p>\n%s writes for:\n", $journo['prettyname'] );
 	print "<ul>\n";
 	foreach( $writtenfor as $row )
 	{
