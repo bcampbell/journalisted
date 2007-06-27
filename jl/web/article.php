@@ -41,7 +41,7 @@ function emit_page_findarticles( $findtext )
 
 	printf( "<h2>Articles within the last week containing \"%s\"</h2>", $findtext );
 
-	$q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content LIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
+	$q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content ILIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
 	print "<ul>\n";
 	$cnt = 0;
 	while( $r=db_fetch_array($q) )
