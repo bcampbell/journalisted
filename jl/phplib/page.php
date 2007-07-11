@@ -38,6 +38,22 @@ function page_header( $title, $params=array() )
 <div id="container">
 
 <div id="top">
+<?php
+
+	if( $P )
+	{
+		if ($P->name_or_blank())
+			$name = $P->name;
+		else
+			$name = $P->email;
+		print "<div id=\"hellouser\">\n";
+		print "Hello, {$name}\n";
+		print "[<a href=\"/logout\">log out</a>]<br>\n";
+		print "<small>(<a href=\"/logout\">this isn't you? click here</a>)</small><br>\n";
+		print "</div>\n";
+	}
+
+?>
 <h1>Journa-list</h1>
 
 <ul class="hnav">
@@ -46,22 +62,7 @@ function page_header( $title, $params=array() )
 <li><a href="/tags">Browse terms</a></li>
 </ul>
 </div>
-<?php
 
-if( $P )
-{
-	print '<p>Hello, ';
-	if ($P->name_or_blank())
-		print htmlspecialchars($P->name);
-	else 
-		print htmlspecialchars($P->email);
-	print "<p>\n";
-}
-else
-{
-	print "<p>Not logged in</p>\n";
-}
-?>
 <div id="content">
 <?php
 

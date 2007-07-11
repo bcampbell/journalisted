@@ -2,6 +2,8 @@
 /*
  * login.php:
  * Identification and authentication of users.
+ *
+ * NOTE: This file is based on login.php from PledgeBank (BenC)
  * 
  * The important thing here is that we mustn't leak information about whether
  * a given email address has an account or not. That means that, until we have
@@ -22,21 +24,6 @@
  *  login-error
  *      Shown when the user enters an incorrect password or an unknown email
  *      address on the login page.
- *
- *  create-password
- *      Shown when a user logs in by means of an emailed token and has already
- *      created or signed a pledge, or posted a comment, to ask them to give a
- *      password for future logins.
- *
- *  change-name
- *      Shown when a user logs in but their name is significantly different
- *      from the name shown on their account. Gives them the options of
- *      changing the name recorded, or continuing with the old name.
- * 
- * Copyright (c) 2005 UK Citizens Online Democracy. All rights reserved.
- * Email: chris@mysociety.org; WWW: http://www.mysociety.org/
- *
- * $Id: login.php,v 1.79 2007/02/03 03:24:33 francis Exp $
  * 
  */
 
@@ -82,13 +69,14 @@ if ($q_name==_('<Enter your name>')) {
 /* General purpose login, asks for email also. */
 if (get_http_var("now")) {
     $P = person_signon(array(
-                    'reason_web' => _("To log into PledgeBank, we need to check your email address."),
-                    'reason_email' => _("Then you will be logged into PledgeBank, and can set or change your password."),
-                    'reason_email_subject' => _('Log into PledgeBank.com')
+                    'reason_web' => _("To log into Journa-list, we need to check your email address."),
+                    'reason_email' => _("Then you will be logged into Journa-list, and can set or change your password."),
+                    'reason_email_subject' => _('Log into Journa-list')
 
                 ));
 
-    header("Location: /");
+	// "my alerts" is closest thing we have to an account management page
+    header("Location: /alert");
     exit;
 }
 
@@ -204,13 +192,15 @@ function login_page() {
                         'stash' => $q_stash
                     ));
         db_commit();
-        $url = "SHITE!";	//TODO: pb_domain_url(array("path" => "/L/$token"));
-        $template_data = rabx_unserialise(stash_get_extra($q_stash));
-        $template_data['url'] = $url;
-        $template_data['user_name'] = $q_name;
-        if (is_null($template_data['user_name']))
-            $template_data['user_name'] = 'Pledge signer';
-        $template_data['user_email'] = $q_email;
+
+
+//        $url = "SHITE!";	//TODO: pb_domain_url(array("path" => "/L/$token"));
+//        $template_data = rabx_unserialise(stash_get_extra($q_stash));
+//        $template_data['url'] = $url;
+//        $template_data['user_name'] = $q_name;
+//        if (is_null($template_data['user_name']))
+//            $template_data['user_name'] = 'Pledge signer';
+//        $template_data['user_email'] = $q_email;
 //        pb_send_email_template($q_email, 
 //            array_key_exists('template', $template_data) 
 //                ?  $template_data['template'] : 'generic-confirm', 
@@ -265,7 +255,7 @@ function login_form($errors = array()) {
      * password" prompt in, e.g., Mozilla. */
 ?>
 
-<div class="pledge">
+<div class="loginform">
 <form action="/login" name="login" class="login" method="POST" accept-charset="utf-8">
 <input type="hidden" name="stash" value="<?=$q_h_stash?>">
 <input type="hidden" name="name" id="name" value="<?=$q_h_name?>">
@@ -286,15 +276,14 @@ function login_form($errors = array()) {
 
 <? } ?>
 
-<p><strong><?=_('Have you used PledgeBank before?') ?></strong></p>
-
+<p><strong><?=_('Have you used Journa-list before?') ?></strong></p> 
 <div id="loginradio">
 
-<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used PledgeBank before")) ?></label>
+<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used Journa-list before")) ?></label>
 <br>
 <small><?=_("(we'll send an email, click the link in it to confirm your email is working)") ?></small>
 
-<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a PledgeBank <strong>password</strong>') ?>:</label>
+<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a Journa-list <strong>password</strong>') ?>:</label>
 <input type="password" name="password" id="password" value="" <? if (array_key_exists('badpass', $errors)) print ' class="error"' ?> onchange="check_login_password_radio()">
 <br>
 <label for="rememberme"><?=_('Remember me') ?></label>
@@ -306,7 +295,7 @@ function login_form($errors = array()) {
 <p>
 <input type="radio" name="loginradio" value="SendEmailForgotten" id="loginradio3" <?=get_http_var("loginradio") == 'SendEmailForgotten' ? 'checked' : ''?>><label for="loginradio3"><?=_("I've forgotten or didn't set a password") ?></label>
 <br>
-<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password on Your Pledges page)") ?></small>
+<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password on your Alerts page)") ?></small>
 <br>
 </p>
 
