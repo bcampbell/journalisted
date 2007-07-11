@@ -6,7 +6,7 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
 
-page_header();
+page_header( "" );
 db_connect();
 $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 

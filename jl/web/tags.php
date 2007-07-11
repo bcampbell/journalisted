@@ -12,7 +12,7 @@ require_once '../../phplib/utility.php';
 
 
 
-page_header( array( 'title'=>'Tags' ));
+page_header( 'Tags' );
 
 $tag = get_http_var( 'tag', null );
 if( $tag )

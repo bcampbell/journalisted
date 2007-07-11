@@ -1,15 +1,18 @@
 <?php
 
 require_once '../conf/general';
+require_once '../../phplib/person.php';
 
-function page_header( $params=array() )
+function page_header( $title, $params=array() )
 {
 	header( 'Content-Type: text/html; charset=utf-8' );
 
-	if( array_key_exists( 'title', $params ) )
-		$title = $params['title'];
-	else
-		$title = OPTION_WEB_DOMAIN;
+    $P = person_if_signed_on(true); /* Don't renew any login cookie. */
+
+//	if( array_key_exists( 'title', $params ) )
+//		$title = $params['title'];
+//	else
+//		$title = OPTION_WEB_DOMAIN;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -43,7 +46,22 @@ function page_header( $params=array() )
 <li><a href="/tags">Browse terms</a></li>
 </ul>
 </div>
+<?php
 
+if( $P )
+{
+	print '<p>Hello, ';
+	if ($P->name_or_blank())
+		print htmlspecialchars($P->name);
+	else 
+		print htmlspecialchars($P->email);
+	print "<p>\n";
+}
+else
+{
+	print "<p>Not logged in</p>\n";
+}
+?>
 <div id="content">
 <?php
 

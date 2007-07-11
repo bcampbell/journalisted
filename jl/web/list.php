@@ -11,7 +11,7 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 
-page_header();
+page_header("");
 
 db_connect();
 

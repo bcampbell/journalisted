@@ -27,7 +27,7 @@ function emit_page_article( $article_id )
 	$art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
 
 	$pagetitle = $art['title'];
-	page_header( array( 'title'=>$pagetitle ));
+	page_header( $pagetitle );
 
 	emit_article_info( $art );
 
@@ -43,7 +43,7 @@ function emit_page_findarticles( $findtext,$ref=null )
 	}
 	else
 		$pagetitle = "Articles containing \"$findtext\"";
-	page_header( array( 'title'=>$pagetitle ));
+	page_header( $pagetitle );
 
 	if( $ref )
 	{

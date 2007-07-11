@@ -27,11 +27,11 @@ if(!$journo)
 $rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
 
 $pageparams = array(
-	'title'=>$journo['prettyname'] . " - " . OPTION_WEB_DOMAIN,
 	'rss'=>array( 'Recent Articles'=>$rssurl )
 );
 
-page_header( $pageparams );
+$title = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
+page_header( $title, $pageparams );
 
 
 printf( "<h2>%s</h2>\n", $journo['prettyname'] );
@@ -57,6 +57,10 @@ print "</div>\n";
 Recent articles by <?php print $journo['prettyname']; ?>
 </div>
 
+<div class="block">
+<h3>Email alerts</h3>
+<a href="/alert?who=<?=$ref;?>">Email me when <?=$journo['prettyname'] ?> writes anything!</a>
+</div>
 
 <?php
 

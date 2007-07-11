@@ -22,11 +22,7 @@ if(!$journo)
 	exit(1);
 }
 
-$pageparams = array(
-	'title'=>$journo['prettyname'] . " - " . OPTION_WEB_DOMAIN,
-	);
-
-page_header( $pageparams );
+page_header( $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN );
 
 
 $tag = get_http_var( 'tag', '' );
