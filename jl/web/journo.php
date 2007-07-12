@@ -59,7 +59,7 @@ Recent articles by <?php print $journo['prettyname']; ?>
 
 <div class="block">
 <h3>Email alerts</h3>
-<a href="/alert?who=<?=$ref;?>">Email me when <?=$journo['prettyname'] ?> writes anything!</a>
+<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me when <?=$journo['prettyname'] ?> writes anything!</a>
 </div>
 
 <?php

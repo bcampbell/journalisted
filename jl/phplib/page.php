@@ -61,13 +61,13 @@ function page_header( $title, $params=array() )
 <li><a href="/">Home</a></li>
 <li><a href="/list">All journalists</a></li>
 <li><a href="/tags">Browse terms</a></li>
+<li><a href="/alert">Your alerts</a></li>
 <?php
 
 	// some extra menu items for logged-in users
 	if( $P )
 	{
 ?>
-<li><a href="/alert">My Alerts</a></li>
 <li><a href="/logout">Log out</a></li>
 <?php
 	}
