@@ -214,11 +214,6 @@ function login_page() {
 <?=_('Now check your email!') ?><br>
 <?=_("We've sent you an email, and you'll need to click the link in it before you can
 continue") ?>
-<p class="loudmessage">
-<small><?=_('If you use web-based email or have
-"junk mail" filters, you may wish to check your bulk/spam mail folders:
-sometimes, our messages are marked that way.') ?></small>
-</p>
 <?
 
         page_footer(array('nonav' => 1));
@@ -255,7 +250,7 @@ function login_form($errors = array()) {
      * password" prompt in, e.g., Mozilla. */
 ?>
 
-<div class="loginform">
+<div class="block">
 <form action="/login" name="login" class="login" method="POST" accept-charset="utf-8">
 <input type="hidden" name="stash" value="<?=$q_h_stash?>">
 <input type="hidden" name="name" id="name" value="<?=$q_h_name?>">

@@ -31,6 +31,7 @@ function page_header( $title, $params=array() )
 	}
 
 ?>
+<script type="text/javascript" src="/jl.js"></script>
 </head>
 
 <body>
@@ -48,7 +49,7 @@ function page_header( $title, $params=array() )
 			$name = $P->email;
 		print "<div id=\"hellouser\">\n";
 		print "Hello, {$name}\n";
-		print "[<a href=\"/logout\">log out</a>]<br>\n";
+//		print "[<a href=\"/logout\">log out</a>]<br>\n";
 		print "<small>(<a href=\"/logout\">this isn't you? click here</a>)</small><br>\n";
 		print "</div>\n";
 	}
@@ -60,6 +61,18 @@ function page_header( $title, $params=array() )
 <li><a href="/">Home</a></li>
 <li><a href="/list">All journalists</a></li>
 <li><a href="/tags">Browse terms</a></li>
+<?php
+
+	// some extra menu items for logged-in users
+	if( $P )
+	{
+?>
+<li><a href="/alert">My Alerts</a></li>
+<li><a href="/logout">Log out</a></li>
+<?php
+	}
+
+?>
 </ul>
 </div>
 
