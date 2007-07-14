@@ -159,5 +159,29 @@ function article_link( $art )
 	return $htmlfrag;
 }
 
+// Send a text email (swiped from planningalerts.com)
+function jl_send_text_email($to, $from_name, $from_email, $subject, $body)
+{
+    $headers  = 'MIME-Version: 1.0' . "\r\n";
+    $headers .= 'Content-type: text/plain; charset=iso-8859-1' . "\r\n";
+    $headers .= 'From: ' . $from_name. ' <' . $from_email . ">\r\n";
+    return mail($to, $subject, $body, $headers);
+}
+
+
+// Send an html email
+function jl_send_html_email($to, $from_name, $from_email, $subject, $htmltext )
+{
+    $headers = '';
+    $headers .= 'From: ' . $from_name. ' <' . $from_email . ">\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-type: text/html; charset=utf-8\r\n";
+    $headers .= "Content-Transfer-Encoding: base64\r\n";
+
+    $body = chunk_split(base64_encode($htmltext));
+
+    return mail($to, $subject, $body, $headers);
+}
+
 
 ?>

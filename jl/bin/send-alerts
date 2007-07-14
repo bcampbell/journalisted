@@ -1,0 +1,182 @@
+#!/usr/bin/php
+<?php
+/* 
+ * send-alerts:
+ * Run from cron daily to send list of new articles for watched journos.
+ *
+ */
+
+$short_opts = '';
+$long_opts = array('verbose','dryrun', 'help');
+
+chdir(dirname($_SERVER['SCRIPT_FILENAME']));
+require_once "../conf/general";
+require_once "../../phplib/phpcli.php";
+require_once '../../phplib/db.php';
+require_once '../../phplib/utility.php';
+require_once '../../phplib/person.php';
+require_once "../phplib/misc.php";
+
+
+$switches = $options[0];
+$args = $options[1];
+$verbose = 0;
+$dryrun = 0;
+foreach( $switches as $switch) {
+	if ($switch[0]=='--verbose') $verbose = 1;
+	if ($switch[0]=='--dryrun') $dryrun = 1;
+	if ($switch[0]=='--help') {
+		Usage();
+        exit;
+    }
+}
+
+db_connect();
+DoIt();
+
+
+
+/************/
+
+
+function Usage()
+{
+?>
+
+Journa-list alert sending script.
+
+Usage: send-alerts [--verbose]
+
+--help      Display this help message
+--verbose   Display more information
+--dryrun    Don't send any emails, don't change database
+<?
+}
+
+
+
+function DoIt()
+{
+	global $verbose, $dryrun;
+
+	$q = db_query( "select distinct person_id from alert" );
+	while( $r = db_fetch_row($q) )
+	{
+		$person_id = $r[0];
+
+		$person = new Person($person_id);
+
+		$to = $person->email();
+		if( $verbose )
+			print "{$to}\n";
+		$from_name = "Journa-list";
+		$from_email = "team@" . OPTION_WEB_DOMAIN;
+		$subject = "Email alert from Journa-list";
+		$msg = DoPerson( $person_id, 'html' );
+
+		if( $msg && !$dryrun )
+		{
+			if( $verbose )
+				print "sending.\n";
+			if( !jl_send_html_email( $person->email(), $from_name, $from_email, $subject, $msg ) )
+			{
+				fprintf( STDERR, "send failed for {$email}\n" );
+			}
+		}
+	}
+}
+
+/* execute all alerts for a given person
+ * returns email text (utf-8) or null if no alerts triggered
+ * fmt = 'html' or 'text'
+ */
+function DoPerson( $person_id, $fmt )
+{
+	global $verbose, $dryrun;
+
+	$alertcnt = 0;	/* how many triggered */
+	$msg = '';
+	if( $fmt == 'html' )
+	{
+		$msg .=
+		"<html>\n" .
+		"<head><title>Email alert from Journa-list</title></head>\n" .
+		"<body>\n" .
+		"<p>Your email alerts have triggered!</p>\n";
+	}
+
+	/* For each alert... */
+	$q1 = db_query( "SELECT journo_id, prettyname, ref ".
+		"FROM (alert INNER JOIN journo ON alert.journo_id=journo.id) ".
+		"WHERE person_id=? ".
+		"ORDER BY lastname",
+		$person_id );
+	$journos = array();
+	while( $r=db_fetch_array($q1) )
+	{
+		$journo_id = $r['journo_id'];
+		$journo_name = $r['prettyname'];
+		$journo_ref = $r['ref'];
+
+		$journo_url = OPTION_BASE_URL . '/' . $journo_ref;
+
+		/* find new articles by the journo in this alert */
+		$q2 = db_query( "SELECT title,byline,firstseen,permalink " .
+			"FROM ( article a INNER JOIN journo_attr j ON a.id=j.article_id ) " .
+			"WHERE j.journo_id=? AND a.pubdate>(NOW()-'1 day'::interval) " .
+			"ORDER BY pubdate DESC", $journo_id );
+
+		$artcnt = db_num_rows( $q2 );
+
+		if( $verbose )
+			print " $journo_name: $artcnt\n";
+
+		if( $artcnt == 0 )
+			continue;
+
+		++$alertcnt;
+
+		/* begin output for this alert */
+		if( $fmt == 'html' )
+			$msg .= "<p>New articles by <a href=\"$journo_url\">$journo_name</a>:</p>\n<ul>\n";
+		else
+			$msg .= "New articles by $journo_name:\n\n";
+
+		/* list articles found by this alert */
+		while( $art = db_fetch_array( $q2 ) )
+		{
+			$title = $art['title'];
+			$url = $art['permalink'];
+			if( $fmt == 'html' )
+				$msg .= "  <li><a href=\"{$url}\">$title</a></li>\n";
+			else
+				$msg .= "* $title\n    $url\n";
+		}
+		/* end output for this alert */
+		if( $fmt == 'html' )
+			$msg .= "</ul>\n";
+		else
+			$msg .= "\n";
+	}
+
+
+	$editurl = OPTION_BASE_URL . "/alert";
+	if( $fmt =='html' )
+	{
+		$msg .= "<p>You can modify your email alerts at <a href=\"$editurl\">$editurl</a></p>\n";
+		$msg .= "</body>\n</html>\n";
+	}
+	else
+	{
+		$msg .= "You can modify your email alerts at:\n";
+		$msg .= " $editurl\n";
+	}
+
+	if( $alertcnt > 0 )
+		return $msg;
+	else
+		return null;	// no alerts triggered!
+}
+
+
+

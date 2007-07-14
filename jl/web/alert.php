@@ -97,11 +97,11 @@ function DoAddAlert( $P, $journo_ref )
 		db_query( "INSERT INTO alert (person_id,journo_id) VALUES (?,?)", $P->id, $journo_id );
 		db_commit();
 
-		print( "<p>Set up an email alert for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
+		print( "<p>An email alert has been set for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
 	}
 	else
 	{
-		print( "<p>You already have an alert set up for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
+		print( "<p>You already have an alert set for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
 	}
 }
 

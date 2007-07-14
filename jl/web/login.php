@@ -28,8 +28,10 @@
  */
 
 
+require_once '../conf/general';
 require_once '../../phplib/auth.php';
 require_once '../phplib/page.php';
+require_once '../phplib/misc.php';
 require_once '../../phplib/stash.php';
 require_once '../../phplib/rabx.php';
 require_once '../../phplib/importparams.php';
@@ -194,6 +196,22 @@ function login_page() {
         db_commit();
 
 
+		/* send out a confirmation email */
+		$url = OPTION_BASE_URL . "/login?t={$token}";
+
+		$values = rabx_unserialise(stash_get_extra($q_stash));
+		$body = "Please click on the link below to confirm your email address.\n" .
+			"{$values['reason_email']}\n" .
+			"\n" .
+			"{$url}\n" .
+			"\n";
+
+		$subject = $values['reason_email_subject'];
+		$from_name = "journa-list";
+		$from_email = "team@" . OPTION_WEB_DOMAIN;
+		jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+
+
 //        $url = "SHITE!";	//TODO: pb_domain_url(array("path" => "/L/$token"));
 //        $template_data = rabx_unserialise(stash_get_extra($q_stash));
 //        $template_data['url'] = $url;
@@ -208,7 +226,6 @@ function login_page() {
         page_header(_("Now check your email!"));
         /* XXX show message only for Hotmail users? Probably not worth it. */
 
-		print "<a href=\"/login?t=$token\">$token</a>\n";
     ?>
 <p class="loudmessage">
 <?=_('Now check your email!') ?><br>
