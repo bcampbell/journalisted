@@ -71,6 +71,8 @@ else if( get_http_var( 'Remove' ) )
 }
 
 alert_emit_list( $P->id );
+print "<br>\n";
+EmitLookupForm();
 print"</div>\n";
 
 print"<div id=\"sidepane\">\n";
@@ -219,6 +221,39 @@ Each journalist has a link on their page for setting up an alert.
 <?
 
 	}
+}
+
+
+// form to quickly lookup journos by name
+function EmitLookupForm()
+{
+	$lookup = get_http_var('lookup')
+?>
+<form action="/alert" method="get">
+Look up journalist by name:
+<input type="text" name="lookup" value="<?=$lookup; ?>"/>
+<input type="submit" value="Lookup" />
+</form>
+<?php
+
+	if( $lookup )
+	{
+		$pat = strtolower( "%{$lookup}%" );
+		$q = db_query( "SELECT ref,prettyname FROM journo WHERE LOWER(prettyname) LIKE( ? )", $pat );
+
+		$cnt = 0;
+		print "<ul>\n";
+		while( $j = db_fetch_array($q) )
+		{
+			$cnt++;
+			$url = '/' . $j['ref'];
+			print "<li><a href=\"{$url}\">{$j['prettyname']}</a> ";
+			print "<small>[<a href=\"/alert?Add=1&j={$j['ref']}\">add</a>]</small></li>\n";
+		}
+		print "</ul>\n";
+		print "<p>{$cnt} Matches</p>";
+	}
+
 }
 
 
