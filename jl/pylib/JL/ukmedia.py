@@ -238,8 +238,9 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
 	socket.setdefaulttimeout( defaulttimeout )	# in seconds
 
-	DBUG2( "*** %s ***: reading rss feeds..." % (srcorgname) )
+	DBUG2( "*** %s ***: reading rss feeds...\n" % (srcorgname) )
 	for feedname, feedurl in rssfeeds.iteritems():
+		DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
 		r = feedparser.parse( feedurl )
 		lastseen = datetime.now()
