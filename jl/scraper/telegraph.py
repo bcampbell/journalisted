@@ -57,14 +57,19 @@ srcidpat = re.compile( """main\.jhtml\?xml=(.*?)$""" )
 # return datetime, or None if matching fails
 
 
+
+
+
 def Extract( html, context ):
 
 	# Sometimes the telegraph has missing articles.
 	# But the website doesn't return proper 404 (page not found) errors.
 	# Instead, it redirects to an error page which has a 200 (OK) code.
 	# Sigh.
+	# there do seem to be a few borked pages on the site, so we'll treat it
+	# as non-fatal (so it won't contribute toward the error count/abort)
 	if re.search( """<title>.*404 Error: file not found</title>""", html ):
-		raise Exception, ("missing article (telegraph doesn't return proper 404s)")
+		raise ukmedia.NonFatal, ("missing article (telegraph doesn't return proper 404s)")
 
 	art = context
 
@@ -73,6 +78,12 @@ def Extract( html, context ):
 	soup = BeautifulSoup( html )
 
 	headline = soup.find( 'h1' )
+	if not headline:
+		# is it a blog? if so, skip it for now (no byline, so less important to us)
+		# TODO: update scraper to handle blog page format
+		hd = soup.find( 'div', {'class': 'bloghd'} )
+		if hd:
+			raise ukmedia.NonFatal, ("scraper doesn't yet handle blog pages (%s)" % context['srcurl'] );
 
 	title = ukmedia.DescapeHTML( headline.renderContents(None) )
 	# strip out excess whitespace (and compress to one line)
@@ -166,6 +177,12 @@ def ScrubFunc( context, entry ):
 #	if context['title'] == 'Slideshowxl':
 #		return None
 	if context['title'] == 'Horoscopes':
+		return None
+
+	# skip slideshow pages, eg
+	# "http://www.telegraph.co.uk/health/main.jhtml?xml=/health/2007/07/10/pixbeauty110.xml"
+	slideshow_pattern = pat=re.compile( '/pix\\w+[.]xml$' )
+	if slideshow_pattern.search( context['srcurl'] ):
 		return None
 
 	# we'll assume that all articles published on a Sunday are from
