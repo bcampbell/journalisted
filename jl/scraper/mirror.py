@@ -91,7 +91,11 @@ def Extract( html, context ):
 
 
 # to get unique id out of url
-srcid_extract_pat = re.compile( "%26objectid=([0-9]+)%26""" );
+srcid_patterns = [
+	re.compile( "-89520-([0-9]+)/$""" ),	# mirror
+	re.compile( "-98487-([0-9]+)/$""" ),	# sundaymirror
+	re.compile( "%26objectid=([0-9]+)%26""" )	# old url style
+	]
 
 def ScrubFunc( context, entry ):
 	title = context['title']
@@ -108,9 +112,14 @@ def ScrubFunc( context, entry ):
 		raise Exception, "URL not from mirror.co.uk or sundaymirror.co.uk ('%s')" % (url)
 
 
-	m = srcid_extract_pat.search( url );
+	for pat in srcid_patterns:
+		m = pat.search( url )
+		if m:
+			break
+
 	if not m:
 		raise Exception, "Couldn't extract srcid from url ('%s')" % (url)
+
 	srcid = m.group(1)
 
 	context[ 'srcid' ] = srcid
