@@ -34,19 +34,21 @@ def Extract( html, context ):
 	for cruft in headline.findAll( 'span' ):
 		cruft.extract()
 	art[ 'title' ] = headline.renderContents(None).strip()
-	art[ 'title' ] = ukmedia.DescapeHTML( art['title'] )
+	art[ 'title' ] = ukmedia.FromHTML( art['title'] )
 
 	byline = articlediv.find( 'h3' )
 	if byline:
 		art[ 'byline' ] = byline.renderContents(None).strip()
 	else:
 		art[ 'byline' ] = u''
+	art[ 'byline' ] = ukmedia.FromHTML( art['byline'] )
 
 	pubdate = articlediv.find( 'h4' )
 	art[ 'pubdate' ] = CrackDate( pubdate.renderContents() )
 
 	body = articlediv.find( 'div', id='bodyCopyContent' )
 	art['content'] = body.renderContents( None )
+	art['content'] = ukmedia.SanitiseHTML( art['content'] )
 
 	return art
 
