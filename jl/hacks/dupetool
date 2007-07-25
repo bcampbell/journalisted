@@ -1,4 +1,15 @@
 #!/usr/bin/env python2.4
+#
+# dupetool
+#
+# Tool for finding and dealing with dupes in the DB.
+# Dupes considered to be any articles from the same organisation, with
+# the same title, written within 1 day.
+# Not perfect, but should be good enough for now.
+#
+# Some papers publish additional edits as new stories, with new srcid.
+#
+
 
 import sys
 
@@ -10,9 +21,9 @@ from JL import Tags,DB
 
 
 def FindDupeGroups( conn ):
-
+	""" find groups of articles with same title, published within 1 day of each other """
 	c = conn.cursor()
-	c.execute( """select srcorg,title,count(*) as cnt FROM article GROUP BY title,srcorg HAVING count(*)>1 AND max(pubdate)-min(pubdate)<=interval '1 day'""" )
+	c.execute( """select srcorg,title,count(*) as cnt FROM article GROUP BY title,srcorg,status HAVING status='a' AND count(*)>1 AND max(pubdate)-min(pubdate)<=interval '1 day'""" )
 
 	dupegroups = []
 	while 1:
@@ -27,16 +38,18 @@ def FindDupeGroups( conn ):
 
 
 def HandleDupeGroup( conn, dg ):
-
+	""" Hide all but one article in a group of dupes """
 	(srcorg,title,cnt) = ( dg['srcorg'],dg['title'],dg['cnt'] )
 
 	c = conn.cursor()
+
+	# keep the one with the highest srcid
 	c.execute( """SELECT id,srcid FROM article WHERE srcorg=%s AND title=%s ORDER BY srcid DESC""", srcorg, title )
 	found = c.fetchall()
 
 	if len( found ) != cnt:
 		raise Exception, "uh-oh! (%d %s)" % (srcorg, title)
-	
+
 	c2 = conn.cursor()
 	print "%d %s" %(srcorg, title)
 	print " keep %s" %( found[0]['srcid'] )
@@ -48,11 +61,23 @@ def HandleDupeGroup( conn, dg ):
 
 def Usage():
 	print "Usage:"
+	print "./dupetool list"
+	print "./dupetool hidedupes"
 	sys.exit(0)
 
 
 def main():
-	if len(sys.argv) > 1 and sys.argv[1] == 'hidedupes':
+	if len(sys.argv) <= 1:
+		Usage()
+
+	if sys.argv[1] == 'list':
+		conn = DB.Connect()
+		dupegroups = FindDupeGroups(conn)
+		print "%d groups found" % len(dupegroups)
+		for d in dupegroups:
+			print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
+		conn.commit()
+	elif sys.argv[1] == 'hidedupes':
 		conn = DB.Connect()
 		dupegroups = FindDupeGroups(conn)
 		print "%d groups found" % len(dupegroups)
@@ -60,6 +85,7 @@ def main():
 			HandleDupeGroup( conn, d )
 	#		print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
 		conn.commit()
+
 	else:
 		Usage()
 

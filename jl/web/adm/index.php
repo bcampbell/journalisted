@@ -1,12 +1,6 @@
 <?
 /*
- * index.php:
- * Admin pages for PledgeBank.
- * 
- * Copyright (c) 2005 UK Citizens Online Democracy. All rights reserved.
- * Email: francis@mysociety.org. WWW: http://www.mysociety.org
- *
- * $Id: index.php,v 1.13 2006/07/10 10:20:53 francis Exp $
+ * Admin pages for Journa-list
  * 
  */
 
@@ -17,6 +11,7 @@ chdir( dirname(dirname(__FILE__)) );
 
 require_once "../conf/general";
 require_once "../phplib/admin-jl.php";
+require_once "../phplib/admin-jl-journo.php";
 require_once "../phplib/admin-jl-summary.php";
 require_once "../phplib/admin-jl-dupes.php";
 require_once "../phplib/admin-jl-checkscrapers.php";
@@ -32,6 +27,7 @@ $pages = array(
 	new ADMIN_PAGE_JL_ARTICLE,
 	new ADMIN_PAGE_JL_CHECKSCRAPERS,
 	new ADMIN_PAGE_JL_DUPES,
+	new ADMIN_PAGE_JL_JOURNO,
 	null,
     new ADMIN_PAGE_SERVERINFO,
     new ADMIN_PAGE_CONFIGINFO,

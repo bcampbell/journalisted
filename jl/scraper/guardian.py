@@ -4,13 +4,13 @@
 #
 
 import re
-from datetime import date,datetime
+from datetime import date,datetime,timedelta
 import time
 import sys
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import DB,ArticleDB,ukmedia
 
 
 rssfeeds = {
@@ -147,13 +147,62 @@ def ScrubFunc( context, entry ):
 	return context
 
 
+# this fn is called after the article is added to the db.
+# it looks for dupes, and keeps only the one with the highest
+# srcid (which is probably the latest revsion in the guardian db)
+#
+# TODO: this could be made a lot more elegant by adding it to the
+# transaction where the article is actually added to the db (in
+# ArticleDB).
+#
+def DupeCheckFunc( artid, art ):
+	srcorg = orgmap[ art['srcorgname'] ]
+	pubdatestr = '%s' % (art['pubdate'])
+
+	c = myconn.cursor()
+	# find any articles with the same title published a day either
+	# side of this one
+	s = art['pubdate'] - timedelta(days=1)
+	e = art['pubdate'] + timedelta(days=1)
+	c.execute( "SELECT id,srcid FROM article WHERE status='a' AND "
+		"srcorg=%s AND title=%s AND pubdate > %s AND pubdate < %s "
+		"ORDER BY srcid DESC",
+		srcorg,
+		art['title'].encode('utf-8'),
+		str(s), str(e) )
+
+	rows = c.fetchall()
+	if len(rows) > 1:
+		# there are dupes!
+		for dupe in rows[1:]:
+			c.execute( "UPDATE article SET status='d' WHERE id=%s",
+				dupe['id'] )
+			myconn.commit()
+			ukmedia.DBUG2( " hide dupe id=%s (srcid='%s')\n" % (dupe['id'],dupe['srcid']) )
+
 def main():
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, None, ScrubFunc )
 
 	store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract )
+	ukmedia.ProcessArticles( found, store, Extract, DupeCheckFunc )
 
 	return 0
+
+
+# connection and orgmap used by DupeCheckFunc()
+myconn = DB.Connect()
+
+orgmap = {}
+c = myconn.cursor()
+c.execute( "SELECT id,shortname FROM organisation" )
+while 1:
+	row=c.fetchone()
+	if not row:
+		break
+	orgmap[ row[1] ] = row[0]
+c.close()
+c=None
+
 
 if __name__ == "__main__":
     sys.exit(main())

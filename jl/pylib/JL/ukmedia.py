@@ -282,12 +282,15 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
 
 
-def ProcessArticles( foundarticles, store, extractfn ):
+def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 	"""Download, scrape and load a list of articles
 
 	Each entry in foundarticles must have at least:
 		srcurl, srcorgname, srcid
 	Assumes entire article can be grabbed from srcurl.
+
+	extractfn - function to extract an article from the html
+	postfn - option fn to call after article is added to db
 	"""
 	failcount = 0
 	abortcount = 0
@@ -307,9 +310,12 @@ def ProcessArticles( foundarticles, store, extractfn ):
 			art = extractfn( html, context )
 
 			if art:
-				store.Add( art )
+				artid = store.Add( art )
 				DBUG2( "%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
 				newcount = newcount + 1
+				# if there is a post-processing fn, call it
+				if postfn:
+					postfn( artid, art )
 
 		except Exception, err:
 			if context.has_key( 'title' ):
@@ -355,8 +361,8 @@ def UncapsTitle( title ):
 	# "Title'S Apostrophe Badness" => "Title's Apostrophe Badness"
 	# I'Ll I'M I'D Don'T We'Ll I'Ve...
 	for suffix in ( u'Ve', u'S', u'L', u'T', u'Ll', u'M', u'D' ):
-		pat = re.compile( "(\w)('%s\\b)" % (suffix), re.UNICODE );
-		title = pat.sub( "\\1'%s" % (suffix.lower() ), title );
+		pat = re.compile( "(\w)('%s\\b)" % (suffix), re.UNICODE )
+		title = pat.sub( "\\1'%s" % (suffix.lower() ), title )
 	return title.strip()
 
 
