@@ -49,6 +49,7 @@ class ADMIN_PAGE_JL_CHECKSCRAPERS {
 <div style="height:500px; overflow:auto; border: 1px solid black;">
 <?php
         print "<p><strong>Title:</strong>{$art['title']}</p>\n";
+        print "<p><strong>Desc:</strong>{$art['description']}</p>\n";
         print "<p><strong>Byline:</strong><em>{$art['byline']}</em></p>\n";
         print "<p><strong>PubDate:</strong><em>{$art['pubdate']}</em></p>\n";
         print "<p><strong>SrcURL:</strong><a href=\"{$art['srcurl']}\">{$art['srcurl']}</a></p>\n";
