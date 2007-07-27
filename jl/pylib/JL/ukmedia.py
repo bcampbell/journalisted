@@ -56,8 +56,8 @@ datecrackers = [
 	# "09-Apr-07 00:00" (scotsman)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{2}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
-	# "Friday    August    11, 2006" (guardian/observer, express)
-	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),\s*(?P<year>\d{4})""", re.UNICODE ),
+	# "Friday    August    11, 2006" (express, guardian/observer)
+	re.compile( """\w+\s+(?P<month>\w+)\s+(?P<day>\d+),?\s*(?P<year>\d{4})""", re.UNICODE ),
 
 	# "26 May 2007, 02:10:36 BST" (newsoftheworld)
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
@@ -255,7 +255,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 				pubdate = None
 
 			title = DescapeHTML( title )
-			desc = DescapeHTML( desc )
+			desc = FromHTML( desc )
 
 			context = {
 				'srcid': url,

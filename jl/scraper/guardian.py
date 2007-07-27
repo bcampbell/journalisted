@@ -2,7 +2,15 @@
 #
 # Scraper for the guardian and observer
 #
-
+# NOTE: guardian unlimited is changing their backend. They're doing it
+# section by section and new system looks a lot cleaner, so hopefully we
+# can remove some of the hackery in this scraper one day!
+#
+# TODO:
+# - add guardian blogs
+# - detect subscription-only pages
+# - extract journo names from description
+#
 import re
 from datetime import date,datetime,timedelta
 import time
@@ -44,13 +52,92 @@ rssfeeds = {
 
 
 
-
-
-#
 def Extract( html, context ):
+
+	art = context
+	soup = BeautifulSoup( html )
+
+	# header contains headline, strapline
+	headerdiv = soup.find( 'div', id="article-header" )
+	if not headerdiv:
+		return OldExtract( soup, context )
+
+	# find title
+	title = headerdiv.h1.renderContents(None)
+	title = ukmedia.DescapeHTML(title)
+	art[ 'title' ] = title.strip()
+
+	# just use description from context (from rss feed)
+	# TODO: could also check 'stand-first' para?
+
+	contentdiv = soup.find( 'div', id="content" )
+
+
+	# article-attributes
+	# contains byline, date, publication...
+	attrsdiv = contentdiv.find( 'ul', {'class':re.compile("""\\barticle-attributes\\b""")} )
+
+	# byline
+	byline = attrsdiv.find( 'li', { 'class':'byline' } )
+	if byline:
+		art['byline'] = byline.renderContents(None)
+	else:
+		# TODO: could search for journo in description or "stand-first"
+		# para in article-header div.
+		art['byline'] = u''
+
+	# date
+	pubdate = attrsdiv.find( 'li', { 'class':'date' } ).renderContents(None).strip()
+	art['pubdate'] = ukmedia.ParseDateTime( pubdate )
+
+	# quick sanity check on publication
+	publication = attrsdiv.find( 'li', { 'class':'publication' } ).a.string
+	if art['srcorgname'] == u'observer' and publication != u'The Observer':
+		raise Exception, ("Observer article not actually from observer?" )
+
+	# now strip out all non-text bits of content div
+	attrsdiv.extract()
+	contentdiv.find('ul', id='article-toolbox').extract()
+
+	# images
+	for cruft in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
+		cruft.extract()
+
+	# long articles have a folding part
+
+	# 1) 'shower' para to control folding
+	showerpara = contentdiv.find( 'p', {'class':'shower'} )
+	if showerpara:
+		showerpara.extract()
+	# 2) the extra text is inside the 'more-article' div
+	morediv = contentdiv.find( 'div', id='more-article' );
+	if morediv:
+		morediv.extract()
+
+	# move all the remaining elements into a fresh soup
+	textpart = BeautifulSoup()
+	for element in contentdiv.contents:
+		textpart.append( element )
+
+	# if there was a folding bit, add its contents to the new soup too
+	if morediv:
+		for element in morediv.contents:
+			textpart.append( element )
+
+	# that's it!
+	art['content'] = textpart.prettify(None)
+
+	return art
+
+
+
+
+
+# extractor for old style articles...
+def OldExtract( soup, context ):
 	art = context
 
-	soup = BeautifulSoup( html )
+#	soup = BeautifulSoup( html )
 	articlediv = soup.find( 'div', id='GuardianArticle' )
 
 	# find title
@@ -90,14 +177,17 @@ def Extract( html, context ):
 		art[ 'pubdate' ] = ukmedia.ParseDateTime( m.group(1) )
 
 
-	text = ExtractText( articlediv )
+	text = OldExtractText( articlediv )
 
 	art[ 'content' ] = ukmedia.SanitiseHTML( text )
+
+	# we just use the description passed in (from the RSS feed)
+	art[ 'description' ] = ukmedia.FromHTML( art['description'] )
 
 	return art
 
 
-def ExtractText( articlediv ):
+def OldExtractText( articlediv ):
 	bodydiv = articlediv.find( 'div', id='GuardianArticleBody' )
 
 	# strip out embedded advertising rubbish
@@ -124,10 +214,9 @@ def ScrubFunc( context, entry ):
 
 	m = idpat.search( url )
 	if m:
-		context['srcid'] = m.group(1)
+		context['srcid'] = m.group(1)	# storyserver format
 	else:
-		context['srcid'] = None
-#		raise Exception, "couldn't extract srcid from url (%s)" % (url)
+		context['srcid'] = context['srcurl']		#
 
 	# some items don't have pubdate
 	# (they're probably special-case duds (eg flash pages), but try and
@@ -181,12 +270,30 @@ def DupeCheckFunc( artid, art ):
 			ukmedia.DBUG2( " hide dupe id=%s (srcid='%s')\n" % (dupe['id'],dupe['srcid']) )
 
 def main():
+	#Test( sys.argv[1] )
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, None, ScrubFunc )
 
 	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract, DupeCheckFunc )
 
 	return 0
+
+
+def Test( url ):
+	html = ukmedia.FetchURL( url )
+	context = { 'srcurl': url }
+	art = Extract( html, context )
+	PrettyDump( art )
+
+
+
+def PrettyDump( art ):
+	for f in art:
+		if f != 'content':
+			print "%s: %s" % (f,art[f])
+	print "---------------------------------"
+	print art['content']
+	print "---------------------------------"
 
 
 # connection and orgmap used by DupeCheckFunc()
@@ -206,4 +313,6 @@ c=None
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
 

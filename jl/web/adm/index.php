@@ -15,6 +15,7 @@ require_once "../phplib/admin-jl-journo.php";
 require_once "../phplib/admin-jl-summary.php";
 require_once "../phplib/admin-jl-dupes.php";
 require_once "../phplib/admin-jl-checkscrapers.php";
+require_once "../phplib/admin-jl-tags.php";
 require_once "../../phplib/template.php";
 require_once "../../phplib/admin-phpinfo.php";
 require_once "../../phplib/admin-serverinfo.php";
@@ -26,7 +27,8 @@ $pages = array(
 	new ADMIN_PAGE_JL_ARTICLES,
 	new ADMIN_PAGE_JL_ARTICLE,
 	new ADMIN_PAGE_JL_CHECKSCRAPERS,
-	new ADMIN_PAGE_JL_DUPES,
+//	new ADMIN_PAGE_JL_DUPES,
+	new ADMIN_PAGE_JL_TAGS,
 	new ADMIN_PAGE_JL_JOURNO,
 	null,
     new ADMIN_PAGE_SERVERINFO,

@@ -34,15 +34,41 @@ def RemoveBlacklistedTags():
 	conn.commit()
 	print "%d removed (out of %d)" % (cnt,tot)
 
+
+
+def RebuildTags():
+	conn = DB.Connect()
+
+	c = conn.cursor()
+	c.execute( "DELETE FROM article_tag WHERE article_id<1000" );
+	c.execute( "SELECT id, content FROM article WHERE status='a' and id<1000" )
+	while 1:
+		row=c.fetchone()
+		if not row:
+			break
+
+		article_id = row['id']
+		print "doing %d" %(article_id)
+		article_content = row['content'].decode('utf-8')
+#		c2 = conn.cursor()
+#		c2.execute( "DELETE FROM article_tag WHERE article_id=%s", article_id )
+#		c2.close()
+		Tags.Generate( conn, article_id, article_content )
+
+	conn.commit()
+
 def Usage():
 	print "Usage:"
 	print "tagtool remove-blacklisted"
+	print "tagtool rebuild-all"
 	sys.exit(0)
 
 
 def main():
 	if len(sys.argv) > 1 and sys.argv[1] == 'remove-blacklisted':
 		RemoveBlacklistedTags()
+	elif len(sys.argv) > 1 and sys.argv[1] == 'rebuild-all':
+		RebuildTags()
 	else:
 		Usage()
 

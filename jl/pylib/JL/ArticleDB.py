@@ -83,8 +83,8 @@ class ArticleDB:
 		id = cursor.fetchone()[0]
 		cursor.close()
 
-		GenerateTags( self.conn, id, art['content'] )
-		
+		Tags.Generate( self.conn, id, art['content'] )
+
 		self.conn.commit()
 
 		# parse byline to assign/create journos
@@ -189,18 +189,4 @@ def ProcessByline( article_id, srcorg, byline ):
 	return attributed
 
 
-
-def GenerateTags( conn, article_id, article_content ):
-	""" Generate tags for an article """
-	txt = ukmedia.StripHTML( article_content )
-
-	tags = Tags.ExtractFromText( txt )
-
-	# write the tags into the DB
-	c2 = conn.cursor()
-	for tag,freq in tags.items():
-		tag = tag.encode('utf-8')
-		c2.execute( "INSERT INTO article_tag (article_id, tag, freq) VALUES (%s,%s,%s)",
-			article_id, tag, freq )
-	c2.close()
 
