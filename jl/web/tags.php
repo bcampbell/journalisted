@@ -12,7 +12,7 @@ require_once '../../phplib/utility.php';
 
 
 
-page_header( 'Tags' );
+page_header( 'Topics - ' . OPTION_WEB_DOMAIN );
 
 $tag = get_http_var( 'tag', null );
 if( $tag )
@@ -34,7 +34,7 @@ function emit_tag_summaries()
 {
 
 ?>
-<h2>Most Frequent Terms</h2>
+<h2>Most written about topics</h2>
 
 <div class="block">
 <h3>Last 24 hours</h3>

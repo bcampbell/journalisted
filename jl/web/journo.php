@@ -43,43 +43,19 @@ emit_block_overview( $journo );
 emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 //emit_block_tags( $journo );
 emit_block_stats( $journo );
-print "</div>\n";
+print "</div> <!-- end mainpane -->\n";
 
 /* side pane */
 
-?>
-<div id="sidepane">
+print "<div id=\"sidepane\">\n\n";
 
-<div class="block">
-<h3>Newsfeed</h3>
-
-<a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
-Recent articles by <?php print $journo['prettyname']; ?>
-</div>
-
-<div class="block">
-<h3>Email alerts</h3>
-<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me when <?=$journo['prettyname'] ?> writes anything!</a>
-</div>
-
-<?php
-
+emit_block_links( $journo );
+emit_block_rss( $journo, $rssurl );
+emit_block_alerts( $journo );
 emit_block_tags( $journo );
+emit_block_searchbox( $journo );
 
 ?>
-
-<div class="block">
-<h3>Find</h3>
-<p>
-<form action="article" method="get">
-<input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
-Find articles by <?php echo $journo['prettyname'];?> containing:
-<input type="text" name="find" value=""/>
-<input type="submit" value="Find" />
-</form>
-</p>
-</div>
-
 <div class="block">
 <h3>Something wrong/missing?</h3>
 <p>
@@ -87,8 +63,10 @@ Have we got the wrong information about this journalist?
 <a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page!">Let us know!</a>
 </p>
 </div>
+
 <?php
-print "</div>\n";
+
+print "</div> <!-- end sidepane -->\n";	// end sidepane
 
 page_footer();
 
@@ -98,23 +76,14 @@ page_footer();
  * HELPERS
  */
 
-function emit_journo( $journo )
-{
-
-}
-
 
 function emit_blocks_articles( $journo, $allarticles )
 {
 
-
 ?>
-
 <div class="block">
 <h3>Most recent article</h3>
 <?php
-
-
 
 	$journo_id = $journo['id'];
 	$orgs = get_org_names();
@@ -144,7 +113,7 @@ function emit_blocks_articles( $journo, $allarticles )
 		$desc = $r['description'];
 		print "<p>\n";
 		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\", {$pubdate}, <em>{$org}</em>\n";
-		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
+		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small>\n";
 		print "<blockquote>{$desc}</blockquote>\n";
 		print "</p>\n";
 
@@ -177,7 +146,7 @@ function emit_blocks_articles( $journo, $allarticles )
 		$desc = $r['description'];
 		print "<li>\n";
 		print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>, {$pubdate}, <em>{$org}</em>\n";
-		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
+		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small>\n";
 		print "</li>\n";
 
 	}
@@ -187,12 +156,16 @@ function emit_blocks_articles( $journo, $allarticles )
 	{
 		print "<a href=\"/{$journo['ref']}?allarticles=yes\">[Show all previous articles...]</a>\n";
 	}
+
 ?>
 </ul>
 </div>
+
 <?php
 
 }
+
+
 
 function emit_block_stats( $journo )
 {
@@ -235,7 +208,9 @@ function emit_block_stats( $journo )
 
 ?>
 </div>
+
 <?php
+
 }
 
 
@@ -245,10 +220,12 @@ function emit_block_tags( $journo )
 
 	$journo_id = $journo['id'];
 	$ref = $journo['ref'];
+
 ?>
 <div class="block">
-<h3>Most cited [Tag cloud]</h3>
+<h3>Most cited topics</h3>
 <?php
+
 	$maxtags = 20;
 
 	# TODO: should only include active articles (ie where article.status='a')
@@ -265,14 +242,17 @@ function emit_block_tags( $journo )
 
 ?>
 </div>
+
 <?php
 
 }
 
 
 
-function emit_links( $journo_id )
+
+function emit_block_links( $journo )
 {
+	$journo_id = $journo['id'];
 	$q = db_query( "SELECT url, description " .
 		"FROM journo_weblink " .
 		"WHERE journo_id=?",
@@ -281,7 +261,10 @@ function emit_links( $journo_id )
 	$row = db_fetch_array($q);
 	if( !$row )
 		return;		/* no links to show */
-	print "<p>Elsewhere on the web:\n<ul>";
+
+	print "<div class=\"block\">\n";
+	print "<h3>Elsewhere on the web</h3>\n";
+	print "<ul>\n";
 	while( $row )
 	{
 		printf( "<li><a href=\"%s\">%s</a></li>\n",
@@ -290,7 +273,62 @@ function emit_links( $journo_id )
 		$row = db_fetch_array($q);
 	}
 	print "</ul></p>\n";
+	print "</div>\n";
 }
+
+
+// block with rss feed for journo
+function emit_block_rss( $journo, $rssurl )
+{
+
+?>
+<div class="block">
+<h3>Newsfeed</h3>
+<a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
+Articles by <?php print $journo['prettyname']; ?>
+
+</div>
+
+<?php
+}
+
+// email alerts
+function emit_block_alerts( $journo )
+{
+
+?>
+<div class="block">
+<h3>Your Journa-list</h3>
+<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article!
+</div>
+
+<?php
+
+}
+
+
+// search box for this journo
+// ("find articles by this journo containing ....")
+function emit_block_searchbox( $journo )
+{
+
+?>
+<div class="block">
+<h3>Find</h3>
+<p>
+<form action="article" method="get">
+<input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
+Find articles by <?php echo $journo['prettyname'];?> containing:
+<input type="text" name="find" value=""/>
+<input type="submit" value="Find" />
+</form>
+</p>
+</div>
+
+<?php
+
+}
+
 
 
 
@@ -304,9 +342,7 @@ function emit_block_overview( $journo )
 
 	emit_writtenfor( $journo );
 
-	emit_links( $journo_id );
-
-	print "</div>\n";
+	print "</div>\n\n";
 
 
 }
@@ -333,12 +369,12 @@ function emit_writtenfor( $journo )
 
 		$orgname = $orgs[ $srcorg ];
 
-		print "<li>\n";
-		print "$orgname\n";
+		print "<li>";
+		print "$orgname";
 
 		if( $titles )
 		{
-			print "<ul>\n";
+			print "\n<ul>\n";
 			foreach( $titles as $t )
 				printf( "<li>%s</li>\n", $t['jobtitle']);
 			print "</ul>\n";

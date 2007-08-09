@@ -51,7 +51,7 @@ Find articles containing:
 <div class="block">
 <h3>Who's writing about what?</h3>
 <p>
-Here are some terms which have appeared frequently in recent articles:
+Here are some topics which have appeared frequently in recent articles:
 </p>
 
 <?php

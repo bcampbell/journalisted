@@ -60,8 +60,8 @@ function page_header( $title, $params=array() )
 <ul class="hnav">
 <li><a href="/">Home</a></li>
 <li><a href="/list">All journalists</a></li>
-<li><a href="/tags">Browse terms</a></li>
-<li><a href="/alert">Your alerts</a></li>
+<li><a href="/tags">Browse topics</a></li>
+<li><a href="/alert">Your Journa-list</a></li>
 <?php
 
 	// some extra menu items for logged-in users
