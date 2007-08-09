@@ -223,7 +223,7 @@ function emit_block_tags( $journo )
 
 ?>
 <div class="block">
-<h3>Most cited topics</h3>
+<h3>Most mentioned topics</h3>
 <?php
 
 	$maxtags = 20;
