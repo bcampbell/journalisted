@@ -54,6 +54,12 @@ rssfeeds = {
 
 def Extract( html, context ):
 
+	# quick check for subscription-only mediaguardian page
+	if html.find( '<title>Media registration promo' ) != -1:
+		ukmedia.DBUG2( "SUPPRESS subscription-only page '%s' (%s)\n" % (context['title'], context['srcurl']) )
+		return None
+
+
 	art = context
 	soup = BeautifulSoup( html )
 
@@ -93,7 +99,8 @@ def Extract( html, context ):
 	# quick sanity check on publication
 	publication = attrsdiv.find( 'li', { 'class':'publication' } ).a.string
 	if art['srcorgname'] == u'observer' and publication != u'The Observer':
-		raise Exception, ("Observer article not actually from observer?" )
+#		raise Exception, ("Observer article not actually from observer?" )
+		ukmedia.DBUG2( "WARNING: Observer article not actually from observer? '%s' (%s)\n" %( art['title'], art['srcurl'] ) );
 
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
@@ -208,6 +215,7 @@ urltrimpat = re.compile( u'\?gusrc=rss&feed=.*$', re.UNICODE )
 idpat = re.compile( u'.*[/](.*)[.]html$', re.UNICODE )
 
 def ScrubFunc( context, entry ):
+	# trim off the rss bits
 	url = urltrimpat.sub( '', context['permalink'] )
 	context['permalink'] = url;
 	context['srcurl'] = url;
@@ -216,7 +224,27 @@ def ScrubFunc( context, entry ):
 	if m:
 		context['srcid'] = m.group(1)	# storyserver format
 	else:
-		context['srcid'] = context['srcurl']		#
+		context['srcid'] = context['srcurl']		# new format
+
+	# we don't handle gallery pages...
+	if url.find( '/gallery/') != -1:
+		ukmedia.DBUG2( "IGNORE gallery '%s' (%s)\n" % (context['title'], url) );
+		return None
+	# ... or videos....
+	if url.find( '/video/') != -1:
+		ukmedia.DBUG2( "IGNORE video page '%s' (%s)\n" % (context['title'], url) );
+		return None
+	# ...or quizes
+	if url.find( '/quiz/') != -1:
+		ukmedia.DBUG2( "IGNORE quiz '%s' (%s)\n" % (context['title'], url) );
+		return None
+
+	# we don't handle subscription-only pages (media guardian)
+	# sigh... this doesn't work because not all mediaguardian pages are subscription-only...
+#	if url.find( 'http://media.guardian.co.uk/') == 0 or url.find( '/mediaguardian/' ) != -1:
+#		ukmedia.DBUG2( "IGNORE subscription-only page '%s' (%s)\n" % (context['title'], url) );
+#		return None
+
 
 	# some items don't have pubdate
 	# (they're probably special-case duds (eg flash pages), but try and
@@ -232,6 +260,7 @@ def ScrubFunc( context, entry ):
 		context['srcorgname'] = u'observer'
 	else:
 		context['srcorgname'] = u'guardian'
+
 
 	return context
 
