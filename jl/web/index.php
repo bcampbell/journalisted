@@ -43,6 +43,7 @@ Browse Journalists by news outlet:
 Find articles containing:
 <input type="text" name="find" value=""/>
 <input type="submit" value="Find" />
+<small>(within the last 7 days)</small>
 </form>
 </p>
 
@@ -51,7 +52,7 @@ Find articles containing:
 <div class="block">
 <h3>Who's writing about what?</h3>
 <p>
-Here are some topics which have appeared frequently in recent articles:
+Here are some topics which have appeared frequently in the last 24 hours:
 </p>
 
 <?php

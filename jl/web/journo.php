@@ -151,6 +151,10 @@ function emit_blocks_articles( $journo, $allarticles )
 
 	}
 
+?>
+</ul>
+<?php
+
 	/* if there are any more we're not showing, say so */
 	if( db_fetch_array($q) )
 	{
@@ -158,7 +162,6 @@ function emit_blocks_articles( $journo, $allarticles )
 	}
 
 ?>
-</ul>
 </div>
 
 <?php
