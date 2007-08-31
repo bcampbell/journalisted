@@ -1,0 +1,28 @@
+This directory holds changes to be applied to the live database.
+After a change has been applied, the sql file should be moved into the
+"applied" dir. There is currently no master schema file maintained.
+
+
+Text is utf-8 encoded and stored in a latin-1 DB. So the DB _thinks_ it's
+got latin-1 text, but the backend and website know that that text is really
+in utf-8). At some point we'll tidy it up so the database knows it's storing
+utf-8.
+
+
+To restore from a backup:
+
+Kill the old db:
+  $ dropdb mst
+
+Create the new one:
+  $ createdb -E latin-1 mst
+
+as superuser:
+
+  CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;
+
+Load backup:
+
+  $ bzcat [backupfile] | psql -U mst mst
+
+
