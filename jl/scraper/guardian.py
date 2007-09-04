@@ -70,8 +70,8 @@ def Extract( html, context ):
 
 	# find title
 	title = headerdiv.h1.renderContents(None)
-	title = ukmedia.DescapeHTML(title)
-	art[ 'title' ] = title.strip()
+	title = ukmedia.FromHTML(title)
+	art[ 'title' ] = title
 
 	# just use description from context (from rss feed)
 	# TODO: could also check 'stand-first' para?
@@ -86,7 +86,7 @@ def Extract( html, context ):
 	# byline
 	byline = attrsdiv.find( 'li', { 'class':'byline' } )
 	if byline:
-		art['byline'] = byline.renderContents(None)
+		art['byline'] = ukmedia.FromHTML( byline.renderContents(None) )
 	else:
 		# TODO: could search for journo in description or "stand-first"
 		# para in article-header div.
