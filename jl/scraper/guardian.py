@@ -105,6 +105,8 @@ def Extract( html, context ):
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
 	contentdiv.find('ul', id='article-toolbox').extract()
+	contentdiv.find('div', id='send-share').extract()
+	contentdiv.find('div', id='send-email').extract()
 
 	# images
 	for cruft in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
