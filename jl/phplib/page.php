@@ -2,6 +2,7 @@
 
 require_once '../conf/general';
 require_once '../../phplib/person.php';
+require_once 'gatso.php';
 
 function page_header( $title, $params=array() )
 {
@@ -56,12 +57,11 @@ function page_header( $title, $params=array() )
 
 ?>
 <h1>Journa-list</h1>
-
 <ul class="hnav">
 <li><a href="/">Home</a></li>
 <li><a href="/list">All journalists</a></li>
 <li><a href="/tags">Browse topics</a></li>
-<li><a href="/alert">Your Journa-list</a></li>
+<li><a href="/alert">My Journa-list</a></li>
 <?php
 
 	// some extra menu items for logged-in users
@@ -90,14 +90,20 @@ function page_footer( $params=array() )
 
 <div id="footer">
 Journa-list is a <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> project.<br>
-Questions? Comments? Suggestions? <a href="mailto:team@journa-list.dyndns.org">Let us know!</a>
+Questions? Comments? Suggestions? <a href="mailto:team@journa-list.dyndns.org">Let us know</a>
+<?php
+
+	gatso_report_html();
+
+?>
 </div>
 
 </div>
-
 </body>
 </html>
 <?php
+
+//	debug_comment_timestamp();
 
 }
 

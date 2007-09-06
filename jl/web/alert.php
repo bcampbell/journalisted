@@ -21,8 +21,8 @@ if( get_http_var( 'Add' ) )
 {
 	// adding an alert...
 	$r = array(
-		'reason_web' => 'Before setting up the email alert, we need to confirm your email address.',
-		'reason_email' => "You'll then be emailed when the journalist writes",
+		'reason_web' => 'Before adding the journalist to your list, we need to confirm your email address.',
+		'reason_email' => "You'll then be emailed when the journalist writes anything",
 		'reason_email_subject' => "Set up an email alert at journa-list"
 		);
 }
@@ -30,14 +30,14 @@ else if( get_http_var( 'Remove' ) )
 {
 	// remove an alert...
 	$r = array(
-		'reason_web' => 'Before removing the email alert, we need to confirm your email address.',
+		'reason_web' => 'Before removing the journalist from your list, we need to confirm your email address.',
 		'reason_email' => "Your email alert will then be removed",
 		'reason_email_subject' => "Remove an email alert at journa-list"
 		);
 }
 else
 {
-	// default - just viewing exiting alerts (or updating password)
+	// default - just viewing existing alerts (or updating password)
 	$r = array(
 		'reason_web' => "To view your alerts, we need to check your email address.",
 		'reason_email' => "Then you will be able to view your alerts.",
@@ -53,9 +53,15 @@ $P = person_signon($r);
 
 
 /* OK, if we get here, we've got a logged-in user and can start our output! */ 
-page_header( "Your Email Alerts" );
+page_header( "My Journa-list" );
 
 print"<div id=\"mainpane\">\n";
+
+?>
+<h2>My Journa-list</h2>
+Create your own newspaper! Sort of.<br>
+Tell us who your favourite journalists are and we'll email you whenever they write an article.<br>
+<?php
 
 if( get_http_var( 'Add' ) )
 {
@@ -99,11 +105,11 @@ function DoAddAlert( $P, $journo_ref )
 		db_query( "INSERT INTO alert (person_id,journo_id) VALUES (?,?)", $P->id, $journo_id );
 		db_commit();
 
-		print( "<p>An email alert has been set for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
+		print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> was added to your list.</p>\n" );
 	}
 	else
 	{
-		print( "<p>You already have an alert set for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
+		print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> is already on your list.</p>\n" );
 	}
 }
 
@@ -119,7 +125,7 @@ function DoRemoveAlert( $P, $journo_ref )
 	$journo_id = $journo['id'];
 	db_query( "DELETE FROM alert WHERE journo_id=? AND person_id=?", $journo_id, $P->id );
 	db_commit();
-	print( "<p>Removed email alert for <a href=\"{$url}\">{$journo['prettyname']}</a></p>\n" );
+	print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> was removed from your list.</p>\n" );
 }
 
 
@@ -149,7 +155,7 @@ function EmitChangePasswordBox()
 	if( !$q_UpdateDetails && !$has_password ) {
 ?>
 <p>Setting up a password means you won't have to confirm your
-email address every time you want to manage your alerts.</p>
+email address every time you want to manage your journalist list.</p>
 <?php
 	}
 ?>
@@ -192,7 +198,7 @@ email address every time you want to manage your alerts.</p>
 /* output a list of alerts for a user */
 function alert_emit_list( $person_id )
 {
-	print "<h2>Your Email Alerts</h2>\n";
+//	print "<h2>Your Email Alerts</h2>\n";
 
 	$q = db_query( "SELECT a.id,a.journo_id, j.prettyname, j.ref " .
 		"FROM (alert a INNER JOIN journo j ON j.id=a.journo_id) " .
@@ -200,6 +206,7 @@ function alert_emit_list( $person_id )
 
 	if( db_num_rows($q) > 0 )
 	{
+		print "<p>Your list of journalists:</p>\n";
 		print "<ul>\n";
 		while( $row=db_fetch_array($q) )
 		{
@@ -215,8 +222,9 @@ function alert_emit_list( $person_id )
 
 ?>
 <p>
-You have no email alerts set up.<br>
-Each journalist has a link on their page for setting up an alert.
+You have no journalists on your list.<br>
+To add some, use the "My Journa-list" box on a journalists page, or use
+the search box below...
 </p>
 <?
 
@@ -232,7 +240,7 @@ function EmitLookupForm()
 <form action="/alert" method="get">
 Look up journalist by name:
 <input type="text" name="lookup" value="<?=$lookup; ?>"/>
-<input type="submit" value="Lookup" />
+<input type="submit" value="Look Up" />
 </form>
 <?php
 
@@ -253,7 +261,7 @@ Look up journalist by name:
 		print "</ul>\n";
 		print "<p>{$cnt} Matches</p>";
 	}
-
+	print "<br>\n";
 }
 
 

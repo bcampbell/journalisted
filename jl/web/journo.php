@@ -7,6 +7,7 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/gatso.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -41,7 +42,7 @@ printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 print "<div id=\"mainpane\">\n";
 emit_block_overview( $journo );
 emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
-//emit_block_tags( $journo );
+emit_block_tags( $journo );
 emit_block_stats( $journo );
 print "</div> <!-- end mainpane -->\n";
 
@@ -52,7 +53,7 @@ print "<div id=\"sidepane\">\n\n";
 emit_block_links( $journo );
 emit_block_rss( $journo, $rssurl );
 emit_block_alerts( $journo );
-emit_block_tags( $journo );
+//emit_block_tags( $journo );
 emit_block_searchbox( $journo );
 
 ?>
@@ -60,13 +61,14 @@ emit_block_searchbox( $journo );
 <h3>Something wrong/missing?</h3>
 <p>
 Have we got the wrong information about this journalist?
-<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page!">Let us know!</a>
+<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page!">Let us know</a>
 </p>
 </div>
 
 <?php
 
 print "</div> <!-- end sidepane -->\n";	// end sidepane
+
 
 page_footer();
 
@@ -175,7 +177,7 @@ function emit_block_stats( $journo )
 
 ?>
 <div class="block">
-<h3>Journa-list by numbers:</h3>
+<h3>Journa-list by numbers</h3>
 <?php
 
 	$journo_id = $journo['id'];
@@ -223,14 +225,16 @@ function emit_block_tags( $journo )
 
 	$journo_id = $journo['id'];
 	$ref = $journo['ref'];
+	$prettyname = $journo['prettyname'];
 
 ?>
 <div class="block">
-<h3>Most mentioned topics</h3>
+<h3>The topics <?=$prettyname; ?> mentions most:</h3>
 <?php
 
 	$maxtags = 20;
 
+	gatso_start('tags');
 	# TODO: should only include active articles (ie where article.status='a')
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 		"FROM ( journo_attr a INNER JOIN article_tag t ON a.article_id=t.article_id ) ".
@@ -239,6 +243,7 @@ function emit_block_tags( $journo )
 		"ORDER BY freq DESC " .
 		"LIMIT ?";
 	$q = db_query( $sql, $journo_id, $maxtags );
+	gatso_stop('tags');
 
 	tag_cloud_from_query( $q, $ref );
 
@@ -301,8 +306,8 @@ function emit_block_alerts( $journo )
 
 ?>
 <div class="block">
-<h3>Your Journa-list</h3>
-<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article!
+<h3>My Journa-list</h3>
+<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
 </div>
 
 <?php
@@ -356,6 +361,8 @@ function emit_writtenfor( $journo )
 {
 	$orgs = get_org_names();
 	$journo_id = $journo['id'];
+
+	gatso_start( 'writtenfor' );
 	$writtenfor = db_getAll( "SELECT DISTINCT a.srcorg " .
 		"FROM article a INNER JOIN journo_attr j ON (a.status='a' AND a.id=j.article_id) ".
 		"WHERE j.journo_id=?",
@@ -369,7 +376,6 @@ function emit_writtenfor( $journo )
 		// get jobtitles seen for this org:	
 		$titles = db_getAll( "SELECT jobtitle FROM journo_jobtitle WHERE journo_id=? AND org_id=?",
 			$journo_id, $srcorg );
-
 		$orgname = $orgs[ $srcorg ];
 
 		print "<li>";
@@ -385,6 +391,7 @@ function emit_writtenfor( $journo )
 		print "</li>\n";
 	}
 	print "</ul>\n</p>\n";
+	gatso_stop( 'writtenfor' );
 }
 
 
