@@ -34,41 +34,9 @@ $pageparams = array(
 $title = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
 page_header( $title, $pageparams );
 
-
-printf( "<h2>%s</h2>\n", $journo['prettyname'] );
-
-/* main pane */
-
-print "<div id=\"mainpane\">\n";
-emit_block_overview( $journo );
-emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
-emit_block_tags( $journo );
-emit_block_stats( $journo );
-print "</div> <!-- end mainpane -->\n";
-
-/* side pane */
-
-print "<div id=\"sidepane\">\n\n";
-
-emit_block_links( $journo );
-emit_block_rss( $journo, $rssurl );
-emit_block_alerts( $journo );
-//emit_block_tags( $journo );
-emit_block_searchbox( $journo );
-
-?>
-<div class="block">
-<h3>Something wrong/missing?</h3>
-<p>
-Have we got the wrong information about this journalist?
-<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page!">Let us know</a>
-</p>
-</div>
-
-<?php
-
-print "</div> <!-- end sidepane -->\n";	// end sidepane
-
+// emit the main part of the page (cached for up to 2 hours)
+$cacheid = sprintf( "j%d", $journo['id'] );
+cache_emit( $cacheid, "emit_journo", 60*60*2 );
 
 page_footer();
 
@@ -77,6 +45,48 @@ page_footer();
 /*
  * HELPERS
  */
+
+// emit the cacheable part of the page
+function emit_journo()
+{
+	global $journo;
+	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
+
+	/* main pane */
+
+	print "<div id=\"mainpane\">\n";
+	emit_block_overview( $journo );
+	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
+	emit_block_tags( $journo );
+	emit_block_stats( $journo );
+	print "</div> <!-- end mainpane -->\n";
+
+	/* side pane */
+
+	print "<div id=\"sidepane\">\n\n";
+
+	emit_block_links( $journo );
+	$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
+	emit_block_rss( $journo, $rssurl );
+	emit_block_alerts( $journo );
+	//emit_block_tags( $journo );
+	emit_block_searchbox( $journo );
+
+	?>
+	<div class="block">
+	<h3>Something wrong/missing?</h3>
+	<p>
+	Have we got the wrong information about this journalist?
+	<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a>
+	</p>
+	</div>
+
+	<?php
+
+	print "</div> <!-- end sidepane -->\n";	// end sidepane
+}
+
+
 
 
 function emit_blocks_articles( $journo, $allarticles )
@@ -199,7 +209,7 @@ function emit_block_stats( $journo )
 	printf( "<tr><th></th><th>%s&nbsp;&nbsp;</th><th>Average for all journalists</th></tr>",
 		$journo['prettyname'] );
 
-	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.1f</td></tr>\n",
+	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.0f</td></tr>\n",
 		$row['num_articles'], $row['first_pubdate'], $avg['num_articles'] );
 	printf( "<tr><th>Total words written</th><td>%d</td><td>%.0f</td></tr>\n",
 		$row['wc_total'], $avg['wc_total'] );
@@ -212,6 +222,8 @@ function emit_block_stats( $journo )
 	print "</table>\n";
 
 ?>
+<p>(no reflection of quality, just stats)</p>
+
 </div>
 
 <?php

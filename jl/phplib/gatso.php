@@ -1,10 +1,11 @@
 <?php
+// functions for collecting timing information
 
 require_once( '../../phplib/debug.php' );
 
 $g_gatsos = array();
 
-gatso_start( '_TOTAL' );
+$g_gatsostart = getmicrotime();
 
 function gatso_start( $name )
 {
@@ -30,11 +31,9 @@ function gatso_stop( $name )
 function gatso_report_html()
 {
 	global $g_gatsos;
+	global $g_gatsostart;
 
-	gatso_stop('_TOTAL');
-
-	$total = $g_gatsos['_TOTAL']['tot'];
-	unset( $g_gatsos['_TOTAL'] );
+	$total = getmicrotime() - $g_gatsostart;
 
 	print "<pre>\n";
 	foreach( $g_gatsos as $name=>$g )

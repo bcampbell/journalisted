@@ -23,8 +23,8 @@ if( $tag )
 }
 else
 {
-	// no tag specified - display summary
-	emit_tag_summaries();
+	// no tag specified - display summary (cache for 12 hours)
+	cache_emit( "tags", "emit_tag_summaries", 60*60*12 );
 }
 
 page_footer();
@@ -86,6 +86,5 @@ function emit_tag_summaries()
 <?php 
 
 }
-
 
 

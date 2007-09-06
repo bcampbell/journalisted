@@ -184,4 +184,55 @@ function jl_send_html_email($to, $from_name, $from_email, $subject, $htmltext )
 }
 
 
+
+/*
+ * Function for cached output of data.
+ * If the cache contains a valid copy of the data then it'll just
+ * be fetched and output.
+ * If the cache entry is missing or out of date, genfunc will
+ * be called to generate it, it will be output and a copy will
+ * be stored in the cache.
+ *
+ * cacheid  - name of the entry in the cache (<= 10 chars)
+ * genfunc - function which generates and outputs the data
+ * maxage   - maximum age (in seconds) before regenerating the data
+ */
+function cache_emit( $cacheid, $genfunc, $maxage )
+{
+	$row = db_getRow( "SELECT EXTRACT(EPOCH FROM NOW()-gentime) as elapsed, content FROM htmlcache WHERE name=?", $cacheid );
+	if( $row )
+	{
+		if( $row['elapsed'] < $maxage )
+		{
+			printf( "<!-- cache: '%s' fetched from cache -->\n", $cacheid );
+			// cache is valid.
+			print $row['content'];
+			printf( "<!-- cache: end '%s' -->\n", $cacheid );
+			return;
+		}
+
+	}
+
+	// if we got this far the cache entry is invalid (missing or expired)
+	printf( "<!-- cache: '%s' regenerated -->\n", $cacheid );
+	ob_start();
+	call_user_func( $genfunc );
+	$content = ob_get_contents();
+	ob_flush();
+	printf( "<!-- cache: end '%s' -->\n", $cacheid );
+
+	if( $row )
+	{
+		db_do( "UPDATE htmlcache SET content=?, gentime=NOW() WHERE name=?",
+			$content, $cacheid );
+	}
+	else
+	{
+		db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)",
+			$cacheid, $content );
+	}
+	db_commit();
+}
+
+
 ?>
