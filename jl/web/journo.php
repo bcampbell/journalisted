@@ -57,8 +57,9 @@ function emit_journo()
 	print "<div id=\"mainpane\">\n";
 	emit_block_overview( $journo );
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
+	emit_block_friendlystats( $journo );
 	emit_block_tags( $journo );
-	emit_block_stats( $journo );
+	emit_block_bynumbers( $journo );
 	print "</div> <!-- end mainpane -->\n";
 
 	/* side pane */
@@ -181,44 +182,91 @@ function emit_blocks_articles( $journo, $allarticles )
 }
 
 
-
-function emit_block_stats( $journo )
+// some friendly (sentence-based) stats
+function emit_block_friendlystats( $journo )
 {
+	$journo_id = $journo['id'];
+
+	// stats for this journo
+	$stats = FetchJournoStats( $journo );
+
+	// get average stats for all journos
+	$avg = FetchAverages();
+
+?>
+<div class="block">
+<h3><?php echo $journo['prettyname']; ?> has written...</h3>
+<ul>
+<?php
+	// more about <X> than anything else
+	if( array_key_exists( 'toptag_alltime', $stats ) )
+	{
+		$link = tag_gen_link( $stats['toptag_alltime'], $journo['ref'] );
+		printf( "<li>More about '<a href =\"%s\">%s</a>' than anything else</li>", $link, $stats['toptag_alltime'] );
+	}
+	// a lot about <Y> in the last month
+	if( array_key_exists( 'toptag_month', $stats ) )
+	{
+		$link = tag_gen_link( $stats['toptag_month'], $journo['ref'] );
+		printf( "<li>A lot about '<a href =\"%s\">%s</a>' in the last month</li>", $link, $stats['toptag_month'] );
+	}
+
+	// more or less articles than average journo?
+	print( "<li>\n" );
+	$diff = (float)$stats['num_articles'] / (float)$avg['num_articles'];
+	if( $diff < 0.8 )
+		print( "fewer articles than the average journalist" );
+	elseif( $diff > 1.2 )
+		print("more articles than the average journalist");
+	else
+		print("about the same number of articles as the average journalist");
+
+	if( $stats['num_articles'] == 1 )
+		printf( " (%d article since %s)", $stats['num_articles'], $stats['first_pubdate'] );
+	else
+		printf( " (%d articles since %s)", $stats['num_articles'], $stats['first_pubdate'] );
+	print( "</li>\n" );
+
+?>
+</ul>
+</div>
+<?php
+
+}
+
+
+
+
+
+function emit_block_bynumbers( $journo )
+{
+	$journo_id = $journo['id'];
+
+	// stats for this journo
+	$stats = FetchJournoStats( $journo );
+
+	// get average stats for all journos
+	$avg = FetchAverages();
 
 ?>
 <div class="block">
 <h3>Journa-list by numbers</h3>
 <?php
 
-	$journo_id = $journo['id'];
-
-	$avg = FetchAverages();
-
-	$sql = "SELECT SUM(s.wordcount) AS wc_total, ".
-			"AVG(s.wordcount) AS wc_avg, ".
-			"MIN(s.wordcount) AS wc_min, ".
-			"MAX(s.wordcount) AS wc_max, ".
-			"to_char( MIN(s.pubdate), 'Month YYYY') AS first_pubdate, ".
-			"COUNT(*) AS num_articles ".
-		"FROM (journo_attr a INNER JOIN article s ON (s.status='a' AND a.article_id=s.id) ) ".
-		"WHERE a.journo_id=?";
-	$row = db_getRow( $sql, $journo_id );
-
-
 	print "<table>\n";
 	printf( "<tr><th></th><th>%s&nbsp;&nbsp;</th><th>Average for all journalists</th></tr>",
 		$journo['prettyname'] );
 
 	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.0f</td></tr>\n",
-		$row['num_articles'], $row['first_pubdate'], $avg['num_articles'] );
+		$stats['num_articles'], $stats['first_pubdate'], $avg['num_articles'] );
 	printf( "<tr><th>Total words written</th><td>%d</td><td>%.0f</td></tr>\n",
-		$row['wc_total'], $avg['wc_total'] );
+		$stats['wc_total'], $avg['wc_total'] );
 	printf( "<tr><th>Average article length</th><td>%d words</td><td>%.0f words</td></tr>\n",
-		$row['wc_avg'], $avg['wc_avg'] );
+		$stats['wc_avg'], $avg['wc_avg'] );
 	printf( "<tr><th>Shortest article</th><td>%d words</td><td>%.0f words</td></tr>\n",
-		$row['wc_min'], $avg['wc_min'] );
+		$stats['wc_min'], $avg['wc_min'] );
 	printf( "<tr><th>Longest article</th><td>%d words</td><td>%.0f words</td></tr>\n",
-		$row['wc_max'], $avg['wc_max'] );
+		$stats['wc_max'], $avg['wc_max'] );
 	print "</table>\n";
 
 ?>
@@ -356,7 +404,6 @@ function emit_block_overview( $journo )
 {
 	$journo_id = $journo['id'];
 
-
 	print "<div class=\"block\">\n";
 	print "<h3>Overview</h3>\n";
 
@@ -410,6 +457,10 @@ function emit_writtenfor( $journo )
 
 function FetchAverages()
 {
+	static $avgs = NULL;
+	if( $avgs !== NULL )
+		return $avgs;
+
 	$refreshinterval = 60*60*2;		// 2 hours
 
 	$avgs = db_getRow( "SELECT date_part('epoch', now()-last_updated) AS elapsed, ".
@@ -468,5 +519,56 @@ function StoreAverages( $avgs )
 		$avgs['num_articles'] );
 	db_commit();
 }
+
+
+// get various stats for this journo
+function FetchJournoStats( $journo )
+{
+	static $ret = NULL;
+	if( $ret !== NULL )
+		return $ret;
+
+	$journo_id = $journo['id'];
+	$ret = array();
+
+	// wordcount stats, number of articles...
+	$sql = "SELECT SUM(s.wordcount) AS wc_total, ".
+			"AVG(s.wordcount) AS wc_avg, ".
+			"MIN(s.wordcount) AS wc_min, ".
+			"MAX(s.wordcount) AS wc_max, ".
+			"to_char( MIN(s.pubdate), 'Month YYYY') AS first_pubdate, ".
+			"COUNT(*) AS num_articles ".
+		"FROM (journo_attr a INNER JOIN article s ON (s.status='a' AND a.article_id=s.id) ) ".
+		"WHERE a.journo_id=?";
+	$row = db_getRow( $sql, $journo_id );
+	$ret = $row;
+
+	// most frequent tag over last month
+	$sql = "SELECT t.tag, sum(t.freq) as mentions ".
+		"FROM ((article_tag t INNER JOIN journo_attr attr ON attr.article_id=t.article_id) ".
+			"INNER JOIN article a ON a.id=t.article_id) ".
+		"WHERE attr.journo_id = ? AND a.status='a' AND a.pubdate>NOW()-interval '1 month' ".
+		"GROUP BY t.tag ".
+		"ORDER BY mentions DESC ".
+		"LIMIT 1";
+	$row = db_getRow( $sql, $journo_id );
+	if( $row )
+		$ret['toptag_month'] = $row['tag'];
+
+	// most frequent tag  of all time
+	$sql = "SELECT t.tag, sum(t.freq) as mentions ".
+		"FROM ((article_tag t INNER JOIN journo_attr attr ON attr.article_id=t.article_id) ".
+			"INNER JOIN article a ON a.id=t.article_id) ".
+		"WHERE attr.journo_id = ? AND a.status='a' ".
+		"GROUP BY t.tag ".
+		"ORDER BY mentions DESC ".
+		"LIMIT 1";
+	$row = db_getRow( $sql, $journo_id );
+	if( $row )
+		$ret['toptag_alltime'] = $row['tag'];
+
+	return $ret;
+}
+
 
 ?>

@@ -36,7 +36,7 @@ function pretty_date( $t )
 		return strftime('%a %e %B %Y',$t);
 }
 
-
+// generate a link for a tag
 function tag_gen_link( $tag, $journo_ref=null )
 {
     if( $journo_ref )
