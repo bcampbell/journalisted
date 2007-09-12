@@ -215,11 +215,11 @@ function emit_block_friendlystats( $journo )
 	print( "<li>\n" );
 	$diff = (float)$stats['num_articles'] / (float)$avg['num_articles'];
 	if( $diff < 0.8 )
-		print( "fewer articles than the average journalist" );
+		print( "Fewer articles than the average journalist" );
 	elseif( $diff > 1.2 )
-		print("more articles than the average journalist");
+		print("More articles than the average journalist");
 	else
-		print("about the same number of articles as the average journalist");
+		print("About the same number of articles as the average journalist");
 
 	if( $stats['num_articles'] == 1 )
 		printf( " (%d article since %s)", $stats['num_articles'], $stats['first_pubdate'] );
