@@ -1,0 +1,32 @@
+#!/usr/bin/env python2.4
+#
+# Tool to scrape journo info from the guardian commentisfree site.
+#
+
+import re
+import urllib2
+import sys
+
+sys.path.append( "../pylib" )
+from BeautifulSoup import BeautifulSoup
+from JL import DB,Byline,Journo
+
+
+contributors_url = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
+
+
+def ParseContributors( html ):
+	soup = BeautifulSoup( html )
+
+	for authordiv in soup.findAll( 'div', { 'class':'authorazentry' } ):
+		name = authordiv.h1.a.string
+		a = authordiv.find( text="Profile" ).parent;
+		profile_url = a['href'];
+		print name, profile_url
+
+
+f = urllib2.urlopen( contributors_url )
+html = f.read()
+f.close()
+ParseContributors(html)
+
