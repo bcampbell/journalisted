@@ -19,78 +19,69 @@ function emit_front_page()
 	$orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
 ?>
+<div id="contenthead">
+<img src="img/paper.png" alt="" />
 
-<h2>At Journa-list, you can:</h2>
-
-<p>
 <form action="list" method="get">
-Find a journalist by name:
-<input type="text" name="name" value=""/>
-<input type="submit" value="Find" />
+ <label for="name">Find out more about a journalist<input type="text" value="type journalist name here" id="name" /></label>
+ <input type="submit" value="Find" />
 </form>
-</p>
 
-<p>
 <form action="/list" method="get">
-Browse Journalists by news outlet:
-<select name="outlet">
+ <label for="outlet">Track down a journalist by news outlet
+  <select name="outlet">
 <?php
-
 	foreach( $orgs as $o )
-	{
-		print "<option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
-	}
-
+		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
 ?>
-</select>
-<input type="submit" value="Find">
+  </select>
+ </label>
+ <input type="submit" value="Find" />
 </form>
 
-<p>
-<form action="article" method="get">
-Find articles containing:
-<input type="text" name="find" value=""/>
-<input type="submit" value="Find" />
-<small>(within the last 7 days)</small>
-</form>
-</p>
 
-<br>
-<br>
+<form action="list" method="get">
+ <label for="find">Find articles containing<input type="text" value="type keywords here" id="find" /></label>
+ <input type="submit" value="Find" />
+</form>
+
+</div>
+
+
+<div id="maincolumn">
 <?php
 
 	emit_stats();
-
+	emit_whoswritingaboutwhat();
 ?>
-<div class="block">
-<h3>Who's writing about what?</h3>
-<p>
-Here are some topics which have appeared frequently in the last 24 hours:
-</p>
-
-<?php
-
-	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
-		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
-		"WHERE a.pubdate > NOW() - interval '24 hours' ".
-		"GROUP BY t.tag ".
-		"ORDER BY freq DESC " .
-		"LIMIT 32";
-	$q = db_query( $sql );
-	tag_cloud_from_query( $q );
-
-?>
-<p>Click one to see who writes about it!</p>
 </div>
+
+<div id="smallcolumn">
+ <div class="boxnarrow">
+   <h2>my journa-list</h2>
+   <ul>
+     <li>a</li>
+     <li>b</li>
+     <li>c</li>
+     <li>d</li>
+     <li>e</li>
+    </ul>
+ </div>
+</div>
+
 <?php
 
 }
+
+
+
 
 function emit_stats()
 {
 
 ?>
-<div class="block">
+<div class="boxwide">
+<h2>Latest</h2>
 <ul>
 <?php
 
@@ -132,5 +123,33 @@ function emit_stats()
 <?php
 }
 
+
+function emit_whoswritingaboutwhat()
+{
+?>
+
+<div class="boxwide">
+<h2>Who's writing about what?</h2>
+<p>
+Here are some topics which have appeared frequently in the last 24 hours:
+</p>
+
+<?php
+
+	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
+		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
+		"WHERE a.pubdate > NOW() - interval '24 hours' ".
+		"GROUP BY t.tag ".
+		"ORDER BY freq DESC " .
+		"LIMIT 32";
+	$q = db_query( $sql );
+	tag_cloud_from_query( $q );
+
+?>
+<p>Click one to see who writes about it!</p>
+</div>
+<?php
+
+}
 
 ?>

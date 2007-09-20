@@ -1,161 +1,242 @@
+/* Backgrounds and colours */
 body {
-background-color: #fff;
-color: #333;
-font-family: Verdana, Arial, Sans-Serif;
+  background-color:#DDDDDD;
 }
 
-#container
-{
-margin: 2em;
-padding: 0;
-background-color: #fff;
-color: #333;
-font-family: Verdana, Arial, Sans-Serif;
-line-height: 130%;
+#menu, #content, #footer {
+  background-color:#FFFFFF;
 }
 
-/*****************************************/
-#top
-{
-padding: 1em;
-background-color: #ddd;
-border: 1px solid gray;
+#head {
+  background-color:#ED1C24;
 }
 
-#top h1
-{
-padding: 0;
-margin: 0;
+.boxnarrow {
+  background-color:#F4F4F4;
 }
 
-
-#hellouser
-{
-	font-size: 0.8em;
-	padding: 0.2em;
-	border: 1px dashed gray;
-	float: right;
+#content form label {
+  color:#CC0E0E;
 }
 
-/*****************************************/
-
-#content
-{
-	margin: 0;
-	padding: 1em .5em .5em .5em;
+#content #contenthead {
+  background-color:#F4F4F4;
 }
 
-/*****************************************/
+#head h1 a span {
+  background-image:url('img/title.png');
+  background-position:top right;
+}
 
-#sidepane
-{
-float: left;
-width: 23%;
-margin: 0;
-padding: 0;
-/* background-color: #ddd; */
-/* border: 1px solid green; */
+#menu ul {
+  background-image:url('img/barcode.png');
+  background-repeat:no-repeat;
+  background-position:center left;
+}
+
+.boxnarrow h2 {
+  background-color:#7F0BAF;
+}
+
+.boxnarrow h3 {
+  background-color:#7F0BAF;
+}
+
+.boxwide h2 {
+  background-color:#999999;
+}
+
+.boxwide h3 {
+  background-color:#999999;
 }
 
 
-/*****************************************/
-
-#mainpane
-{
-/*margin-right: 200px;*/
-/*max-width: 36em;*/
-float: left;
-margin: 0;
-padding: 0;
-width: 75%;
-/* border: 1px solid red; */
+/* Positions, margin and padding */
+body {
+  margin:0 auto 0 auto;
+  padding:0;
 }
 
-#content h2 { margin: 0 0 .5em 0; }
-
-
-
-/*****************************************/
-#footer
-{
-clear: both;
-margin: 0;
-padding: .5em;
-color: #333;
-background-color: #ddd;
-border: 1px solid gray;
+body, #menu, #head {
+  width:750px;
 }
 
-
-/*****************************************/
-
-ul.hnav
-{
-	margin: 0;
-	padding: 1em;
-	list-style-type: none;
+#head {
+  float:left;
+  margin-top:117px;
+  height:106px;
 }
 
-
-ul.hnav li {
-	padding-right: 1em;
-	display: inline;
+#head h1 {
+  margin:0;
+  padding:0;
 }
 
-.hnav a {
+#menu {
+  float:left;
+  margin:-226px auto 0 auto;
+  overflow:auto;
+  width:100%;
 }
 
+#menu ul {
+  height:117px;
+  padding:0 0 0 100px;
+  margin:5px 15px; 
+}
+#menu ul li {
+  width:150px;
+  list-style-type:none;
+  display:inline;
+  float:left;
 
-
-/*****************************************/
-
-
-.block {
-  margin: .2em .2em .8em .2em;
-  padding: 0;
-  color: black;
-  background-color: #eee;	/*white;*/
-  border: 1px solid #ddd;
 }
 
-.block h2 {
-  margin: 0;
-  background-color: #ddd;
-  color: black;
-  font-size: 1.2em;
+#menu ul li h2 {
+  padding:0;
+  margin:0; 
 }
 
-.block h3 {
-  margin: 0;
-  background-color: #ddd;
-  color: black;
-  font-size: 0.9em;
+#menu ul li p {
+  padding:0;
+  margin:0;
+  display:inline;
 }
 
 
-/* For example, to tell people to check their email */
-.loudmessage {
-    font-size: 150%; 
-    font-weight: bold; 
-    text-align: center;
-}
-.loudmessage strong {
-    font-size: 125%;
-    font-weight: bolder; 
+#head h1, #head h2 {
+  float:right;
+  clear:both;
+  margin:0;
+  padding:0;
 }
 
-/* forms */
-
-input.error, input[type=text].error, select.error, input[type=radio].error {
-    border: solid 2px #990000;
-    background-color: #ffcccc;
-}
-
-#errors {
-    color: #ff0000;
-    background-color: #ffcccc;
-    border: solid 2px #990000;
-    padding: 3px;
+#head p {
+  padding:2px;
+  margin:0;
 }
 
 
+
+#head h1 {
+  width:289px;
+  overflow:hidden;
+  height:73px;
+  margin: 0px 0px 0 0;
+}
+#head h1 a span {
+  margin-bottom:-0px;
+  width:289px;
+  height:73px;
+  display:block;
+  position: relative;
+  z-index: 1;
+}
+
+#head h2 {
+  padding:0 30px 0 0; 
+}
+
+#content {
+  padding:10px 5px;
+  clear:both;
+  width:740px;
+  overflow:auto;
+  border-bottom:1px solid #ECECEC;
+}
+
+#content #contenthead {
+  clear:both;
+  overflow:auto;
+  width:100%;
+  margin:0 0 10px 0;
+}
+#content #contenthead img {
+  float:left;
+}
+
+#content form {
+  float:right;
+  width:49%;
+}
+
+#content form label {
+  padding:5px 20px;
+  display:block;
+}
+#content form label input, #content form label select {
+  width:300px;
+}
+
+#maincolumn {
+  float:left;
+  width:75%;
+}
+
+.boxwide h2,h3 {
+  margin:0;
+  height:2em;
+}
+
+#smallcolumn {
+  margin:0 0 0 10px;
+  float:right;
+  width:22%;
+}
+
+.boxnarrow h2,h3 {
+  padding:0;
+  margin:0;
+  height:2em;
+}
+
+#footer {
+  clear:both;
+}
+
+
+/* text styles */
+
+body {
+  font-family: sans-serif;
+}
+
+#head {
+  color:#FFFFFF;
+}
+
+#menu ul li h2 {
+  font-size:1em;
+  font-family:"Times New Roman", Times, Serif;
+}
+#menu ul li p {
+  font-size:0.8em;
+}
+
+#menu ul li.cover h2 {
+  color:#009900;
+}
+
+#menu ul li.all h2 {
+  color:#FF00FF;
+}
+
+#menu ul li.subject h2 {
+  color:#6666FF;
+}
+
+#menu ul li.my h2 {
+  color:#7F0BAF;
+}
+
+
+#head h2 {
+  font-size:0.9em;
+}
+
+.boxwide h2,h3 {
+  font-size:1em;
+}
+.boxnarrow h2,h3 {
+  font-size:1em;
+}

@@ -199,19 +199,27 @@ function jl_send_html_email($to, $from_name, $from_email, $subject, $htmltext )
  */
 function cache_emit( $cacheid, $genfunc, $maxage )
 {
-	$row = db_getRow( "SELECT EXTRACT(EPOCH FROM NOW()-gentime) as elapsed, content FROM htmlcache WHERE name=?", $cacheid );
-	if( $row )
-	{
-		if( $row['elapsed'] < $maxage )
-		{
-			printf( "<!-- cache: '%s' fetched from cache -->\n", $cacheid );
-			// cache is valid.
-			print $row['content'];
-			printf( "<!-- cache: end '%s' -->\n", $cacheid );
-			return;
-		}
+    $cache_disabled = 0;
+    if( defined('OPTION_JL_DISABLE_CACHE') && OPTION_JL_DISABLE_CACHE ==1 )
+        $cache_disabled = 1;
 
-	}
+
+    if( !$cache_disabled )
+    {
+        $row = db_getRow( "SELECT EXTRACT(EPOCH FROM NOW()-gentime) as elapsed, content FROM htmlcache WHERE name=?", $cacheid );
+        if( $row )
+        {
+            if( $row['elapsed'] < $maxage )
+            {
+                printf( "<!-- cache: '%s' fetched from cache -->\n", $cacheid );
+                // cache is valid.
+                print $row['content'];
+                printf( "<!-- cache: end '%s' -->\n", $cacheid );
+                return;
+            }
+
+        }
+    }
 
 	// if we got this far the cache entry is invalid (missing or expired)
 	printf( "<!-- cache: '%s' regenerated -->\n", $cacheid );
@@ -221,17 +229,20 @@ function cache_emit( $cacheid, $genfunc, $maxage )
 	ob_flush();
 	printf( "<!-- cache: end '%s' -->\n", $cacheid );
 
-	if( $row )
-	{
-		db_do( "UPDATE htmlcache SET content=?, gentime=NOW() WHERE name=?",
-			$content, $cacheid );
-	}
-	else
-	{
-		db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)",
-			$cacheid, $content );
-	}
-	db_commit();
+    if( !$cache_disabled )
+    {
+        if( $row )
+        {
+            db_do( "UPDATE htmlcache SET content=?, gentime=NOW() WHERE name=?",
+                $content, $cacheid );
+        }
+        else
+        {
+            db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)",
+                $cacheid, $content );
+        }
+        db_commit();
+    }
 }
 
 

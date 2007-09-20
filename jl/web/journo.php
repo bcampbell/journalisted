@@ -54,17 +54,19 @@ function emit_journo()
 
 	/* main pane */
 
-	print "<div id=\"mainpane\">\n";
+	print "<div id=\"maincolumn\">\n";
 	emit_block_overview( $journo );
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 	emit_block_friendlystats( $journo );
 	emit_block_tags( $journo );
 	emit_block_bynumbers( $journo );
-	print "</div> <!-- end mainpane -->\n";
+	print "</div> <!-- end maincolumn -->\n";
 
-	/* side pane */
 
-	print "<div id=\"sidepane\">\n\n";
+
+	/* small column */
+
+	print "<div id=\"smallcolumn\">\n\n";
 
 	emit_block_links( $journo );
 	$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
@@ -73,18 +75,19 @@ function emit_journo()
 	//emit_block_tags( $journo );
 	emit_block_searchbox( $journo );
 
-	?>
-	<div class="block">
-	<h3>Something wrong/missing?</h3>
-	<p>
-	Have we got the wrong information about this journalist?
-	<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a>
-	</p>
-	</div>
+?>
 
-	<?php
+<div class="boxnarrow">
+ <h3>Something wrong/missing?</h3>
+<p>
+Have we got the wrong information about this journalist?
+<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a>
+</p>
+</div>
 
-	print "</div> <!-- end sidepane -->\n";	// end sidepane
+<?php
+
+	print "</div> <!-- end smallcolumn -->\n";
 }
 
 
@@ -94,7 +97,7 @@ function emit_blocks_articles( $journo, $allarticles )
 {
 
 ?>
-<div class="block">
+<div class="boxwide">
 <h3>Most recent article</h3>
 <?php
 
@@ -139,7 +142,7 @@ function emit_blocks_articles( $journo, $allarticles )
 ?>
 </div>
 
-<div class="block">
+<div class="boxwide">
 <h3>Previous articles</h3>
 <ul>
 <?php
@@ -194,7 +197,7 @@ function emit_block_friendlystats( $journo )
 	$avg = FetchAverages();
 
 ?>
-<div class="block">
+<div class="boxwide">
 <h3><?php echo $journo['prettyname']; ?> has written...</h3>
 <ul>
 <?php
@@ -249,7 +252,7 @@ function emit_block_bynumbers( $journo )
 	$avg = FetchAverages();
 
 ?>
-<div class="block">
+<div class="boxwide">
 <h3>Journa-list by numbers</h3>
 <?php
 
@@ -288,7 +291,7 @@ function emit_block_tags( $journo )
 	$prettyname = $journo['prettyname'];
 
 ?>
-<div class="block">
+<div class="boxwide">
 <h3>The topics <?=$prettyname; ?> mentions most:</h3>
 <?php
 
@@ -330,7 +333,7 @@ function emit_block_links( $journo )
 	if( !$row )
 		return;		/* no links to show */
 
-	print "<div class=\"block\">\n";
+	print "<div class=\"boxnarrow\">\n";
 	print "<h3>Elsewhere on the web</h3>\n";
 	print "<ul>\n";
 	while( $row )
@@ -350,7 +353,7 @@ function emit_block_rss( $journo, $rssurl )
 {
 
 ?>
-<div class="block">
+<div class="boxnarrow">
 <h3>Newsfeed</h3>
 <a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
 Articles by <?php print $journo['prettyname']; ?>
@@ -365,7 +368,7 @@ function emit_block_alerts( $journo )
 {
 
 ?>
-<div class="block">
+<div class="boxnarrow">
 <h3>My Journa-list</h3>
 <a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
 </div>
@@ -381,7 +384,7 @@ function emit_block_searchbox( $journo )
 {
 
 ?>
-<div class="block">
+<div class="boxnarrow">
 <h3>Find</h3>
 <p>
 <form action="article" method="get">
@@ -404,7 +407,7 @@ function emit_block_overview( $journo )
 {
 	$journo_id = $journo['id'];
 
-	print "<div class=\"block\">\n";
+	print "<div class=\"boxwide\">\n";
 	print "<h3>Overview</h3>\n";
 
 	emit_writtenfor( $journo );
