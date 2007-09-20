@@ -40,8 +40,8 @@ def RebuildTags():
 	conn = DB.Connect()
 
 	c = conn.cursor()
-	c.execute( "DELETE FROM article_tag WHERE article_id<1000" );
-	c.execute( "SELECT id, content FROM article WHERE status='a' and id<1000" )
+	c.execute( "DELETE FROM article_tag" );
+	c.execute( "SELECT id, content FROM article WHERE status='a'" )
 	while 1:
 		row=c.fetchone()
 		if not row:
