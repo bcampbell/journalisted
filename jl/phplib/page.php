@@ -41,6 +41,22 @@ function page_header( $title, $params=array() )
   <p><?php echo $datestring; ?></p>
   <p>media standards trust</p>
  </div>
+
+<?php
+	if( $P )
+	{
+		if ($P->name_or_blank())
+			$name = $P->name;
+		else
+			$name = $P->email;
+		print "<div id=\"hellouser\">\n";
+		print "Hello, {$name}\n";
+		print "[<a href=\"/logout\">log out</a>]<br>\n";
+		print "<small>(<a href=\"/logout\">this isn't you? click here</a>)</small><br>\n";
+		print "</div>\n";
+	}
+?>
+
  <div id="menu">
   <ul>
     <li class="cover">

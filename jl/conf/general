@@ -17,4 +17,5 @@ define('OPTION_WEB_DOMAIN', 'journa-list.dev');
 define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
 
 
+define('OPTION_JL_DISABLE_CACHE', '1');
 ?>

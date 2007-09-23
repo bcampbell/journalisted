@@ -9,24 +9,46 @@ import sys
 
 sys.path.append( "../pylib" )
 from BeautifulSoup import BeautifulSoup
-from JL import DB,Byline,Journo
+from JL import ukmedia
 
 
 contributors_url = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
 
 
 def ParseContributors( html ):
+	"""parse the CIF contributors a-z page, returns a list of profile pages found"""
+
 	soup = BeautifulSoup( html )
 
+	profiles = []
 	for authordiv in soup.findAll( 'div', { 'class':'authorazentry' } ):
 		name = authordiv.h1.a.string
+		name = ukmedia.DescapeHTML( name )
 		a = authordiv.find( text="Profile" ).parent;
-		profile_url = a['href'];
-		print name, profile_url
+		profile_url = a['href']
+#		print name, profile_url
 
+		profiles.append( {'name': name, 'profile_url': profile_url } )
+
+	return profiles
+
+
+def Output( profiles, fout ):
+	encoding = 'utf-8'
+	fout.write( "<?xml version=\"1.0\" encoding=\"%s\"?>\n" %(encoding) )
+	fout.write( " <journodata>" )
+	for p in profiles:
+		fout.write( "  <journo>\n" )
+		fout.write( "   <name>%s</name>\n" %( p['name'].encode(encoding) ) )
+		fout.write( "   <weblink url=\"%s\">%s</weblink>\n" % ( p['profile_url'], 'Profile page on Comment Is Free' ) )
+		fout.write( "  </journo>\n" )
+	fout.write( " </journodata>\n" )
+	fout.write( "</xml>\n" );
 
 f = urllib2.urlopen( contributors_url )
 html = f.read()
 f.close()
-ParseContributors(html)
+profiles = ParseContributors(html)
+Output( profiles, sys.stdout )
+
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env python2.4
+#
+# Tool for managing tags in the database
+#
 
 import sys
 
@@ -37,25 +40,62 @@ def RemoveBlacklistedTags():
 
 
 def RebuildTags():
+	"""Rebuild the entire article_tag table"""
 	conn = DB.Connect()
 
 	c = conn.cursor()
-	c.execute( "DELETE FROM article_tag" );
-	c.execute( "SELECT id, content FROM article WHERE status='a'" )
-	while 1:
-		row=c.fetchone()
-		if not row:
-			break
 
-		article_id = row['id']
-		print "doing %d" %(article_id)
-		article_content = row['content'].decode('utf-8')
-#		c2 = conn.cursor()
-#		c2.execute( "DELETE FROM article_tag WHERE article_id=%s", article_id )
-#		c2.close()
-		Tags.Generate( conn, article_id, article_content )
+	# take a snapshot of the highest id at this time
+	# (assume any new articles added while we're running will have tags
+	# generated for them anyway)
+	c.execute( "SELECT MAX(id) FROM article" )
+	row = c.fetchone()
+	highestid = row[0]
+	print highestid
 
-	conn.commit()
+
+	# run through in chunks, 1000 at a time
+
+	overallstart = 0
+	overallend = highestid + 1
+	chunksize = 1000
+
+
+	totalchunks = (overallend-overallstart)/chunksize
+	chunknum = 0
+
+	chunkstart = overallstart
+	while chunkstart < overallend:
+		chunkend = chunkstart + chunksize
+		if chunkend > overallend:
+			chunkend = overallend
+
+		# process chunk where id in range [chunkstart, chunkend)
+		print "chunk %d/%d (%d-%d)" % (chunknum,totalchunks,chunkstart,chunkend)
+
+		print " delete"
+		c.execute( "DELETE FROM article_tag WHERE article_id>=%s AND article_id<%s", chunkstart, chunkend )
+
+		print " generate"
+		c.execute( "SELECT id, content FROM article WHERE status='a' AND id>=%s AND id<%s", chunkstart, chunkend )
+		while 1:
+			row=c.fetchone()
+			if not row:
+				break
+
+			article_id = row['id']
+
+			article_content = row['content'].decode('utf-8')
+			Tags.Generate( conn, article_id, article_content )
+
+		print " commit"
+		conn.commit()
+
+		# next chunk starts where this one left off
+		chunkstart = chunkend
+		chunknum = chunknum + 1
+
+	print "done"
 
 def Usage():
 	print "Usage:"
