@@ -1,8 +1,5 @@
 <?php
 
-/* 
- * TODO: per week stats for journo (articles written this week)
-*/
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
@@ -35,8 +32,18 @@ $title = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
 page_header( $title, $pageparams );
 
 // emit the main part of the page (cached for up to 2 hours)
-$cacheid = sprintf( "j%d", $journo['id'] );
-cache_emit( $cacheid, "emit_journo", 60*60*2 );
+
+if( get_http_var( 'allarticles', 'no' ) != 'yes' )
+{
+	// use caching
+	$cacheid = sprintf( "j%d", $journo['id'] );
+	cache_emit( $cacheid, "emit_journo", 60*60*2 );
+}
+else
+{
+	// if we want to list all articles, don't cache!
+	emit_journo();
+}
 
 page_footer();
 
@@ -407,12 +414,12 @@ function emit_block_overview( $journo )
 {
 	$journo_id = $journo['id'];
 
-	print "<div class=\"boxwide\">\n";
-	print "<h3>Overview</h3>\n";
+//	print "<div class=\"boxwide\">\n";
+//	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 	emit_writtenfor( $journo );
 
-	print "</div>\n\n";
+//	print "</div>\n\n";
 
 
 }
@@ -429,34 +436,42 @@ function emit_writtenfor( $journo )
 		"FROM article a INNER JOIN journo_attr j ON (a.status='a' AND a.id=j.article_id) ".
 		"WHERE j.journo_id=?",
 		$journo_id );
-	printf( "<p>\n%s writes for:\n", $journo['prettyname'] );
-	print "<ul>\n";
+
+	$orglist = array();
 	foreach( $writtenfor as $row )
 	{
 		$srcorg = $row['srcorg'];
-
 		// get jobtitles seen for this org:	
 		$titles = db_getAll( "SELECT jobtitle FROM journo_jobtitle WHERE journo_id=? AND org_id=?",
 			$journo_id, $srcorg );
-		$orgname = $orgs[ $srcorg ];
+		$titlelist = array();
+		foreach( $titles as $t )
+			$titlelist[] = $t['jobtitle'];
 
-		print "<li>";
-		print "$orgname";
-
-		if( $titles )
-		{
-			print "\n<ul>\n";
-			foreach( $titles as $t )
-				printf( "<li>%s</li>\n", $t['jobtitle']);
-			print "</ul>\n";
-		}
-		print "</li>\n";
+		$s = "<span class=\"publication\">" . $orgs[ $srcorg ] . "</span>";
+		if( !empty( $titlelist ) )
+			$s .= ' (' . implode( ', ', $titlelist) . ')';
+		$orglist[] = $s;
 	}
-	print "</ul>\n</p>\n";
+
+	printf( "<p>Writes for %s</p>", PrettyImplode( $orglist) );
+
 	gatso_stop( 'writtenfor' );
 }
 
 
+// join strings using ", " and " and "
+// eg ("foo", "bar", "wibble") => "foo, bar and wibble"
+function PrettyImplode( $parts)
+{
+	if( empty( $parts ) )
+		return '';
+	$last = array_pop( $parts );
+	if( empty( $parts ) )
+		return $last;
+	else
+		return implode( ', ', $parts ) . " and " . $last;
+}
 
 function FetchAverages()
 {
