@@ -68,7 +68,7 @@ function page_header( $title, $params=array() )
       <p>alphabetical list of uk journalists</p>
     </li>
     <li class="subject">
-      <h2><a href="/list">Subject Index</a></h2>
+      <h2><a href="/tags">Subject Index</a></h2>
       <p>see what journalists are writing about</p>
     </li>
     <li class="my">

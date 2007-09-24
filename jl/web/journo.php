@@ -550,7 +550,7 @@ function FetchJournoStats( $journo )
 	$sql = "SELECT t.tag, sum(t.freq) as mentions ".
 		"FROM ((article_tag t INNER JOIN journo_attr attr ON attr.article_id=t.article_id) ".
 			"INNER JOIN article a ON a.id=t.article_id) ".
-		"WHERE attr.journo_id = ? AND a.status='a' AND a.pubdate>NOW()-interval '1 month' ".
+		"WHERE t.kind<>'c' AND attr.journo_id = ? AND a.status='a' AND a.pubdate>NOW()-interval '1 month' ".
 		"GROUP BY t.tag ".
 		"ORDER BY mentions DESC ".
 		"LIMIT 1";
@@ -562,7 +562,7 @@ function FetchJournoStats( $journo )
 	$sql = "SELECT t.tag, sum(t.freq) as mentions ".
 		"FROM ((article_tag t INNER JOIN journo_attr attr ON attr.article_id=t.article_id) ".
 			"INNER JOIN article a ON a.id=t.article_id) ".
-		"WHERE attr.journo_id = ? AND a.status='a' ".
+		"WHERE t.kind<>'c' AND attr.journo_id = ? AND a.status='a' ".
 		"GROUP BY t.tag ".
 		"ORDER BY mentions DESC ".
 		"LIMIT 1";

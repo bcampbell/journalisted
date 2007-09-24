@@ -106,10 +106,18 @@ function emit_stats()
 
 	// "<N> journos have written about <X> today"
 	// how many journos have mentioned each topic over the last day?
-	// Cheesy hack - discard the top 15 entries as they're likely to be "britain" 
-	// "british" "us" etc etc etc
-	// so we'll just arbitarily pick the 15th.
-	$sql ="SELECT t.tag, count(DISTINCT attr.journo_id) FROM ((article_tag t INNER JOIN journo_attr attr ON t.article_id=attr.article_id) INNER JOIN article a ON a.id=t.article_id ) WHERE a.status='a' AND a.pubdate>=NOW() - interval '1 day' AND a.pubdate<NOW() GROUP BY t.tag ORDER BY count DESC LIMIT 1 OFFSET 15";
+	// Cheesy hack - discard the top entries as they're likely to be
+	// not so interesting (brown, london, government,labour etc...)
+	// so we'll just arbitarily pick the 10th.
+	$sql = <<<EOT
+SELECT t.tag, count(DISTINCT attr.journo_id)
+	FROM ((article_tag t INNER JOIN journo_attr attr ON t.article_id=attr.article_id) INNER JOIN article a ON a.id=t.article_id )
+	WHERE t.kind<>'c' AND a.status='a' AND a.pubdate>=NOW() - interval '1 day' AND a.pubdate<NOW()
+	GROUP BY t.tag
+	ORDER BY count DESC
+	LIMIT 1
+	OFFSET 10
+EOT;
 	$r = db_getRow( $sql );
 	if( $r )
 	{
@@ -137,7 +145,7 @@ Here are some topics which have appeared frequently in the last 24 hours:
 <?php
 
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
-		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
+		"FROM ( article a INNER JOIN article_tag t ON ( a.id=t.article_id AND t.kind <> 'c') ) ".
 		"WHERE a.pubdate > NOW() - interval '24 hours' ".
 		"GROUP BY t.tag ".
 		"ORDER BY freq DESC " .
