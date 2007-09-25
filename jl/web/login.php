@@ -307,7 +307,7 @@ function login_form($errors = array()) {
 <p>
 <input type="radio" name="loginradio" value="SendEmailForgotten" id="loginradio3" <?=get_http_var("loginradio") == 'SendEmailForgotten' ? 'checked' : ''?>><label for="loginradio3"><?=_("I've forgotten or didn't set a password") ?></label>
 <br>
-<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password on your Alerts page)") ?></small>
+<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password on your My Journa-list page)") ?></small>
 <br>
 </p>
 

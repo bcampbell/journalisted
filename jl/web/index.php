@@ -11,6 +11,19 @@ page_header( "" );
 // recalculate front page once every 4 hours
 cache_emit( 'frontpage', 'emit_front_page', 4*60*60 );
 
+// smallcolumn not part of cached section - depends on user if logged in
+?>
+<div id="smallcolumn">
+<?php
+
+$P = person_if_signed_on(true);
+if( $P )
+	emit_my_journos_box($P);
+// else what?
+?>
+</div>
+<?php
+
 page_footer();
 
 
@@ -23,25 +36,25 @@ function emit_front_page()
 <img src="img/paper.png" alt="" />
 
 <form action="list" method="get">
- <label for="name">Find out more about a journalist<input type="text" value="type journalist name here" id="name" /></label>
- <input type="submit" value="Find" />
+ <label for="name">Find out more about a journalist</label>
+<input type="text" value="" title="type journalist name here" id="name" /><input type="submit" value="Find" />
 </form>
 
 <form action="/list" method="get">
- <label for="outlet">Track down a journalist by news outlet
+ <label for="outlet">Track down a journalist by news outlet</label>
   <select name="outlet">
 <?php
 	foreach( $orgs as $o )
 		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
 ?>
   </select>
- </label>
  <input type="submit" value="Find" />
 </form>
 
 
 <form action="list" method="get">
- <label for="find">Find articles containing<input type="text" value="type keywords here" id="find" /></label>
+ <label for="find">Find articles containing</label>
+ <input type="text" value="" title="type keywords here" id="find" />
  <input type="submit" value="Find" />
 </form>
 
@@ -56,18 +69,6 @@ function emit_front_page()
 ?>
 </div>
 
-<div id="smallcolumn">
- <div class="boxnarrow">
-   <h2>my journa-list</h2>
-   <ul>
-     <li>a</li>
-     <li>b</li>
-     <li>c</li>
-     <li>d</li>
-     <li>e</li>
-    </ul>
- </div>
-</div>
 
 <?php
 
@@ -158,6 +159,32 @@ Here are some topics which have appeared frequently in the last 24 hours:
 </div>
 <?php
 
+}
+
+
+function emit_my_journos_box( &$P )
+{
+?>
+ <div class="boxnarrow">
+  <h2>My Journa-lists</h2>
+<?php
+
+    $P = person_if_signed_on(true); /* Don't renew any login cookie. */
+	if( $P )	
+	$q = db_query( "SELECT a.id,a.journo_id, j.prettyname, j.ref " .
+		"FROM (alert a INNER JOIN journo j ON j.id=a.journo_id) " .
+		"WHERE a.person_id=? ORDER BY j.lastname", $P->id );
+	print "  <ul>\n";
+	while( $row=db_fetch_array($q) )
+	{
+		$journourl = "/{$row['ref']}";
+		printf( "   <li><a href=\"%s\">%s</a></li>\n", $journourl, $row['prettyname'] );
+	}
+	print( "  </ul>\n" );
+
+?>
+ </div>
+<?php
 }
 
 ?>

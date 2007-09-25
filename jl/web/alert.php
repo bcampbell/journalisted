@@ -23,7 +23,7 @@ if( get_http_var( 'Add' ) )
 	$r = array(
 		'reason_web' => 'Before adding the journalist to your list, we need to confirm your email address.',
 		'reason_email' => "You'll then be emailed when the journalist writes anything",
-		'reason_email_subject' => "Set up an email alert at journa-list"
+		'reason_email_subject' => "Set up an email alert at Journa-list"
 		);
 }
 else if( get_http_var( 'Remove' ) )
@@ -32,16 +32,16 @@ else if( get_http_var( 'Remove' ) )
 	$r = array(
 		'reason_web' => 'Before removing the journalist from your list, we need to confirm your email address.',
 		'reason_email' => "Your email alert will then be removed",
-		'reason_email_subject' => "Remove an email alert at journa-list"
+		'reason_email_subject' => "Remove an email alert at Journa-list"
 		);
 }
 else
 {
 	// default - just viewing existing alerts (or updating password)
 	$r = array(
-		'reason_web' => "To view your alerts, we need to check your email address.",
-		'reason_email' => "Then you will be able to view your alerts.",
-		'reason_email_subject' => 'View your alerts at Journa-list'
+		'reason_web' => "To use My Journa-list, we need to check your email address.",
+		'reason_email' => "Then you will be able to use My Journa-list.",
+		'reason_email_subject' => 'My Journa-list: email confirmation'
 		);
 }
 
@@ -55,12 +55,17 @@ $P = person_signon($r);
 /* OK, if we get here, we've got a logged-in user and can start our output! */ 
 page_header( "My Journa-list" );
 
-print"<div id=\"mainpane\">\n";
+print"<div id=\"maincolumn\">\n";
 
 ?>
+<div class="boxwide">
 <h2>My Journa-list</h2>
-Create your own newspaper! Sort of.<br>
-Tell us who your favourite journalists are and we'll email you whenever they write an article.<br>
+<p>
+Create your own newspaper! Sort of.
+</p>
+<p>
+Tell us who your favourite journalists are and we'll email you whenever they write an article.
+</p>
 <?php
 
 if( get_http_var( 'Add' ) )
@@ -80,8 +85,9 @@ alert_emit_list( $P->id );
 print "<br>\n";
 EmitLookupForm();
 print"</div>\n";
+print"</div>\n";
 
-print"<div id=\"sidepane\">\n";
+print"<div id=\"smallcolumn\">\n";
 EmitChangePasswordBox();
 print"</div>\n";
 
@@ -149,7 +155,7 @@ function EmitChangePasswordBox()
     $has_password = $P->has_password();
 
 ?>
-<div class="block">
+<div class="boxnarrow">
 <h2><?=$has_password ? _('Change password') : _('Set password') ?></h2>
 <?php
 	if( !$q_UpdateDetails && !$has_password ) {
@@ -189,8 +195,8 @@ email address every time you want to manage your journalist list.</p>
     <?=_('New password:') ?> <input type="password" name="pw1" id="pw1" size="15">
     <br><?=_('New password, again:') ?> <input type="password" name="pw2" id="pw2" size="10">
     <input name="submit" type="submit" value="<?=_('Submit') ?>"></p>
-    </form>
-    </div>
+</form>
+</div>
 
     <?
 }

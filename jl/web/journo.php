@@ -57,7 +57,7 @@ page_footer();
 function emit_journo()
 {
 	global $journo;
-	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
+//	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 	/* main pane */
 
@@ -341,7 +341,7 @@ function emit_block_links( $journo )
 		return;		/* no links to show */
 
 	print "<div class=\"boxnarrow\">\n";
-	print "<h3>Elsewhere on the web</h3>\n";
+	print "<h3>On the web</h3>\n";
 	print "<ul>\n";
 	while( $row )
 	{
@@ -397,7 +397,7 @@ function emit_block_searchbox( $journo )
 <form action="article" method="get">
 <input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
 Find articles by <?php echo $journo['prettyname'];?> containing:
-<input type="text" name="find" value=""/>
+<input id="findarticles" type="text" name="find" value=""/>
 <input type="submit" value="Find" />
 </form>
 </p>
@@ -414,12 +414,12 @@ function emit_block_overview( $journo )
 {
 	$journo_id = $journo['id'];
 
-//	print "<div class=\"boxwide\">\n";
-//	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
+	print "<div class=\"boxwide\">\n";
+	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 	emit_writtenfor( $journo );
 
-//	print "</div>\n\n";
+	print "</div>\n\n";
 
 
 }

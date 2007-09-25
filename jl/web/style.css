@@ -1,9 +1,10 @@
 /* Backgrounds and colours */
 body {
   background-color:#DDDDDD;
+ font-size: smaller;
 }
 
-#menu, #content, #footer {
+#content {
   background-color:#FFFFFF;
 }
 
@@ -12,7 +13,7 @@ body {
 }
 
 .boxnarrow {
-  background-color:#F4F4F4;
+  background-color:#E3E3E3;
 }
 
 #content form label {
@@ -28,19 +29,23 @@ body {
   background-position:top right;
 }
 
+/*
 #menu ul {
   background-image:url('img/barcode.png');
   background-repeat:no-repeat;
   background-position:center left;
 }
+*/
 
 .boxnarrow h2 {
   background-color:#7F0BAF;
 }
 
+
 .boxnarrow h3 {
   background-color:#7F0BAF;
 }
+
 
 .boxwide h2 {
   background-color:#999999;
@@ -63,8 +68,10 @@ body, #menu, #head {
 
 #head {
   float:left;
-  margin-top:117px;
+/*  width:100%; */
+/*  margin-top:117px;
   height:106px;
+*/
 }
 
 #head h1 {
@@ -72,36 +79,58 @@ body, #menu, #head {
   padding:0;
 }
 
+#hellouser {
+  float:left;
+  padding-top: .1em;
+  padding-bottom: .1em;
+  overflow: auto;
+  width:100%;
+  text-align: right;
+  font-size: small;
+  background-color: #FFFFFF;
+}
+
 #menu {
   float:left;
+  padding: 0;
+  margin: 0;
+/*
   margin:-226px auto 0 auto;
+  height:117px;
+*/
   overflow:auto;
   width:100%;
+
+/*
+  background-image:url('img/barcode.png');
+  background-repeat:no-repeat;
+  background-position:center left;
+*/
+  background-color: #AA0000;
 }
 
 #menu ul {
-  height:117px;
-  padding:0 0 0 100px;
-  margin:5px 15px; 
+/*  padding:0 0 0 100px;
+  margin:0px 15px;
+*/
+  margin 0;
+  padding 0;
 }
+
 #menu ul li {
   width:150px;
   list-style-type:none;
   display:inline;
   float:left;
-
+  padding: 4px;
+  margin: 0;
 }
 
-#menu ul li h2 {
-  padding:0;
-  margin:0; 
-}
+#menu ul li { background-color: #AA0000; }
 
-#menu ul li p {
-  padding:0;
-  margin:0;
-  display:inline;
-}
+#menu ul li:hover { background-color:#ED1C24; }
+
+#menu ul li a { color: #FFFFFF; }
 
 
 #head h1, #head h2 {
@@ -112,7 +141,7 @@ body, #menu, #head {
 }
 
 #head p {
-  padding:2px;
+  padding:.4em;
   margin:0;
 }
 
@@ -155,17 +184,17 @@ body, #menu, #head {
   float:left;
 }
 
-#content form {
+#contenthead form {
   float:right;
-  width:49%;
+  width:48%;
 }
 
-#content form label {
-  padding:5px 20px;
+#contenthead form label {
+  padding:5px 0px;
   display:block;
 }
-#content form label input, #content form label select {
-  width:300px;
+#contenthead form label input, #contenthead form label select {
+  width:200px;
 }
 
 #maincolumn {
@@ -185,13 +214,26 @@ body, #menu, #head {
 }
 
 .boxnarrow h2,h3 {
-  padding:0;
-  margin:0;
-  height:2em;
+  padding:.1em;
+/*  margin:0;
+  height:2em;*/
+}
+
+.boxnarrow ul {
+	padding-left: 20px;
+}
+
+
+/* kludge to stop findarticles input element overrunning boxnarrow and forcing a scrollbar */
+.boxnarrow form input#findarticles {
+	width: 80%;
 }
 
 #footer {
   clear:both;
+  background-color:#AA0000;
+  color: #FFFFFF;
+  padding: .5em;
 }
 
 
@@ -205,38 +247,34 @@ body {
   color:#FFFFFF;
 }
 
-#menu ul li h2 {
-  font-size:1em;
-  font-family:"Times New Roman", Times, Serif;
-}
-#menu ul li p {
-  font-size:0.8em;
-}
 
-#menu ul li.cover h2 {
+
+/*
+#menu ul li.cover a {
   color:#009900;
 }
 
-#menu ul li.all h2 {
+#menu ul li.all a {
   color:#FF00FF;
 }
 
-#menu ul li.subject h2 {
+#menu ul li.subject a {
   color:#6666FF;
 }
 
-#menu ul li.my h2 {
+#menu ul li.my a {
   color:#7F0BAF;
 }
+*/
 
 
 #head h2 {
   font-size:0.9em;
 }
 
-.boxwide h2,h3 {
-  font-size:1em;
-}
-.boxnarrow h2,h3 {
-  font-size:1em;
-}
+.boxwide h2 { font-size:1.3em; }
+.boxnarrow h2 { font-size:1em; }
+
+.boxwide h3 { font-size:1em; }
+.boxnarrow h3 { font-size:1em; }
+
