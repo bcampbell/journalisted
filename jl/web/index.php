@@ -54,8 +54,8 @@ function emit_front_page()
 
 
 <form action="/article" method="get">
- <label for="find">Find articles containing</label>
- <input class="inputhack" type="text" value="" title="type keywords here" id="find" name="find" />
+ <label for="find">Who's writing about a subject in the news</label>
+ <input class="inputhack" type="text" value="" title="type subject here" id="find" name="find" />
  <input type="submit" value="Find" />
 </form>
 
