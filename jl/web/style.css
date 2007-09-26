@@ -1,7 +1,7 @@
 /* Backgrounds and colours */
 body {
   background-color:#DDDDDD;
- font-size: smaller;
+/*  font-size: smaller; */
 }
 
 #content {
@@ -28,6 +28,8 @@ body {
   background-image:url('img/title.png');
   background-position:top right;
 }
+
+#head a { color: #FFFFFF; }
 
 /*
 #menu ul {
@@ -98,27 +100,27 @@ body, #menu, #head {
   margin:-226px auto 0 auto;
   height:117px;
 */
+/*  height: 90px; */
   overflow:auto;
   width:100%;
 
-/*
   background-image:url('img/barcode.png');
   background-repeat:no-repeat;
   background-position:center left;
-*/
-  background-color: #AA0000;
+  background-color: #FFFFFF;
 }
 
 #menu ul {
-/*  padding:0 0 0 100px;
+  padding:0 0 0 90px;
   margin:0px 15px;
-*/
-  margin 0;
+
+/*  margin 0;
   padding 0;
+*/
 }
 
 #menu ul li {
-  width:150px;
+  width:140px;
   list-style-type:none;
   display:inline;
   float:left;
@@ -126,9 +128,9 @@ body, #menu, #head {
   margin: 0;
 }
 
-#menu ul li { background-color: #AA0000; }
+#menu ul li { background-color: #FFFFFF; }
 
-#menu ul li:hover { background-color:#ED1C24; }
+/*#menu ul li:hover { background-color:#ED1C24; }*/
 
 #menu ul li a { color: #FFFFFF; }
 
@@ -193,8 +195,10 @@ body, #menu, #head {
   padding:5px 0px;
   display:block;
 }
-#contenthead form label input, #contenthead form label select {
-  width:200px;
+
+/* used for input elements on front page */
+.inputhack {
+  width: 260px;
 }
 
 #maincolumn {
@@ -231,8 +235,8 @@ body, #menu, #head {
 
 #footer {
   clear:both;
-  background-color:#AA0000;
-  color: #FFFFFF;
+  background-color:#FFFFFF;
+  color: #888888;
   padding: .5em;
 }
 
@@ -249,7 +253,7 @@ body {
 
 
 
-/*
+
 #menu ul li.cover a {
   color:#009900;
 }
@@ -265,7 +269,7 @@ body {
 #menu ul li.my a {
   color:#7F0BAF;
 }
-*/
+
 
 
 #head h2 {

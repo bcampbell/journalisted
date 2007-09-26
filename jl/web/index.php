@@ -19,7 +19,8 @@ cache_emit( 'frontpage', 'emit_front_page', 4*60*60 );
 $P = person_if_signed_on(true);
 if( $P )
 	emit_my_journos_box($P);
-// else what?
+else
+	emit_recent_journos_box();
 ?>
 </div>
 <?php
@@ -35,14 +36,14 @@ function emit_front_page()
 <div id="contenthead">
 <img src="img/paper.png" alt="" />
 
-<form action="list" method="get">
+<form action="/list" method="get">
  <label for="name">Find out more about a journalist</label>
-<input type="text" value="" title="type journalist name here" id="name" /><input type="submit" value="Find" />
+<input type="text" class="inputhack" value="" title="type journalist name here" id="name" name="name" /><input type="submit" value="Find" />
 </form>
 
 <form action="/list" method="get">
  <label for="outlet">Track down a journalist by news outlet</label>
-  <select name="outlet">
+  <select class="inputhack" name="outlet">
 <?php
 	foreach( $orgs as $o )
 		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
@@ -52,9 +53,9 @@ function emit_front_page()
 </form>
 
 
-<form action="list" method="get">
+<form action="/article" method="get">
  <label for="find">Find articles containing</label>
- <input type="text" value="" title="type keywords here" id="find" />
+ <input class="inputhack" type="text" value="" title="type keywords here" id="find" name="find" />
  <input type="submit" value="Find" />
 </form>
 
@@ -184,6 +185,52 @@ function emit_my_journos_box( &$P )
 
 ?>
  </div>
+<?php
+
+
+}
+
+
+function emit_recent_journos_box()
+{
+?>
+ <div class="boxnarrow">
+
+  <p>Some journalists who have written articles today:</p>
+  <ul>
+<?php
+
+	// get 20 of them, just in case some have written multiple articles...
+	$sql = <<<EOT
+SELECT j.prettyname,j.ref
+	FROM ( (article a INNER JOIN journo_attr attr ON attr.article_id=a.id)
+		INNER JOIN journo j ON attr.journo_id=j.id )
+	WHERE a.pubdate > NOW()-interval '1 day'
+	ORDER BY a.pubdate desc
+	LIMIT 20;
+EOT;
+
+	$q = db_query( $sql );
+	$uniq = array();
+	while( $row=db_fetch_array($q) )
+	{
+		$journourl = "/{$row['ref']}";
+		$uniq[ $row['prettyname'] ] = $journourl;
+	}
+
+	$cnt = 0;
+	foreach( $uniq as $name=>$url )
+	{
+		++$cnt;
+		if( $cnt >= 10 )
+			break;
+		printf( "   <li><a href=\"%s\">%s</a></li>\n", $url, $name );
+	}
+
+?>
+  </ul>
+ </div>
+
 <?php
 }
 

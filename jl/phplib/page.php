@@ -34,42 +34,39 @@ function page_header( $title, $params=array() )
 </head>
 
 <body>
+ <div id="menu">
+  <ul>
+    <li class="cover">
+      <a href="/about">Cover Story</a><br />
+      What is journa-list?
+    </li>
+    <li class="all">
+      <a href="/list">All Journalists</a><br />
+      Alphabetical list of UK Journalists
+    </li>
+    <li class="subject">
+      <a href="/tags">Subject Index</a><br />
+      See what journalists are writing about
+    </li>
+    <li class="my">
+      <a href="/alert">My Journa-list</a><br />
+      Build your own newspaper
+    </li>
+  </ul>
+ </div>
 
  <div id="head">
   <h1><a href="/"><span></span>Journa-list</a></h1>
   <h2>&#0133;read all about them!</h2>
   <p>
-   <table border=0>
-   <tr>
-   <td> <img src="/img/barcode.png" /><br /></td>
-    <td>
-     FREE!<br />
-     <?php echo $datestring; ?><br />
-     <br />
-     A <a href="">Media Standards Trust</a> Publication
-    </td>
-   </tr>
-   </table>
+    <strong>FREE!</strong><br />
+    <?php echo $datestring; ?><br />
+    <br />
+    A <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> Publication
   </p>
  </div>
 
 
- <div id="menu">
-  <ul>
-    <li class="cover">
-      <a href="/about" title="what is journa-list?">Cover Story</a>
-    </li>
-    <li class="all">
-      <a href="/list" title="Alphabetical list of UK Journalists">All Journalists</a>
-    </li>
-    <li class="subject">
-      <a href="/tags" title="See what journalists are writing about">Subject Index</a>
-    </li>
-    <li class="my">
-      <a href="/alert" title="Build your own newspaper">My Journa-list</a>
-    </li>
-  </ul>
- </div>
 
 <?php
 	if( $P )
