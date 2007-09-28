@@ -1,4 +1,4 @@
-/* Backgrounds and colours */
+/* XXX Backgrounds and colours */
 body {
   background-color:#DDDDDD;
 /*  font-size: smaller; */
@@ -9,7 +9,7 @@ body {
 }
 
 #head {
-  background-color:#ED1C24;
+  background-color:#CC0E0E;
 }
 
 .boxnarrow {
@@ -31,13 +31,10 @@ body {
 
 #head a { color: #FFFFFF; }
 
-/*
-#menu ul {
-  background-image:url('img/barcode.png');
-  background-repeat:no-repeat;
-  background-position:center left;
+
+.popular {
+  color:#6666FF;
 }
-*/
 
 .boxnarrow h2 {
   background-color:#7F0BAF;
@@ -58,7 +55,7 @@ body {
 }
 
 
-/* Positions, margin and padding */
+/* XXX Positions, margin and padding */
 body {
   margin:0 auto 0 auto;
   padding:0;
@@ -70,10 +67,6 @@ body, #menu, #head {
 
 #head {
   float:left;
-/*  width:100%; */
-/*  margin-top:117px;
-  height:106px;
-*/
 }
 
 #head h1 {
@@ -96,14 +89,8 @@ body, #menu, #head {
   float:left;
   padding: 0;
   margin: 0;
-/*
-  margin:-226px auto 0 auto;
-  height:117px;
-*/
-/*  height: 90px; */
   overflow:auto;
   width:100%;
-
   background-image:url('img/barcode.png');
   background-repeat:no-repeat;
   background-position:center left;
@@ -113,10 +100,6 @@ body, #menu, #head {
 #menu ul {
   padding:0 0 0 90px;
   margin:0px 15px;
-
-/*  margin 0;
-  padding 0;
-*/
 }
 
 #menu ul li {
@@ -130,7 +113,6 @@ body, #menu, #head {
 
 #menu ul li { background-color: #FFFFFF; }
 
-/*#menu ul li:hover { background-color:#ED1C24; }*/
 
 #menu ul li a { color: #FFFFFF; }
 
@@ -186,9 +168,14 @@ body, #menu, #head {
   float:left;
 }
 
-#contenthead form {
+#contenthead form, #content.home #contenthead p {
   float:right;
   width:48%;
+}
+
+#content.home #contenthead p {
+  padding:5px 0;
+  margin:0;
 }
 
 #contenthead form label {
@@ -197,7 +184,7 @@ body, #menu, #head {
 }
 
 /* used for input elements on front page */
-.inputhack {
+#content.home #contenthead form input.text, #content.home #contenthead form select.select {
   width: 260px;
 }
 
@@ -219,8 +206,6 @@ body, #menu, #head {
 
 .boxnarrow h2,h3 {
   padding:.1em;
-/*  margin:0;
-  height:2em;*/
 }
 
 .boxnarrow ul {
@@ -241,7 +226,7 @@ body, #menu, #head {
 }
 
 
-/* text styles */
+/* XXX text styles */
 
 body {
   font-family: sans-serif;
@@ -249,10 +234,29 @@ body {
 
 #head {
   color:#FFFFFF;
+  font-family:Arial, Sans-Serif;
+  font-size:14px;
 }
 
+#head h2 {
+  font-size:16px;
+}
 
+#head .mst {
+  font-weight:bold;
+}
 
+#menu ul li {
+  font-family:Arial, Sans-Serif;
+  font-size:13px;
+}
+
+#menu ul li a {
+  font-family:"Times New Roman", Times, Serif;
+  font-size:16px;
+  font-weight:bold;
+  text-decoration:none;
+}
 
 #menu ul li.cover a {
   color:#009900;
@@ -269,16 +273,42 @@ body {
 #menu ul li.my a {
   color:#7F0BAF;
 }
-
-
-
-#head h2 {
-  font-size:0.9em;
+#content form label {
+font-family:"Times New Roman", Times, Serif;
+font-size:17px;
 }
 
-.boxwide h2 { font-size:1.3em; }
+#content.home #contenthead p {
+  font-size:12px;
+}
+
+#content {
+  font-size:14px;
+}
+
+.boxwide h2 { 
+  font-size:1.3em; 
+  color:#FFFFFF;
+  
+  
+  padding:0 0 0 10px;
+  margin:0;
+}
+
+.boxwide-content {
+  padding:0 0 0 10px;
+}
+
+.tags a {
+  color:#666565;
+}
+
 .boxnarrow h2 { font-size:1em; }
 
 .boxwide h3 { font-size:1em; }
 .boxnarrow h3 { font-size:1em; }
 
+#footer {
+  color:#666565;
+  font-size:11px;
+}
