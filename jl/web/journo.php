@@ -104,7 +104,7 @@ function emit_blocks_articles( $journo, $allarticles )
 {
 
 ?>
-<div class="boxwide">
+<div class="boxwide recent">
 <h3>Most recent article</h3>
 <div class="boxwide-content">
 <?php
@@ -151,7 +151,7 @@ function emit_blocks_articles( $journo, $allarticles )
 </div>
 </div>
 
-<div class="boxwide">
+<div class="boxwide previous">
 <h3>Previous articles</h3>
 <div class="boxwide-content">
 <ul>
@@ -208,7 +208,7 @@ function emit_block_friendlystats( $journo )
 	$avg = FetchAverages();
 
 ?>
-<div class="boxwide">
+<div class="boxwide friendlystats">
 <h3><?php echo $journo['prettyname']; ?> has written...</h3>
 <div class="boxwide-content">
 <ul>
@@ -265,7 +265,7 @@ function emit_block_bynumbers( $journo )
 	$avg = FetchAverages();
 
 ?>
-<div class="boxwide">
+<div class="boxwide bynumbers">
 <h3>Journa-list by numbers</h3>
 <div class="boxwide-content">
 <?php
@@ -351,7 +351,7 @@ function emit_block_links( $journo )
 		return;		/* no links to show */
 
 ?>
-<div class="boxnarrow">
+<div class="boxnarrow links">
 <h3>On the web</h3>
 <div class="boxnarrow-content">
 <ul>
@@ -379,7 +379,7 @@ function emit_block_rss( $journo, $rssurl )
 {
 
 ?>
-<div class="boxnarrow">
+<div class="boxnarrow rss">
 <h3>Newsfeed</h3>
 <div class="boxnarrow-content">
 <a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
@@ -396,7 +396,7 @@ function emit_block_alerts( $journo )
 {
 
 ?>
-<div class="boxnarrow">
+<div class="boxnarrow alert">
 <h3>My Journa-list</h3>
 <div class="boxnarrow-content">
 <a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
@@ -414,7 +414,7 @@ function emit_block_searchbox( $journo )
 {
 
 ?>
-<div class="boxnarrow">
+<div class="boxnarrow find">
 <h3>Find</h3>
 <div class="boxnarrow-content">
 <p>
@@ -439,7 +439,7 @@ function emit_block_overview( $journo )
 {
 	$journo_id = $journo['id'];
 
-	print "<div class=\"boxwide\">\n";
+	print "<div class=\"boxwide overview\">\n";
 	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 	print "<div class=\"boxwide-content\">\n";
 

@@ -85,7 +85,7 @@ function emit_stats()
 {
 
 ?>
-<div class="boxwide">
+<div class="boxwide latest">
 <h2>Latest</h2>
 <div class="boxwide-content">
 <ul>
@@ -173,7 +173,7 @@ Here are some topics which have appeared frequently in the last 24 hours:
 function emit_my_journos_box( &$P )
 {
 ?>
- <div class="boxnarrow">
+ <div class="boxnarrow myjournos">
   <h2>My Journa-lists</h2>
   <div class="boxnarrow-content">
 <?php
@@ -203,7 +203,7 @@ function emit_my_journos_box( &$P )
 function emit_recent_journos_box()
 {
 ?>
- <div class="boxnarrow">
+ <div class="boxnarrow recentjournos">
  <div class="boxnarrow-content">
 
   <p>Some journalists who have written articles today:</p>
