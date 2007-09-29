@@ -86,10 +86,10 @@ function emit_journo()
 
 <div class="boxnarrow">
  <h3>Something wrong/missing?</h3>
-<p>
-Have we got the wrong information about this journalist?
-<a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a>
-</p>
+ <div class="boxnarrow-content">
+  <p>Have we got the wrong information about this journalist?
+   <a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a></p>
+ </div>
 </div>
 
 <?php
@@ -106,6 +106,7 @@ function emit_blocks_articles( $journo, $allarticles )
 ?>
 <div class="boxwide">
 <h3>Most recent article</h3>
+<div class="boxwide-content">
 <?php
 
 	$journo_id = $journo['id'];
@@ -148,9 +149,11 @@ function emit_blocks_articles( $journo, $allarticles )
 
 ?>
 </div>
+</div>
 
 <div class="boxwide">
 <h3>Previous articles</h3>
+<div class="boxwide-content">
 <ul>
 <?php
 	$count=0;
@@ -186,6 +189,7 @@ function emit_blocks_articles( $journo, $allarticles )
 
 ?>
 </div>
+</div>
 
 <?php
 
@@ -206,6 +210,7 @@ function emit_block_friendlystats( $journo )
 ?>
 <div class="boxwide">
 <h3><?php echo $journo['prettyname']; ?> has written...</h3>
+<div class="boxwide-content">
 <ul>
 <?php
 	// more about <X> than anything else
@@ -240,6 +245,7 @@ function emit_block_friendlystats( $journo )
 ?>
 </ul>
 </div>
+</div>
 <?php
 
 }
@@ -261,6 +267,7 @@ function emit_block_bynumbers( $journo )
 ?>
 <div class="boxwide">
 <h3>Journa-list by numbers</h3>
+<div class="boxwide-content">
 <?php
 
 	print "<table>\n";
@@ -283,6 +290,7 @@ function emit_block_bynumbers( $journo )
 <p>(no reflection of quality, just stats)</p>
 
 </div>
+</div>
 
 <?php
 
@@ -298,8 +306,9 @@ function emit_block_tags( $journo )
 	$prettyname = $journo['prettyname'];
 
 ?>
-<div class="boxwide">
+<div class="boxwide tags">
 <h3>The topics <?=$prettyname; ?> mentions most:</h3>
+<div class="boxwide-content">
 <?php
 
 	$maxtags = 20;
@@ -319,6 +328,7 @@ function emit_block_tags( $journo )
 
 
 ?>
+</div>
 </div>
 
 <?php
@@ -340,9 +350,13 @@ function emit_block_links( $journo )
 	if( !$row )
 		return;		/* no links to show */
 
-	print "<div class=\"boxnarrow\">\n";
-	print "<h3>On the web</h3>\n";
-	print "<ul>\n";
+?>
+<div class="boxnarrow">
+<h3>On the web</h3>
+<div class="boxnarrow-content">
+<ul>
+<?php
+
 	while( $row )
 	{
 		printf( "<li><a href=\"%s\">%s</a></li>\n",
@@ -350,8 +364,13 @@ function emit_block_links( $journo )
 			$row['description'] );
 		$row = db_fetch_array($q);
 	}
-	print "</ul></p>\n";
-	print "</div>\n";
+
+?>
+</ul>
+</div>
+</div>
+<?php
+
 }
 
 
@@ -362,9 +381,11 @@ function emit_block_rss( $journo, $rssurl )
 ?>
 <div class="boxnarrow">
 <h3>Newsfeed</h3>
+<div class="boxnarrow-content">
 <a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
 Articles by <?php print $journo['prettyname']; ?>
 
+</div>
 </div>
 
 <?php
@@ -377,7 +398,9 @@ function emit_block_alerts( $journo )
 ?>
 <div class="boxnarrow">
 <h3>My Journa-list</h3>
+<div class="boxnarrow-content">
 <a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
+</div>
 </div>
 
 <?php
@@ -393,6 +416,7 @@ function emit_block_searchbox( $journo )
 ?>
 <div class="boxnarrow">
 <h3>Find</h3>
+<div class="boxnarrow-content">
 <p>
 <form action="article" method="get">
 <input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
@@ -401,6 +425,7 @@ Find articles by <?php echo $journo['prettyname'];?> containing:
 <input type="submit" value="Find" />
 </form>
 </p>
+</div>
 </div>
 
 <?php
@@ -416,12 +441,12 @@ function emit_block_overview( $journo )
 
 	print "<div class=\"boxwide\">\n";
 	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
+	print "<div class=\"boxwide-content\">\n";
 
 	emit_writtenfor( $journo );
 
+	print "</div>\n";
 	print "</div>\n\n";
-
-
 }
 
 

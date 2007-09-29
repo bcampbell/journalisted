@@ -34,16 +34,17 @@ function emit_front_page()
 
 ?>
 <div id="contenthead">
-<img src="img/paper.png" alt="" />
+<img src="/img/paper.png" alt="" />
 
 <form action="/list" method="get">
  <label for="name">Find out more about a journalist</label>
-<input type="text" class="inputhack" value="" title="type journalist name here" id="name" name="name" /><input type="submit" value="Find" />
+<input type="text" value="" title="type journalist name here" id="name" name="name" class="text" /><input type="submit" value="Find" />
 </form>
 
 <form action="/list" method="get">
  <label for="outlet">Track down a journalist by news outlet</label>
-  <select class="inputhack" name="outlet">
+
+  <select name="outlet" class="select" >
 <?php
 	foreach( $orgs as $o )
 		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
@@ -55,10 +56,12 @@ function emit_front_page()
 
 <form action="/article" method="get">
  <label for="find">Who's writing about a subject in the news</label>
- <input class="inputhack" type="text" value="" title="type subject here" id="find" name="find" />
+
+ <input type="text" value="" title="type subject here" id="find" name="find" class="text" />
  <input type="submit" value="Find" />
 </form>
-
+<p class="popular">Popular today: Madeleine McCann, facebook</p>
+<p>Journa-list is an initiative of the media standards trust &gt;</p>
 </div>
 
 
@@ -84,6 +87,7 @@ function emit_stats()
 ?>
 <div class="boxwide">
 <h2>Latest</h2>
+<div class="boxwide-content">
 <ul>
 <?php
 
@@ -130,6 +134,7 @@ EOT;
 ?>
 </ul>
 </div>
+</div>
 <?php
 }
 
@@ -138,8 +143,9 @@ function emit_whoswritingaboutwhat()
 {
 ?>
 
-<div class="boxwide">
+<div class="boxwide tags">
 <h2>Who's writing about what?</h2>
+<div class="boxwide-content">
 <p>
 Here are some topics which have appeared frequently in the last 24 hours:
 </p>
@@ -158,6 +164,7 @@ Here are some topics which have appeared frequently in the last 24 hours:
 ?>
 <p>Click one to see who writes about it!</p>
 </div>
+</div>
 <?php
 
 }
@@ -168,6 +175,7 @@ function emit_my_journos_box( &$P )
 ?>
  <div class="boxnarrow">
   <h2>My Journa-lists</h2>
+  <div class="boxnarrow-content">
 <?php
 
     $P = person_if_signed_on(true); /* Don't renew any login cookie. */
@@ -184,6 +192,7 @@ function emit_my_journos_box( &$P )
 	print( "  </ul>\n" );
 
 ?>
+  </div>
  </div>
 <?php
 
@@ -195,6 +204,7 @@ function emit_recent_journos_box()
 {
 ?>
  <div class="boxnarrow">
+ <div class="boxnarrow-content">
 
   <p>Some journalists who have written articles today:</p>
   <ul>
@@ -229,6 +239,7 @@ EOT;
 
 ?>
   </ul>
+ </div>
  </div>
 
 <?php

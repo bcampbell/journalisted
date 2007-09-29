@@ -40,9 +40,16 @@
   </p>
  </div>
 
+<!-- hellouser div only present if user is logged in -->
+<div id="hellouser">
+Hello, bob@randomuser.com
+[<a href="/logout">log out</a>]<br>
+<small>(<a href="/logout">this isn't you? click here</a>)</small><br>
+</div>
+
 <div id="content" class="home">
 <div id="contenthead">
-<img src="images/paper.png" alt="" />
+<img src="/img/paper.png" alt="" />
 
 <form action="/list" method="get">
  <label for="name">Find out more about a journalist</label>

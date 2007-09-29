@@ -34,6 +34,7 @@ function page_header( $title, $params=array() )
 </head>
 
 <body>
+
  <div id="menu">
   <ul>
     <li class="cover">
@@ -61,8 +62,7 @@ function page_header( $title, $params=array() )
   <p>
     <strong>FREE!</strong><br />
     <?php echo $datestring; ?><br />
-    <br />
-    A <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> Publication
+    <br /><span class="mst">A <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> Publication</span>
   </p>
  </div>
 
@@ -84,7 +84,7 @@ function page_header( $title, $params=array() )
 ?>
 
 
-<div id="content">
+<div id="content" class="home">
 <?php
 	// TODO:
 	// * login box
