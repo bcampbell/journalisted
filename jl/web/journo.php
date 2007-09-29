@@ -84,7 +84,7 @@ function emit_journo()
 
 ?>
 
-<div class="boxnarrow">
+<div class="boxnarrow letusknow">
  <h3>Something wrong/missing?</h3>
  <div class="boxnarrow-content">
   <p>Have we got the wrong information about this journalist?
