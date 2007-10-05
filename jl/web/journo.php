@@ -382,7 +382,7 @@ function emit_block_rss( $journo, $rssurl )
 <div class="boxnarrow rss">
 <h3>Newsfeed</h3>
 <div class="boxnarrow-content">
-<a href="<?php echo $rssurl; ?>"><img src="/img/rss.gif"></a><br>
+<a href="<?php echo $rssurl; ?>"><img src="/images/rss.gif"></a><br>
 Articles by <?php print $journo['prettyname']; ?>
 
 </div>

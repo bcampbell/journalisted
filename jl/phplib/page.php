@@ -18,6 +18,7 @@ function page_header( $title, $params=array() )
 <head>
   <title><?=$title ?></title>
   <style type="text/css" media="all">@import "/style.css";</style>
+  <style type="text/css" media="all">@import "/text.css";</style>	
   <meta name="Content-Type" content="text/html; charset=UTF-8" />
 <?php
 
@@ -35,36 +36,32 @@ function page_header( $title, $params=array() )
 
 <body>
 
- <div id="menu">
-  <ul>
-    <li class="cover">
-      <a href="/about">Cover Story</a><br />
-      What is journa-list?
-    </li>
-    <li class="all">
-      <a href="/list">All Journalists</a><br />
-      Alphabetical list of UK Journalists
-    </li>
-    <li class="subject">
-      <a href="/tags">Subject Index</a><br />
-      See what journalists are writing about
-    </li>
-    <li class="my">
-      <a href="/alert">My Journa-list</a><br />
-      Build your own newspaper
-    </li>
-  </ul>
- </div>
+	<div id="head">
+		<h1><a href="/"><span></span>Journa-list</a></h1>
+		<h2>&#0133;read all about them!</h2>
+		<p>
+			<strong>FREE!</strong><br />
+			Wednesday 26.09.2007<br />
+		</p>
+	</div>
 
- <div id="head">
-  <h1><a href="/"><span></span>Journa-list</a></h1>
-  <h2>&#0133;read all about them!</h2>
-  <p>
-    <strong>FREE!</strong><br />
-    <?php echo $datestring; ?><br />
-    <br /><span class="mst">A <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> Publication</span>
-  </p>
- </div>
+	<div id="menu">
+		<span class="mst"><a href="http://www.mediastandardstrust.com">Media Standards Trust</a></span>
+		<ul>
+			<li class="cover active">
+				<a href="/about">Cover Story</a>
+			</li>
+			<li class="all">
+				<a href="/list">All Journalists</a>
+			</li>
+			<li class="subject">
+				<a href="/tags">Subject Index</a>
+			</li>
+			<li class="my">
+				<a href="/alert">My Journa-list</a>
+			</li>
+		</ul>
+	</div>
 
 
 
