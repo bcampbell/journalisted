@@ -34,7 +34,7 @@ function emit_front_page()
 
 ?>
 <div id="contenthead">
-<img src="/img/paper.png" alt="" />
+<img src="/images/paper.png" alt="" />
 
 <form action="/list" method="get">
  <label for="name">Find out more about a journalist</label>

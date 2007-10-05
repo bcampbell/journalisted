@@ -41,7 +41,7 @@ function page_header( $title, $params=array() )
 		<h2>&#0133;read all about them!</h2>
 		<p>
 			<strong>FREE!</strong><br />
-			Wednesday 26.09.2007<br />
+			<?php echo $datestring; ?><br />
 		</p>
 	</div>
 
