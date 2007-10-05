@@ -1,0 +1,94 @@
+/* XXX text styles */
+
+body {
+  font-family: sans-serif;
+  font-size:12px;
+}
+
+#head {
+  color:#FFFFFF;
+  font-family:Arial, Sans-Serif;
+  font-size:12px;
+}
+
+#head h2 {
+  font-size:17px;
+  font-family:"Times New Roman";
+}
+
+#head p {
+  font-weight:bold;
+}
+
+#menu a {
+  font-family:Arial, Sans-Serif;
+  font-size:13px;
+  font-weight:bold;
+  text-decoration:none;
+}
+
+#menu .mst a {
+  color:#FFFFFF;
+  text-decoration:none;
+}
+
+#menu a:hover, #menu .active a {
+  color:#FFFF00;
+}
+
+#menu ul li.active {
+  background-color:#CC0E0E;
+}
+
+#content {
+  font-size:12px;
+}
+
+#content.home #contenthead p {
+  font-size:10px;
+}
+
+#content form label {
+  font-family:"Times New Roman", Times, Serif;
+  font-size:18px;
+}
+
+.boxwide-content {
+  padding:0 0 0 10px;
+}
+
+.tags a {
+  color:#666565;
+}
+
+.boxnarrow h2, .boxwide h3, .boxnarrow h3, .boxwide h2 { 
+  padding:0 0 0 5px;
+  font-size:18px; 
+  color:white;
+  font-family:"Times New Roman";
+}
+
+.boxnarrow .boxnarrow-content {
+  padding:0 10px 5px 10px;
+}
+
+.boxnarrow ul {
+  list-style-type:none;
+  	padding:0;
+}
+
+.boxnarrow ul li {
+  padding:0;
+  margin:0;
+}
+
+.boxnarrow ul li a {
+  color:#000000;
+  text-decoration:none;
+}
+
+#footer {
+  color:#666565;
+  font-size:10px;
+}
+
