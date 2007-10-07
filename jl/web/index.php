@@ -6,7 +6,7 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
 
-page_header( "" );
+page_header( "", array( 'menupage'=>'cover') );
 
 // recalculate front page once every 4 hours
 cache_emit( 'frontpage', 'emit_front_page', 4*60*60 );

@@ -12,22 +12,24 @@ require_once '../../phplib/utility.php';
 
 
 
-page_header( 'Topics - ' . OPTION_WEB_DOMAIN );
 
 $tag = get_http_var( 'tag', null );
 if( $tag )
 {
 	// list journos who've used that tag.
+	page_header( "Journalists who have mentioned \"{$tag}\"", array( 'menupage'=>'') );
 	print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
 	tag_emit_journo_list( $tag );
+	page_footer();
 }
 else
 {
 	// no tag specified - display summary (cache for 12 hours)
+	page_header( 'Subject Index', array( 'menupage'=>'subject') );
 	cache_emit( "tags", "emit_tag_summaries", 60*60*12 );
+	page_footer();
 }
 
-page_footer();
 
 
 function emit_tag_summaries()

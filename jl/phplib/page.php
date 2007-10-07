@@ -8,10 +8,16 @@ function page_header( $title, $params=array() )
 {
 	header( 'Content-Type: text/html; charset=utf-8' );
 
+	if( $title )
+		$title .= ' - ' . OPTION_WEB_DOMAIN;
+	else
+		$title = OPTION_WEB_DOMAIN;
+
     $P = person_if_signed_on(true); /* Don't renew any login cookie. */
 
 	$datestring = date( 'l d.m.Y' );
 
+	$mnpage = array_key_exists('menupage', $params) ? $params['menupage'] : '';
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
@@ -22,6 +28,7 @@ function page_header( $title, $params=array() )
   <meta name="Content-Type" content="text/html; charset=UTF-8" />
 <?php
 
+	print "<!-- menupage: '$mnpage' -->\n";
 	if (array_key_exists('rss', $params))
 	{
 		foreach ($params['rss'] as $rss_title => $rss_url)
@@ -48,16 +55,16 @@ function page_header( $title, $params=array() )
 	<div id="menu">
 		<span class="mst"><a href="http://www.mediastandardstrust.com">Media Standards Trust</a></span>
 		<ul>
-			<li class="cover active">
-				<a href="/about">Cover Story</a>
+			<li class="cover<?php echo $mnpage=='cover' ? ' active' :''; ?>">
+				<a href="/">Cover Story</a>
 			</li>
-			<li class="all">
+			<li class="all<?php echo $mnpage=='all' ? ' active' :''; ?>">
 				<a href="/list">All Journalists</a>
 			</li>
-			<li class="subject">
+			<li class="subject<?php echo $mnpage=='subject' ? ' active' :''; ?>">
 				<a href="/tags">Subject Index</a>
 			</li>
-			<li class="my">
+			<li class="my<?php echo $mnpage=='my' ? ' active' :''; ?>">
 				<a href="/alert">My Journa-list</a>
 			</li>
 		</ul>

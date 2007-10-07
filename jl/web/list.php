@@ -39,7 +39,7 @@ else if( $searchtext )
 else
 {
 	// default - alphabetical list of all journos in system
-	page_header("All journalists");
+	page_header("All journalists", array( 'menupage'=>'all' ) );
 	AlphabeticalList();
 	page_footer();
 }

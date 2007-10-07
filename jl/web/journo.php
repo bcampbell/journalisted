@@ -28,7 +28,7 @@ $pageparams = array(
 	'rss'=>array( 'Recent Articles'=>$rssurl )
 );
 
-$title = $journo['prettyname'] . " - " . OPTION_WEB_DOMAIN;
+$title = $journo['prettyname'];
 page_header( $title, $pageparams );
 
 // emit the main part of the page (cached for up to 2 hours)

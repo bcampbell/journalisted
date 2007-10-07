@@ -53,7 +53,7 @@ $P = person_signon($r);
 
 
 /* OK, if we get here, we've got a logged-in user and can start our output! */ 
-page_header( "My Journa-list" );
+page_header( "My Journa-list", array( 'menupage'=>'my') );
 
 print"<div id=\"maincolumn\">\n";
 
