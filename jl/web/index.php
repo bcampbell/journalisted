@@ -54,10 +54,10 @@ function emit_front_page()
 </form>
 
 
-<form action="/article" method="get">
+<form action="/list" method="get">
  <label for="find">Who's writing about a subject in the news</label>
 
- <input type="text" value="" title="type subject here" id="find" name="find" class="text" />
+ <input type="text" value="" title="type subject here" id="search" name="search" class="text" />
  <input type="submit" value="Find" />
 </form>
 <p class="popular">Popular today: Madeleine McCann, facebook</p>

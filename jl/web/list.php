@@ -11,27 +11,39 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 
-page_header("");
 
 db_connect();
 
 $name = get_http_var( 'name', null );
 $outlet = get_http_var( 'outlet', null );
+$searchtext = get_http_var( 'search', null );
 if( $name )
 {
+	page_header("");
 	FindByName( $name );
+	page_footer();
 }
 else if( $outlet )
 {
+	page_header("");
 	FindByOutlet( $outlet );
+	page_footer();
+}
+else if( $searchtext )
+{
+	$pagetitle = "Articles mentioning \"$searchtext\"";
+	page_header( $pagetitle );
+	FindByText( $searchtext );
+	page_footer();
 }
 else
 {
 	// default - alphabetical list of all journos in system
+	page_header("All journalists");
 	AlphabeticalList();
+	page_footer();
 }
 
-page_footer();
 
 
 
@@ -174,4 +186,73 @@ function FindByOutlet( $outlet )
 }
 
 
+// list journos who've written articles containing $searchtext
+function FindByText( $searchtext )
+{
+
+	$orgs = get_org_names();
+
+	$sql = <<<EOT
+SELECT j.id AS journo_id, j.ref, j.prettyname, a.id AS article_id,a.title,a.permalink,a.pubdate,a.srcorg
+	FROM ((article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
+		INNER JOIN journo j ON j.id=attr.journo_id)
+	WHERE a.status='a'
+		AND a.content ilike ?
+		AND a.pubdate>now()-interval '1 month'
+	ORDER BY j.id
+EOT;
+	$q = db_query( $sql, '%'.$searchtext.'%' );
+
+	printf( "<h2>Articles within the last month mentioning \"%s\"</h2>", $searchtext );
+
+	// want to group articles by journo
+	$journo_id = null;
+	print "<ul>\n";
+
+	$articlecnt = 0;
+	$journocnt = 0;
+	while( $row=db_fetch_array($q) )
+	{
+		++$articlecnt;
+		$org = $orgs[ $row['srcorg'] ];
+		$pubdate = pretty_date(strtotime($row['pubdate']));
+
+		if( $journo_id != $row['journo_id'] )
+		{
+			// it's a new journo
+			++$journocnt;
+			if( $journo_id )
+			{
+				// close old journo
+				print("  </ul>");	// article sublist
+				print(" </li>");
+			}
+
+			//start new journo
+			$journo_id = $row['journo_id'];
+
+			$journo_url = '/' . $row['ref'];
+			printf( " <li><a href=\"%s\">%s</a>\n", $journo_url, $row['prettyname'] );
+			print( "  <ul>\n" );	// start article sublist
+		}
+		$art_html = sprintf( "%s (%s, %s)", $row['title'], $pubdate, $org );
+
+		// article
+		print "   <li>";
+		print "<a href=\"/article?id={$row['article_id']}\">{$row['title']}</a>, {$pubdate}, <em>{$org}</em>";
+		print "<small>(<a href=\"{$row['permalink']}\">original article</a>)</small";
+		print "   </li>";
+	}
+
+	// close any open journo
+	if( $journocnt > 0 )
+	{
+		print "  </ul>\n";	// close article sublist
+		print " </li>\n";
+	}
+
+	print "</ul>\n";
+
+	printf( "<p>Found %d matching articles by %d journalists</p>", $articlecnt, $journocnt );
+}
 ?>
