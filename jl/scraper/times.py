@@ -1,4 +1,9 @@
 #!/usr/bin/env python2.4
+#
+# Copyright (c) 2007 Media Standards Trust
+# Licensed under the Affero General Public License
+# (http://www.affero.org/oagpl.html)
+#
 
 import re
 from datetime import datetime
