@@ -77,8 +77,8 @@ function emit_journo()
 
 	emit_block_links( $journo );
 	$rssurl = sprintf( "http://%s/%s/rss", OPTION_WEB_DOMAIN, $journo['ref'] );
-	emit_block_rss( $journo, $rssurl );
 	emit_block_alerts( $journo );
+	emit_block_rss( $journo, $rssurl );
 	//emit_block_tags( $journo );
 	emit_block_searchbox( $journo );
 
@@ -266,16 +266,16 @@ function emit_block_bynumbers( $journo )
 
 ?>
 <div class="boxwide bynumbers">
-<h3>Journa-list by numbers</h3>
+<h3>Journa-list by numbers (since <?php echo $stats['first_pubdate'];?>)</h3>
 <div class="boxwide-content">
 <?php
 
 	print "<table>\n";
-	printf( "<tr><th></th><th>%s&nbsp;&nbsp;</th><th>Average for all journalists</th></tr>",
+	printf( "<tr><th></th><th>%s&nbsp;&nbsp;</th><th>Average</th></tr>",
 		$journo['prettyname'] );
 
-	printf( "<tr><th>Articles</th><td>%d (since %s)</td><td>%.0f</td></tr>\n",
-		$stats['num_articles'], $stats['first_pubdate'], $avg['num_articles'] );
+	printf( "<tr><th>Articles</th><td>%d</td><td>%.0f</td></tr>\n",
+		$stats['num_articles'], $avg['num_articles'] );
 	printf( "<tr><th>Total words written</th><td>%d</td><td>%.0f</td></tr>\n",
 		$stats['wc_total'], $avg['wc_total'] );
 	printf( "<tr><th>Average article length</th><td>%d words</td><td>%.0f words</td></tr>\n",

@@ -89,37 +89,7 @@ function page_header( $title, $params=array() )
 
 
 <div id="content" class="home">
-<?php
-	// TODO:
-	// * login box
-	// * Log-out option for logged-in users
 
-/*
-	if( $P )
-	{
-		if ($P->name_or_blank())
-			$name = $P->name;
-		else
-			$name = $P->email;
-		print "<div id=\"hellouser\">\n";
-		print "Hello, {$name}\n";
-//		print "[<a href=\"/logout\">log out</a>]<br>\n";
-		print "<small>(<a href=\"/logout\">this isn't you? click here</a>)</small><br>\n";
-		print "</div>\n";
-	}
-*/
-
-/*
-	// some extra menu items for logged-in users
-	if( $P )
-	{
-?>
-<li><a href="/logout">Log out</a></li>
-<?php
-	}
-*/
-
-?>
 <?php
 }
 
@@ -134,9 +104,10 @@ function page_footer( $params=array() )
 
 	gatso_report_html();
 
+	$contactemail = "team@" . OPTION_WEB_DOMAIN;
 ?>
-Journa-list is a <a href="http://www.mediastandardstrust.com">Media Standards Trust</a> project.<br>
-Questions? Comments? Suggestions? <a href="mailto:team@journa-list.dyndns.org">Let us know</a>
+<a href="/about">About us</a> | <a href="/development">Development</a> | <a href="mailto:<?=$contactemail ?>">Contact us</a><br />
+&copy; 2007 <a href="http://www.mediastandardstrust.com">Media Standards Trust</a><br />
 </div>
 </body>
 </html>

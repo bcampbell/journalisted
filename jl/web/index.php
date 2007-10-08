@@ -55,13 +55,11 @@ function emit_front_page()
 
 
 <form action="/list" method="get">
- <label for="find">Who's writing about a subject in the news</label>
+ <label for="find">Journalist vs journalist</label>
 
  <input type="text" value="" title="type subject here" id="search" name="search" class="text" />
  <input type="submit" value="Find" />
 </form>
-<p class="popular">Popular today: Madeleine McCann, facebook</p>
-<p>Journa-list is an initiative of the media standards trust &gt;</p>
 </div>
 
 
@@ -144,11 +142,8 @@ function emit_whoswritingaboutwhat()
 ?>
 
 <div class="boxwide tags">
-<h2>Who's writing about what?</h2>
+<h2>The most written about subjects today are...</h2>
 <div class="boxwide-content">
-<p>
-Here are some topics which have appeared frequently in the last 24 hours:
-</p>
 
 <?php
 
@@ -162,7 +157,7 @@ Here are some topics which have appeared frequently in the last 24 hours:
 	tag_cloud_from_query( $q );
 
 ?>
-<p>Click one to see who writes about it!</p>
+<p>...click one to see which journalists are writing about it</p>
 </div>
 </div>
 <?php
@@ -206,6 +201,7 @@ function emit_recent_journos_box()
  <div class="boxnarrow recentjournos">
  <div class="boxnarrow-content">
 
+  <h2>Recently Published</h2>
   <p>Some journalists who have written articles today:</p>
   <ul>
 <?php
