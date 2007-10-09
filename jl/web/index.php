@@ -38,7 +38,8 @@ function emit_front_page()
 
 <form action="/list" method="get">
  <label for="name">Find out more about a journalist</label>
-<input type="text" value="" title="type journalist name here" id="name" name="name" class="text" /><input type="submit" value="Find" />
+<input type="text" value="" title="type journalist name here" id="name" name="name" class="text" />
+<input type="submit" value="Find" />
 </form>
 
 <form action="/list" method="get">
@@ -55,7 +56,7 @@ function emit_front_page()
 
 
 <form action="/list" method="get">
- <label for="find">Journalist vs journalist</label>
+ <label for="find">Compare coverage by different journalists</label>
 
  <input type="text" value="" title="type subject here" id="search" name="search" class="text" />
  <input type="submit" value="Find" />

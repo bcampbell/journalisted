@@ -310,6 +310,8 @@ function emit_block_tags( $journo )
 <h3>The topics <?=$prettyname; ?> mentions most:</h3>
 <div class="boxwide-content">
 <?php
+	$stats = FetchJournoStats( $journo );
+	printf( "(based on %d articles)<br />\n", $stats['num_articles'] );
 
 	$maxtags = 20;
 
@@ -325,7 +327,6 @@ function emit_block_tags( $journo )
 	gatso_stop('tags');
 
 	tag_cloud_from_query( $q, $ref );
-
 
 ?>
 </div>

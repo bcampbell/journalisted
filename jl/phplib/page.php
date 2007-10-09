@@ -56,7 +56,7 @@ function page_header( $title, $params=array() )
 		<span class="mst"><a href="http://www.mediastandardstrust.com">Media Standards Trust</a></span>
 		<ul>
 			<li class="cover<?php echo $mnpage=='cover' ? ' active' :''; ?>">
-				<a href="/">Cover Story</a>
+				<a href="/">Home</a>
 			</li>
 			<li class="all<?php echo $mnpage=='all' ? ' active' :''; ?>">
 				<a href="/list">All Journalists</a>
