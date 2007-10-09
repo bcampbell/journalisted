@@ -206,7 +206,6 @@ body, #menu, #head {
   padding: .5em;
 }
 
-
 #hellouser {
   float:left;
   padding-top: .1em;
@@ -216,4 +215,12 @@ body, #menu, #head {
   text-align: right;
   font-size: small;
   background-color: #FFFFFF;
+}
+
+.boxwide-content table {
+   text-align:left;
+}
+
+.boxwide-content td {
+  padding:2px;
 }

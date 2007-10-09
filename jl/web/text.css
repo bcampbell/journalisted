@@ -78,13 +78,17 @@ body {
 }
 
 .boxnarrow ul li {
-  padding:0;
+  padding:1px 0;
   margin:0;
 }
 
 .boxnarrow ul li a {
   color:#000000;
   text-decoration:none;
+}
+
+.boxnarrow ul li a:hover {
+  text-decoration:underline;
 }
 
 #footer {
