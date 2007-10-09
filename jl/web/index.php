@@ -200,9 +200,9 @@ function emit_recent_journos_box()
 {
 ?>
  <div class="boxnarrow recentjournos">
+ <h2>Recently Published</h2>
  <div class="boxnarrow-content">
 
-  <h2>Recently Published</h2>
   <p>Some journalists who have written articles today:</p>
   <ul>
 <?php
