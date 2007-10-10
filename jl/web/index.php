@@ -203,7 +203,7 @@ function emit_recent_journos_box()
  <h2>Recently Published</h2>
  <div class="boxnarrow-content">
 
-  <p>Some journalists who have written articles today:</p>
+  <p>Journalists just published:</p>
   <ul>
 <?php
 
