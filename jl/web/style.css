@@ -115,7 +115,7 @@ body, #menu, #head {
   background-color: #8E2B2B;
   height:30px;
   overflow:visible;
-  border-bottom:8px solid #DDDDDD;
+ /* border-bottom:8px solid #DDDDDD; */
 }
 
 #menu ul {
