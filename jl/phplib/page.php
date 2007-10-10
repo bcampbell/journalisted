@@ -81,7 +81,7 @@ function page_header( $title, $params=array() )
 			$name = $P->email;
 		print "<div id=\"hellouser\">\n";
 		print "Hello, {$name}\n";
-		print "[<a href=\"/logout\">log out</a>]<br>\n";
+		print "[<a href=\"/logout\">log out</a>] ";
 		print "<small>(<a href=\"/logout\">this isn't you? click here</a>)</small><br>\n";
 		print "</div>\n";
 	}
