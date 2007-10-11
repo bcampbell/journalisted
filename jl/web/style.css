@@ -146,7 +146,7 @@ body, #menu, #head {
   padding:10px 5px;
   clear:both;
   width:770px;
-  overflow:auto;
+  /*overflow:auto;*/
   border-bottom:1px solid #ECECEC;
 }
 
