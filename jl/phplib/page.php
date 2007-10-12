@@ -98,6 +98,7 @@ function page_footer( $params=array() )
 {
 
 ?>
+<br clear="all" />
 </div>
 <div id="footer">
 <?php
