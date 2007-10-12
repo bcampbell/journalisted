@@ -61,6 +61,10 @@ function emit_front_page()
  <input type="text" value="" title="type subject here" id="search" name="search" class="text" />
  <input type="submit" value="Find" />
 </form>
+
+
+<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Please let us know when you find one so we can correct it</p>
+
 </div>
 
 

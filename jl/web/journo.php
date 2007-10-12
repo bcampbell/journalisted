@@ -67,6 +67,11 @@ function emit_journo()
 	emit_block_friendlystats( $journo );
 	emit_block_tags( $journo );
 	emit_block_bynumbers( $journo );
+?>
+<p>
+This website is in beta - all information is generated automatically so there are bound to be mistakes. Please let us know when you find one so we can correct it.
+</p>
+<?php
 	print "</div> <!-- end maincolumn -->\n";
 
 
@@ -230,20 +235,22 @@ function emit_block_friendlystats( $journo )
 	print( "<li>\n" );
 	$diff = (float)$stats['num_articles'] / (float)$avg['num_articles'];
 	if( $diff < 0.8 )
-		print( "Fewer articles than the average journalist" );
+		print( "Fewer bylined articles than the average journalist" );
 	elseif( $diff > 1.2 )
-		print("More articles than the average journalist");
+		print("More bylined articles than the average journalist");
 	else
-		print("About the same number of articles as the average journalist");
-
-	if( $stats['num_articles'] == 1 )
-		printf( " (%d article since %s)", $stats['num_articles'], $stats['first_pubdate'] );
-	else
-		printf( " (%d articles since %s)", $stats['num_articles'], $stats['first_pubdate'] );
+		print("About the same number of bylined articles as the average journalist");
 	print( "</li>\n" );
 
+	print( "</ul>\n" );
+
+	if( $stats['num_articles'] == 1 )
+		printf( "Based on %d article since %s", $stats['num_articles'], $stats['first_pubdate'] );
+	else
+		printf( "Based on %d articles since %s", $stats['num_articles'], $stats['first_pubdate'] );
+	print( "<br/>\n" );
+
 ?>
-</ul>
 </div>
 </div>
 <?php
