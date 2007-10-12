@@ -24,7 +24,7 @@ body {
 }
 
 #head h1 a span {
-  background-image:url('images/title.png');
+  background-image:url('images/title_beta.png');
   background-position:top right;
 }
 
@@ -91,7 +91,8 @@ body, #menu, #head {
 }
 
 #head h1 {
-  width:289px;
+/*  width:289px; */
+  width: 299px; /* title_beta.png width */
   overflow:hidden;
   height:73px;
   margin: 0px 0px 0 0;
@@ -99,7 +100,8 @@ body, #menu, #head {
 
 #head h1 a span {
   margin-bottom:-0px;
-  width:289px;
+/* width:289px; */
+  width: 299px; /* title_beta.png width */
   height:73px;
   display:block;
   position: relative;
