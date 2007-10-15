@@ -249,7 +249,7 @@ function login_form($errors = array()) {
     /* Just render the form. */
     global $q_h_stash, $q_h_email, $q_h_name, $q_stash, $q_email, $q_name, $q_rememberme;
 
-    page_header(_('Checking Your Email Address'));
+    page_header(_('Checking Your Email Address'), array( 'menupage'=>'my') );
 
     if (is_null($q_name))
         $q_name = $q_h_name = '';   /* shouldn't happen */
