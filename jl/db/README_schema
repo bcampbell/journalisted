@@ -1,0 +1,120 @@
+Journa-list database Schema
+===========================
+
+Tables
+------
+
+alert                 - My Journa-list alerts
+article               - the articles (the core of everything)
+article_dupe          - info about duplicate articles (might drop this)
+article_tag           - tags (aka terms, subjects) extracted from articles
+htmlcache             - used to speed up some pages by caching bits of html
+journo                - the journalists
+journo_alias          - names for journalists (to handle mispelllings etc) 
+journo_attr           - links articles to journalists (attribution)
+journo_average_cache  - cache for journo stats
+journo_jobtitle       - job titles found for journos
+journo_weblink        - links to journo websites (wikipedia etc)
+organisation          - the organisations in the system (newspapers, bbc etc)
+person                - user accounts (for my journa-list)
+requeststash          -
+secret                -
+tag_blacklist         - tags to ignore during term extraction
+tag_synonym           - to tie multiple tags together
+token                 -
+
+The article table is the core of the whole system. All the scraped articles
+are stored there, and most other data in the system is derived from them.
+
+
+article table
+-------------
+
+
+id (integer, primary key, not null)
+  The unique id for the article.
+
+
+title (text, not null)
+  The article headline. Single line, utf-8, plain text.
+
+
+byline (text, not null)
+ The article byline as scraped (eg "By Fred Smith, Washington
+ and Fred Bloggs, Political Correspondent"). Single line, utf-8,
+ plain text.
+
+
+description (text, not null)
+ Short description of the article (utf-8, plain text)
+
+
+pubdate (timestamp)
+ When the article was published (or when the article claims it was published).
+Different outlets do things a bit differently. For example, one paper might
+only have dates, so all the articles will appear to show up at midnight.
+It's a bit rough.
+
+
+firstseen (timestamp, not null)
+ When the article is first seen by the scraper. The idea is that firstseen
+and lastseen can track the period the article was active, as the scrapers
+are run regularly.
+For historical archives, it's probably better for firstseen/lastseen to be
+set to the pubdate, rather than the time they were scraped.
+
+
+lastseen (timestamp, not null)
+ The last time the article was seen by the scrapers.
+Currently the scrapers don't correctly update this after the initial scrape.
+But the idea is that this'll be updated so that we get an idea of how long
+the article was active on the source site...
+
+
+content (text)
+ The actual article text (utf-8). Uses a very cut-down set of HTML, with
+very basic formatting (<p>, <br>, <strong>, headings etc). The scrapers
+should remove most style fluff and just leave the text and it's basic
+structure.
+
+permalink (text, not null)
+ URL to original article. Might be different to the one scraped (eg
+we might find it easier to scrape the printer version of an article).
+This is the URL we serve up to the user when they want to read the
+original article.
+
+srcurl (text, not null)
+ The original url which we scraped the article from. Usually the same as
+permalink, but doesn't have to be.
+
+srcorg (integer, not null)
+ The ID of the organisation the article came from (foreign key - indexes
+into the "organisation" table).
+
+srcid (text, not null)
+ A unique ID which identifies the article within the source organisation.
+ srcorg + srcid together should form a unique indentifier for the article
+ over the whole database.
+ Often, srcid can just be the same as srcurl, but not always. Some
+ sites have multiple urls pointing at the same article.
+ Often, sites expose their internal database IDs in the URL. If this is
+ the case, then it makes sense to extract this from the url and use it
+ as the srcid.
+ eg:
+ http://news.independent.co.uk/uk/politics/article3061121.ece
+ For this independent url, it's pretty obvious that 3061121 is their
+ internal database id.
+
+lastscraped (timestamp)
+ When the article was last scraped
+
+wordcount (integer)
+ Number of words in the article.
+
+status ( character(1), default 'a' )
+ 'a'=active
+ Any other value means article is hidden and not included in analysis.
+ 'd'=duplicate
+
+
+
