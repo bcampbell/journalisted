@@ -38,6 +38,13 @@ function emit_tag_summaries()
 ?>
 <h2>Most written about topics</h2>
 
+
+<p>The larger the word, the more it's been written about. Click on any of
+the words and you'll see which journalists have written about it.</p>
+<p>Based on the output of all bylined journalists from 12 UK national
+newspapers and BBC news online.</p>
+
+
 <div class="block">
 <h3>Last 24 hours</h3>
 <?php
@@ -71,9 +78,11 @@ function emit_tag_summaries()
 </div>
 
 <div class="block">
-<h3>All Time</h3>
+<h3>All Time (since May 2007)</h3>
 <?php
-
+	/* TODO: (since May 2007) should really be derived from a DB query,
+    but it's not a big deal unless someelse reuses the code for another
+    dataset :-) */
 	$sql = "SELECT tag, SUM(freq) AS freq ".
 		"FROM article_tag ".
 		"GROUP BY tag ".

@@ -4,12 +4,8 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../../phplib/db.php';
-/*require_once '../phplib/misc.php';
-require_once '../phplib/gatso.php';
-require_once '../../phplib/utility.php';
-*/
 
-page_header( "About" );
+page_header( "About", array( 'menupage'=>'about' ) );
 
 ?>
 <h2>About Journa-list</h2>
@@ -26,7 +22,9 @@ page_header( "About" );
 
 <h3>What is journa-list?</h3>
 <p>Journa-list is an independent, not-for-profit website that makes it easy for people to find out more about journalists and what they write about.</p>
-<p>It is the first UK website to offer a fully searchable database of UK national journalists (who write under a byline), with links to their current and previous articles, and some basic statistics about their work.</p>
+
+<p>It is the first UK website - after <a href="http://www.byliner.com">www.byliner.com</a> - to offer a free, fully searchable database of UK national journalists (who write under a byline), with links to their current and previous articles, and some basic statistics about their work.</p>
+
 <p>It allows you to build up your own tailored list of journalists whose views you respect and trust. You can search through their back catalogue of articles, and link to other articles on the same topic by different journalists. And, if you want, you can be alerted each time any of them writes an article.</p>
 <p>Right now there is no website that pulls together the work of individual journalists and aggregates it to make it easy to search and link. If you search on the internet for a journalist the chances are you’ll find one of three things: a link to an article of theirs on a news website, a brief bio on the news website (or, if well known, on Wikipedia), or their own website / blog (very rare in the UK).</p>
 

@@ -67,6 +67,9 @@ function page_header( $title, $params=array() )
 			<li class="my<?php echo $mnpage=='my' ? ' active' :''; ?>">
 				<a href="/alert">My Journa-list</a>
 			</li>
+			<li class="about<?php echo $mnpage=='about' ? ' active' :''; ?>">
+				<a href="/about">About</a>
+			</li>
 		</ul>
 	</div>
 
@@ -107,7 +110,7 @@ function page_footer( $params=array() )
 
 	$contactemail = "team@" . OPTION_WEB_DOMAIN;
 ?>
-<a href="/about">About us</a> | <a href="/development">Development</a> | <a href="mailto:<?=$contactemail ?>">Contact us</a><br />
+<a href="/development">Development</a> | <a href="mailto:<?=$contactemail ?>">Contact us</a><br />
 &copy; 2007 <a href="http://www.mediastandardstrust.com">Media Standards Trust</a><br />
 </div>
 </body>
