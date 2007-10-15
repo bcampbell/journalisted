@@ -15,7 +15,7 @@ body {
   background-color:#E3E3E3;
 }
 
-#content form label {
+#content .frontform label {
   color:#CC0E0E;
 }
 
@@ -162,7 +162,7 @@ body, #menu, #head {
   float:left;
 }
 
-#contenthead form, #content.home #contenthead p {
+#contenthead .frontform, #content.home #contenthead p {
   float:right;
   width:48%;
   padding-top:6px;
@@ -173,13 +173,13 @@ body, #menu, #head {
   margin:0;
 }
 
-#contenthead form label {
+#contenthead .frontform label {
   padding:5px 0px;
   display:block;
 }
 
 /* used for input elements on front page */
-#content.home #contenthead form input.text, #content.home #contenthead form select.select {
+#content.home #contenthead .frontform input.text, #content.home #contenthead .frontform select.select {
   width: 260px;
 }
 
@@ -225,3 +225,16 @@ body, #menu, #head {
 .boxwide-content td {
   padding:2px;
 }
+
+
+
+/* div for showing errors on forms */
+#errors {
+  border: thin solid red;
+}
+
+/* login form */
+.login {
+  background-color:#E3E3E3;
+}
+

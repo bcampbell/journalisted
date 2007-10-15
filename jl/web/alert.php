@@ -19,27 +19,30 @@ require_once '../../phplib/importparams.php';
 /* display different messages depending on why we're here */
 if( get_http_var( 'Add' ) )
 {
+	$journo_ref = get_http_var( 'j' );
+	$jname = db_getOne( 'SELECT prettyname FROM journo WHERE ref=?', $journo_ref );
+
 	// adding an alert...
 	$r = array(
-		'reason_web' => 'Before adding the journalist to your list, we need to confirm your email address.',
-		'reason_email' => "You'll then be emailed when the journalist writes anything",
-		'reason_email_subject' => "Set up an email alert at Journa-list"
+		'reason_web' => "To add {$jname} to your My Journa-list newsroom, we need your email address.",
+		'reason_email' => "You'll then be emailed when {$jname} writes anything",
+		'reason_email_subject' => "Set up a My Journa-list email alert"
 		);
 }
 else if( get_http_var( 'Remove' ) )
 {
 	// remove an alert...
 	$r = array(
-		'reason_web' => 'Before removing the journalist from your list, we need to confirm your email address.',
+		'reason_web' => "Before removing {$jname} from your list, we need to confirm your email address.",
 		'reason_email' => "Your email alert will then be removed",
-		'reason_email_subject' => "Remove an email alert at Journa-list"
+		'reason_email_subject' => "Remove a My Journa-list email alert"
 		);
 }
 else
 {
 	// default - just viewing existing alerts (or updating password)
 	$r = array(
-		'reason_web' => "To use My Journa-list, we need to check your email address.",
+		'reason_web' => "To start using My Journa-list, we need your email address.",
 		'reason_email' => "Then you will be able to use My Journa-list.",
 		'reason_email_subject' => 'My Journa-list: email confirmation'
 		);

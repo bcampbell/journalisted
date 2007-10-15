@@ -48,7 +48,7 @@ body {
   font-size:10px;
 }
 
-#content form label {
+#content .frontform label {
   font-family:"Times New Roman", Times, Serif;
   font-size:18px;
 }
@@ -94,5 +94,13 @@ body {
 #footer {
   color:#666565;
   font-size:10px;
+}
+
+
+
+/* div for showing errors on forms */
+#errors {
+  color:#FF0000;
+  font-weight:bold;
 }
 

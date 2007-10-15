@@ -36,13 +36,13 @@ function emit_front_page()
 <div id="contenthead">
 <img src="/images/paper.png" alt="" />
 
-<form action="/list" method="get">
+<form action="/list" method="get" class="frontform">
  <label for="name">Find out more about a journalist</label>
 <input type="text" value="" title="type journalist name here" id="name" name="name" class="text" />
 <input type="submit" value="Find" />
 </form>
 
-<form action="/list" method="get">
+<form action="/list" method="get" class="frontform">
  <label for="outlet">Track down a journalist by news outlet</label>
 
   <select name="outlet" class="select" >
@@ -55,7 +55,7 @@ function emit_front_page()
 </form>
 
 
-<form action="/list" method="get">
+<form action="/list" method="get" class="frontform">
  <label for="find">Compare coverage by different journalists</label>
 
  <input type="text" value="" title="type subject here" id="search" name="search" class="text" />

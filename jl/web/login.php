@@ -71,9 +71,9 @@ if ($q_name==_('<Enter your name>')) {
 /* General purpose login, asks for email also. */
 if (get_http_var("now")) {
     $P = person_signon(array(
-                    'reason_web' => _("To log into Journa-list, we need to check your email address."),
-                    'reason_email' => _("Then you will be logged into Journa-list, and can set or change your password."),
-                    'reason_email_subject' => _('Log into Journa-list')
+                    'reason_web' => _("To use My Journa-list, we need your email address."),
+                    'reason_email' => _("Then you will be logged into My Journa-list, and can set or change your password."),
+                    'reason_email_subject' => _('Log into My Journa-list')
 
                 ));
 
@@ -257,17 +257,45 @@ function login_form($errors = array()) {
     $template_data = rabx_unserialise(stash_get_extra($q_stash));
     $reason = htmlspecialchars($template_data['reason_web']);
 
+
+    /* Split into two forms to avoid "do you want to remember this
+     * password" prompt in, e.g., Mozilla. */
+
+
+	/* show My-Journa-list blurb here, as that's the only thing
+     * login is currently required for */
+?>
+
+<div class="block">
+
+<h2>My Journa-list</h2>
+
+<p>Build your own newsroom of favourite journalists.</p>
+
+<p>Just enter your email address and you'll be able to pick any bylined journalists
+from the national press or the BBC. Every time he/she writes a new
+article it will be emailed to you automatically, along with
+those of the other journalists you've picked.</p>
+
+<p>Perhaps you want to keep up-to-date with the latest scientific
+developments? If so, you could add Richard Black, Alok Jha, Mark Henderson,
+Pallab Ghosh, Jeremy Laurance, Fiona Macrae and Roger Highfield to your
+My Journa-list newsroom.</p>
+
+<p>Or maybe economic commentary is your thing? You could combine James
+Harding with Larry Elliott, Liam Halligan, Anatole Kaletsky, Sean O'Grady
+and Edmund Conway?</p>
+
+<br/ >
+<?php
+
     if (sizeof($errors)) {
         print '<div id="errors"><ul><li>';
         print join ('</li><li>', array_values($errors));
         print '</li></ul></div>';
     }
 
-    /* Split into two forms to avoid "do you want to remember this
-     * password" prompt in, e.g., Mozilla. */
 ?>
-
-<div class="block">
 <form action="/login" name="login" class="login" method="POST" accept-charset="utf-8">
 <input type="hidden" name="stash" value="<?=$q_h_stash?>">
 <input type="hidden" name="name" id="name" value="<?=$q_h_name?>">
@@ -288,14 +316,14 @@ function login_form($errors = array()) {
 
 <? } ?>
 
-<p><strong><?=_('Have you used Journa-list before?') ?></strong></p> 
+<p><strong><?=_('Have you used My Journa-list before?') ?></strong></p> 
 <div id="loginradio">
 
-<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used Journa-list before")) ?></label>
+<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used My Journa-list before")) ?></label>
 <br>
 <small><?=_("(we'll send an email, click the link in it to confirm your email is working)") ?></small>
 
-<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a Journa-list <strong>password</strong>') ?>:</label>
+<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a My Journa-list <strong>password</strong>') ?>:</label>
 <input type="password" name="password" id="password" value="" <? if (array_key_exists('badpass', $errors)) print ' class="error"' ?> onchange="check_login_password_radio()">
 <br>
 <label for="rememberme"><?=_('Remember me') ?></label>
@@ -307,7 +335,7 @@ function login_form($errors = array()) {
 <p>
 <input type="radio" name="loginradio" value="SendEmailForgotten" id="loginradio3" <?=get_http_var("loginradio") == 'SendEmailForgotten' ? 'checked' : ''?>><label for="loginradio3"><?=_("I've forgotten or didn't set a password") ?></label>
 <br>
-<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password on your My Journa-list page)") ?></small>
+<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password)") ?></small>
 <br>
 </p>
 
