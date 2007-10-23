@@ -48,7 +48,7 @@ datecrackers = [
 	re.compile( """(?P<year>\d{4})/(?P<month>\d\d)/(?P<day>\d\d) (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
 
 	# "Mar 3, 2007 12:00 AM"
-	re.compile( """((?P<month>\w{3}) (?P<day>\d+), (?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
+	re.compile( """((?P<month>[A-Z]\w{2}) (?P<day>\d+), (?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
 	# "09-Apr-2007 00:00" (times, sundaytimes)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
@@ -62,6 +62,28 @@ datecrackers = [
 	# "26 May 2007, 02:10:36 BST" (newsoftheworld)
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
 
+	# for BLOGS:
+	
+	# "22 Oct 2007 (weird non-ascii characters) at(weird non-ascii characters)11:23" (telegraph blogs)
+	re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4}).*?at.*?(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE|re.DOTALL ),
+	
+	# "18 Oct 07, 04:50 PM" (BBC blogs)
+	# "02 August 2007  1:21 PM" (Daily Mail blogs)
+	re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{2,4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM))""", re.UNICODE ),
+
+	# 'October 22, 2007  5:31 PM' (Guardian blogs)
+	re.compile( """((?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
+
+	# 'October 15, 2007' (Times blogs)
+	re.compile( """(?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})""", re.UNICODE ),
+	
+	# 'Monday, 22 October 2007' (Independent blogs)
+	re.compile( """\w+,\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
+	
+	# '22 October 2007' (Sky News blogs)
+	re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
+	# 03/09/2007' (Sky News blogs)
+	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE )
 	]
 
 
@@ -75,11 +97,21 @@ def GetGroup(m,nm):
 def ParseDateTime( datestring ):
 	"""Parse a date string in a variety of formats. Raises an exception if no dice"""
 
+	#DEBUG:
+	#print "DATE: "
+	#print datestring
+	#print "\n"
+	
 	for c in datecrackers:
 		m = c.search( datestring )
 		if not m:
 			continue
 
+		#DEBUG:
+		#print "MONTH: "
+		#print m.group( 'month' )
+		#print "\n"
+		
 		day = int( m.group( 'day' ) )
 		month = MonthNumber( m.group( 'month' ) )
 		year = int( m.group( 'year' ) )
@@ -243,6 +275,9 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 		DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
 		r = feedparser.parse( feedurl )
+		
+		print r.version;
+
 		lastseen = datetime.now()
 		for entry in r.entries:
 			#Each item is a dictionary mapping properties to values
@@ -265,6 +300,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 				'title' :title,
 				'srcorgname' : srcorgname,
 				'lastseen': lastseen,
+				'feedname': feedname #gtb
 				}
 
 			if pubdate:
