@@ -15,7 +15,8 @@ from JL import ArticleDB,ukmedia
 
 # sources used by FindArticles
 rssfeeds = {
-	'News': 'http://news.independent.co.uk/index.jsp?service=rss'
+	'News': 'http://news.independent.co.uk/index.jsp?service=rss',
+	'Independent.co.uk/Comment': 'http://comment.independent.co.uk/index.jsp?service=rss',
 }
 
 
@@ -40,12 +41,23 @@ def Extract( html, context ):
 	art[ 'title' ] = headline.renderContents(None).strip()
 	art[ 'title' ] = ukmedia.FromHTML( art['title'] )
 
-	byline = articlediv.find( 'h3' )
-	if byline:
-		art[ 'byline' ] = byline.renderContents(None).strip()
+	bylinepart = articlediv.find( 'h3' )
+	if bylinepart:
+		byline = bylinepart.renderContents(None).strip()
 	else:
-		art[ 'byline' ] = u''
-	art[ 'byline' ] = ukmedia.FromHTML( art['byline'] )
+		byline = u''
+
+	if byline == u'' and art['srcurl'].startswith( 'http://comment.independent.co.uk' ):
+		# comment pages - if byline is empty, try and get it from title
+		# eg "Janet Street-Porter: Our politicians know nothing of real life"
+		m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
+		if m:
+			byline = m.group(1)
+			# cull out duds
+			if byline.lower() in ( u'leading article', u'the third leader' ):
+				byline = u''
+
+	art[ 'byline' ] = ukmedia.FromHTML( byline )
 
 	pubdate = articlediv.find( 'h4' )
 	art[ 'pubdate' ] = CrackDate( pubdate.renderContents() )
