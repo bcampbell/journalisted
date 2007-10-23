@@ -10,10 +10,17 @@
 # section by section and new system looks a lot cleaner, so hopefully we
 # can remove some of the hackery in this scraper one day!
 #
+# Current sections using new system:
+#  science
+#  technology
+#  environment
+#  travel
+#
+#
 # TODO:
 # - add guardian blogs
-# - detect subscription-only pages
-# - extract journo names from description
+# - extract journo names from descriptions if possible...
+#
 #
 import re
 from datetime import date,datetime,timedelta
@@ -43,7 +50,7 @@ rssfeeds = {
 	'Guardian Unlimited Sport': 'http://www.guardian.co.uk/rssfeed/0,,7,00.xml',
 	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
 	'Guardian Unlimited The Guide': 'http://www.guardian.co.uk/rssfeed/0,,21,00.xml',
-#	'Media Guardian (registration required)': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
+	'Media Guardian (registration required)': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
 	'The Observer': 'http://www.guardian.co.uk/rssfeed/0,,15,00.xml',
 	'Society Guardian': 'http://www.guardian.co.uk/rssfeed/0,,9,00.xml',
 #	'Guardian Unlimited Business Insight': 'http://blogs.guardian.co.uk/businessinsight/index.rdf',
@@ -51,6 +58,81 @@ rssfeeds = {
 #	'Guardian Unlimited Newsblog': 'http://blogs.guardian.co.uk/news/index.rdf',
 #	'Guardian Unlimited Onlineblog': 'http://blogs.guardian.co.uk/technology/index.xml',
 #	'Guardian Abroad': 'http://www.guardianabroad.co.uk/rss.xml',
+
+	# education guardian
+	'Education Guardian': 'http://www.guardian.co.uk/rssfeed/0,,8,00.xml',
+	'Education Guardian TEFL news': 'http://www.guardian.co.uk/rssfeed/0,,30,00.xml',
+
+	# Life and style
+	'Guardian Unlimited Life and Style': 'http://www.guardian.co.uk/rssfeed/0,,44,00.xml',
+	'Guardian Unlimited Life and Style Food': 'http://www.guardian.co.uk/rssfeed/0,,46,00.xml',
+
+
+	# http://arts.guardian.co.uk/
+	'Guardian Unlimited Art': 'http://www.guardian.co.uk/rssfeed/0,,40,00.xml',
+#	'Guardian Unlimited: Arts blog':'http://blogs.guardian.co.uk/arts/atom.xml',
+	# already got books
+
+	# http://business.guardian.co.uk/
+	'Guardian Unlimited Business - more business news': 'http://www.guardian.co.uk/rssfeed/0,,25,00.xml',
+
+	# ENVIRONMENT - http://www.guardian.co.uk/environment
+	'Guardian Unlimited Environment': 'http://www.guardian.co.uk/environment/rss',
+	'Guardian Unlimited Environment: Climate change': 'http://www.guardian.co.uk/environment/climatechange/rss',
+	'Guardian Unlimited Environment: Conservation': 'http://www.guardian.co.uk/environment/conservation/rss',
+	'Guardian Unlimited Environment: Energy': 'http://www.guardian.co.uk/environment/energy/rss',
+	'Guardian Unlimited Environment: Ethical Living': 'http://www.guardian.co.uk/environment/ethicalliving/rss',
+	'Guardian Unlimited Environment: Recycling': 'http://www.guardian.co.uk/environment/recycling/rss',
+	'Guardian Unlimited Environment: Travel and transport': 'http://www.guardian.co.uk/environment/travelandtransport/rss',
+	# missing "what can I do?" feed - url changes daily
+
+	# SCIENCE - http://www.guardian.co.uk/science
+	'Guardian Unlimited Science': 'http://www.guardian.co.uk/science/rss',
+	'Guardian Unlimited Science: Science news': 'http://www.guardian.co.uk/science/sciencenews/rss',
+	'Guardian Unlimited Science: Comment': 'http://www.guardian.co.uk/science/comment/rss',
+	#	'Science podcasts | Guardian Unlimited': 'http://www.guardian.co.uk/science/podcast/rss',
+	'Guardian Unlimited Science: Bad science': 'http://www.guardian.co.uk/science/series/badscience/rss',
+
+	# TECHNOLOGY - http://www.guardian.co.uk/technology
+	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/technology/rss',
+	'Guardian Unlimited Technology: News': 'http://www.guardian.co.uk/technology/news/rss',
+	'Guardian Unlimited Technology: Comment': 'http://www.guardian.co.uk/technology/comment/rss',
+	'Guardian Unlimited Technology: Games': 'http://www.guardian.co.uk/technology/games/rss',
+	'Guardian Unlimited Technology: Gadgets': 'http://www.guardian.co.uk/technology/gadgets/rss',
+	'Guardian Unlimited Technology: Internet': 'http://www.guardian.co.uk/technology/internet/rss',
+	'Guardian Unlimited Technology: Inside IT': 'http://www.guardian.co.uk/technology/it/rss',
+	'Guardian Unlimited Technology: Telecoms': 'http://www.guardian.co.uk/technology/telecoms/rss',
+	#'Ask Jack': 'http://blogs.guardian.co.uk/askjack/atom.xml',
+
+	#TRAVEL - http://www.guardian.co.uk/travel
+	'Guardian Unlimited Travel': 'http://www.guardian.co.uk/travel/rss',
+	'Guardian Unlimited Travel: Short breaks': 'http://www.guardian.co.uk/travel/shortbreaks/rss',
+	'Guardian Unlimited Travel: Hotels': 'http://www.guardian.co.uk/travel/hotels/rss',
+	'Guardian Unlimited Travel: Restaurants': 'http://www.guardian.co.uk/travel/restaurants/rss',
+
+	# mediaguardian blogs
+	# 'PDA': 'http://blogs.guardian.co.uk/digitalcontent/atom.xml',
+	# 'Guardian Unlimited: Organ Grinder': 'http://blogs.guardian.co.uk/organgrinder/atom.xml',
+	# 'Greenslade': 'http://blogs.guardian.co.uk/greenslade/atom.xml',
+
+	'Guardian Unlimited Music': 'http://www.guardian.co.uk/rssfeed/0,,39,00.xml',
+	'Guardian Unlimited Theatre & performance art': 'http://www.guardian.co.uk/rssfeed/0,,41,00.xml',
+
+
+
+	# these I found by trying out URLs - Ben
+
+	# 31 invalid
+	'Guardian Unlimited Family': 'http://www.guardian.co.uk/rssfeed/0,,32,00.xml',
+	'Guardian Unlimited Money expat finance news': 'http://www.guardian.co.uk/rssfeed/0,,33,00.xml',
+	'Guardian Unlimited Health news': 'http://www.guardian.co.uk/rssfeed/0,,34,00.xml',
+	'Guardian Unlimited Money property abroad news': 'http://www.guardian.co.uk/rssfeed/0,,35,00.xml',	
+	# 36,37 invalid
+	# 'testRssFeed': 'http://www.guardian.co.uk/rssfeed/0,,38,00.xml',
+	# 'Nokia mobile tips': 'http://www.guardian.co.uk/rssfeed/0,,42,00.xml',		# short term promo?
+	# 'Money Business news': 'http://www.guardian.co.uk/rssfeed/0,,43,00.xml',	# empty/unused?
+	# 'Observer Food Monthly': 'http://www.guardian.co.uk/rssfeed/0,,45,00.xml',	# empty/unused?
+	# 46-60 invalid
 	}
 
 
@@ -228,9 +310,18 @@ def ScrubFunc( context, entry ):
 
 	m = idpat.search( url )
 	if m:
-		context['srcid'] = m.group(1)	# storyserver format
+		# old (storyserver) format
+		context['srcid'] = m.group(1)
 	else:
-		context['srcid'] = context['srcurl']		# new format
+		# new format
+		context['srcid'] = context['srcurl']
+		# force whole article on single page
+		context['srcurl'] = context['srcurl'] + '?page=all'
+
+
+	if url in ( 'http://www.guardian.co.uk/travel/typesoftrip', 'http://www.guardian.co.uk/travel/places' ):
+		ukmedia.DBUG2( "IGNORE travel section link '%s' (%s)\n" % (context['title'], url) );
+		return None
 
 	# we don't handle gallery pages...
 	if url.find( '/gallery/') != -1:
