@@ -136,15 +136,42 @@ def FindJournoMultiple( conn, rawname ):
 	return found
 
 
-def FindJourno( conn, rawname ):
-	found = FindJournoMultiple( conn, rawname )
-	if len(found) > 1:
-		raise Exception, "Multiple journos found matching '%s'"%(alias)
+def FindJourno( conn, rawname, hint_srcorgid = None ):
+	journos = FindJournoMultiple( conn, rawname )
 
-	if found:
-		return found[0]
-	else:
+	if not journos:
 		return None
+
+	if len(journos) == 1:
+		return journos[0]
+
+	if len(journos) > 1:
+		# if we need to implement per-journo evil hacks,
+		# then this is probably the place to put them!
+		# eg if rawname = "Fred Bloggs":....
+
+		# multiple matches - try using the organisations they've written for
+		# to pick one.
+		if hint_srcorgid == None:
+			raise Exception, "Multiple journos found called '%s'" % (rawname)
+
+		# which journos have articles in this srcorg?
+		c = conn.cursor()
+		sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in journos]) + ") AND a.srcorg=%s"
+
+		c.execute( sql, hint_srcorgid )
+		matching = c.fetchall()
+		# want to make sure that only one of our possible journos has written for this org
+		cnt = len(matching)
+		if cnt == 0:
+			raise Exception, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,hint_srcorgid)
+		if cnt != 1:
+			raise Exception, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,hint_srcorgid)
+
+		c.close()
+		return matching[0]
+
+	return None
 
 
 def CreateNewJourno( conn, rawname ):
@@ -232,6 +259,7 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen, srcorg ):
 			srcorg )
 
 	q.close()
+
 
 
 
