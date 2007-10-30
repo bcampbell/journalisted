@@ -93,7 +93,7 @@ This website is in beta - all information is generated automatically so there ar
  <h3>Something wrong/missing?</h3>
  <div class="boxnarrow-content">
   <p>Have we got the wrong information about this journalist?
-   <a href="mailto:team@journa-list.dyndns.org?subject=Problem with <?php echo $journo['prettyname']; ?>'s page">Let us know</a></p>
+   <a href="/missing?j=<?=$journo['ref'];?>">Let us know</a></p>
  </div>
 </div>
 
@@ -193,6 +193,8 @@ function emit_blocks_articles( $journo, $allarticles )
 	}
 
 ?>
+<p>Article(s) missing? If you notice an article is missing,
+<a href="/missing?j=<?=$journo['ref'];?>">click here</a></p>
 </div>
 </div>
 

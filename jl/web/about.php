@@ -28,8 +28,41 @@ page_header( "About", array( 'menupage'=>'about' ) );
 <p>It allows you to build up your own tailored list of journalists whose views you respect and trust. You can search through their back catalogue of articles, and link to other articles on the same topic by different journalists. And, if you want, you can be alerted each time any of them writes an article.</p>
 <p>Right now there is no website that pulls together the work of individual journalists and aggregates it to make it easy to search and link. If you search on the internet for a journalist the chances are you’ll find one of three things: a link to an article of theirs on a news website, a brief bio on the news website (or, if well known, on Wikipedia), or their own website / blog (very rare in the UK).</p>
 
-<h3>Which journalists does it include?</h3>
-<p>It contains all journalists from 12 national newspapers - The Times, The Guardian, The Independent, The Daily Telegraph, The Daily Mail, The Daily Express, The Mirror, The Sun, The Sunday Times, The Sunday Telegraph, The Sunday Mirror, The Observer - and BBC News Online. The site can only index those articles which have bylines. We started indexing the articles in May 2007.</p>
+
+<a name="howcollected"><h3>How is this information collected?</h3></a>
+
+<p>This information is collected automatically from the websites of
+<a href="#whichoutlets">various UK national news outlets</a>. Articles are indexed by
+journalist based on the byline to the article. Statistics are based
+on articles indexed to each journalist from the date the first article
+was recorded on this site.
+</p>
+<p>
+We started indexing articles in May 2007.
+</p>
+
+<a name="whichoutlets"><h3>Which news outlets are covered?</h3></a>
+
+<p>The site currently covers:
+<ul>
+ <li>BBC News</li>
+ <li>Sky News (Blogs only)</li>
+ <li>The Daily Express</li>
+ <li>The Daily Mail</li>
+ <li>The Daily Telegraph</li>
+ <li>The Guardian</li>
+ <li>The Independent</li>
+ <li>The Mirror</li>
+ <li>The Observer</li>
+ <li>The Sun</li>
+ <li>The Sunday Mirror</li>
+ <li>The Sunday Telegraph</li>
+ <li>The Sunday Times</li>
+ <li>The Times</li>
+</ul>
+</p>
+
+
 
 <?php
 

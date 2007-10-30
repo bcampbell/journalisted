@@ -110,7 +110,9 @@ function page_footer( $params=array() )
 
 	$contactemail = "team@" . OPTION_WEB_DOMAIN;
 ?>
-<a href="/development">Development</a> | <a href="mailto:<?=$contactemail ?>">Contact us</a><br />
+<a href="/development">Development</a> |
+<?=SafeMailto( $contactemail, 'Contact us' );?>
+<br />
 &copy; 2007 <a href="http://www.mediastandardstrust.com">Media Standards Trust</a><br />
 </div>
 </body>

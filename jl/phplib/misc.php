@@ -36,6 +36,25 @@ function pretty_date( $t )
 		return strftime('%a %e %B %Y',$t);
 }
 
+/***************************************************************************
+*	function:		SafeMailto
+*	description:	return a spam-safe MailTo link using javascript
+*					Uses gen_mailto() in scripts/base.js
+*					$addr - email address to output
+*					NOTE: doesn't work if name part contains a dot (.)
+*					eg "fred.smith@megacorp.com"
+***************************************************************************/
+function SafeMailto( $addr, $text='' )
+{
+	$parts = array_reverse( preg_split( '/[.@]/', $addr ) );
+	
+	$out = "<script>gen_mailto( '$text', '" . implode( "','", $parts ). "');</script><noscript>$text</noscript>";
+
+	return $out;
+}
+
+
+
 // generate a link for a tag
 function tag_gen_link( $tag, $journo_ref=null )
 {
