@@ -379,7 +379,7 @@ def ScrubFunc( context, entry ):
 
 
 def main():	
-	DEBUG_OUTPUT_TO_DIR = True
+	DEBUG_OUTPUT_TO_DIR = False
 	if DEBUG_OUTPUT_TO_DIR:
 		if not os.path.exists("output"):
 			os.mkdir("output")
