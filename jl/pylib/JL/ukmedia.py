@@ -381,12 +381,33 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 	return (newcount,failcount)
 
 
+indyurlpat = re.compile( '^(http://)?[^/]*independent[^/]*' )
+
 def FetchURL( url, timeout=defaulttimeout ):
 	socket.setdefaulttimeout( timeout )
 
-	f = urllib2.urlopen(url)
-	dat = f.read()
-	return dat
+	attempt = 0
+	while 1:
+		try:
+			f = urllib2.urlopen(url)
+			dat = f.read()
+			return dat
+		except urllib2.HTTPError, e:
+
+			if not indyurlpat.match( url ):
+				raise
+			if e.code!=500:
+				raise
+
+			DBUG2( "FetchURL INDY500 error (%s)\n" % (url) )
+
+			attempt = attempt + 1
+			if attempt >= 5:
+				DBUG2( "  aborting - too many retries\n" )
+				raise
+
+			# give server a few seconds to get its act together and retry!
+			time.sleep( 10 )
 
 
 
