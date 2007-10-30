@@ -114,9 +114,26 @@ class DummyArticleDB:
 	def __init__(self):
 		self.id = 1
 
+		# gtb, get orgmap:
+		self.conn = DB.Connect()
+		c = self.conn.cursor()
+		c.execute( "SELECT id,shortname FROM organisation" )
+		self.orgmap = {}
+		while 1:
+			row=c.fetchone()
+			if not row:
+				break
+			self.orgmap[ row[1] ] = row[0]
+
 	def Add( self, art ):
 		CheckArticle( art )
+
 		artid = self.id
+		srcorg = self.orgmap[ art[ 'srcorgname' ] ]
+
+#		print "        Process Byline:"+art['byline'].encode('latin-1','replace')
+		ProcessByline( artid, art['byline'], srcorg )
+
 		self.id = artid + 1
 		return artid
 
@@ -129,6 +146,14 @@ def CheckArticle(art):
 	tagpat = re.compile( "<.*?>", re.UNICODE )
 	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
+	# check for missing/blank fields
+	for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
+		if not (f in art):
+			raise Exception, ( "missing '%s' field!" % (f) )
+		s= art[f]
+		if s.strip() == '':
+			raise Exception, ( "blank '%s' field!" % (f) )
+
 	# make sure assorted fields are unicode
 	for f in ( 'title', 'byline', 'description', 'content' ):	#, 'permalink', 'srcurl','srcid' ):
 		if not isinstance( art[f], unicode ):
@@ -138,23 +163,17 @@ def CheckArticle(art):
 	for f in ( 'title','byline' ):
 		s = art[f]
 		if s != s.strip():
-			raise Exception, ( "%s has leading/trailing whitespace ('%s')" % (f,s) )
+			raise Exception, ( "%s has leading/trailing whitespace ('%s')" % (f,s.encode('latin-1','replace')) )
 		if s.find("\n") != -1:
-			raise Exception, ( "multi-line %s ('%s')" % (f,s) )
-
-	# check for missing/blank fields
-	for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
-		s= art[f]
-		if s.strip() == '':
-			raise Exception, ( "missing '%s' field!" % (f) )
+			raise Exception, ( "multi-line %s ('%s')" % (f,s.encode('latin-1','replace')) )
 
 	# check for unwanted html tags & entities
 	for f in ( 'title','byline','description' ):
 		s = art[f]
 		if entpat.search( s ):
-			raise Exception, ( "%s contains html entities ('%s')" % (f,s) )
+			raise Exception, ( "%s contains html entities ('%s')" % (f,s.encode('latin-1','replace')) )
 		if tagpat.search( s ):
-			raise Exception, ( "%s contains html tags ('%s')" % (f,s) )
+			raise Exception, ( "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace')) )
 
 
 

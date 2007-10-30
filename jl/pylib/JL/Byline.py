@@ -18,8 +18,23 @@ bylinecrackers = [
 	# note: ignore email addr here as we don't know which person it's for
 	{ 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+) and (\S+ \S+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})$' },
 	{ 'fmt': '(n)(nl)', 'pat': '(?:by |from |)(.+) and (.+) in (.+)$' },
+
+	# By Andy Portch, Sky News' cameraman in Beijing
+	{ 'fmt': '(natl)', 'pat': '(?:by |from |)(.+), (.+)\'s? (.+) (?:in|at|reports from) (.+)$' },	# 
+
+	# Sky's Foreign News Editor Nick Ludlam
+	{ 'fmt': '(natl)', 'pat': '(.+)\'?s? (.+) (\S+ \S+)$' },	# 
+	
+	# Sky News Online's Alison Chung
+	{ 'fmt': '(an)', 'pat': '(.+)(?:\'s|\') (.+)$' },	# 
+
 	{ 'fmt': '(nal)', 'pat': '(?:by |from |)(.+), of (.+), in (.+)$' },
+
+	{ 'fmt': '(nal)', 'pat': '(?:by |from |)(.+), (.+) (?:in|at|reports from) (.+)$' },	# gtb
+	
+
 	{ 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?)[,]? (?:in|at|reports from) (.+)$' },
+
 	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?), (.+)$' },
 	{ 'fmt': '(nte)', 'pat': """(?:by |from |)(\S+ \S+) (.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
 	{ 'fmt': '(ne)', 'pat': """(?:by |from |)(.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
@@ -80,9 +95,15 @@ agencypats = [
 	re.compile( """\\bagencies\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bagences\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bexpress.co.uk\\b""", re.IGNORECASE|re.UNICODE ),
+	
+	re.compile( """sky news online""", re.IGNORECASE|re.UNICODE ),	# gtb
+	re.compile( """sky news""", re.IGNORECASE|re.UNICODE ),	# gtb
+	re.compile( """sky""", re.IGNORECASE|re.UNICODE ),	# gtb
 	]
 
 jobtitlepats = [
+	re.compile( """associate editor""", re.IGNORECASE|re.UNICODE ),
+
 	re.compile( """editor$""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """reporter$""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """correspondent$""", re.IGNORECASE|re.UNICODE ),
@@ -91,6 +112,13 @@ jobtitlepats = [
 	re.compile( """writer$""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """commentator$""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """nutritionist""", re.IGNORECASE|re.UNICODE ),
+
+	re.compile( """presenter""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """online journalist""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """journalist""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """cameraman""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """deputy head""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """head""", re.IGNORECASE|re.UNICODE ),
 	]
 
 emailpat = re.compile( """\\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\\b""", re.UNICODE )
@@ -100,6 +128,16 @@ def CrackByline( byline ):
 		raise Exception, "byline not unicode"
 
 	byline = byline.strip()
+	
+	# gtb:
+	# Discard text after "is" to deal with e.g.
+	#     Sky News Online's Alison Chung is heading home from Portugal
+	#     Sky's Foreign News Editor Nick Ludlam is embedded with Us troops in Iraq to analyse...
+	matchIs = re.search('^(.*?)\\bis\\b(.*?)$', byline)
+	if matchIs:
+		byline = matchIs.group(1)
+		
+	
 
 	# compress whitespace
 	byline = u' '.join( byline.split() )
@@ -114,7 +152,7 @@ def CrackByline( byline ):
 		if not m:
 			continue
 
-#		print "match!"
+#		print "match! %s" %(cracker['fmt'])
 
 		ret = []
 		fmt = cracker['fmt']
@@ -139,7 +177,7 @@ def CrackByline( byline ):
 				nm = m.group(idx).strip()
 				if not CouldBeName( nm ):
 					skip = True
-					#print "(fmt %s) reject name %s" % (fmt,nm)
+#					print "(fmt %s) reject name %s" % (fmt,nm)
 					break
 				person['name'] = nm
 
@@ -149,7 +187,7 @@ def CrackByline( byline ):
 			if f=='t':
 				title = m.group(idx).strip()
 				if not IsJobTitle( title ):
-				#	print "(fmt %s) reject title %s" % (fmt,title)
+#					print "(fmt %s) reject title %s" % (fmt,title)
 					skip = True
 					break
 				person['title'] = title
@@ -173,10 +211,12 @@ def CrackByline( byline ):
 				person['email'] = m.group(idx)
 
 			idx = idx +1
-
+			
 		if not skip:
+#			print "        Cracked: "+cracker['fmt']+" ",ret
 			return ret
 
+	print "        Failed to crack byline: "+byline.encode('latin-1','replace')
 	# no matches
 	return None
 

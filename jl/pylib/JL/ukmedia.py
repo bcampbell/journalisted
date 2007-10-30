@@ -23,6 +23,9 @@ class NonFatal(Exception):
 	"""
 	pass
 
+OFFLINE = False#True	# gtb
+USE_CACHE = True	# gtb
+
 defaulttimeout=120	# socket timeout, in secs
 
 def MonthNumber( name ):
@@ -243,6 +246,8 @@ unientitydefs = {}
 for (name, codepoint) in htmlentitydefs.name2codepoint.iteritems():
 	unientitydefs[name] = unichr(codepoint)
 
+#print unientitydefs
+
 del name, codepoint
 
 
@@ -274,9 +279,13 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 	for feedname, feedurl in rssfeeds.iteritems():
 		DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
-		r = feedparser.parse( feedurl )
+		if USE_CACHE:
+			FetchURL(feedurl, defaulttimeout, "rssCache\\"+srcorgname)
+			r = feedparser.parse( "rssCache\\"+srcorgname+"\\"+GetCacheFilename(feedurl) )
+		else:
+			r = feedparser.parse( feedurl )
 		
-		print r.version;
+		#debug:		print r.version;
 
 		lastseen = datetime.now()
 		for entry in r.entries:
@@ -289,8 +298,11 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 			else:
 				pubdate = None
 
+#			print "New desc: ",desc.encode('latin-1','replace')
+
 			title = DescapeHTML( title )
 			desc = FromHTML( desc )
+			
 
 			context = {
 				'srcid': url,
@@ -337,8 +349,12 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 		try:
 			if store.ArticleExists( context['srcorgname'], context['srcid'] ):
 				continue;	# skip it - we've already got it
+				
+			# gtb!debug, for debugging tricky cases:
+#			if context['srcurl']!='http://timesonline.typepad.com/eco_worrier/2007/09/should-you-feed.html': 
+#				continue;
 
-			html = FetchURL( context['srcurl'] )
+			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
 
 			# some extra, last minute context :-)
 			context[ 'lastscraped' ] = datetime.now()
@@ -381,19 +397,90 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 	return (newcount,failcount)
 
 
+def ExtractAuthorFromParagraph(para):
+
+	para = RemoveTags(para)
+	# shame to throw away information, like the author name might be in bold, but in practice it doesn't seem to matter that much
+
+	# gtb
+	# Deal with complex bylines:
+	# TODO choose last match only (more likely to be the journalist)
+	# For now assume the author's name is two capitalised words
+	verbsIndicatingJournalistInOrderOfLikelihood = (
+		# "Roger Highfield outlines the verdict of former science minister, Lord Sainsbury"
+		u'(?:choose|tour|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|by|say)(?:d|ed|s|)',
+		#     Andrew Cave becomes 'Telegraphman Boozehound' on Second Life to see how well it works
+		u'(?:caught up|catches up|becomes|is|was|takes|makes)',
+#		u'(?:[a-z]+s)',	# any word ending with -s
+#		u'[a-z]+'		# anything at all (but must be lowercase)
+	)
+
+	# deals with double-barrelled names like Jessica Gorst-Williams, also names like McGreal
+	journalistNamePattern_one = u'[A-Z][a-z]+ (?:[A-Z][a-z]+-?)?[A-Z][a-z]+'	
+	# allows Aaa Bee and Cee Dee:
+	journalistNamePattern = u'(?:'+journalistNamePattern_one+')(?: and '+journalistNamePattern_one+')?'
+	
+	author = u'';
+	confidence = 0
+	for verbs in verbsIndicatingJournalistInOrderOfLikelihood:
+		confidence=confidence+1
+		# "Joe Bloggs writes..."
+		authorFromDescriptionMatches = re.findall(
+			u'\\b('+journalistNamePattern+') '+verbs+u'\\b', 
+			para)
+		if authorFromDescriptionMatches:
+			author = authorFromDescriptionMatches[-1]#.group(1)
+			break
+		# "... writes Joe Bloggs"
+		authorFromDescriptionMatches = re.findall(
+			u'\\b'+verbs+u' ('+journalistNamePattern+')\\b', 
+			para)
+		if authorFromDescriptionMatches:
+			author = authorFromDescriptionMatches[-1]#.group(1)
+			break
+
+	if author!=u'':
+		print "    Byline-o-matic: ",confidence," ",author," <- ",para.encode('latin-1','replace'),""
+	else:
+		print "    Byline-o-matic failed."
+
+	return author
+
+
+def GetCacheFilename(url):
+	return re.sub("\\W","_",url)
+
 indyurlpat = re.compile( '^(http://)?[^/]*independent[^/]*' )
 
-def FetchURL( url, timeout=defaulttimeout ):
+def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
 	socket.setdefaulttimeout( timeout )
+	# some URLs are down as https erroneously, fix this:
+	url = re.sub(u'\\bhttps\\b',u'http',url)
+	#DEBUG	print "FetchURL: ",url
 
 	attempt = 0
 	while 1:
 		try:
-			f = urllib2.urlopen(url)
-			dat = f.read()
+			if USE_CACHE:
+				if not os.path.exists(cacheDirName):
+					os.mkdir(cacheDirName)
+				cachedFilename = cacheDirName+'\\'+GetCacheFilename(url)
+		#	print cachedFilename
+			if USE_CACHE and os.path.exists(cachedFilename):
+				# read from cache instead of from the internet:
+				f = open(cachedFilename,'r')
+				dat = f.read()
+			else:
+				if OFFLINE:
+					return None
+				f = urllib2.urlopen(url)
+				dat = f.read()
+				# cache it:
+				if USE_CACHE:
+					f = open(cachedFilename,'w')
+					f.write(dat)
 			return dat
 		except urllib2.HTTPError, e:
-
 			if not indyurlpat.match( url ):
 				raise
 			if e.code!=500:
