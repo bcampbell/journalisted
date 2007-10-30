@@ -172,7 +172,7 @@ def ProcessByline( article_id, byline, srcorgid ):
 	# reminder: a byline can contain multiple journos
 	for d in details:
 		# is journo already in DB?
-		journo_id = Journo.FindJourno( conn, d['name'] )
+		journo_id = Journo.FindJourno( conn, d['name'], srcorgid )
 		if not journo_id:
 			journo_id = Journo.CreateNewJourno( conn, d['name'] )
 			ukmedia.DBUG2( " NEW journo '%s' (id: %s)\n" %(d['name'],journo_id) )
