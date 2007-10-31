@@ -351,8 +351,8 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 				continue;	# skip it - we've already got it
 				
 			# gtb!debug, for debugging tricky cases:
-#	if context['srcurl']!='http://skynews5.typepad.com/my_weblog/2007/10/rock-in-the-doc.html':
-#			continue;
+#			if context['srcurl']!='http://www.telegraph.co.uk/travel/main.jhtml?xml=/travel/2007/10/25/et-a380-flight.xml':
+#				continue;
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
 			
@@ -397,20 +397,29 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 	return (newcount,failcount)
 
 
+# Byline-o-matic, gtb
 def ExtractAuthorFromParagraph(para):
+#	print "ExtractAuthorFromParagraph"
 
-	para = RemoveTags(para)
+	para = RemoveTags(para).strip()
+	
+	if (para==u''):
+		return u''
+
+
+	# TODO
+	# Rosanna de Lisle
+	
 	# shame to throw away information, like the author name might be in bold, but in practice it doesn't seem to matter that much
-
+	
 	# gtb
 	# Deal with complex bylines:
-	# TODO choose last match only (more likely to be the journalist)
 	# For now assume the author's name is two capitalised words
 	verbsIndicatingJournalistInOrderOfLikelihood = (
 		# "Roger Highfield outlines the verdict of former science minister, Lord Sainsbury"
-		u'(?:choose|tour|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|by|say)(?:d|ed|s|)',
+		u'(?:review|choose|tour|insist|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|say)(?:d|ed|s|)',
 		#     Andrew Cave becomes 'Telegraphman Boozehound' on Second Life to see how well it works
-		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes)',
+		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes|at large)'
 #		u'(?:[a-z]+s)',	# any word ending with -s
 #		u'[a-z]+'		# anything at all (but must be lowercase)
 	)
@@ -423,26 +432,22 @@ def ExtractAuthorFromParagraph(para):
 	author = u'';
 	confidence = 0
 	for verbs in verbsIndicatingJournalistInOrderOfLikelihood:
+		# new, gtb, only pick out where at beginning or end of sentence:
+		searchPatterns = [
+			u'(?:^|[\.\!\?\'\"])\s*('+journalistNamePattern+') '+verbs+u'\\b',			# "Joe Bloggs writes..."
+			u'\\b'+verbs+u' ('+journalistNamePattern+')(?:$|[\.\!\?\'\"])'				# "... writes Joe Bloggs"
+		]
 		confidence=confidence+1
-		# "Joe Bloggs writes..."
-		authorFromDescriptionMatches = re.findall(
-			u'\\b('+journalistNamePattern+') '+verbs+u'\\b', 
-			para)
-		if authorFromDescriptionMatches:
-			author = authorFromDescriptionMatches[0]#-1]#.group(1)
-			break
-		# "... writes Joe Bloggs"
-		authorFromDescriptionMatches = re.findall(
-			u'\\b'+verbs+u' ('+journalistNamePattern+')\\b', 
-			para)
-		if authorFromDescriptionMatches:
-			author = authorFromDescriptionMatches[0]#-1]#.group(1)
-			break
+		for searchPattern in searchPatterns:
+			authorFromDescriptionMatches = re.findall(searchPattern, para)
+			if authorFromDescriptionMatches:
+				author = authorFromDescriptionMatches[0]#-1]#.group(1)
+				break
 
 	if author!=u'':
 		print "    Byline-o-matic: ",confidence," ",author," <- ",para.encode('latin-1','replace'),""
 	else:
-		print "    Byline-o-matic failed."
+		print "    Byline-o-matic failed on: ",para.encode('latin-1','replace')
 
 	return author
 

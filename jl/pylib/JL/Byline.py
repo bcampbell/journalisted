@@ -96,6 +96,8 @@ agencypats = [
 	re.compile( """\\bagences\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """\\bexpress.co.uk\\b""", re.IGNORECASE|re.UNICODE ),
 	
+	re.compile( """\\breuters\\b""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """\\bafp\\b""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """sky news online""", re.IGNORECASE|re.UNICODE ),	# gtb
 	re.compile( """sky news""", re.IGNORECASE|re.UNICODE ),	# gtb
 	re.compile( """sky""", re.IGNORECASE|re.UNICODE ),	# gtb
@@ -216,7 +218,8 @@ def CrackByline( byline ):
 #			print "        Cracked: "+cracker['fmt']+" ",ret
 			return ret
 
-	print "        Failed to crack byline: "+byline.encode('latin-1','replace')
+	if (byline!=u''):
+		print "        Failed to crack byline: "+byline.encode('latin-1','replace')
 	# no matches
 	return None
 
