@@ -4,7 +4,7 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
-# Scraper for BBC News blogs site
+# Scraper for assorted News blogs site
 #
 # TODO:
 #
@@ -757,8 +757,8 @@ def main():
 				for f in found:
 					print ("%s" % ( f )).encode( "utf-8" )
 				print "\n--------------------------\n"
-			# store = ArticleDB.ArticleDB()
-			store = ArticleDB.DummyArticleDB()	# testing
+			store = ArticleDB.ArticleDB()
+			#store = ArticleDB.DummyArticleDB()	# testing
 			ukmedia.ProcessArticles( found, store, Extract )
 		
 	return 0
