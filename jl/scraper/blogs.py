@@ -37,6 +37,10 @@ from JL import ArticleDB,ukmedia
 #7	telegraph	The Daily Telegraph
 
 # sources used by FindArticles
+
+
+
+
 rssfeedGroups = {
 
 	# Times Online pattern		
@@ -448,7 +452,15 @@ def Extract( html, context ):
 
 	art = context
 
-	soup = BeautifulSoup( html )
+	# typepad always uses utf-8.
+	# Sky news blogs sometimes have a meta tag claiming that they are iso-8859-1. Muppets.
+	# So we'll just assume all typepad blogs are utf-8.
+	if art['srcurl' ].find('typepad.com') != -1:
+		soup = BeautifulSoup( html, fromEncoding='utf-8' );
+	else:
+		# not typepad - let BeautifulSoup guess (it's pretty good)
+		soup = BeautifulSoup( html )
+
 
 #	meta = soup.find( 'meta', { 'name': 'Headline' } )
 #	art['title'] = ukmedia.DescapeHTML( meta[ 'content' ] ).strip()
@@ -485,7 +497,7 @@ def Extract( html, context ):
 	txt = soup.renderContents(None)
 #	m = re.search( u'<!--\s*S BO\s*-->(.*)<!--\s*E BO\s*-->', txt, re.UNICODE|re.DOTALL )
 	
-	
+
 
 
 	# TODO strip weird non-ascii on date of telegraph
