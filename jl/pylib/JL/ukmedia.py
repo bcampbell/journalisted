@@ -351,8 +351,8 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 				continue;	# skip it - we've already got it
 				
 			# gtb!debug, for debugging tricky cases:
-#			if context['srcurl']!='http://adamboulton.typepad.com/my_weblog/2007/10/a-perfect-oppor.html':
-#				continue;
+#	if context['srcurl']!='http://skynews5.typepad.com/my_weblog/2007/10/rock-in-the-doc.html':
+#			continue;
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
 			

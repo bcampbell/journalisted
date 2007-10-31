@@ -191,7 +191,7 @@ rssfeedGroups = {
 		'rssfeeds':
 		{
 			u'(Frontline blog- various journalists)':	'http://skynews6.typepad.com/my_weblog/index.rdf',
-			u'([Adam Boulton] et al)':						'http://adamboulton.typepad.com/my_weblog/index.rdf', # 'http://adamboulton.typepad.com/',
+			u'([Adam Boulton] et al)':					'http://adamboulton.typepad.com/my_weblog/index.rdf', # 'http://adamboulton.typepad.com/',
 			u'Martin Brunt':							'http://skynews4.typepad.com/my_weblog/index.rdf',
 			u'(Editors blog- various editors)':			'http://skynews7.typepad.com/my_weblog/index.rdf',
 			u'(Technology blogs- various)':				'http://skynews.typepad.com/technologyblog/index.rdf',
@@ -230,13 +230,13 @@ rssfeedGroups = {
 						(?:<img[^>]*>)?
 						(?:</a[^>]*>)?
 					)
-					(?P<author>[^<]+)
+					(?P<author2>[^<]+)
 				)?
 				(?P<content>.*?)
 				(?:
 					>
 					(?:Written|Posted)\ [b|B]y\ 
-					(?P<author2>[^<,]+)
+					(?P<author>[^<,]+)
 					.*?
 				)?
 				<div\ class="comments">
@@ -549,7 +549,7 @@ def Extract( html, context ):
 	# fix everything up:
 	art['content'] = ukmedia.SanitiseHTML( art['content'] )
 	
-	if (('author' in art) and re.search('\\bGuardian Unlimited\\b',art['author'])):
+	if (('author' in art) and (re.search('\\b(?:skynews|Guardian Unlimited)\\b',art['author'])) or art['author']=="Sky News"):
 		del art['author']
 	if ('author2' in art) and art['author2']==u'':
 		del art['author2']
@@ -559,6 +559,7 @@ def Extract( html, context ):
 	# disabled: and no lower case words: not re.search('\\b[a-z]',art['author'])) and 
 	# and one of the words is not 'The', as in "The Guardian"
 #	print "AUTHOR: ["+art['author']+"]"
+#	print "AUTHOR2: ["+art['author2']+"]"
 	
 #	art['author'] = art['author'].encode('latin-1','replace')
 	
@@ -710,7 +711,7 @@ def main():
 	for rssfeedGroupName in rssfeedGroupsToProcess:
 		rssfeedGroup = rssfeedGroups[rssfeedGroupName]
 
-		DEBUG_OUTPUT_TO_DIR = True
+		DEBUG_OUTPUT_TO_DIR = False
 		if DEBUG_OUTPUT_TO_DIR:
 			if not os.path.exists("output"):
 				os.mkdir("output")
