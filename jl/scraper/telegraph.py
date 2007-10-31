@@ -258,13 +258,19 @@ def Extract( html, context ):
 		byline = u' '.join( byline.split() )
 
 	art['byline'] = byline
-	
+
+
+	# Some articles have a hidden bit where the author name is stored:	
 	# fill in author name:
-	if not byline:
+	if True: #not byline:
 		# cv.c6="/property/features/article/2007/10/25/lpsemi125.xml|Max+Davidson";
 		authorMatch = re.search(u'cv.c6=".*?\|(.*?)";', html)
 		if authorMatch:
-			art['byline'] = re.sub(u'\+',' ',authorMatch.group(1)) # convert + signs to spaces
+			author = authorMatch.group(1)
+			author = re.sub(u'\+',' ',author) 										# convert + signs to spaces
+			author = re.sub(u'\\b([A-Z][a-z]{3,})([A-Z][a-z]+)\\b', '\\1-\\2', author)	# convert SparckJones to Sparck-Jones (that's how they encode it)
+			# n.b. {3,} makes McTaggart not go to Mc-Taggart... bit hacky
+			art['byline'] = author
 	
 
 	# text (all paras use 'story' or 'story2' class, so just discard everything else!)
@@ -377,8 +383,19 @@ def ScrubFunc( context, entry ):
 	return context
 
 
-def main():	
-	DEBUG_OUTPUT_TO_DIR = False
+def main():
+
+	# test	
+#	author = "Karen SparckJones"
+#	author = re.sub(u'\\b([A-Z][a-z]+)([A-Z][a-z]+)\\b', '\\1-\\2', author)	# convert SparckJones to Sparck-Jones (that's how they encode it)
+#	print author
+#	return 0
+
+	#debug test auto-byline-o-matic
+#	print ukmedia.ExtractAuthorFromParagraph('The A380, the world\'s largest passenger plane, touched down in Sydney this morning, reports Francisca Kellett.')
+#	return 0
+	
+	DEBUG_OUTPUT_TO_DIR = False#True
 	if DEBUG_OUTPUT_TO_DIR:
 		if not os.path.exists("output"):
 			os.mkdir("output")
