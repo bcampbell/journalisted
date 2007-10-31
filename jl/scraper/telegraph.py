@@ -394,8 +394,8 @@ def main():
 
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
 
-	store = ArticleDB.DummyArticleDB()	# testing
-#	store = ArticleDB.ArticleDB()
+#	store = ArticleDB.DummyArticleDB()	# testing
+	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0
