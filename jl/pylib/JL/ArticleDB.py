@@ -154,6 +154,7 @@ def CheckArticle(art):
 		if s.strip() == '':
 			raise Exception, ( "blank '%s' field!" % (f) )
 
+#	print "CheckArticle byline: ["+art['byline']+"]"
 	# make sure assorted fields are unicode
 	for f in ( 'title', 'byline', 'description', 'content' ):	#, 'permalink', 'srcurl','srcid' ):
 		if not isinstance( art[f], unicode ):

@@ -274,7 +274,6 @@ def Extract( html, context ):
 	art['description'] = ExtractParas( soup, textpart )
 
 
-	
 	if (not ('byline' in art)) or art['byline']==u'':
 		author = ukmedia.ExtractAuthorFromParagraph(art['description'])
 		if author!=u'':
@@ -379,7 +378,7 @@ def ScrubFunc( context, entry ):
 
 
 def main():	
-	DEBUG_OUTPUT_TO_DIR = False
+	DEBUG_OUTPUT_TO_DIR = False#True
 	if DEBUG_OUTPUT_TO_DIR:
 		if not os.path.exists("output"):
 			os.mkdir("output")

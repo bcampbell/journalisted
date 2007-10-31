@@ -14,6 +14,7 @@ import re
 from datetime import datetime
 import sys
 import time
+import os
 
 #print sys.argv
 
@@ -141,13 +142,13 @@ rssfeedGroups = {
 		    u'Nick Robinson':	                        'http://blogs.bbc.co.uk/nickrobinson/rss.xml',                  # 'http://www.bbc.co.uk/blogs/nickrobinson/',
 		    u'Mark Devenport':	                        'http://www.bbc.co.uk/blogs/thereporters/markdevenport/rss.xml',# 'http://www.bbc.co.uk/blogs/thereporters/markdevenport/',
 		    u'Robert Peston':	                        'http://www.bbc.co.uk/blogs/thereporters/robertpeston/rss.xml',	# 'http://www.bbc.co.uk/blogs/thereporters/robertpeston/',
-		    u'(PM Blog- Eddie Mair & others)':	        'http://www.bbc.co.uk/blogs/pm/index.xml',						# 'http://www.bbc.co.uk/blogs/pm/',
+		    u'(PM Blog[Eddie Mair] et al)':		        'http://www.bbc.co.uk/blogs/pm/index.xml',						# 'http://www.bbc.co.uk/blogs/pm/',
 		    u'Martin Rosenbaum':	                    'http://www.bbc.co.uk/blogs/opensecrets/rss.xml',				# 'http://www.bbc.co.uk/blogs/opensecrets/',
 		    u'Brian Taylor':	                        'http://www.bbc.co.uk/blogs/thereporters/briantaylor/rss.xml',	# 'http://www.bbc.co.uk/blogs/thereporters/briantaylor/',
-		    u'(Sports editors blogs- Roger Mosey et al)':'http://www.bbc.co.uk/blogs/sporteditors/index.xml',			# 'http://www.bbc.co.uk/blogs/sporteditors/',
-		    u'(Newsnight blog- Peter Barron et al)':	'http://www.bbc.co.uk/blogs/newsnight/index.xml',				# 'http://www.bbc.co.uk/blogs/newsnight/',
+		    u'(Sports editors blogs[Roger Mosey] et al)':'http://www.bbc.co.uk/blogs/sporteditors/index.xml',			# 'http://www.bbc.co.uk/blogs/sporteditors/',
+		    u'(Newsnight blog[Peter Barron] et al)':		'http://www.bbc.co.uk/blogs/newsnight/index.xml',				# 'http://www.bbc.co.uk/blogs/newsnight/',
 		    u'Betsan Powys':	                    	'http://www.bbc.co.uk/blogs/thereporters/betsanpowys/rss.xml',	# 'http://www.bbc.co.uk/blogs/thereporters/betsanpowys/',
-		    u'(World Have Your Say- Ros Atkins et al)':	'http://blogs.bbc.co.uk/worldhaveyoursay/index.xml'				# 'http://www.bbc.co.uk/blogs/worldhaveyoursay/'
+		    u'(World Have Your Say[Ros Atkins] et al)':	'http://blogs.bbc.co.uk/worldhaveyoursay/index.xml'				# 'http://www.bbc.co.uk/blogs/worldhaveyoursay/'
 		},
 		'regexp':
 		[
@@ -190,7 +191,7 @@ rssfeedGroups = {
 		'rssfeeds':
 		{
 			u'(Frontline blog- various journalists)':	'http://skynews6.typepad.com/my_weblog/index.rdf',
-			u'(Adam Boulton & Co)':						'http://adamboulton.typepad.com/my_weblog/index.rdf', # 'http://adamboulton.typepad.com/',
+			u'([Adam Boulton] et al)':						'http://adamboulton.typepad.com/my_weblog/index.rdf', # 'http://adamboulton.typepad.com/',
 			u'Martin Brunt':							'http://skynews4.typepad.com/my_weblog/index.rdf',
 			u'(Editors blog- various editors)':			'http://skynews7.typepad.com/my_weblog/index.rdf',
 			u'(Technology blogs- various)':				'http://skynews.typepad.com/technologyblog/index.rdf',
@@ -229,18 +230,16 @@ rssfeedGroups = {
 						(?:<img[^>]*>)?
 						(?:</a[^>]*>)?
 					)
-					(?P<author2>[^<]+)
+					(?P<author>[^<]+)
 				)?
-				.*?
 				(?P<content>.*?)
 				(?:
-					<strong>
-					(?P<author>
-						Posted By .*?
-					)
-					</strong>
+					>
+					(?:Written|Posted)\ [b|B]y\ 
+					(?P<author2>[^<,]+)
+					.*?
 				)?
-				<div\ class="entry-comments"
+				<div\ class="comments">
 			'''
 		]
 #		<strong>By\ Sky\ News\ 
@@ -430,6 +429,9 @@ rssfeedGroups = {
 
 
 def Extract( html, context ):
+	# convert unicode non-breaking space to normal space, e.g. for "AndrewC2AOGimson" which otherwise confuses the scraper:
+	html = re.sub("C2A0".decode("hex"),' ', html)
+
 
 #	print context['srcurl']
 	if context['srcurl'].find('/podcasts/')!=-1:
@@ -506,7 +508,8 @@ def Extract( html, context ):
 		timeAfter = time.time()
 	
 		# WARNING on slow regular expressions:
-		if (timeAfter-timeBefore)>100:
+		timeTaken = 1000*(timeAfter-timeBefore)
+		if timeTaken>1000:
 			print "WARNING: Regular expression search took: ",1000*(timeAfter-timeBefore)
 
 		if m:
@@ -545,7 +548,7 @@ def Extract( html, context ):
 
 	# fix everything up:
 	art['content'] = ukmedia.SanitiseHTML( art['content'] )
-
+	
 	if (('author' in art) and re.search('\\bGuardian Unlimited\\b',art['author'])):
 		del art['author']
 	if ('author2' in art) and art['author2']==u'':
@@ -555,14 +558,32 @@ def Extract( html, context ):
 	# author should be two words or more
 	# disabled: and no lower case words: not re.search('\\b[a-z]',art['author'])) and 
 	# and one of the words is not 'The', as in "The Guardian"
+#	print "AUTHOR: ["+art['author']+"]"
+	
+#	art['author'] = art['author'].encode('latin-1','replace')
+	
+#	if ('author' in art):
+#		print "TEST1"
+#	if re.search(' ',art['author']):
+#		print "TEST2"
+#	if art['author']!=u'The Guardian':
+#		print "TEST3"
+	if ('author2' in art) and not ('author' in art):
+		art['author'] = art['author2']		# sometimes author appears in just one of two places
+		del art['author2']
+
 	if ('author' in art) and re.search(' ',art['author']) and art['author']!=u'The Guardian':
 #		print "AUTHOR: "+art['author']		
 		True
-	elif ('author2' in art):
+	elif ('author2' in art) and re.search(' ',art['author2']):
 		art['author'] = art['author2']		# sometimes author appears in just one of two places
 		del art['author2']
 	elif ('blogname' in art):
 		art['author'] = art['blogname']
+	# Maybe use feed name if default , i.e. use "[Adam Boulton]" if author name says "Adam" or "Boulton"
+	elif re.search('\[', context['feedname']) and re.search(art['author'], context['feedname']):
+		art['author'] = re.search(u'\[([^\]]+)\]', context['feedname']).group(1)
+#		print "USED DEFAULT NAME! "+art['author']
 	# Feed name is author name if no brackets, i.e. if not "The Editors (split out by name)"
 	elif (re.search('\(', context['feedname'])==None):
 		art['author'] = context['feedname']	# maybe author is not written in page or in RSS, we just know it because of the URL
@@ -590,7 +611,7 @@ def Extract( html, context ):
 	art['byline'] = art['author']
 	
 	
-#	print "BYLINE: "+art['byline']		
+#	print "BYLINE: ["+art['byline']+"]"
 
 #	if not ('description' in art):
 		# we just use the description passed in (from the RSS feed)
@@ -689,7 +710,7 @@ def main():
 	for rssfeedGroupName in rssfeedGroupsToProcess:
 		rssfeedGroup = rssfeedGroups[rssfeedGroupName]
 
-		DEBUG_OUTPUT_TO_DIR = False
+		DEBUG_OUTPUT_TO_DIR = True
 		if DEBUG_OUTPUT_TO_DIR:
 			if not os.path.exists("output"):
 				os.mkdir("output")
@@ -719,6 +740,12 @@ def main():
 			artid = store.Add( art )
 		else:
 			rssfeeds = rssfeedGroup['rssfeeds']
+			
+			# debug
+#			rssfeeds = {
+#				u'Gimson Unbound': 'http://blogs.telegraph.co.uk/politics/gimsonunbound/feed.rss',
+#			}
+
 			found = ukmedia.FindArticlesFromRSS( rssfeeds, rssfeedGroupName, ScrubFunc )
 
 #			print "\nFOUND:\n"

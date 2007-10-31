@@ -245,12 +245,17 @@ def CouldBeName( nm ):
 		return False
 	if emailpat.search( nm ):
 		return False
-	
+			
 	# check for stuff that shouldn't be in names
 	for c in nm:
 		if c in u',:@0123456789':
 			return False
-	if re.search( """\\b(a|by|and|the|staff|in)\\b""", nm, re.UNICODE|re.IGNORECASE ):
+	if re.search( """\\b(by|and|the|staff|in)\\b""", nm, re.UNICODE|re.IGNORECASE ):
+		return False
+
+	# allow "Gareth A. Davies", but not "A writer" - i.e. the 'a' has to have a dot after it:
+	# (bit hacky, probably could be better)
+	if re.search( """\\b(a)\\b""", nm, re.UNICODE|re.IGNORECASE ) and (not re.search( """\\b(a)\.""", nm, re.UNICODE|re.IGNORECASE )):
 		return False
 
 	return True

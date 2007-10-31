@@ -351,11 +351,11 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 				continue;	# skip it - we've already got it
 				
 			# gtb!debug, for debugging tricky cases:
-#			if context['srcurl']!='http://timesonline.typepad.com/eco_worrier/2007/09/should-you-feed.html': 
+#			if context['srcurl']!='http://adamboulton.typepad.com/my_weblog/2007/10/a-perfect-oppor.html':
 #				continue;
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
-
+			
 			# some extra, last minute context :-)
 			context[ 'lastscraped' ] = datetime.now()
 
@@ -410,7 +410,7 @@ def ExtractAuthorFromParagraph(para):
 		# "Roger Highfield outlines the verdict of former science minister, Lord Sainsbury"
 		u'(?:choose|tour|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|by|say)(?:d|ed|s|)',
 		#     Andrew Cave becomes 'Telegraphman Boozehound' on Second Life to see how well it works
-		u'(?:caught up|catches up|becomes|is|was|takes|makes)',
+		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes)',
 #		u'(?:[a-z]+s)',	# any word ending with -s
 #		u'[a-z]+'		# anything at all (but must be lowercase)
 	)
@@ -429,14 +429,14 @@ def ExtractAuthorFromParagraph(para):
 			u'\\b('+journalistNamePattern+') '+verbs+u'\\b', 
 			para)
 		if authorFromDescriptionMatches:
-			author = authorFromDescriptionMatches[-1]#.group(1)
+			author = authorFromDescriptionMatches[0]#-1]#.group(1)
 			break
 		# "... writes Joe Bloggs"
 		authorFromDescriptionMatches = re.findall(
 			u'\\b'+verbs+u' ('+journalistNamePattern+')\\b', 
 			para)
 		if authorFromDescriptionMatches:
-			author = authorFromDescriptionMatches[-1]#.group(1)
+			author = authorFromDescriptionMatches[0]#-1]#.group(1)
 			break
 
 	if author!=u'':
