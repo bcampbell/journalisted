@@ -8,6 +8,7 @@
 import re
 from datetime import datetime
 import sys
+import os
 
 sys.path.append("../pylib")
 import BeautifulSoup
@@ -33,9 +34,9 @@ sectionnames = ('News',
 		'incomingFeeds',
 		'Comment',
 		'Business',
-#		'Sport'
-#		'Life &amp; Style',
-#		'Arts &amp; Entertainment',
+		'Sport',
+		'Life & Style',
+		'Arts & Entertainment',
 		)
 
 siteroot = "http://timesonline.co.uk"
@@ -84,9 +85,10 @@ def FindArticles():
 		for heading in soup.findAll( 'h3', {'class': 'section-heading' } ):
 			sectionname = heading.find( text = sectionnames )
 			if not sectionname:
+#				print "Ignoring section ",heading
 				continue
 
-			#ukmedia.DBUG( "  " + sectionname + "\n" )
+			ukmedia.DBUG2( "  " + sectionname + "\n" )
 
 			ul = heading.findNextSibling( 'ul' )
 			for a in ul.findAll( 'a' ):
@@ -192,9 +194,16 @@ def Extract( html, context ):
 
 
 def main():
+	DEBUG_OUTPUT_TO_DIR = False#True
+	if DEBUG_OUTPUT_TO_DIR:
+		if not os.path.exists("output"):
+			os.mkdir("output")
+		sys.stdout = open("output/news_"+"times"+".txt", 'w')
+		sys.stderr = sys.stdout
 
 
 	found = FindArticles()
+#	store = ArticleDB.DummyArticleDB()	# testing
 	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
 
