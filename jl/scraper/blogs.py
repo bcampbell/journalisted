@@ -561,7 +561,7 @@ def Extract( html, context ):
 	# fix everything up:
 	art['content'] = ukmedia.SanitiseHTML( art['content'] )
 	
-	if (('author' in art) and (re.search('\\b(?:skynews|Guardian Unlimited)\\b',art['author'])) or art['author']=="Sky News"):
+	if ('author' in art) and (re.search('\\b(?:skynews|Guardian Unlimited)\\b',art['author']) or art['author']=="Sky News"):
 		del art['author']
 	if ('author2' in art) and art['author2']==u'':
 		del art['author2']
