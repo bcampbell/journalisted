@@ -75,7 +75,7 @@ datecrackers = [
 	re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{2,4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM))""", re.UNICODE ),
 
 	# 'October 22, 2007  5:31 PM' (Guardian blogs)
-	re.compile( """((?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
+	re.compile( """((?P<month>\w+)\s+(?P<day>\d+),\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
 	# 'October 15, 2007' (Times blogs)
 	re.compile( """(?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})""", re.UNICODE ),
