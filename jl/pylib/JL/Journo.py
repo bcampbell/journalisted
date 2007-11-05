@@ -174,9 +174,16 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 	return None
 
 
+def PrettyCaseName( n ):
+	# TODO:
+	# handle:
+	# - Mc, Mac prefixes
+	# - O'Connor
+	return n.title()
+
 def CreateNewJourno( conn, rawname ):
 	alias = DefaultAlias( rawname )
-	prettyname = rawname.title()
+	prettyname = PrettyCaseName( rawname )
 #	(firstname,lastname) = prettyname.split(None,1) 
 
 	parts = prettyname.lower().split()
