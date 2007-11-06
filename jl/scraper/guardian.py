@@ -15,10 +15,15 @@
 #  technology
 #  environment
 #  travel
+#  media
 #
+# Main RSS page doesn't seem be be updated with feeds from new sections
+# (presumably it'll be rejigged once the transition is complete)
+# For the new-style sections, there is usually one feed for the main
+# section frontpage, and then an extra feed for each subsection. Just
+# click through all the subsection frontpages and look for the RSS link.
 #
 # TODO:
-# - add guardian blogs
 # - extract journo names from descriptions if possible...
 #
 #
@@ -50,7 +55,8 @@ rssfeeds = {
 	'Guardian Unlimited Sport': 'http://www.guardian.co.uk/rssfeed/0,,7,00.xml',
 	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
 	'Guardian Unlimited The Guide': 'http://www.guardian.co.uk/rssfeed/0,,21,00.xml',
-	'Media Guardian (registration required)': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
+	# OLD media guardian rss
+	'Media Guardian': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
 	'The Observer': 'http://www.guardian.co.uk/rssfeed/0,,15,00.xml',
 	'Society Guardian': 'http://www.guardian.co.uk/rssfeed/0,,9,00.xml',
 #	'Guardian Unlimited Business Insight': 'http://blogs.guardian.co.uk/businessinsight/index.rdf',
@@ -75,6 +81,8 @@ rssfeeds = {
 
 	# http://business.guardian.co.uk/
 	'Guardian Unlimited Business - more business news': 'http://www.guardian.co.uk/rssfeed/0,,25,00.xml',
+
+	# (section names IN CAPS below are new-style sections, with new rss feeds)
 
 	# ENVIRONMENT - http://www.guardian.co.uk/environment
 	'Guardian Unlimited Environment': 'http://www.guardian.co.uk/environment/rss',
@@ -110,6 +118,20 @@ rssfeeds = {
 	'Guardian Unlimited Travel: Hotels': 'http://www.guardian.co.uk/travel/hotels/rss',
 	'Guardian Unlimited Travel: Restaurants': 'http://www.guardian.co.uk/travel/restaurants/rss',
 
+
+	# MEDIA
+	'Guardian Unlimited Media': 'http://www.guardian.co.uk/media/rss',
+	'Guardian Unlimited Media: Press and publishing': 'http://www.guardian.co.uk/media/pressandpublishing/rss',
+	'Guardian Unlimited Media: Digital media': 'http://www.guardian.co.uk/media/digitalmedia/rss',
+	'Guardian Unlimited Media: Advertising': 'http://www.guardian.co.uk/media/advertising/rss',
+	'Guardian Unlimited Media: Television': 'http://www.guardian.co.uk/media/television/rss',
+	'Guardian Unlimited Media: Radio': 'http://www.guardian.co.uk/media/radio/rss',
+	'Guardian Unlimited Media: Marketing and PR': 'http://www.guardian.co.uk/media/marketingandpr/rss',
+	'Guardian Unlimited Media: Media business': 'http://www.guardian.co.uk/media/mediabusiness/rss',
+	# these blogs covered by separate scraper (blogs.py)
+#	'Media Monkey': 'http://blogs.guardian.co.uk/mediamonkey/atom.xml',
+#	'Guardian Unlimited: Organ Grinder': 'http://blogs.guardian.co.uk/organgrinder/atom.xml',
+
 	# mediaguardian blogs
 	# 'PDA': 'http://blogs.guardian.co.uk/digitalcontent/atom.xml',
 	# 'Guardian Unlimited: Organ Grinder': 'http://blogs.guardian.co.uk/organgrinder/atom.xml',
@@ -140,7 +162,8 @@ rssfeeds = {
 
 def Extract( html, context ):
 
-	# quick check for subscription-only mediaguardian page
+	# quick check for subscription-only page (maybe we don't need this
+	# any more since media guardian is free...)
 	if html.find( '<title>Media registration promo' ) != -1:
 		ukmedia.DBUG2( "SUPPRESS subscription-only page '%s' (%s)\n" % (context['title'], context['srcurl']) )
 		return None
