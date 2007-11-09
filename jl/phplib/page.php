@@ -3,6 +3,7 @@
 require_once '../conf/general';
 require_once '../../phplib/person.php';
 require_once 'gatso.php';
+require_once 'misc.php';
 
 function page_header( $title, $params=array() )
 {
