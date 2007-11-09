@@ -31,6 +31,9 @@ if( get_http_var( 'Add' ) )
 }
 else if( get_http_var( 'Remove' ) )
 {
+	$journo_ref = get_http_var( 'j' );
+	$jname = db_getOne( 'SELECT prettyname FROM journo WHERE ref=?', $journo_ref );
+
 	// remove an alert...
 	$r = array(
 		'reason_web' => "Before removing {$jname} from your list, we need to confirm your email address.",
