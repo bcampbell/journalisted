@@ -1,6 +1,8 @@
+#!/usr/bin/env python2.4
 #
 # Tidy the database by merging journalists with similar names
 #
+
 import sys
 import csv
 import os
@@ -13,6 +15,7 @@ from JL import DB
 from JL import Journo
 from JL import Tags
 
+
 DEBUG_NO_COMMITS = False
 
 places_cached = None
@@ -24,7 +27,7 @@ def getPlaces():
 	places_cached = []
 	
 	# TOWNS (UK only right now), from http://en.wikipedia.org/wiki/List_of_post_towns_in_the_United_Kingdom
-	towndatafile = os.path.join(os.path.dirname(__file__),'../pylib/jl/towns.txt')
+	towndatafile = os.path.join(os.path.dirname(__file__),'../pylib/JL/towns.txt')
 	f = open( towndatafile, "rb" )
 	reader = csv.reader( f )
 	for row in reader:
@@ -34,7 +37,7 @@ def getPlaces():
 		places_cached.append( c )
 
 	# CITIES (worldwide): from http://www.world-gazetteer.com/wg.php?x=&men=gcis&lng=en&dat=32&srt=pnan&col=aohdq&pt=c&va=x
-	citydatafile = os.path.join(os.path.dirname(__file__),'../pylib/jl/cities.csv')
+	citydatafile = os.path.join(os.path.dirname(__file__),'../pylib/JL/cities.csv')
 	f = open( citydatafile, "rb" )
 	reader = csv.reader( f )
 	for row in reader:
