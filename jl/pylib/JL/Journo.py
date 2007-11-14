@@ -1,4 +1,6 @@
 import DB
+import re
+import unicodedata
 
 from datetime import datetime
 
@@ -77,15 +79,25 @@ def BaseRef( prettyname ):
 	Mapping is not guaranteed to be unique
 	"""
 
-	ref = u''
-	# translate european accented chars into ascii equivalents and
-	# remove anything else that we don't want in our url.
-	for ch in prettyname:
-		if xlate_delatinise.has_key( ch ):
-			ch = xlate_delatinise[ch]
-		elif ch.lower() not in u'abcdefghijklmnopqrstuvwxyz ':
-			ch = u'' 	# drop all other non-numeric-or-space chars
-		ref += ch
+	# convert to unicode (actually it is already, but we need to let python know that)
+	if not isinstance(prettyname, unicode):
+		prettyname = unicode(prettyname, 'utf-8')
+
+	# get rid of accents:
+	ref = unicodedata.normalize('NFKD',prettyname).encode('ascii','ignore')
+	
+	# get rid of non-alphas:
+	ref = re.sub(u'[^a-zA-Z ]',u'',ref)
+
+#	ref = u''
+#	# translate european accented chars into ascii equivalents and
+#	# remove anything else that we don't want in our url.
+#	for ch in prettyname:
+#		if xlate_delatinise.has_key( ch ):
+#			ch = xlate_delatinise[ch]
+#		elif ch.lower() not in u'abcdefghijklmnopqrstuvwxyz ':
+#			ch = u'' 	# drop all other non-numeric-or-space chars
+#		ref += ch
 
 	ref = ref.lower()
 	ref = ref.strip()
@@ -113,18 +125,80 @@ def GenerateUniqueRef( conn, prettyname ):
 		i = i + 1
 
 
-def DefaultAlias( rawname ):
-	""" compress whitespace, strip leading/trailing space, lowercase """
-	alias = rawname.strip()
-	alias = u' '.join( alias.split() )
-	alias = alias.lower()
-	return alias;
+#def DefaultAlias( rawname ):
+#	""" compress whitespace, strip leading/trailing space, lowercase """
+#	alias = rawname.strip()
+#	alias = u' '.join( alias.split() )
+#	alias = alias.lower()
+#	return alias;
+
+
+def GetNoOfArticlesWrittenBy( conn, journo_ref ):
+	journo_id = FindJourno(conn,journo_ref)
+#	if not journo_id:
+#		return 
+	assert journo_id, "Can't find journo: "+journo_ref
+
+	c = conn.cursor()
+	c.execute((u"SELECT COUNT(journo_id) FROM journo_attr WHERE journo_id=%d" % journo_id).encode('utf-8'))
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return 0
+	return row[0]
+
+# reasonable if appears twice or more?
+def IsReasonableFirstName( conn, firstName, mustFindNOrMore=2 ):
+	firstName = firstName.lower()
+	firstName = re.sub(u"\'", u'\\\'', firstName, re.UNICODE) # escape e.g. o\'connor
+	c = conn.cursor()
+	c.execute((u"SELECT COUNT(id) FROM journo WHERE firstname='%s'" % firstName).encode('utf-8'))
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return False
+	return row[0]>=mustFindNOrMore
+
+# reasonable if appears twice or more?
+def IsReasonableLastName( conn, lastName, mustFindNOrMore=2 ):
+	lastName = lastName.lower()
+	lastName = re.sub(u"\'", u'\\\'', lastName, re.UNICODE) # escape e.g. o\'connor
+	c = conn.cursor()
+	c.execute((u"SELECT COUNT(id) FROM journo WHERE lastname='%s'" % lastName).encode('utf-8'))
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return False
+	return row[0]>=mustFindNOrMore
+
+
+def GetFirstName( conn, ref ):
+	c = conn.cursor()
+	c.execute((u"SELECT firstname FROM journo WHERE ref='%s'" % ref).encode('utf-8'))
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return None
+	return unicode(row[0], 'utf-8')
+
+def GetLastName( conn, ref ):
+	c = conn.cursor()
+	c.execute((u"SELECT lastname FROM journo WHERE ref='%s'" % ref).encode('utf-8'))
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return None
+	return unicode(row[0], 'utf-8')
 
 
 def FindJournoMultiple( conn, rawname ):
-	alias = DefaultAlias(rawname)
+
+	# TODO return fuzzy match of journo-names:
+
+#	alias = DefaultAlias(rawname)
 	c = conn.cursor()
-	c.execute( "SELECT journo_id FROM journo_alias WHERE alias=%s", alias.encode('utf-8') ) 
+	c.execute( "SELECT id FROM journo WHERE ref=%s", rawname.encode('utf-8') ) 
+#	c.execute( "SELECT journo_id FROM journo_alias WHERE alias=%s", alias.encode('utf-8') ) 
 	found = []
 	while 1:
 		row = c.fetchone()
@@ -175,14 +249,22 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 
 
 def PrettyCaseName( n ):
-	# TODO:
+	# - O'Connor should be done by this:
+	n = n.title()
 	# handle:
 	# - Mc, Mac prefixes
-	# - O'Connor
-	return n.title()
+	def helperFn(s):
+		return s.group(1)+s.group(2).title() 
+	#s.group(1)+s.group(2).lower()
+	n = re.sub(u'\\b(Ma?c)([a-z]{3,})', helperFn, n)
+	n = re.sub(u'\\bVan\\b', u'van', n)
+	n = re.sub(u'\\bDe\\b', u'de', n)
+	#sometimes good sometimes bad:	n = re.sub(u'\\bD\'', u'd\'', n)
+
+	return n
 
 def CreateNewJourno( conn, rawname ):
-	alias = DefaultAlias( rawname )
+#gtb	alias = DefaultAlias( rawname )
 	prettyname = PrettyCaseName( rawname )
 #	(firstname,lastname) = prettyname.split(None,1) 
 
@@ -210,9 +292,9 @@ def CreateNewJourno( conn, rawname ):
 			prettyname.encode('utf-8'),
 			lastname.encode('utf-8'),
 			firstname.encode('utf-8') ) )
-	q.execute( "INSERT INTO journo_alias (journo_id,alias) VALUES (%s,%s)",
-			journo_id,
-			alias.encode('utf-8') )
+#gtb	q.execute( "INSERT INTO journo_alias (journo_id,alias) VALUES (%s,%s)",
+#			journo_id,
+#			alias.encode('utf-8') )
 	q.close()
 	return journo_id
 

@@ -1,0 +1,736 @@
+﻿1,Shanghai,15 434 642,China
+2,Bombay,13 073 926,India
+3,Karāchi,12 315 843,Pakistan
+4,Buenos Aires,11 612 214,Argentina
+5,Delhi,11 505 196,India
+6,Manila,10 665 584,Philippines
+7,Moscow,10 568 193,Russia
+8,Sŏul,10 451 281,Korea (South)
+9,İstanbul,10 291 102,Turkey
+10,São Paulo,10 095 244,Brazil
+11,Lagos,9 229 944,Nigeria
+12,Mexico City,8 658 576,Mexico
+13,Jakarta,8 568 838,Indonesia
+14,Kinshasa,8 418 819,Congo (Dem. Rep.)
+15,Tōkyō,8 403 512,Japan
+16,New York,8 141 241,United States of America
+17,Lima,7 979 965,Peru
+18,Cairo,7 933 236,Egypt
+19,Peking,7 724 932,China
+20,London,7 554 236,United Kingdom
+21,Bogotá,7 363 494,Colombia
+22,Tehrān,7 185 831,Iran
+23,Dhāka,6 969 458,Bangladesh
+24,Lahore,6 659 543,Pakistan
+25,Rio de Janeiro,6 087 917,Brazil
+26,Baghdad,5 831 541,Iraq
+27,Bangalore,5 281 927,India
+28,Santiago,4 949 540,Chile
+29,Bangkok,4 819 253,Thailand
+30,Toronto,4 726 194,Canada
+31,Rangoon,4 668 755,Myanmar
+32,Calcutta,4 643 011,India
+33,Sydney,4 490 662,Australia
+34,Riyadh,4 453 447,Saudi Arabia
+35,Madras,4 376 400,India
+36,Chongqing,4 306 933,China
+37,Wuhan,4 287 693,China
+38,Xian,4 235 170,China
+39,Saint Petersburg,3 990 267,Russia
+40,Chengdu,3 972 509,China
+41,Los Angeles,3 945 097,United States of America
+42,Chāţţagām,3 920 222,Bangladesh
+43,Abidjan,3 918 000,Ivory Coast
+44,Alexandria,3 917 082,Egypt
+45,Kano,3 848 885,Nigeria
+46,Ibadan,3 847 472,Nigeria
+47,Melbourne,3 829 400,Australia
+48,Ahmadābād,3 819 497,India
+49,Tianjin,3 755 249,China
+50,Hyderabad,3 665 106,India
+51,Pusan,3 663 421,Korea (South)
+52,Cape Town,3 660 197,South Africa
+53,Singapore,3 654 103,Singapore
+54,Ankara,3 641 931,Turkey
+55,Yokohama,3 632 023,Japan
+56,Shenyang,3 564 751,China
+57,Ho Chi Minh City,3 525 282,Vietnam
+58,Berlin,3 370 823,Germany
+59,Durban,3 368 631,South Africa
+60,Harbin,3 329 557,China
+61,Montreal,3 290 804,Canada
+62,Nanjing,3 234 774,China
+63,Casablanca,3 209 054,Morocco
+64,Kabul,3 199 091,Afghanistan
+65,Madrid,3 183 121,Spain
+66,Guangzhou,3 162 183,China
+67,Sūrat,3 156 578,India
+68,Pune,3 153 883,India
+69,Umm Durmān,3 127 802,Sudan
+70,Pyŏngyang,3 059 678,Korea (North)
+71,Jiddah,3 002 839,Saudi Arabia
+72,Nairobi,2 982 226,Kenya
+73,Luanda,2 977 212,Angola
+74,Kānpur,2 975 526,India
+75,Jaipur,2 926 915,India
+76,Dar es Salaam,2 915 878,Tanzania
+77,Āddīs Ābebā,2 888 248,Ethiopia
+78,Mogadishu,2 855 805,Somalia
+79,Chicago,2 818 628,United States of America
+80,Salvador,2 810 334,Brazil
+81,Taiyuan,2 782 594,China
+82,Changchun,2 669 149,China
+83,Faisalābād,2 658 181,Pakistan
+84,Inchŏn,2 657 698,Korea (South)
+85,İzmir,2 615 568,Turkey
+86,Lakhnau,2 611 300,India
+87,Taegu,2 591 996,Korea (South)
+88,Ōsaka,2 588 578,Japan
+89,Rome,2 548 076,Italy
+90,Cali,2 498 074,Colombia
+91,Gizeh,2 491 991,Egypt
+92,Kiev,2 469 968,Ukraine
+93,Taipei,2 468 705,Taiwan
+94,Mashhad,2 463 393,Iran
+95,Dakar,2 461 682,Senegal
+96,Belo Horizonte,2 424 579,Brazil
+97,Fortaleza,2 390 058,Brazil
+98,Surabaya,2 358 111,Indonesia
+99,Nāgpur,2 317 946,India
+100,Brasília,2 314 172,Brazil
+101,Santo Domingo,2 306 148,Dominican Republic
+102,al-Başrah,2 271 544,Iraq
+103,al-Mawşil,2 220 624,Iraq
+104,Khartoum,2 207 794,Sudan
+105,Nagoya,2 197 711,Japan
+106,Changsha,2 190 724,China
+107,Shijiazhuang,2 171 671,China
+108,Havanna,2 164 362,Cuba
+109,Johannesburg,2 156 367,South Africa
+110,Jinan,2 151 290,China
+111,Paris,2 143 614,France
+112,Dalian,2 117 607,China
+113,Accra,2 096 653,Ghana
+114,Algiers,2 072 993,Algeria
+115,Conakry,2 064 236,Guinea
+116,Houston,2 059 430,United States of America
+117,Maracaibo,2 054 039,Venezuela
+118,Medellín,2 042 093,Colombia
+119,Zhengzhou,2 032 493,China
+120,Jilin,2 032 434,China
+121,Sanʿā,2 015 515,Yemen
+122,Nanchang,1 999 452,China
+123,Jiulong,1 980 350,China
+124,Indore,1 967 229,India
+125,Tashkent,1 959 190,Uzbekistan
+126,Guayaquil,1 952 029,Ecuador
+127,Brisbane,1 938 851,Australia
+128,Hangzhou,1 911 379,China
+129,Sapporo,1 908 433,Japan
+130,Ecatepec,1 884 585,Mexico
+131,Bucharest,1 848 554,Romania
+132,Rāwalpindi,1 843 418,Pakistan
+133,Vancouver,1 840 441,Canada
+134,Soweto,1 839 146,South Africa
+135,Caracas,1 801 562,Venezuela
+136,Phnum Pénh,1 781 113,Cambodia
+137,Curitiba,1 776 074,Brazil
+138,Medan,1 763 874,Indonesia
+139,Pretoria,1 757 505,South Africa
+140,Minsk,1 753 245,Belarus
+141,Hamburg,1 748 035,Germany
+142,Xinyang,1 732 926,China
+143,al-H̱arţūm Bah̨rī,1 725 570,Sudan
+144,Patna,1 722 140,India
+145,Rabat,1 721 760,Morocco
+146,Qingdao,1 694 970,China
+147,Budapest,1 691 864,Hungary
+148,Manaus,1 690 331,Brazil
+149,Bhopāl,1 686 792,India
+150,Kaduna,1 652 844,Nigeria
+151,Bandung,1 651 840,Indonesia
+152,Aleppo,1 649 694,Syria
+153,Guadalajara,1 632 171,Mexico
+154,Ludhiāna,1 624 767,India
+155,Tangshan,1 623 412,China
+156,Bekasi,1 619 775,Indonesia
+157,Warsaw,1 618 500,Poland
+158,Thāna,1 612 738,India
+159,Harare,1 607 022,Zimbabwe
+160,Barcelona,1 606 181,Spain
+161,Kumasi,1 604 909,Ghana
+162,Karaj,1 602 350,Iran
+163,Eşfahān,1 600 554,Iran
+164,Damascus,1 592 206,Syria
+165,Vienna,1 572 637,Austria
+166,Urumqi,1 569 769,China
+167,Kōbe,1 541 229,Japan
+168,Antananarivo,1 538 349,Madagascar
+169,Āgra,1 521 112,India
+170,Kaohsiung,1 519 748,Taiwan
+171,Taejŏn,1 515 270,Korea (South)
+172,Kuala Lumpur,1 509 699,Malaysia
+173,Multān,1 506 424,Pakistan
+174,Bursa,1 504 817,Turkey
+175,Recife,1 500 293,Brazil
+176,Perth,1 497 487,Australia
+177,Juárez,1 496 551,Mexico
+178,Tabrīz,1 496 319,Iran
+179,Lubumbashi,1 485 288,Congo (Dem. Rep.)
+180,Tijuana,1 482 294,Mexico
+181,Phoenix,1 474 184,United States of America
+182,Ha Noi,1 472 717,Vietnam
+183,Santa Cruz,1 468 658,Bolivia
+184,Belém,1 465 670,Brazil
+185,Vadodara,1 462 058,India
+186,Gujrānwāla,1 459 139,Pakistan
+187,Valencia,1 457 912,Venezuela
+188,Córdoba,1 457 447,Argentina
+189,Kyōto,1 456 716,Japan
+190,Suzhou,1 456 077,China
+191,Kampala,1 455 027,Uganda
+192,Pimpri,1 452 620,India
+193,Hyderabad,1 447 275,Pakistan
+194,Lanzhou,1 444 377,China
+195,Kwangju,1 442 492,Korea (South)
+196,Puebla,1 441 685,Mexico
+197,Tangerang,1 433 427,Indonesia
+198,Barranquilla,1 429 031,Colombia
+199,Philadelphia,1 426 259,United States of America
+200,Hefei,1 424 802,China
+201,Fushun,1 420 680,China
+202,Novosibirsk,1 415 463,Russia
+203,Koyang,1 413 116,Korea (South)
+204,Fukuoka,1 412 993,Japan
+205,Kharkiv,1 412 086,Ukraine
+206,Farīdābad,1 411 063,India
+207,Nāshik,1 410 844,India
+208,Shantou,1 407 774,China
+209,Douala,1 404 831,Cameroon
+210,Luoyang,1 403 263,China
+211,Khulnā,1 400 689,Bangladesh
+212,Quito,1 399 814,Ecuador
+213,Yaoundé,1 390 516,Cameroon
+214,Bamako,1 388 980,Mali
+215,Porto Alegre,1 387 891,Brazil
+216,Mecca,1 383 707,Saudi Arabia
+217,Makasar,1 380 840,Indonesia
+218,Handan,1 380 827,China
+219,Brazzaville,1 370 612,Congo
+220,Suwŏn,1 368 767,Korea (South)
+221,Lusaka,1 346 522,Zambia
+222,Ghāziābād,1 334 230,India
+223,ʿAmmān,1 331 028,Jordan
+224,Kawasaki,1 328 841,Japan
+225,Baotou,1 324 408,China
+226,Milan,1 324 048,Italy
+227,Xianggangdao,1 322 807,China
+228,Port-au-Prince,1 321 522,Haiti
+229,Depok,1 315 173,Indonesia
+230,San Diego,1 311 612,United States of America
+231,Shīrāz,1 307 552,Iran
+232,Mīrat,1 303 248,India
+233,Rājkot,1 299 975,India
+234,San Antonio,1 299 646,United States of America
+235,Kalyān,1 295 345,India
+236,Bayrūt,1 295 078,Lebanon
+237,Adana,1 294 460,Turkey
+238,Peshāwar,1 288 549,Pakistan
+239,Semarang,1 286 938,Indonesia
+240,Yekaterinburg,1 284 446,Russia
+241,Munich,1 281 954,Germany
+242,Davao,1 278 148,Philippines
+243,Montevideo,1 272 411,Uruguay
+244,Stockholm,1 269 094,Sweden
+245,Nizhniy Novgorod,1 266 667,Russia
+246,Mandalay,1 266 453,Myanmar
+247,Xuzhou,1 264 057,China
+248,Palembang,1 257 449,Indonesia
+249,Maputo,1 249 309,Mozambique
+250,Guarulhos,1 231 381,Brazil
+251,Nezahualcóyotl,1 229 673,Mexico
+252,Almaty,1 227 059,Kazakhstan
+253,Dubai,1 225 137,United Arab Emirates
+254,Fuzhou,1 224 755,China
+255,Dallas,1 222 053,United States of America
+256,Rongcheng,1 215 843,China
+257,Anshan,1 208 257,China
+258,Goiânia,1 206 545,Brazil
+259,Port Harcourt,1 203 184,Nigeria
+260,Maiduguri,1 197 497,Nigeria
+261,Guiyang,1 195 626,China
+262,Vārānasī,1 194 221,India
+263,Sofia,1 179 350,Bulgaria
+264,Rosario,1 178 407,Argentina
+265,Tripoli,1 178 007,Libya
+266,Wuxi,1 171 364,China
+267,Prague,1 168 936,Czech Republic
+268,Benin,1 167 327,Nigeria
+269,León,1 156 053,Mexico
+270,Amritsar,1 154 927,India
+271,Ouagadougou,1 152 402,Burkina Faso
+272,Hiroshima,1 150 810,Japan
+273,Shenzhen,1 146 511,China
+274,Gaziantep,1 136 281,Turkey
+275,Omsk,1 126 620,Russia
+276,Huainan,1 126 338,China
+277,Taichung,1 124 514,Taiwan
+278,Monterrey,1 123 799,Mexico
+279,Samara,1 119 927,Russia
+280,Baku,1 118 904,Azerbaijan
+281,Allahābād,1 114 923,India
+282,Belgrade,1 111 825,Serbia and Montenegro
+283,Visakhapatnam,1 111 481,India
+284,Kazan,1 105 083,Russia
+285,Saitama,1 100 253,Japan
+286,Aurangābād,1 096 363,India
+287,Copenhagen,1 093 954,Denmark
+288,Subang Jaya,1 091 600,Malaysia
+289,Yerevan,1 086 174,Armenia
+290,Qom,1 081 745,Iran
+291,Rostov-na-Donu,1 079 581,Russia
+292,Adelaide,1 079 558,Australia
+293,Xianyang,1 076 887,China
+294,Sŏngnam,1 072 017,Korea (South)
+295,Datong,1 070 222,China
+296,Jabalpur,1 069 314,India
+297,Kunming,1 065 380,China
+298,Sholāpur,1 064 935,India
+299,Campinas,1 062 795,Brazil
+300,Baoding,1 061 336,China
+301,Chelyabinsk,1 053 780,Russia
+302,Sendai,1 050 378,Japan
+303,Navi Mumbai,1 049 975,India
+304,Brussels,1 044 050,Belgium
+305,Nova Iguaçu,1 037 618,Brazil
+306,Dublin,1 036 724,Ireland
+307,Benxi,1 034 783,China
+308,Hāora,1 034 290,India
+309,Ufa,1 027 645,Russia
+310,Tbilisi,1 026 874,Georgia
+311,Maceió,1 024 507,Brazil
+312,Guatemala,1 024 101,Guatemala
+313,Zapopan,1 022 564,Mexico
+314,Shubra-El-Khema,1 019 725,Egypt
+315,Zaria,1 018 827,Nigeria
+316,Port Elizabeth,1 017 820,South Africa
+317,Dnipropetrovsʿk,1 017 681,Ukraine
+318,Srīnagar,1 017 039,India
+319,Calgary,1 013 675,Canada
+320,Volgograd,1 010 341,Russia
+321,Managua,1 007 811,Nicaragua
+322,al-Madīnah,1 004 444,Saudi Arabia
+323,Ulsan,1 002 898,Korea (South)
+324,Fez,1 001 798,Morocco
+325,Cartagena,1 001 044,Colombia
+326,Rānchi,996 595,India
+327,Klang,995 926,Malaysia
+328,Irbīl,993 468,Iraq
+329,Kitakyūshū,991 913,Japan
+330,Birmingham,989 141,United Kingdom
+331,Odesa,988 943,Ukraine
+332,Changzhou,978 582,China
+333,Naples,977 738,Italy
+334,Kolwezi,977 292,Congo (Dem. Rep.)
+335,Koyampattur,976 983,India
+336,Donetsk,973 923,Ukraine
+337,Chandīgarh,971 947,India
+338,Perm,969 947,Russia
+339,Monrovia,967 841,Liberia
+340,Cochabamba,966 049,Bolivia
+341,Aba,966 001,Nigeria
+342,Huaibei,962 391,China
+343,São Gonçalo,961 418,Brazil
+344,Jodhpur,959 632,India
+345,Cologne,958 951,Germany
+346,São Luís,954 011,Brazil
+347,Guwāhāti,948 173,India
+348,Ogbomosho,945 147,Nigeria
+349,Maisūru,938 931,India
+350,Bişkek,933 763,Kyrgyzstan
+351,Konya,932 589,Turkey
+352,Chiba,932 459,Japan
+353,Mbuji-Mayi,919 166,Congo (Dem. Rep.)
+354,El Alto,911 525,Bolivia
+355,Gwalior,909 152,India
+356,Qiqihar,907 419,China
+357,Krasnoyarsk,906 586,Russia
+358,Madurai,900 998,India
+359,Padang,899 349,Indonesia
+360,San Jose,898 624,United States of America
+361,Vijayawāda,898 251,India
+362,Pingdingshan,897 789,China
+363,Ottawa,896 048,Canada
+364,Tegucigalpa,893 589,Honduras
+365,Mendoza,890 521,Argentina
+366,Ulaanbaatar,881 218,Mongolia
+367,Wenzhou,880 998,China
+368,Arequipa,878 129,Peru
+369,Johor Bahru,876 033,Malaysia
+370,Turin,872 255,Italy
+371,Marrakesh,872 015,Morocco
+372,Hubli,867 189,India
+373,Jos,860 895,Nigeria
+374,Detroit,858 803,United States of America
+375,Saratov,858 030,Russia
+376,Kigali,857 719,Rwanda
+377,Bandar Lampung,857 352,Indonesia
+378,Kathmandu,856 340,Nepal
+379,Puchŏn,852 416,Korea (South)
+380,Naucalpan,849 180,Mexico
+381,Aşgabat,848 444,Turkmenistan
+382,Mombasa,847 626,Kenya
+383,Ilorin,847 582,Nigeria
+384,Pietermaritzburg,845 843,South Africa
+385,Edmonton,841 202,Canada
+386,Duque de Caxias,840 334,Brazil
+387,Voronezh,835 423,Russia
+388,Freetown,835 108,Sierra Leone
+389,Islāmābād,834 432,Pakistan
+390,Barquisimeto,833 338,Venezuela
+391,Ahvāz,832 969,Iran
+392,Oslo,830 380,Norway
+393,Jalandhar,830 106,India
+394,Niamey,829 255,Niger
+395,Cebu,829 023,Philippines
+396,Antalya,827 591,Turkey
+397,Bhubaneswar,827 074,India
+398,Taian,826 313,China
+399,Selam,824 414,India
+400,H̨imş,822 440,Syria
+401,Jacksonville,822 117,United States of America
+402,La Paz,820 888,Bolivia
+403,ad-Dammām,819 168,Saudi Arabia
+404,Valencia,815 302,Spain
+405,Oyo,808 116,Nigeria
+406,Nanning,807 441,China
+407,Tucumán,803 727,Argentina
+408,Thiruvananthapuram,803 411,India
+409,Anyang,803 019,China
+410,Bogor,801 570,Indonesia
+411,Alīgarh,798 613,India
+412,Mira Bhayandar,798 392,India
+413,Kota,797 647,India
+414,Shihŭng,796 547,Korea (South)
+415,Qinhuangdao,795 670,China
+416,Hohhot,792 845,China
+417,Ciudad Guayana,792 508,Venezuela
+418,Marseille,791 172,France
+419,Tiruchchirāppalli,789 204,India
+420,Trujillo,788 911,Peru
+421,Zaporizhzhya,787 342,Ukraine
+422,Quetta,786 461,Pakistan
+423,Natal,786 193,Brazil
+424,Liuzhou,781 906,China
+425,Sakai,778 394,Japan
+426,Sarajevo,777 761,Bosnia and Herzegovina
+427,Xining,774 056,China
+428,as-Sulaymānīyah,773 496,Iraq
+429,Teresina,773 232,Brazil
+430,São Bernardo do Campo,770 689,Brazil
+431,Indianapolis,770 634,United States of America
+432,Bhiwandi,768 094,India
+433,Bareli,767 257,India
+434,Kermānshāh,765 893,Iran
+435,Hegang,764 310,China
+436,Hengyang,764 039,China
+437,Morādābād,763 416,India
+438,Yantai,761 746,China
+439,Campo Grande,761 544,Brazil
+440,Zhangjiakou,761 209,China
+441,Cúcuta,760 336,Colombia
+442,Łódź,756 879,Poland
+443,Lomé,756 122,Togo
+444,Jaboatão,755 864,Brazil
+445,NʿDjaména,753 791,Chad
+446,Nouakchott,753 187,Mauritania
+447,Cracow,752 705,Poland
+448,Malang,752 020,Indonesia
+449,Xinxiang,750 382,China
+450,Guadalupe,747 709,Mexico
+451,Chŏnju,747 050,Korea (South)
+452,Amsterdam,746 685,Netherlands
+453,Columbus,746 526,United States of America
+454,Jerusalem,743 512,Israel
+455,Mérida,740 059,Mexico
+456,Agadir,739 161,Morocco
+457,Tainan,737 271,Taiwan
+458,Rīga,733 990,Latvia
+459,Ningbo,732 612,China
+460,Langfang,732 052,China
+461,Puyang,731 883,China
+462,Chihuahua,729 843,Mexico
+463,Taʿizz,729 583,Yemen
+464,Tolyatti,729 547,Russia
+465,Rājshāhī,727 083,Bangladesh
+466,Tangier,726 855,Morocco
+467,Lilongwe,721 988,Malawi
+468,Ampang Jaya,721 411,Malaysia
+469,Athens,720 979,Greece
+470,Raipur,719 741,India
+471,Changzhi,718 237,China
+472,Liaoyang,716 007,China
+473,San Francisco,715 975,United States of America
+474,Tlalnepantla,713 827,Mexico
+475,Zhuzhou,713 501,China
+476,al-H̨udaydah,713 458,Yemen
+477,Bulawayo,713 340,Zimbabwe
+478,Cotonou,711 600,Benin
+479,Ipoh,710 798,Malaysia
+480,Lʿviv,710 703,Ukraine
+481,Pointe Noire,708 772,Congo
+482,Huangshi,706 617,China
+483,Pekan Baru,705 470,Indonesia
+484,Sevilla,705 174,Spain
+485,Zagreb,702 417,Croatia
+486,Foshan,701 872,China
+487,Fuxin,701 168,China
+488,Shizuoka,699 442,Japan
+489,La Plata,699 382,Argentina
+490,Gorakhpur,698 821,India
+491,San Luis Potosí,698 533,Mexico
+492,Zigong,693 816,China
+493,Tunis,693 486,Tunisia
+494,Guilin,691 313,China
+495,Osasco,691 083,Brazil
+496,Kumamoto,689 547,Japan
+497,Austin,689 256,United States of America
+498,Enugu,688 862,Nigeria
+499,Diyarbakır,686 986,Turkey
+500,Aguascalientes,685 972,Mexico
+501,Ansan,685 963,Korea (South)
+502,Mudanjiang,685 854,China
+503,Shaoguan,685 555,China
+504,Benghazi,680 943,Libya
+505,Zhanjiang,679 345,China
+506,Xiangtan,678 126,China
+507,Zhangdian,677 556,China
+508,João Pessoa,673 976,Brazil
+509,Nantong,673 302,China
+510,Shatian,671 528,China
+511,Benoni,671 064,South Africa
+512,Yogyakarta,669 870,Indonesia
+513,Hamilton,669 795,Canada
+514,Xingtai,669 270,China
+515,Santo André,666 869,Brazil
+516,Sagamihara,666 704,Japan
+517,Shaoyang,665 780,China
+518,Zaragoza,665 390,Spain
+519,Acapulco,665 280,Mexico
+520,Contagem,664 608,Brazil
+521,Bhilai,663 203,India
+522,Palermo,662 881,Italy
+523,Panjin,654 502,China
+524,Dandong,654 492,China
+525,Anyang,653 333,Korea (South)
+526,Krasnodar,652 790,Russia
+527,Chŏngju,652 548,Korea (South)
+528,Colombo,650 875,Sri Lanka
+529,Quebec,650 026,Canada
+530,Fort Worth,649 409,United States of America
+531,Haikou,646 849,China
+532,Saltillo,646 397,Mexico
+533,Aden,646 180,Yemen
+534,São José dos Campos,646 074,Brazil
+535,Chimalhuacán,645 407,Mexico
+536,Okayama,644 981,Japan
+537,Kryvyy Rih,644 679,Ukraine
+538,Querétaro,644 367,Mexico
+539,Orūmīyeh,644 091,Iran
+540,Ulyanovsk,643 877,Russia
+541,Jībūtī,642 846,Djibouti
+542,Frankfurt,642 442,Germany
+543,Rasht,642 195,Iran
+544,Mersin,641 133,Turkey
+545,Zhenjiang,639 246,China
+546,Jamshedpur,639 141,India
+547,Wahrān,638 459,Algeria
+548,Memphis,637 957,United States of America
+549,Kermān,636 242,Iran
+550,Yancheng,635 092,China
+551,Kuching,634 517,Malaysia
+552,Abu Dhabi,633 136,United Arab Emirates
+553,Winnipeg,633 107,Canada
+554,Amrāvati,632 079,India
+555,Wrocław,631 803,Poland
+556,Zhangzhou,631 591,China
+557,Abeokuta,631 018,Nigeria
+558,Izhevsk,630 564,Russia
+559,Kataka,621 124,India
+560,Hai Phong,620 936,Vietnam
+561,Kirkūk,620 318,Iraq
+562,Taizhou,618 836,China
+563,Blantyre,618 153,Malawi
+564,Hermosillo,617 849,Mexico
+565,Charlotte,616 516,United States of America
+566,Mexicali,616 055,Mexico
+567,Cancún,615 267,Mexico
+568,Hamamatsu,614 492,Japan
+569,Kayseri,614 360,Turkey
+570,Morelia,611 147,Mexico
+571,Chişinău,610 946,Moldova
+572,El Paso,609 716,United States of America
+573,Yingkou,609 599,China
+574,Kochi,607 521,India
+575,Chiclayo,607 121,Peru
+576,Luancheng,607 025,China
+577,Xiamen,606 657,China
+578,Glasgow,604 355,United Kingdom
+579,Libreville,604 265,Gabon
+580,Jinzhou,603 549,China
+581,Yaroslavl,602 830,Russia
+582,Sokoto,601 893,Nigeria
+583,Yuanlong,601 848,China
+584,Culiacán,600 709,Mexico
+585,Bahāwalpur,600 457,Pakistan
+586,Bīkāner,599 911,India
+587,Barnaul,599 113,Russia
+588,Uberlândia,598 803,Brazil
+589,Essen,598 169,Germany
+590,Hachiōji,597 664,Japan
+591,Bouaké,597 507,Ivory Coast
+592,Rotterdam,596 815,Netherlands
+593,Siping,596 731,China
+594,Genoa,595 736,Italy
+595,Baltimore,594 421,United States of America
+596,Āsmara,593 822,Eritrea
+597,Bengbu,593 552,China
+598,Onitsha,591 462,Nigeria
+599,Shihezi,591 270,China
+600,Bucaramanga,591 077,Colombia
+601,Stuttgart,590 785,Germany
+602,Banjarmasin,590 206,Indonesia
+603,Zāhedān,589 477,Iran
+604,Santiago,589 358,Dominican Republic
+605,Sorocaba,588 819,Brazil
+606,Kingston,586 630,Jamaica
+607,Kaifeng,586 134,China
+608,Dortmund,585 953,Germany
+609,Sharjah,584 286,United Arab Emirates
+610,Antipolo,582 896,Philippines
+611,Irkutsk,582 260,Russia
+612,Vladivostok,582 032,Russia
+613,Veracruz,581 905,Mexico
+614,Bhāvnagar,577 587,India
+615,Tembisa,577 356,South Africa
+616,Jiangmen,575 589,China
+617,Khabarovsk,575 252,Russia
+618,Düsseldorf,573 804,Germany
+619,Warangal,571 704,India
+620,Seattle,571 598,United States of America
+621,Milwaukee,571 202,United States of America
+622,Santiago de Cuba,570 503,Cuba
+623,Matola,570 242,Mozambique
+624,Hamhŭng,569 994,Korea (North)
+625,Ribeirão Preto,568 960,Brazil
+626,Las Vegas,568 746,United States of America
+627,Sargodha,566 312,Pakistan
+628,Poznań,565 906,Poland
+629,Niyālā,565 734,Sudan
+630,Meknes,564 853,Morocco
+631,Funabashi,564 661,Japan
+632,Tanggu,564 498,China
+633,Boston,564 483,United States of America
+634,Shah Alam,563 468,Malaysia
+635,Dehra Dūn,563 105,India
+636,Cangzhou,562 640,China
+637,Beira,561 151,Mozambique
+638,Huaiyin,561 105,China
+639,Surakarta,559 766,Indonesia
+640,Jiamusi,559 667,China
+641,Mar del Plata,558 815,Argentina
+642,Málaga,558 797,Spain
+643,Helsinki,558 656,Finland
+644,Denver,557 527,United States of America
+645,Kagoshima,556 877,Japan
+646,Warri,556 179,Nigeria
+647,Kisangani,555 753,Congo (Dem. Rep.)
+648,Port Said,554 757,Egypt
+649,Changde,554 089,China
+650,Bangui,552 904,Central African Republic
+651,Maanshan,551 315,China
+652,Orenburg,550 976,Russia
+653,Petaling Jaya,550 250,Malaysia
+654,aţ-Ţāʿīf,550 027,Saudi Arabia
+655,Neijiang,549 909,China
+656,Bremen,548 770,Germany
+657,Oshogbo,548 327,Nigeria
+658,Maoming,546 730,China
+659,López Mateos,546 100,Mexico
+660,Gold Coast,546 025,Australia
+661,Changwŏn,545 610,Korea (South)
+662,Yangzhou,545 427,China
+663,Portland,545 175,United States of America
+664,Washington,544 345,United States of America
+665,Saigong,543 661,China
+666,Oklahoma City,543 307,United States of America
+667,San Salvador,542 799,El Salvador
+668,Hamadān,542 578,Iran
+669,Vilnius,541 762,Lithuania
+670,Cuiabá,541 022,Brazil
+671,Mixco,540 348,Guatemala
+672,Reynosa,540 207,Mexico
+673,Ulhāsnagar,538 992,India
+674,Shilīguri,538 971,India
+675,Arāk,538 654,Iran
+676,Xigong,537 316,China
+677,Guntūr,537 235,India
+678,Salta,535 185,Argentina
+679,Toluca,535 097,Mexico
+680,Jiaozuo,534 548,China
+681,Ŭijŏngbu,534 383,Korea (South)
+682,Ajmer,533 868,India
+683,Dushanbe,533 495,Tajikistan
+684,Novokuznetsk,532 971,Russia
+685,Kota Kinabalu,532 129,Malaysia
+686,Torreón,532 113,Mexico
+687,Tucson,531 759,United States of America
+688,Yazd,531 284,Iran
+689,Yueyang,531 225,China
+690,Kolhāpur,531 220,India
+691,Durgāpur,531 082,India
+692,Shashi,531 042,China
+693,Zhuhai,526 926,China
+694,Eskişehir,526 321,Turkey
+695,Tyumen,524 934,Russia
+696,Naberezhnyye Chelny,524 667,Russia
+697,Makhachkala,524 153,Russia
+698,Lipetsk,522 540,Russia
+699,Hargeysa,522 508,Somalia
+700,Göteborg,522 421,Sweden
+701,Puente Alto,522 260,Chile
+702,Kousséri,521 281,Cameroon
+703,Sangli-Miraj,520 473,India
+704,Ryazan,519 386,Russia
+705,Nashville,516 845,United States of America
+706,Rājpur,516 674,India
+707,San Pedro Sula,516 608,Honduras
+708,Jammu,516 312,India
+709,Jāmnagar,515 224,India
+710,Zhunmen,514 693,China
+711,Wuhu,514 469,China
+712,Nānded,514 324,India
+713,Hanover,513 729,Germany
+714,Gulbarga,513 713,India
+715,San Nicolás de los Garza,512 219,Mexico
+716,Higashiōsaka,512 203,Japan
+717,Asansol,512 178,India
+718,Tlaquepaque,510 495,Mexico
+719,Mykolayiv,509 523,Ukraine
+720,Penza,509 170,Russia
+721,Niigata,506 933,Japan
+722,Tuxtla Gutiérrez,506 751,Mexico
+723,Suez,506 315,Egypt
+724,Asunción,506 094,Paraguay
+725,Vereeniging,505 108,South Africa
+726,Leipzig,504 421,Germany
+727,Zunyi,504 409,China
+728,Bhātpāra,504 299,India
+729,Feira de Santana,503 838,Brazil
+730,Albuquerque,502 448,United States of America
+731,an-Najaf,502 400,Iraq
+732,Newcastle,502 338,Australia
+733,Aracaju,502 226,Brazil
+734,Astrakhan,501 494,Russia
+735,Sahāranpur,500 371,India
+736,Duisburg,500 217,Germany

@@ -12,6 +12,9 @@ import socket
 from datetime import datetime
 import time
 
+import Journo
+import DB
+
 import feedparser
 
 class NonFatal(Exception):
@@ -24,7 +27,7 @@ class NonFatal(Exception):
 	pass
 
 OFFLINE = False#True	# gtb
-USE_CACHE = False	# gtb
+USE_CACHE = False#True	# gtb
 
 defaulttimeout=120	# socket timeout, in secs
 
@@ -349,9 +352,9 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 		try:
 			if store.ArticleExists( context['srcorgname'], context['srcid'] ):
 				continue;	# skip it - we've already got it
-				
+
 			# gtb!debug, for debugging tricky cases:
-#			if context['srcurl']!='http://www.telegraph.co.uk/travel/main.jhtml?xml=/travel/2007/10/25/et-a380-flight.xml':
+#			if context['srcurl']!='http://www.telegraph.co.uk/global/main.jhtml?xml=/global/2007/10/24/viewfrance.xml':
 #				continue;
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
@@ -419,9 +422,9 @@ def ExtractAuthorFromParagraph(para):
 		# "Roger Highfield outlines the verdict of former science minister, Lord Sainsbury"
 		u'(?:review|choose|tour|insist|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|say)(?:d|ed|s|)',
 		#     Andrew Cave becomes 'Telegraphman Boozehound' on Second Life to see how well it works
-		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes|at large)'
-#		u'(?:[a-z]+s)',	# any word ending with -s
-#		u'[a-z]+'		# anything at all (but must be lowercase)
+		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes|at large)',
+		u'(?:[a-z]+s)',	# any word ending with -s
+		u'[a-z]+'		# anything at all (but must be lowercase)
 	)
 
 	# deals with double-barrelled names like Jessica Gorst-Williams, also names like McGreal
@@ -431,18 +434,43 @@ def ExtractAuthorFromParagraph(para):
 	
 	author = u'';
 	confidence = 0
+	conn = 0
 	for verbs in verbsIndicatingJournalistInOrderOfLikelihood:
-		# new, gtb, only pick out where at beginning or end of sentence:
-		searchPatterns = [
-			u'(?:^|[\.\!\?\'\"])\s*('+journalistNamePattern+') '+verbs+u'\\b',			# "Joe Bloggs writes..."
-			u'\\b'+verbs+u' ('+journalistNamePattern+')(?:$|[\.\!\?\'\"])'				# "... writes Joe Bloggs"
-		]
+		if confidence<=2:
+			#  pick out where at beginning or end of sentence:
+			searchPatterns = [
+				u'(?:^|[\.\!\?\'\"])\s*('+journalistNamePattern+') '+verbs+u'\\b',			# "Joe Bloggs writes..."
+				u'\\b'+verbs+u' ('+journalistNamePattern+')(?:$|[\.\!\?\'\"])'				# "... writes Joe Bloggs"
+			]
+		else:
+			# pick out anywhere with less confidence:
+			searchPatterns = [
+				u'\\b('+journalistNamePattern+') '+verbs+u'\\b',			# "Joe Bloggs writes..."
+				u'\\b'+verbs+u' ('+journalistNamePattern+')\\b'				# "... writes Joe Bloggs"
+			]
 		confidence=confidence+1
+#		print "confidence: ",confidence
 		for searchPattern in searchPatterns:
 			authorFromDescriptionMatches = re.findall(searchPattern, para)
 			if authorFromDescriptionMatches:
-				author = authorFromDescriptionMatches[0]#-1]#.group(1)
-				break
+#				print "Got authorFromDescriptionMatches"
+				# First two (high confidence patterns) are allowed to create new journalists:
+				if confidence<=2:
+					author = authorFromDescriptionMatches[0]#-1]#.group(1)
+					break
+				# Last two (low confidence patterns) are only allowed to match journalists we already know about:
+				else:
+					if conn==0:
+						conn = DB.Connect()
+					for possibleAuthor in authorFromDescriptionMatches:
+#						print "possibleAuthor: ",possibleAuthor
+						if Journo.FindJourno(conn,possibleAuthor):
+							author = possibleAuthor
+							break
+					if author:
+						break
+		if author:
+			break
 
 	if author!=u'':
 		print "    Byline-o-matic: ",confidence," ",author," <- ",para.encode('latin-1','replace'),""

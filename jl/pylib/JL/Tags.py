@@ -13,6 +13,21 @@ countrylist_cached = None
 blacklist_cached = None
 
 
+def GetOverallTagFrequency( conn, tag ):	# gtb
+	c = conn.cursor()
+	c.execute("""
+		SELECT SUM(t.freq) AS freq 
+		FROM article_tag t 
+		WHERE t.tag='"""+tag+"'"+""" 
+	""");
+	row = c.fetchone()
+	c.close()
+	if not row:
+		return 0	# tag not found
+	return row[0]
+
+
+
 def GetCountryList():
 	"""load list of nations and nationalities"""
 

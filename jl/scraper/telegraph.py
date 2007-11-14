@@ -404,15 +404,17 @@ def main():
 
 	# DEBUG just one:
 #	rssfeeds = {
-#		"Telegraph | Your Money":
-#		"http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml"
+#   "Telegraph | Glbal":
+#    "http://www.telegraph.co.uk/newsfeed/rss/global.xml",
 #	}
 
 
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
 
-#	store = ArticleDB.DummyArticleDB()	# testing
-	store = ArticleDB.ArticleDB()
+	if False:#True:#debug
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0
