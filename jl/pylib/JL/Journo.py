@@ -268,6 +268,10 @@ def CreateNewJourno( conn, rawname ):
 	prettyname = PrettyCaseName( rawname )
 #	(firstname,lastname) = prettyname.split(None,1) 
 
+	# gtb, this is a hack! until we sort out what we are doing with journalists who want to opt out of being in the database:
+	if prettyname==u'Jini Reddy':
+		raise Exception, "Not creating New Journo who has opted out"
+
 	parts = prettyname.lower().split()
 	if len(parts) == 0:
 		raise "Empty journo name!"
