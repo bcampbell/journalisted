@@ -23,12 +23,12 @@ $stats = FetchJournoStats( $journo );
 
 
 // Disclaimers:
-$publishLink = "<a href=\"about#whichoutlets\">";
+$publishLink = "<a href=\"about#whichoutlets\"";
 $publishNum  = sprintf("%d", 14);	// hack!
-$publishInfo = $publishLink."these ".$publishNum." news outlets</a>";
+$publishInfo = $publishLink.">".$publishNum." news websites</a>";
 
-$publishDisclaimer = "<p>Published in one of ".$publishLink.$publishNum." news outlets</a>.</p>";
-$basedDisclaimer = sprintf( "<p>Based on %d article%s published in these %s news outlets</a> since %s.</p>",
+$publishDisclaimer = "<p style=\"text-align:right;font-size:x-small\">Published in one of ".$publishLink.">".$publishNum." news websites</a>.</p>";
+$basedDisclaimer = sprintf( "<p style=\"text-align:right;font-size:x-small\">Based on %d article%s published in %s since %s.</p>",
 	$stats['num_articles'], 
 	$stats['num_articles']==1 ? "" : "s", // plural
 	$publishInfo,
@@ -78,7 +78,7 @@ page_footer();
 // emit the cacheable part of the page
 function emit_journo()
 {
-	global $journo,$publishInfo,$publishNum,$publishLink;
+	global $journo,$publishNum,$publishLink;
 //	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 	/* main pane */
@@ -86,11 +86,12 @@ function emit_journo()
 	print "<div id=\"maincolumn\">\n";
 
 ?>
-	<div style="background-color:red; color:white; padding:5px;">
-		Caution: not comprehensive - based on 
-		<?=$publishLink?><?=$publishNum?> UK national news outlets</a> - 
-		information generated automatically so bound to be mistakes. Please 
-		<a href="/missing?j=<?=$journo['ref'];?>">let us know</a>
+	<div style="background-color:blue; color:white; padding:5px;">
+		Caution: this list is not comprehensive but based on articles published on
+		<?=$publishLink?> style="color:white"><?=$publishNum?> UK national news websites</a>.
+		The information is collected automatically so there are bound to be mistakes.
+		Please 
+		<a style="color:white" href="/missing?j=<?=$journo['ref'];?>">let us know</a>
 		when you find one so we can correct it.
 	</div>
 <?
@@ -103,8 +104,8 @@ function emit_journo()
 ?>
 <p>
 This is <b>not a comprehensive list of articles</b> for this journalist.
-It is based on articles published for <?=$publishLink?><?=$publishNum?> UK news outlets</a>.
-Click <a href="/missing?j=<?=$journo['ref'];?>">here</a> to see how this information is gathered.
+It is based on articles published for <?=$publishLink?>><?=$publishNum?> UK news websites</a>.
+Click <a href="about">here</a> to see how this information is gathered.
 </p>
 <?php
 	print "</div> <!-- end maincolumn -->\n";
@@ -286,7 +287,7 @@ function emit_block_friendlystats( $journo )
 
 	echo $basedDisclaimer;
 	
-	print( "<br/>\n" );
+	print( "\n" );
 
 ?>
 </div>
@@ -361,7 +362,6 @@ function emit_block_tags( $journo )
 <h3>The topics <?=$prettyname; ?> mentions most:</h3>
 <div class="boxwide-content">
 <?php
-	echo $basedDisclaimer;
 	
 	$stats = FetchJournoStats( $journo );
 //	printf( "(based on %d articles)<br />\n", $stats['num_articles'] );
@@ -381,6 +381,7 @@ function emit_block_tags( $journo )
 
 	tag_cloud_from_query( $q, $ref );
 
+	echo $basedDisclaimer;
 ?>
 </div>
 </div>
