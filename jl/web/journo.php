@@ -1,5 +1,6 @@
 <?php
 
+//phpinfo();
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
@@ -10,11 +11,31 @@ require_once '../../phplib/utility.php';
 
 
 
+
 /* get journo identifier (eg 'fred-bloggs') */
 
 $ref = strtolower( get_http_var( 'ref' ) );
 
 $journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+// stats for this journo
+$stats = FetchJournoStats( $journo );
+
+
+
+// Disclaimers:
+$publishLink = "<a href=\"about#whichoutlets\"";
+$publishNum  = sprintf("%d", 14);	// hack!
+$publishInfo = $publishLink.">".$publishNum." news websites</a>";
+
+$publishDisclaimer = "<p style=\"text-align:right;font-size:x-small\">Published in one of ".$publishLink.">".$publishNum." news websites</a>.</p>";
+$basedDisclaimer = sprintf( "<p style=\"text-align:right;font-size:x-small\">Based on %d article%s published in %s since %s.</p>",
+	$stats['num_articles'], 
+	$stats['num_articles']==1 ? "" : "s", // plural
+	$publishInfo,
+	$stats['first_pubdate'] );
+
+
+
 
 if(!$journo)
 {
@@ -30,6 +51,7 @@ $pageparams = array(
 
 $title = $journo['prettyname'];
 page_header( $title, $pageparams );
+
 
 // emit the main part of the page (cached for up to 2 hours)
 
@@ -56,12 +78,24 @@ page_footer();
 // emit the cacheable part of the page
 function emit_journo()
 {
-	global $journo;
+	global $journo,$publishNum,$publishLink;
 //	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
 	/* main pane */
 
 	print "<div id=\"maincolumn\">\n";
+
+?>
+	<div style="background-color:blue; color:white; padding:5px;">
+		Caution: this list is not comprehensive but based on articles published on
+		<?=$publishLink?> style="color:white"><?=$publishNum?> UK national news websites</a>.
+		The information is collected automatically so there are bound to be mistakes.
+		Please 
+		<a style="color:white" href="/missing?j=<?=$journo['ref'];?>">let us know</a>
+		when you find one so we can correct it.
+	</div>
+<?
+
 	emit_block_overview( $journo );
 	emit_blocks_articles( $journo, get_http_var( 'allarticles', 'no' ) );
 	emit_block_friendlystats( $journo );
@@ -69,7 +103,9 @@ function emit_journo()
 	emit_block_bynumbers( $journo );
 ?>
 <p>
-This website is in beta - all information is generated automatically so there are bound to be mistakes. Please let us know when you find one so we can correct it.
+This is <b>not a comprehensive list of articles</b> for this journalist.
+It is based on articles published for <?=$publishLink?>><?=$publishNum?> UK news websites</a>.
+Click <a href="about#howcollected">here</a> to see how this information is gathered.
 </p>
 <?php
 	print "</div> <!-- end maincolumn -->\n";
@@ -107,6 +143,7 @@ This website is in beta - all information is generated automatically so there ar
 
 function emit_blocks_articles( $journo, $allarticles )
 {
+	global $publishDisclaimer, $stats;
 
 ?>
 <div class="boxwide recent">
@@ -186,6 +223,8 @@ function emit_blocks_articles( $journo, $allarticles )
 </ul>
 <?php
 
+	echo $publishDisclaimer;
+
 	/* if there are any more we're not showing, say so */
 	if( db_fetch_array($q) )
 	{
@@ -206,10 +245,9 @@ function emit_blocks_articles( $journo, $allarticles )
 // some friendly (sentence-based) stats
 function emit_block_friendlystats( $journo )
 {
-	$journo_id = $journo['id'];
+	global $basedDisclaimer, $stats;
 
-	// stats for this journo
-	$stats = FetchJournoStats( $journo );
+	$journo_id = $journo['id'];
 
 	// get average stats for all journos
 	$avg = FetchAverages();
@@ -220,6 +258,7 @@ function emit_block_friendlystats( $journo )
 <div class="boxwide-content">
 <ul>
 <?php
+	
 	// more about <X> than anything else
 	if( array_key_exists( 'toptag_alltime', $stats ) )
 	{
@@ -246,11 +285,9 @@ function emit_block_friendlystats( $journo )
 
 	print( "</ul>\n" );
 
-	if( $stats['num_articles'] == 1 )
-		printf( "Based on %d article since %s", $stats['num_articles'], $stats['first_pubdate'] );
-	else
-		printf( "Based on %d articles since %s", $stats['num_articles'], $stats['first_pubdate'] );
-	print( "<br/>\n" );
+	echo $basedDisclaimer;
+	
+	print( "\n" );
 
 ?>
 </div>
@@ -265,6 +302,7 @@ function emit_block_friendlystats( $journo )
 
 function emit_block_bynumbers( $journo )
 {
+	global $basedDisclaimer;
 	$journo_id = $journo['id'];
 
 	// stats for this journo
@@ -296,7 +334,11 @@ function emit_block_bynumbers( $journo )
 	print "</table>\n";
 
 ?>
-<p>(no reflection of quality, just stats)</p>
+<? // <p>(no reflection of quality, just stats)</p>
+?>
+<?
+	echo $basedDisclaimer;
+?>
 
 </div>
 </div>
@@ -309,7 +351,8 @@ function emit_block_bynumbers( $journo )
 
 function emit_block_tags( $journo )
 {
-
+	global $basedDisclaimer;
+	
 	$journo_id = $journo['id'];
 	$ref = $journo['ref'];
 	$prettyname = $journo['prettyname'];
@@ -319,8 +362,9 @@ function emit_block_tags( $journo )
 <h3>The topics <?=$prettyname; ?> mentions most:</h3>
 <div class="boxwide-content">
 <?php
+	
 	$stats = FetchJournoStats( $journo );
-	printf( "(based on %d articles)<br />\n", $stats['num_articles'] );
+//	printf( "(based on %d articles)<br />\n", $stats['num_articles'] );
 
 	$maxtags = 20;
 
@@ -337,6 +381,7 @@ function emit_block_tags( $journo )
 
 	tag_cloud_from_query( $q, $ref );
 
+	echo $basedDisclaimer;
 ?>
 </div>
 </div>
@@ -463,6 +508,8 @@ function emit_block_overview( $journo )
 
 function emit_writtenfor( $journo )
 {
+	global $basedDisclaimer;
+
 	$orgs = get_org_names();
 	$journo_id = $journo['id'];
 
@@ -492,6 +539,8 @@ function emit_writtenfor( $journo )
 	printf( "<p>Writes for %s</p>", PrettyImplode( $orglist) );
 
 	gatso_stop( 'writtenfor' );
+	
+	echo $basedDisclaimer;
 }
 
 
