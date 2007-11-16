@@ -536,7 +536,7 @@ function emit_writtenfor( $journo )
 		$orglist[] = $s;
 	}
 
-	printf( "<p>?Has written articles published in %s</p>", PrettyImplode( $orglist) );
+	printf( "<p>Has written articles published in %s</p>", PrettyImplode( $orglist) );
 
 	gatso_stop( 'writtenfor' );
 	
