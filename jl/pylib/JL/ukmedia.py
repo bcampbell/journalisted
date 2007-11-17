@@ -354,7 +354,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 				continue;	# skip it - we've already got it
 
 			# gtb!debug, for debugging tricky cases:
-#			if context['srcurl']!='http://www.telegraph.co.uk/global/main.jhtml?xml=/global/2007/10/24/viewfrance.xml':
+#			if context['srcurl']!='http://www.telegraph.co.uk/money/main.jhtml?xml=/money/2007/11/03/cmjessica03.xml':
 #				continue;
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )

@@ -437,7 +437,7 @@ def GetPrettyNameFromRawName(conn, rawName ):
 
 	# Warning... might need to merge?
 	# get rid of extraneous With and By at the beginning:
-	m = re.match(u'(?:(Eco-Worrier|according|with|by) )(.*?)$', newPrettyname, re.UNICODE|re.IGNORECASE)
+	m = re.match(u'(?:(Eco-Worrier|from|reviewed|according|with|by) )(.*?)$', newPrettyname, re.UNICODE|re.IGNORECASE)
 	if m and m.group(1) and m.group(2):
 #				print m.group(1),"+",m.group(2)
 		newPrettyname = m.group(2)
