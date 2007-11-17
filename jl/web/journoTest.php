@@ -105,7 +105,7 @@ function emit_journo()
 <p>
 This is <b>not a comprehensive list of articles</b> for this journalist.
 It is based on articles published for <?=$publishLink?>><?=$publishNum?> UK news websites</a>.
-Click <a href="about">here</a> to see how this information is gathered.
+Click <a href="about#howcollected">here</a> to see how this information is gathered.
 </p>
 <?php
 	print "</div> <!-- end maincolumn -->\n";

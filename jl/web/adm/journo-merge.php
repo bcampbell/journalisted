@@ -140,7 +140,8 @@ function MergeJourno( $params )
 	$into_id = $intoj['id'];
 
 	db_do( "UPDATE journo_attr SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
-	db_do( "UPDATE journo_alias SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+// alias deprecated
+//	db_do( "UPDATE journo_alias SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_weblink SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 

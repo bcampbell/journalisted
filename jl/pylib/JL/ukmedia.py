@@ -420,9 +420,9 @@ def ExtractAuthorFromParagraph(para):
 	# For now assume the author's name is two capitalised words
 	verbsIndicatingJournalistInOrderOfLikelihood = (
 		# "Roger Highfield outlines the verdict of former science minister, Lord Sainsbury"
-		u'(?:review|choose|tour|insist|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|say)(?:d|ed|s|)',
+		u'(?:review|discover|choose|tour|insist|tackle|head|think|report|stay|ask|warn|outline|report|explain|write|look|answer|argue|examine|advise|wonder|unravel|By|say)(?:d|ed|s|)',
 		#     Andrew Cave becomes 'Telegraphman Boozehound' on Second Life to see how well it works
-		u'(?:caught up|catches up|becomes|is|was|find|select|takes|makes|at large)',
+		u'(?:caught up|meets|catches up|becomes|is|was|find|select|takes|makes|at large)',
 		u'(?:[a-z]+s)',	# any word ending with -s
 		u'[a-z]+'		# anything at all (but must be lowercase)
 	)

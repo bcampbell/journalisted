@@ -357,7 +357,7 @@ def ExtractParas( soup, textpart ):
 			
 	# gtb: replace all whitespace (including newlines) by one space... 
 	# (needed for author extraction from description)
-	desc = re.sub(u'\s+',' ', desc)
+	desc = re.sub(u'\s+',u' ', desc)
 	return desc
 
 
@@ -411,7 +411,7 @@ def main():
 
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
 
-	if False:#True:#debug
+	if False:#debug
 		store = ArticleDB.DummyArticleDB()	# testing
 	else:
 		store = ArticleDB.ArticleDB()
