@@ -210,7 +210,7 @@ def GenerateUniqueRef( conn, prettyname ):
 
 
 def GetNoOfArticlesWrittenBy( conn, journo_ref ):
-	journo_id = FindJourno(conn,journo_ref)
+	journo_id = GetJournoIdFromRef(conn,journo_ref)
 #	if not journo_id:
 #		return 
 	assert journo_id, "Can't find journo: "+journo_ref
