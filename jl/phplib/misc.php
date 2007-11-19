@@ -82,8 +82,10 @@ function tag_display_cloud( &$tags, $journo_ref=null )
 	}
 	foreach( $tags as $tag=>$freq )
 	{
-		// TODO: check for division-by-zero!
-		$size = $minsize + ( (($freq-$low)*($maxsize-$minsize)) / ($high-$low)  );
+		if( $high == $low )
+			$size = $minsize + ($maxsize-$minsize)/4;	// artibrary. looks about right.
+		else
+			$size = $minsize + ( (($freq-$low)*($maxsize-$minsize)) / ($high-$low)  );
 
 		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_ref ), $size, $tag);
 	}
