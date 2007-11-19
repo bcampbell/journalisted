@@ -267,26 +267,39 @@ def GetLastName( conn, ref ):
 	return unicode(row[0], 'utf-8')
 
 
-def FindJournoMultiple( conn, rawname ):
-	# TODO return fuzzy match of journo-names:
-	
-	newPrettyname = GetPrettyNameFromRawName(conn, rawname)
-	nameToProcessForRef = StripPrefixesAndSuffixes(newPrettyname)
-	newRef = BaseRef(nameToProcessForRef)
-
-
+def GetJournoIdFromRef( conn, ref):
 #	alias = DefaultAlias(rawname)
 	c = conn.cursor()
-	c.execute( "SELECT id FROM journo WHERE ref=%s", newRef.encode('utf-8') ) 
+	c.execute( "SELECT id FROM journo WHERE ref=%s", ref.encode('utf-8') ) 
 #	c.execute( "SELECT journo_id FROM journo_alias WHERE alias=%s", alias.encode('utf-8') ) 
-	found = []
 	while 1:
 		row = c.fetchone()
 		if not row:
 			break
-		found.append( row[0] )
-
+		return row[0]
 	c.close()
+	return -999
+
+
+def FindJournoMultiple( conn, rawname ):
+	# TODO return fuzzy match of journo-names:
+
+	newPrettyname = GetPrettyNameFromRawName(conn, rawname)
+	nameToProcessForRef = StripPrefixesAndSuffixes(newPrettyname)
+	newRef = BaseRef(nameToProcessForRef)
+
+	found = []
+	id = GetJournoIdFromRef(conn, newRef)
+	if id>=0:
+		found.append(id)
+	i = 1
+	while 1:
+		candidate = u'%s-%d' %(newRef,i)
+		id = GetJournoIdFromRef(conn, candidate)
+		if id<0:
+			break
+		found.append(id)
+		i = i + 1
 	return found
 
 
@@ -300,6 +313,8 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 		return journos[0]
 
 	if len(journos) > 1:
+		print "Found Multiple Journos: ",journos;
+
 		# if we need to implement per-journo evil hacks,
 		# then this is probably the place to put them!
 		# eg if rawname = "Fred Bloggs":....
@@ -331,7 +346,8 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 # get Journo without prefixes and suffixes:
 def StripPrefixesAndSuffixes(newPrettyname):
 	# could add more from http://en.wikipedia.org/wiki/Title
-	m = re.match(u'(?:(sir|lady|dame|prof|founder|chancellor|lieutenant-colonel|lieutenant|colonel|sgt|mr|dr|professor|cardinal|chef) )?(.*?)(?: (mp|vc))?$', newPrettyname, re.UNICODE|re.IGNORECASE)
+	m = re.match(u'(?:(sir|lady|dame|prof|founder|major|general|chancellor|lieutenant-colonel|col|lieutenant|colonel|captain|corporal|sergeant|sgt|mr|dr|professor|cardinal|chef) )?(.*?)(?: (mp|vc|qc))?$', newPrettyname, re.UNICODE|re.IGNORECASE)
+	# TODO standardise prefixes, e.g. Col->Colonel always!
 	assert m, "Can't process journo: "+m
 	return m.group(2)
 #	if m.group(1) or m.group(3):
@@ -422,6 +438,7 @@ def GetPrettyNameFromRawName(conn, rawName ):
 
 	# capitalise some suffixes like MP:
 	newPrettyname = re.sub(u'\\bMp$', u'MP', newPrettyname)
+	newPrettyname = re.sub(u'\\bQc$', u'QC', newPrettyname)
 	
 	# no dots after initials: (e.g. should be Gareth A Davies, not Gareth A. Davies, also
 	#     get rid of weird characters like < >

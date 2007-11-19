@@ -24,7 +24,9 @@ def main():
 	conn = DB.Connect()
 
 	# Some unit tests:
-	if False:  # True
+	if False: # True:  # True
+		print Journo.FindJournoMultiple(conn, "David Rose")
+		
 		print "IsReasonableLastName('Ramsay')", Journo.IsReasonableLastName(conn,'Ramsay',1)
 		print "IsReasonableLastName('Nabanga')",Journo.IsReasonableLastName(conn,'Nabanga')
 		# Now guess place names for 3-word names, e.g. Stuart Ramsay Nabanga => Stuart Ramsay, Nabanga
@@ -52,7 +54,7 @@ def main():
 		print Journo.getCloseMatches(conn,'amy-turner',['sam-turner'])
 		print Journo.getCloseMatches(conn,'sam-turner',['amy-turner'])
 		
-	#	return 0
+		return 0
 		
 		print Journo.getCloseMatches(conn,'bob smith',['bob smith'])
 		print Journo.getCloseMatches(conn,'bob smith',['rob smith'])#false
