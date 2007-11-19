@@ -159,11 +159,12 @@ function journoCreate( &$j )
 		$j['firstname'] );
 	$j['id'] = db_getOne( "SELECT currval( 'journo_id_seq' )" );
 
+// deprecated
 	// TODO: should handle multiple aliases
-	$alias = $j['alias'];
+//	$alias = $j['alias'];
 
-	db_do( "INSERT INTO journo_alias (journo_id,alias) VALUES (?,?)",
-		$j['id'], $alias );
+//	db_do( "INSERT INTO journo_alias (journo_id,alias) VALUES (?,?)",
+//		$j['id'], $alias );
 }
 
 
@@ -188,8 +189,8 @@ function SplitJourno( $params )
 		$toj['ref'] = $params['to_ref'];
 
 		// copy alias too (should be array really)
-		$alias = db_getOne( "SELECT alias FROM journo_alias WHERE journo_id=?", $fromj['id'] );
-		$toj['alias'] = $alias;
+//		$alias = db_getOne( "SELECT alias FROM journo_alias WHERE journo_id=?", $fromj['id'] );
+//		$toj['alias'] = $alias;
 
 		// create the new journo
 		journoCreate( $toj );
