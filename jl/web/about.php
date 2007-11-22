@@ -23,15 +23,19 @@ page_header( "About", array( 'menupage'=>'about' ) );
 <p>It's an attempt to make news a bit more transparent and journalists a bit more accountable - on behalf of the public.
 
 <h3>What is journa-list?</h3>
-<p>Journa-list is an independent, not-for-profit website that makes it easier for people to find out more about journalists and what they write about.
-<p>It is the first UK website - after <a href="http://www.byliner.com">www.byliner.com</a> - to offer a free searchable database of UK national journalists published by one of 14 news outlets online (who write under a byline), with links to their current and previous articles, and some basic statistics about their work.
-<p>It allows you to build up your own tailored list of journalists whose views you respect and trust. You can search through their back catalogue of articles, and link to other articles on the same topic by different journalists. And, if you want, you can be alerted each time any of them writes an article.
-<p><b>It is certainly not comprehensive.</b> Due to the way information is gathered (see below) it is also bound to contain mistakes (though we do our best to correct them whenever we find them). And, it will never do full justice to the output of the journalists covered – for which we apologise.
-<p>But in a world of growing information overload we hope it will be an additional way for the public to navigate news, compare different stories and build up a range of journalists that they read regularly and trust.
+<p>Journa-list is an independent, not-for-profit website built to make it easier for the public to find out more about journalists and what they write about.</p>
+<p>It is non-commercial and non-partisan. It is intended to make the news media more transparent and accountable on behalf of the public (as opposed to journalists or PR). It is an initiative of the Media Standards Trust, a charitable body set up to find ways to foster high standards in news.</p>
+<p>It has been funded - on a very limited budget - by a number of charitable foundations (particularly Esmee Fairbairn and Joseph Rowntree) and by individual Board members of the Media Standards Trust.</p>
+<p>It is the first UK website - after <a href="http://www.byliner.com">www.byliner.com</a> - to offer a free searchable database of UK national journalists published by one of 14 news outlets online (who write under a byline), with links to their current and previous articles, and some basic statistics about their work.</p>
+<p>It allows you to build up your own tailored list of journalists whose views you respect and trust. You can search through their back catalogue of articles (since October 2007), and link to other articles on the same topic by different journalists. And, if you want, you can be alerted each time any of them writes an article.</p>
+<p><b>It is certainly not comprehensive</b>. Due to the way information is gathered (see below) it is also bound to contain mistakes (though we do our best to correct them whenever we find them). And, it will never do full justice to the output of the journalists covered – for which we apologise.</p>
+<p>But in a world of growing information overload we hope it will be an additional way for the public to navigate news, compare different stories and build up a range of journalists that they read regularly and trust.</p>
+
 
 <a name="howcollected"><h3>How is this information collected?</h3></a>
-<p>This information is collected automatically from the websites of <a href="#whichoutlets">various UK national news outlets</a>. Articles are indexed by journalist based on the byline to the article. Statistics are based on articles indexed to each journalist from the date the first article was recorded on this site. 
-<p>We started indexing articles in the summer 2007. 
+<p>This information is collected automatically from the websites of <a href="#whichoutlets">various UK national news outlets</a>. Articles are indexed by journalist based on the byline to the article. Statistics are based on articles indexed to each journalist from the date the first article was recorded on this site.</p>
+<p>We started indexing articles in the summer 2007.</p>
+
 
 <a name="whichoutlets"><h3>Which news outlets are covered?</h3></a>
 <p>The site currently covers:
@@ -68,6 +72,23 @@ page_header( "About", array( 'menupage'=>'about' ) );
 <p>Once we have got through this first stage in the development of the site we will enable journalists to add information / material of their own.
 <p>If you have suggestions on how to improve the site, please 
 <?=SafeMailto( $contactemail . '?subject=' . $subject, 'let us know' );?>.
+
+<h3>What next?</h3>
+<p>We believe the site has enormous potential and we very much want to develop it further.</p>
+We would very much like:
+<ul>
+<li>To give journalists the opportunity to add further information about themselves, links to more of their articles, and to register their interests.</li>
+<li>To increase the number of publications from which we source articles – particularly regional newspapers, weekly magazines and the trade press.</li>
+<li>To offer more information to users about each article – who is blogging about it, who is sharing it (via del.icio.us, digg, reddit etc.), who is commenting on it.</li>
+<li>To be able to allow people to compare articles to press releases and other marketing material.</li>
+</ul>
+<p>To do any of this, however, we need support. If you would like to support us please do 
+<?=SafeMailto( $contactemail . '?subject=journa-list', 'get in touch' );?>.</p>
+
+<h3>Credits</h3>
+<p>
+<a href="http://www.scumways.com">Ben Campbell</a> built the site from his rural idyll in North Wales, with help after launch from Gavin Buttimore. Ayesha Garrett, Gary, and James Williamson designed it. Simon Roe translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice along the way. Julian Todd and <a href="http://www.flourish.org">Francis Irving</a> generously provided the hosting and admin support. Martin Moore has led the initiative on behalf of the Media Standards Trust.
+</p>
 
 
 <?php
