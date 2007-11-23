@@ -13,15 +13,6 @@ page_header( "About", array( 'menupage'=>'about' ) );
 <h2>About Journa-list</h2>
 
 
-
-<h3>Why journa-list?</h3>
-<p>Have you ever read an article and thought, I'd really like to know more about the journalist who wrote this?
-<p>Maybe you want to read previous things the journalist has written, or find out more about their experience in a particular subject area, or see if there is other information about their work on the web.
-<p>Or perhaps you want to find out who else is writing about a particular subject - say 'Bluetongue' - and compare one journalist's articles with those written by other journalists from different publications.
-<p>Or, you might want to build your own newsroom of journalists - science journalists for example - and have their articles emailed directly to you each morning.
-<p>You can do all of this on journa-list.
-<p>It's an attempt to make news a bit more transparent and journalists a bit more accountable - on behalf of the public.
-
 <h3>What is journa-list?</h3>
 <p>Journa-list is an independent, not-for-profit website built to make it easier for the public to find out more about journalists and what they write about.</p>
 <p>It is non-commercial and non-partisan. It is intended to make the news media more transparent and accountable on behalf of the public (as opposed to journalists or PR). It is an initiative of the Media Standards Trust, a charitable body set up to find ways to foster high standards in news.</p>
@@ -87,7 +78,7 @@ We would very much like:
 
 <h3>Credits</h3>
 <p>
-<a href="http://www.scumways.com">Ben Campbell</a> built the site from his rural idyll in North Wales, with help after launch from Gavin Buttimore. Ayesha Garrett, Gary, and James Williamson designed it. Simon Roe translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice along the way. Julian Todd and <a href="http://www.flourish.org">Francis Irving</a> generously provided the hosting and admin support. Martin Moore has led the initiative on behalf of the Media Standards Trust.
+<a href="http://www.scumways.com">Ben Campbell</a> built the site from his rural idyll in North Wales, with help after launch from Gavin Buttimore. Ayesha Garrett, Gary Jones, and James Williamson designed it. Simon Roe translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice along the way. Julian Todd and <a href="http://www.flourish.org">Francis Irving</a> generously provided the hosting and admin support. Martin Moore has led the initiative on behalf of the Media Standards Trust.
 </p>
 
 
