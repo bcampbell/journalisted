@@ -78,9 +78,17 @@ We would very much like:
 
 <h3>Credits</h3>
 <p>
-<a href="http://www.scumways.com">Ben Campbell</a> built the site from his rural idyll in North Wales, with help after launch from Gavin Buttimore. Ayesha Garrett, Gary Jones, and James Williamson designed it. Simon Roe translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice along the way. Julian Todd and <a href="http://www.flourish.org">Francis Irving</a> generously provided the hosting and admin support. Martin Moore has led the initiative on behalf of the Media Standards Trust.
+<a href="http://www.scumways.com">Ben Campbell</a> built the site from his
+rural idyll in North Wales, with help after launch from Gavin Buttimore.
+Ayesha Garrett, Gary Jones, and James Williamson designed it. Simon Roe
+translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow,
+Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice
+along the way. Julian Todd and
+<a href="http://www.flourish.org">Francis Irving</a> generously provided the
+hosting and admin support.
+<a href="http://mediastandardstrust.blogspot.com">Martin Moore</a> has led
+the initiative on behalf of the Media Standards Trust.
 </p>
-
 
 <?php
 
