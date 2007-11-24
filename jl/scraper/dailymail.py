@@ -119,8 +119,16 @@ def Extract( html, context ):
 
 
 	# get date posted
+	# two formats used:
+	# ""Last updated at 13:23pm on 29th August 2006" (old)
+	# "20:12pm 23rd November 2007" (new)
 	datespan = articlediv.find( 'span', {'class':'artDate' } )
-	art['pubdate'] = CrackDate( datespan.string )
+
+	datestr = datespan.string
+	if datestr.find("Last updated") != -1:
+		art['pubdate'] = CrackDate( datestr )	# old format
+	else:
+		art['pubdate'] = ukmedia.ParseDateTime( datestr )	# new format
 
 	# is there a byline?
 	bylinespan = articlediv.find( 'span', {'class':'artByline' } )

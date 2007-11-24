@@ -68,6 +68,9 @@ datecrackers = [
 	# "26 May 2007, 02:10:36 BST" (newsoftheworld)
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
 
+	# "20:12pm 23rd November 2007" (dailymail)
+	re.compile( """(?P<hour>\d{1,2}):(?P<min>\d\d)\w\w\s+(?P<day>\d{1,2})\w+\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE),
+
 	# for BLOGS:
 	
 	# "22 Oct 2007 (weird non-ascii characters) at(weird non-ascii characters)11:23" (telegraph blogs)
@@ -544,4 +547,12 @@ def UncapsTitle( title ):
 
 
 
+def PrettyDump( art ):
+	""" dump an article out to stdout, in a readable(ish) form """
+	for f in art:
+		if f != 'content':
+			print "%11s: %s" % (f,art[f])
+	print "---------------------------------"
+	print art['content']
+	print "---------------------------------"
 
