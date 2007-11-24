@@ -78,11 +78,37 @@ rssfeeds = {
 	'Celtic': 'http://feeds.feedburner.com/dailymail/celtic',
 }
 
+# page which lists columnists and their latest rants
+columnistmainpage = 'http://www.dailymail.co.uk/pages/live/columnists/dailymail.html'
 
 
+def FindColumnistArticles():
+	"""Dailymail doesn't seem to have an RSS feed for it's columnists,
+	so we'll just grep for links on the columnist page.
+	TODO: could follow archive links for more articles..."""
 
+	ukmedia.DBUG2("Searching Columnist page for articles\n")
+	foundarticles = []
+	html = ukmedia.FetchURL( columnistmainpage )
+	soup = BeautifulSoup( html )
 
+	srcorgname = u'dailymail'
+	lastseen = datetime.now()
 
+	for h in soup.findAll( 'h3' ):
+		url = TidyURL( 'http://www.dailymail.co.uk' + h.a['href'] )
+
+		context = {
+			'srcid': url,
+			'srcurl': url,
+			'permalink': url,
+			'srcorgname' : srcorgname,
+			'lastseen': lastseen,
+			}
+		foundarticles.append( context )
+
+	ukmedia.DBUG2("found %d columnist articles\n" % (len(foundarticles)) )
+	return foundarticles
 
 # get datetime from dailymail <span class='artDate'> format:
 # "Last updated at 13:23pm on 29th August 2006"
@@ -117,7 +143,9 @@ def Extract( html, context ):
 	html = cruftkillpat1.sub( '', html )
 	html = cruftkillpat2.sub( '', html )
 
-	soup = BeautifulSoup( html )
+	# dailymail _claims_ to use "iso-8859-1" encoding, but really it
+	# uses "windows-1252". Sigh.
+	soup = BeautifulSoup( html, fromEncoding='windows-1252' )
 
 	# get Description
 	foo = soup.find( 'meta', {'name':'description'} )
@@ -212,6 +240,11 @@ def Extract( html, context ):
 
 urltrimpat=re.compile( "(.*?[?]in_article_id=[0-9]+).*$" )
 
+def TidyURL( url ):
+	# trim off cruft
+	return urltrimpat.sub( "\\1", url )
+
+	
 def ScrubFunc( context, entry ):
 	"""mungefunc for ukmedia.FindArticlesFromRSS()"""
 
@@ -220,8 +253,7 @@ def ScrubFunc( context, entry ):
 	if url.find('feedburner') != -1:
 		url = entry.feedburner_origlink
 
-	# trim off cruft
-	url = urltrimpat.sub( "\\1", url )
+	url = TidyURL( url )
 
 	context['srcurl'] = url
 	context['permalink'] = url
@@ -256,8 +288,12 @@ def main():
 		return
 
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
+	# extra articles not from RSS feeds...
+	found = found + FindColumnistArticles()
+	
 	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
+
 
 	return 0
 
