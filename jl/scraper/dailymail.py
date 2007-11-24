@@ -11,6 +11,7 @@
 import re
 from datetime import datetime
 import sys
+from optparse import OptionParser
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -98,10 +99,23 @@ def CrackDate( d ):
 	return d
 
 
+def KillCruft( soup, name, attrs ):
+	for cruft in soup.findAll( name, attrs ):
+		cruft.extract()
+
 
 # extract a single article from a page
 def Extract( html, context ):
 	art = context
+
+	# do a pre-emptive strike and zap _everything_ after the main
+	# article text
+
+	cruftkillpat1 = re.compile( "\\s*<div id=\"social_links_sub\">.*", re.DOTALL )
+	cruftkillpat2 = re.compile( "\\s*<a name=\"StartComments\" id=\"StartComments\" ></a>.*", re.DOTALL )
+
+	html = cruftkillpat1.sub( '', html )
+	html = cruftkillpat2.sub( '', html )
 
 	soup = BeautifulSoup( html )
 
@@ -117,18 +131,25 @@ def Extract( html, context ):
 	art[ 'title' ] = headline.renderContents( None )
 	art[ 'title' ] = ukmedia.DescapeHTML( art['title'] )
 
-
 	# get date posted
 	# two formats used:
-	# ""Last updated at 13:23pm on 29th August 2006" (old)
-	# "20:12pm 23rd November 2007" (new)
+	# ""Last updated at 13:23pm on 29th August 2006" (main paper?)
+	# "20:12pm 23rd November 2007" (columnists?)
 	datespan = articlediv.find( 'span', {'class':'artDate' } )
 
-	datestr = datespan.string
-	if datestr.find("Last updated") != -1:
-		art['pubdate'] = CrackDate( datestr )	# old format
+	if datespan:
+		datestr = datespan.string
+		if datestr.find("Last updated") != -1:
+			art['pubdate'] = CrackDate( datestr )	# old format
+		else:
+			art['pubdate'] = ukmedia.ParseDateTime( datestr )	# new format
 	else:
-		art['pubdate'] = ukmedia.ParseDateTime( datestr )	# new format
+		# Soap watch column has no date
+		if art['title'] == u'SOAP WATCH':
+			art['pubdate'] = datetime.now()
+		else:
+			raise Exception, ("Missing date")
+
 
 	# is there a byline?
 	bylinespan = articlediv.find( 'span', {'class':'artByline' } )
@@ -136,68 +157,54 @@ def Extract( html, context ):
 		byline = bylinespan.renderContents( None )
 		byline = ukmedia.DescapeHTML( byline )
 		byline = re.sub( u"\s*-\s*<a.*?>.*?</a>\s*", u'', byline )
-		art['byline'] = byline
 	else:
-		art['byline'] = u''
+		# Columnist pages have columnist name in colT div
+		colt = articlediv.find( 'div', {'class':'colT'} )
+		if colt:
+			colt.span.extract()	# cruft
+			byline = colt.renderContents( None )
+			colt.extract()
+		else:
+			byline = u''
 
+	art['byline'] = byline
 
+	# Text extraction time...
 
-	# find the comment link at the top, and delete it and everything above it
-	cruft = articlediv.find( 'a', {'class':'t11'} )
-	while cruft:
-		prev = cruft.previous
-		cruft.extract()
-		cruft = prev;
+	# remove title, date, byline
+	headline.extract()
+	if datespan:
+		datespan.extract()
+	if  bylinespan:
+		bylinespan.extract()
 
+	# remove cruft
+
+	KillCruft( articlediv, 'a', {'id': 'endAds'} )
+	KillCruft( articlediv, 'a', {'id': 'statecontent'} )
+
+	# comments link
+	KillCruft( articlediv, 'a', {'href': re.compile(".*StartComments$") } )
 
 	# zap blocks (top stories, email newsletter etc...)
-	cruft = articlediv.find( 'div', { 'class':'right', 'id':'LookHere' } )
-	if cruft:
-		cruft.extract()
+	KillCruft( articlediv, 'div', { 'class':'right', 'id':'LookHere' } )
 
 	# zap extra links embedded in the article
 	for cruft in articlediv.findAll( 'span', { 'class':'ereaderFilter' } ):
 		cruft.extract()
 
-	# After the text there could be a whole heap of cruft (comments etc)
-	# which we want to zap.
+	# image blocks...
+	for cruft in articlediv.findAll( 'strong', ):
+		if unicode( cruft ).find( u"Scroll down for more" ) != -1:
+			cruft.extract()
+	KillCruft( articlediv, 'div', { 'id': re.compile('.*ArtContentImgBody.*' ) } )
 
-	# Look for the comments section, which follows the text.
-	cruft = articlediv.find( 'a', { 'name': 'StartComments', 'id': 'StartComments' } )
-
-	# delete comments and anything else following
-	while cruft:
-		n = cruft.nextSibling
-		cruft.extract()
-		cruft = n
-
-	# just about there - just got to cull out some leftover cruft...
-
-	# little empty divs
-	for cruft in articlediv.findAll( 'div' ):
-		cruft.extract()
-
-	# "Scroll down" messages
-	for cruft in articlediv.findAll( 'strong', text="Scroll down for more" ):
-		cruft.parent.extract()
-
-
-	# <p class="sm">Have your Daily Mail and Mail on Sunday delivered to your door...
-	# delete it. and everything following it.
-	cruft = articlediv.find( 'p', {'class':'sm'} )
-	while cruft:
-		n = cruft.nextSibling
-		cruft.extract()
-		cruft = n
-
-	# cull any "see also..." paragraphs embedded in the text
-#	for cruft in articlediv.findAll( 'strong' ):
-#		if cruft.find( text='See also...' ):
-#			cruft.parent.extract()
-
+	# "Read More..." blocks...
+	KillCruft( articlediv, 'div', { 'class': re.compile( '.*ArtInlineReadLinks.*' ) } )
 
 	# whatever is left is our text!
-	art['content'] = articlediv.renderContents( None )
+	content = articlediv.renderContents( None )
+	art['content'] = ukmedia.SanitiseHTML( content )
 	return art
 
 
@@ -222,9 +229,32 @@ def ScrubFunc( context, entry ):
 	return context
 
 
+def ScrapeSingleURL( url ):
+	html = ukmedia.FetchURL( url )
+	context = {
+		'srcurl': url,
+		'permalink': url,
+		'srcid': url,
+		'srcorgname': u'dailymail',
+	}
+
+	art = Extract( html, context )
+	ArticleDB.CheckArticle( art )
+	return art
 
 
 def main():
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	#parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+	(options, args) = parser.parse_args()
+
+	if options.url:
+		# just scrape and dump a single url (no store)
+		art = ScrapeSingleURL( options.url )
+		ukmedia.PrettyDump( art )
+		return
+
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
 	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )

@@ -161,6 +161,7 @@ tagclosepat = re.compile( "<\s*/\s*(\w+)\s*>", re.UNICODE|re.DOTALL )
 acceptabletags = [ 'p', 'h1','h2','h3','h4','h5','br','b','i','em','li','ul','ol','strong' ]
 
 commentkillpat = re.compile( u"<!--.*?-->", re.UNICODE|re.DOTALL )
+emptyparapat = re.compile( u"<p>\s*</p>", re.IGNORECASE|re.UNICODE|re.DOTALL )
 
 def SanitiseHTML_handleopen(m):
 	tag = m.group(1).lower()
@@ -180,6 +181,7 @@ def SanitiseHTML( html ):
 	"""Strip out all non-essential tags and attrs"""
 	html = tagopenpat.sub( SanitiseHTML_handleopen, html )
 	html = tagclosepat.sub( SanitiseHTML_handleclose, html )
+	html = emptyparapat.sub( u'', html )
 	html = commentkillpat.sub( u'', html )
 	return html
 
