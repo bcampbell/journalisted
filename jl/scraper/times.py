@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 import sys
 import os
+from optparse import OptionParser
 
 sys.path.append("../pylib")
 import BeautifulSoup
@@ -192,6 +193,19 @@ def Extract( html, context ):
 	return art
 
 
+def ScrapeSingleURL( url ):
+	html = ukmedia.FetchURL( url )
+	context = {
+		'srcurl': url,
+		'permalink': url,
+		'srcid': url,
+		'srcorgname': u'times',	# TODO: or sundaytimes
+	}
+
+	art = Extract( html, context )
+	ArticleDB.CheckArticle( art )
+	return art
+
 
 def main():
 	DEBUG_OUTPUT_TO_DIR = False#True
@@ -201,8 +215,27 @@ def main():
 		sys.stdout = open("output/news_"+"times"+".txt", 'w')
 		sys.stderr = sys.stdout
 
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	(options, args) = parser.parse_args()
 
-	found = FindArticles()
+	found = []
+	if options.url:
+		# just scrape a single article
+		url = options.url
+		context = {
+			'srcurl': url,
+			'permalink': url,
+			'srcid': url,
+			'srcorgname': u'times',	# TODO: or sundaytimes
+			'lastseen': datetime.now(),
+		}
+		found.append( context )
+	else:
+		# find _all_ articles
+		found = found + FindArticles()
+
+
 #	store = ArticleDB.DummyArticleDB()	# testing
 	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
