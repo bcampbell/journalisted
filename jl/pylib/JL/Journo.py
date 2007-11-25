@@ -276,7 +276,7 @@ def GetJournoIdFromRef( conn, ref):
 		row = c.fetchone()
 		if not row:
 			break
-		return row[0]
+		return int( row[0] )
 	c.close()
 	return -999
 
@@ -313,7 +313,7 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 		return journos[0]
 
 	if len(journos) > 1:
-		print "Found Multiple Journos: ",journos;
+		#print "Found Multiple Journos: ",journos;
 
 		# if we need to implement per-journo evil hacks,
 		# then this is probably the place to put them!
@@ -337,8 +337,9 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 		if cnt != 1:
 			raise Exception, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,hint_srcorgid)
 
+		journo_id = int( matching[0]['journo_id'] )
 		c.close()
-		return matching[0]
+		return journo_id
 
 	return None
 
@@ -525,7 +526,7 @@ def CreateNewJourno( conn, rawname ):
 
 	ref = GenerateUniqueRef( conn, prettyname )
 
-	print("CreateNewJourno: ",rawname," = ",prettyname," = ",ref);
+	#print("CreateNewJourno: ",rawname," = ",prettyname," = ",ref);
 
 	# TODO: maybe need to filter out some chars from ref?
 	q = conn.cursor()
@@ -547,6 +548,8 @@ def CreateNewJourno( conn, rawname ):
 
 def AttributeArticle( conn, journo_id, article_id ):
 	""" add a link to say that a journo wrote an article """
+
+	print "Attribute article %d to journo %d" %(article_id,journo_id)
 
 	q = conn.cursor()
 	q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", journo_id, article_id )
