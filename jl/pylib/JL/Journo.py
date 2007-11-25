@@ -549,7 +549,7 @@ def CreateNewJourno( conn, rawname ):
 def AttributeArticle( conn, journo_id, article_id ):
 	""" add a link to say that a journo wrote an article """
 
-	print "Attribute article %d to journo %d" %(article_id,journo_id)
+	#print "Attribute article %d to journo %d" %(article_id,journo_id)
 
 	q = conn.cursor()
 	q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", journo_id, article_id )
