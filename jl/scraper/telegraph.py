@@ -395,7 +395,7 @@ def main():
 #	print ukmedia.ExtractAuthorFromParagraph('The A380, the world\'s largest passenger plane, touched down in Sydney this morning, reports Francisca Kellett.')
 #	return 0
 	
-	DEBUG_OUTPUT_TO_DIR = False#True
+	DEBUG_OUTPUT_TO_DIR = False
 	if DEBUG_OUTPUT_TO_DIR:
 		if not os.path.exists("output"):
 			os.mkdir("output")

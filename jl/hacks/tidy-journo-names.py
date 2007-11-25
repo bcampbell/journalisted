@@ -22,6 +22,16 @@ def main():
 #	return 0
 	
 	conn = DB.Connect()
+	
+#	print Journo.GetPrettyNameFromRawName(conn, "David Gow Brussels")
+#	return 0
+#	print Journo.GetPrettyNameFromRawName(conn, "Minder's GARY WEBSTER")
+#	return 0
+#	print Journo.GetOrgsFor(conn,Journo.FindJourno(conn,"Tania Branigan"))
+#	print Journo.GetOrgsFor(conn,Journo.FindJourno(conn,"Richard Williams"))
+#	Journo.MergeJourno(conn,"tania-branigan","richard-williams")# can't
+#	Journo.MergeJourno(conn,"richard-williams","tania-branigan") # ok
+#	return 0
 
 	# Some unit tests:
 	if False: # True:  # True
@@ -160,8 +170,15 @@ def main():
 			# Now guess place names for 3-word names, e.g. Stuart Ramsay Nabanga => Stuart Ramsay, Nabanga
 			words = nameToProcessForRef.split()
 			# (can allow only one match for middle word because this name won't be counted anyway:)
-			if len(words)==3 and Journo.IsReasonableLastName(conn,words[1],1) and not Journo.IsReasonableLastName(conn,words[2]):
-				print "? Maybe should be shortened? ", newPrettyname
+			if len(words)==3:
+				noThirdWord = words[0]+" "+words[1]
+				jId = Journo.FindJourno(conn,noThirdWord)
+				if jId:
+					if Journo.GetNoOfArticlesWrittenById(conn, jId)>1:
+						print "- Shortening to existing journo: ", noThirdWord
+						newPrettyname = noThirdWord
+				if newPrettyname!=noThirdWord and Journo.IsReasonableLastName(conn,words[1],1) and not Journo.IsReasonableLastName(conn,words[2]):
+					print "? Maybe should be shortened? ", newPrettyname
 
 			# Update the firstname and lastname fields:
 			parts = nameToProcessForRef.lower().split()

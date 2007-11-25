@@ -104,8 +104,25 @@ def GetPlaces():
 		# get rid of accents because we'll compare this way:
 		c = unicodedata.normalize('NFKD',c).encode('ascii','ignore')
 		places_cached.append( c )
+
+	# CITIES (worldwide): from http://www.world-gazetteer.com/wg.php?x=1129163518&men=stdl&lng=en&gln=xx&dat=32&srt=npan&col=aohdq
+	citydatafile = os.path.join(os.path.dirname(__file__),'capitalCities.txt')
+	f = open( citydatafile, "rb" )
+	reader = csv.reader( f )
+	for row in reader:
+		c = row[1].decode( 'utf-8' ).lower()
+		# get rid of accents because we'll compare this way:
+		c = unicodedata.normalize('NFKD',c).encode('ascii','ignore')
+		places_cached.append( c )
+
 	return places_cached
 
+
+def ArrayIsSubset(a,b):
+	for i in a:
+		if not (i in b):
+			return False
+	return True
 
 
 def MergeJourno(conn, fromRef, intoRef):
@@ -131,16 +148,24 @@ def MergeJourno(conn, fromRef, intoRef):
 		intoPrettyname = row[2]		
 	#	print fromId
 	#	print toId
-	
+
+		# TODO make Times and Sunday Times be counted the same
+		
 		fromN = GetNoOfArticlesWrittenBy(conn,fromRef)
 		intoN = GetNoOfArticlesWrittenBy(conn,intoRef)
-		print "* Merging Journo     ",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
-
-		c.execute( "UPDATE journo_attr     SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-		c.execute( "UPDATE journo_alias    SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-		c.execute( "UPDATE journo_jobtitle SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-		c.execute( "UPDATE journo_weblink  SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-		c.execute( "DELETE FROM journo WHERE id=%d" % fromId )
+		# Refuse to merge if they're writing for different newspapers!
+		fromOrgs = GetOrgsFor(conn,fromId)
+		intoOrgs = GetOrgsFor(conn,intoId)
+		if not ArrayIsSubset(fromOrgs,intoOrgs):
+			print "* No merge, too diff?",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
+		else:
+			print "* Merging Journo     ",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
+	
+			c.execute( "UPDATE journo_attr     SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
+			c.execute( "UPDATE journo_alias    SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
+			c.execute( "UPDATE journo_jobtitle SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
+			c.execute( "UPDATE journo_weblink  SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
+			c.execute( "DELETE FROM journo WHERE id=%d" % fromId )
 
 	c.close()
 	if not DEBUG_NO_COMMITS:
@@ -211,6 +236,9 @@ def GenerateUniqueRef( conn, prettyname ):
 
 def GetNoOfArticlesWrittenBy( conn, journo_ref ):
 	journo_id = GetJournoIdFromRef(conn,journo_ref)
+	return GetNoOfArticlesWrittenById(conn, journo_id)
+
+def GetNoOfArticlesWrittenById( conn, journo_id ):
 #	if not journo_id:
 #		return 
 	assert journo_id, "Can't find journo: "+journo_ref
@@ -279,6 +307,19 @@ def GetJournoIdFromRef( conn, ref):
 		return int( row[0] )
 	c.close()
 	return -999
+
+
+def GetOrgsFor( conn, id ):
+	c = conn.cursor()
+	sql = "SELECT DISTINCT a.srcorg FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id='"+str(id)+"'"
+
+	c.execute( sql )
+	matching = c.fetchall()
+	found = []
+	# want to make sure that only one of our possible journos has written for this org
+	for match in matching:
+		found.append(match[0])
+	return found	
 
 
 def FindJournoMultiple( conn, rawname ):
@@ -455,7 +496,8 @@ def GetPrettyNameFromRawName(conn, rawName ):
 
 	# Warning... might need to merge?
 	# get rid of extraneous With and By at the beginning:
-	m = re.match(u'(?:(Eco-Worrier|from|reviewed|according|with|by) )(.*?)$', newPrettyname, re.UNICODE|re.IGNORECASE)
+	# (also: Minder's GARY WEBSTER)
+	m = re.match(u'(?:((?:\w+\'S)|Eco-Worrier|from|Interview|reviewed|according|with|by) )(.*?)$', newPrettyname, re.UNICODE|re.IGNORECASE)
 	if m and m.group(1) and m.group(2):
 #				print m.group(1),"+",m.group(2)
 		newPrettyname = m.group(2)
@@ -490,12 +532,12 @@ def GetPrettyNameFromRawName(conn, rawName ):
 			if possibleNewPrettyname.find(u' ')!=-1:
 				lastName = getRestAndLastNameOf(possibleNewPrettyname,2)
 				# sort: Glenn Moorein Moscow
-#						print "testing ",possibleNewPrettyname
+#				print "testing ",possibleNewPrettyname
 				if possibleNewPrettyname[-2:]==u'in' and not IsReasonableLastName(conn,lastName):
 					#print "take off in ",possibleNewPrettyname
 					possibleNewPrettyname = possibleNewPrettyname[:-2]	# take off the 'in'
 					#print "taken off in ",possibleNewPrettyname
-				if len(lastName)>3:
+				if len(lastName)>=3:
 					#print "last name ok"
 					# actually hardcode... otherwise Paris gets treated as a possible name which is bad:
 					if place==u'Wells':#IsReasonableLastName(conn,place):		# e.g. assume Wells is a surname, not a place (be conservative)
