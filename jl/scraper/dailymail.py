@@ -132,6 +132,13 @@ def KillCruft( soup, name, attrs ):
 
 # extract a single article from a page
 def Extract( html, context ):
+
+	# check for dailymail error message
+	if re.search( u"Article:\\d+ Not Found", html ):
+		ukmedia.DBUG2( "IGNORE Missing article (%s)\n" % (context['srcurl']) );
+		return None
+
+
 	art = context
 
 	# do a pre-emptive strike and zap _everything_ after the main
@@ -271,7 +278,8 @@ def ScrapeSingleURL( url ):
 	}
 
 	art = Extract( html, context )
-	ArticleDB.CheckArticle( art )
+	if art:
+		ArticleDB.CheckArticle( art )
 	return art
 
 
@@ -284,7 +292,8 @@ def main():
 	if options.url:
 		# just scrape and dump a single url (no store)
 		art = ScrapeSingleURL( options.url )
-		ukmedia.PrettyDump( art )
+		if art:
+			ukmedia.PrettyDump( art )
 		return
 
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
