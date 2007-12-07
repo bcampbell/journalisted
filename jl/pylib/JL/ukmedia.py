@@ -551,10 +551,12 @@ def UncapsTitle( title ):
 
 def PrettyDump( art ):
 	""" dump an article out to stdout, in a readable(ish) form """
+	print "=== %s ===" % (art['srcurl'])
 	for f in art:
 		if f != 'content':
 			print "%11s: %s" % (f,art[f])
 	print "---------------------------------"
 	print art['content']
 	print "---------------------------------"
+	print
 

@@ -114,25 +114,14 @@ class DummyArticleDB:
 	def __init__(self):
 		self.id = 1
 
-		# gtb, get orgmap:
-		self.conn = DB.Connect()
-		c = self.conn.cursor()
-		c.execute( "SELECT id,shortname FROM organisation" )
-		self.orgmap = {}
-		while 1:
-			row=c.fetchone()
-			if not row:
-				break
-			self.orgmap[ row[1] ] = row[0]
 
 	def Add( self, art ):
 		CheckArticle( art )
 
-		artid = self.id
-		srcorg = self.orgmap[ art[ 'srcorgname' ] ]
+		# just display article in a readable(ish) form
+		ukmedia.PrettyDump( art )
 
-#		print "        Process Byline:"+art['byline'].encode('latin-1','replace')
-		ProcessByline( artid, art['byline'], srcorg )
+		artid = self.id
 
 		self.id = artid + 1
 		return artid
