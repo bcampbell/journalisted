@@ -234,6 +234,7 @@ def Extract( html, context ):
 	contentdiv.find('ul', id='article-toolbox').extract()
 	contentdiv.find('div', id='send-share').extract()
 	contentdiv.find('div', id='send-email').extract()
+	contentdiv.find('div', id='contact').extract()
 
 	# images
 	for cruft in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
