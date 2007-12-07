@@ -23,8 +23,8 @@ require_once "../../phplib/admin-configinfo.php";
 require_once "../../phplib/admin.php";
 
 $pages = array(
-	new ADMIN_PAGE_JL_SUMMARY,
 	new ADMIN_PAGE_JL_ARTICLES,
+	new ADMIN_PAGE_JL_SUMMARY,
 	new ADMIN_PAGE_JL_ARTICLE,
 	new ADMIN_PAGE_JL_CHECKSCRAPERS,
 //	new ADMIN_PAGE_JL_DUPES,
