@@ -175,6 +175,11 @@ def Extract( html, context ):
 
 	art['content'] = ukmedia.SanitiseHTML( contentsoup.prettify(None) )
 
+	# skip crossword solutions etc...
+	if art['content'].strip() == u'' and art['srcurl'].find( "games_and_puzzles" ) != -1:
+		ukmedia.DBUG2( "IGNORE puzzle solution: '%s' (%s)\n" % (art['title'], art['srcurl']) );
+		return None
+
 	# description is in a meta tag
 	descmeta = soup.find('meta', {'name':'Description'} )
 	desc = descmeta['content']
@@ -217,6 +222,8 @@ def main():
 
 	parser = OptionParser()
 	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun")
+
 	(options, args) = parser.parse_args()
 
 	found = []
@@ -235,9 +242,10 @@ def main():
 		# find _all_ articles
 		found = found + FindArticles()
 
-
-#	store = ArticleDB.DummyArticleDB()	# testing
-	store = ArticleDB.ArticleDB()
+	if options.dryrun:
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0

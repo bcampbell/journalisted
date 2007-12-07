@@ -6,6 +6,9 @@
 import re
 import urllib2
 import sys
+from optparse import OptionParser
+
+
 
 sys.path.append( "../pylib" )
 from BeautifulSoup import BeautifulSoup
@@ -87,7 +90,7 @@ def Extract( html, context ):
 	topdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsiderightcolumntop'} );
 
 	art['description'] = topdiv.find( 'p',{'class':'standfirst'} ).renderContents( None )
-	art['headline'] = topdiv.h1.renderContents(None)
+	art['title'] = topdiv.h1.renderContents(None)
 
 
 	# left column has author
@@ -123,7 +126,8 @@ def ScrapeSingleURL( url ):
 	}
 
 	art = Extract( html, context )
-	PrettyDump( art )
+	ArticleDB.CheckArticle( art )
+	return art
 
 def PrettyDump( art ):
 	for f in art:
@@ -135,6 +139,19 @@ def PrettyDump( art ):
 
 
 def main():
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+#	parser.add_option("-q", "--quiet", action="store_false", dest="verbose", default=True, help="don't print status messages to stdout")
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+	(options, args) = parser.parse_args()
+
+	if options.url:
+		art = ScrapeSingleURL( options.url )
+		PrettyDump( art )
+
+	return
+
+
 #	ScrapeSingleURL( "http://commentisfree.guardian.co.uk/tim_watkin/2007/11/learn_to_swim.html" )
 #	return
 

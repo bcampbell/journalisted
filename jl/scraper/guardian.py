@@ -31,6 +31,7 @@ import re
 from datetime import date,datetime,timedelta
 import time
 import sys
+from optparse import OptionParser
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -160,21 +161,32 @@ rssfeeds = {
 
 
 
+# eg "http://www.guardian.co.uk/crime/article/0,,2212646,00.html"
+urlpat_storyserver = re.compile( u".*/\w*,\w*,\w*,\w*\.html", re.UNICODE )
+
+# eg "http://www.guardian.co.uk/environment/2007/nov/17/climatechange.carbonemissions1"
+urlpat_newformat = re.compile(	u".*/.*(?!\.html)", re.UNICODE )
+
+
+def WhichFormat( url ):
+	""" figure out which format the article is going to be in """
+	if urlpat_storyserver.match( url ):
+		return 'storyserver'
+
+	if urlpat_newformat.match( url ):
+		return 'newformat'
+
+	return 'UNKNOWN'
+
+
 def Extract( html, context ):
-
-	# quick check for subscription-only page (maybe we don't need this
-	# any more since media guardian is free...)
-	if html.find( '<title>Media registration promo' ) != -1:
-		ukmedia.DBUG2( "SUPPRESS subscription-only page '%s' (%s)\n" % (context['title'], context['srcurl']) )
-		return None
-
-
 	art = context
 	soup = BeautifulSoup( html )
 
 	# header contains headline, strapline
 	headerdiv = soup.find( 'div', id="article-header" )
 	if not headerdiv:
+		# it's storyserver format
 		return OldExtract( soup, context )
 
 	# find title
@@ -207,9 +219,15 @@ def Extract( html, context ):
 
 	# quick sanity check on publication
 	publication = attrsdiv.find( 'li', { 'class':'publication' } ).a.string
-	if art['srcorgname'] == u'observer' and publication != u'The Observer':
-#		raise Exception, ("Observer article not actually from observer?" )
-		ukmedia.DBUG2( "WARNING: Observer article not actually from observer? '%s' (%s)\n" %( art['title'], art['srcurl'] ) );
+	if 'srcorgname' in art:
+		if art['srcorgname'] == u'observer' and publication != u'The Observer':
+	#		raise Exception, ("Observer article not actually from observer?" )
+			ukmedia.DBUG2( "WARNING: Observer article not actually from observer? '%s' (%s)\n" %( art['title'], art['srcurl'] ) );
+	else:
+		if publication == u'The Observer':
+			art['srcorgname'] = u'observer'
+		else:
+			art['srcorgname'] = u'guardian'
 
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
@@ -279,13 +297,19 @@ def OldExtract( soup, context ):
 		publication = publication.lower()
 		if publication.find( 'observer' ) != -1:
 			# article says it's from observer
-			if art['srcorgname'] != u'observer':
-				raise Exception, ("Observer article found with wrong srcorgname" )
+			if 'srcorgname' in art:
+				if art['srcorgname'] != u'observer':
+					raise Exception, ("Observer article found with wrong srcorgname" )
+			else:
+				art['srcorgname'] = u'observer';
 		else:
 			# article not from observer
-			if art['srcorgname'] != u'guardian':
-				raise Exception, ("Guardian article found with wrong srcorgname" )
-			
+			if 'srcorgname' in art:
+				if art['srcorgname'] != u'guardian':
+					raise Exception, ("Guardian article found with wrong srcorgname" )
+			else:
+				art['srcorgname'] = u'guardian';
+
 	else:
 		art[ 'byline' ] = u''
 		# couldn't find name + date, settle for just the date
@@ -295,17 +319,6 @@ def OldExtract( soup, context ):
 		art[ 'pubdate' ] = ukmedia.ParseDateTime( m.group(1) )
 
 
-	text = OldExtractText( articlediv )
-
-	art[ 'content' ] = ukmedia.SanitiseHTML( text )
-
-	# we just use the description passed in (from the RSS feed)
-	art[ 'description' ] = ukmedia.FromHTML( art['description'] )
-
-	return art
-
-
-def OldExtractText( articlediv ):
 	bodydiv = articlediv.find( 'div', id='GuardianArticleBody' )
 
 	# strip out embedded advertising rubbish
@@ -316,31 +329,89 @@ def OldExtractText( articlediv ):
 	if s:
 		s.extract()
 
-	return bodydiv.renderContents( None )
+	text = bodydiv.renderContents( None )
 
+	art[ 'content' ] = ukmedia.SanitiseHTML( text )
 
+	if 'description' in art:
+		# we just use the description passed in (from the RSS feed)
+		desc = ukmedia.FromHTML( art['description'] )
+	else:
+		# try using the first para as description
+		desc = unicode( bodydiv.find( text=True ) )
+		desc = ukmedia.FromHTML( desc )
+
+	art[ 'description' ] =  desc
+
+	return art
 
 
 
 urltrimpat = re.compile( u'\?gusrc=rss&feed=.*$', re.UNICODE )
+
+def TidyURL( url ):
+	""" Tidy up URL - trim off any extra cruft (eg rss tracking stuff) """
+	url = urltrimpat.sub( '', url )
+	return url
+
+
+# pattern to extract storyserver id from url
 idpat = re.compile( u'.*[/](.*)[.]html$', re.UNICODE )
 
-def ScrubFunc( context, entry ):
-	# trim off the rss bits
-	url = urltrimpat.sub( '', context['permalink'] )
-	context['permalink'] = url;
-	context['srcurl'] = url;
+def CalcSrcID( url ):
+	""" Extract a srcid from the URL.
+
+	srcid should uniquely identify the article within the source organisation.
+	If an outlet has obvious internal IDs in the URL, then we can use them.
+	Otherwise we can just use the whole URL, although we need to be careful
+	that the outlet doesn't have multiple urls for a single article, or
+	we'll get dupes...
+	srcorg and srcid together uniquely identify a single article in the DB.
+	"""
 
 	m = idpat.search( url )
 	if m:
 		# old (storyserver) format
-		context['srcid'] = m.group(1)
+		srcid = m.group(1)
 	else:
-		# new format
-		context['srcid'] = context['srcurl']
-		# force whole article on single page
-		context['srcurl'] = context['srcurl'] + '?page=all'
+		# new format, or comment-is-free
+		# - use whole url as srcid
+		srcid = url
 
+	return srcid
+
+
+def ScrubFunc( context, entry ):
+	""" fn to massage info from RSS feed """
+
+	url = TidyURL( context['permalink'] )
+	context['permalink'] = url;
+	context['srcid'] = CalcSrcID( url )
+
+	if WhichFormat( url ) == 'newformat':
+		# force whole article on single page
+		context['srcurl'] = url + '?page=all'
+	else:
+		context['srcurl'] = url;
+
+	# some items don't have pubdate
+	# (they're probably special-case duds (eg flash pages), but try and
+	# parse them anyway)
+	if not context.has_key( 'pubdate' ):
+		context['pubdate'] = datetime.now()
+
+	# just take all articles on a sunday as being in the observer
+	# (article itself should be able to tell us, but we'd like to know
+	# _before_ we download the article, so we can see if it's already in the
+	# DB)
+	if context['pubdate'].strftime( '%a' ).lower() == 'sun':
+		context['srcorgname'] = u'observer'
+	else:
+		context['srcorgname'] = u'guardian'
+
+	# ---------------------
+	# Some pages to ignore:
+	#----------------------
 
 	if url in ( 'http://www.guardian.co.uk/travel/typesoftrip', 'http://www.guardian.co.uk/travel/places' ):
 		ukmedia.DBUG2( "IGNORE travel section link '%s' (%s)\n" % (context['title'], url) );
@@ -358,29 +429,6 @@ def ScrubFunc( context, entry ):
 	if url.find( '/quiz/') != -1:
 		ukmedia.DBUG2( "IGNORE quiz '%s' (%s)\n" % (context['title'], url) );
 		return None
-
-	# we don't handle subscription-only pages (media guardian)
-	# sigh... this doesn't work because not all mediaguardian pages are subscription-only...
-#	if url.find( 'http://media.guardian.co.uk/') == 0 or url.find( '/mediaguardian/' ) != -1:
-#		ukmedia.DBUG2( "IGNORE subscription-only page '%s' (%s)\n" % (context['title'], url) );
-#		return None
-
-
-	# some items don't have pubdate
-	# (they're probably special-case duds (eg flash pages), but try and
-	# parse them anyway)
-	if not context.has_key( 'pubdate' ):
-		context['pubdate'] = datetime.now()
-
-	# just take all articles on a sunday as being in the observer
-	# (article itself should be able to tell us, but we'd like to know
-	# _before_ we download the article, so we can see if it's already in the
-	# DB)
-	if context['pubdate'].strftime( '%a' ).lower() == 'sun':
-		context['srcorgname'] = u'observer'
-	else:
-		context['srcorgname'] = u'guardian'
-
 
 	return context
 
@@ -418,7 +466,42 @@ def DupeCheckFunc( artid, art ):
 			myconn.commit()
 			ukmedia.DBUG2( " hide dupe id=%s (srcid='%s')\n" % (dupe['id'],dupe['srcid']) )
 
+
+
+
+def FindSingleArticleFromURL( url ):
+	url = TidyURL( url )
+
+	context = {}
+	context['permalink'] = url;
+	context['srcid'] = CalcSrcID( url )
+
+	if WhichFormat( url ) == 'newformat':
+		# force whole article on single page
+		context['srcurl'] = url + '?page=all'
+	else:
+		context['srcurl'] = url;
+
+	return context
+
+
+
+
 def main():
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	#parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+	(options, args) = parser.parse_args()
+
+
+	if options.url:
+		context = FindSingleArticleFromURL( options.url )
+		if context:
+			html = ukmedia.FetchURL( context['srcurl'] )
+			art = Extract( html, context )
+			ukmedia.PrettyDump( art )
+		return
+
 	#Test( sys.argv[1] )
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, None, ScrubFunc )
 
@@ -427,22 +510,6 @@ def main():
 
 	return 0
 
-
-def Test( url ):
-	html = ukmedia.FetchURL( url )
-	context = { 'srcurl': url }
-	art = Extract( html, context )
-	PrettyDump( art )
-
-
-
-def PrettyDump( art ):
-	for f in art:
-		if f != 'content':
-			print "%s: %s" % (f,art[f])
-	print "---------------------------------"
-	print art['content']
-	print "---------------------------------"
 
 
 # connection and orgmap used by DupeCheckFunc()
