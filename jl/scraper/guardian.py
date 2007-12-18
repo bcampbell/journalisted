@@ -474,14 +474,14 @@ def FindSingleArticleFromURL( url ):
 	url = TidyURL( url )
 
 	context = {}
-	context['permalink'] = url;
+	context['permalink'] = url
 	context['srcid'] = CalcSrcID( url )
 
 	if WhichFormat( url ) == 'newformat':
 		# force whole article on single page
 		context['srcurl'] = url + '?page=all'
 	else:
-		context['srcurl'] = url;
+		context['srcurl'] = url
 
 	return context
 

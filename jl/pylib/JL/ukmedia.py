@@ -86,10 +86,11 @@ datecrackers = [
 	# 'October 15, 2007' (Times blogs)
 	re.compile( """(?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})""", re.UNICODE ),
 	
-	# 'Monday, 22 October 2007' (Independent blogs)
+	# 'Monday, 22 October 2007' (Independent blogs, Sun (page date))
 	re.compile( """\w+,\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
 	
 	# '22 October 2007' (Sky News blogs)
+	# '11 Dec 2007' (Sun (article date))
 	re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
 	# 03/09/2007' (Sky News blogs)
 	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE )
@@ -110,7 +111,7 @@ def ParseDateTime( datestring ):
 	#print "DATE: "
 	#print datestring
 	#print "\n"
-	
+
 	for c in datecrackers:
 		m = c.search( datestring )
 		if not m:
@@ -338,7 +339,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
 
 
-def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
+def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 ):
 	"""Download, scrape and load a list of articles
 
 	Each entry in foundarticles must have at least:
@@ -350,7 +351,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None ):
 	"""
 	failcount = 0
 	abortcount = 0
-	maxerrors = 10
+#	maxerrors = 10
 	newcount = 0
 
 	for context in foundarticles:

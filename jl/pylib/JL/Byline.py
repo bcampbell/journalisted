@@ -36,6 +36,7 @@ bylinecrackers = [
 	{ 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?)[,]? (?:in|at|reports from) (.+)$' },
 
 	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?), (.+)$' },
+	{ 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?)\s*-\s+(.+)$' },
 	{ 'fmt': '(nte)', 'pat': """(?:by |from |)(\S+ \S+) (.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
 	{ 'fmt': '(ne)', 'pat': """(?:by |from |)(.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
 	{ 'fmt': '(n)(na)', 'pat': '(?:by |from |)(.+?) and (.+?), (.+)$' },
@@ -121,6 +122,7 @@ jobtitlepats = [
 	re.compile( """cameraman""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """deputy head""", re.IGNORECASE|re.UNICODE ),
 	re.compile( """head""", re.IGNORECASE|re.UNICODE ),
+	re.compile( """columnist""", re.IGNORECASE|re.UNICODE ),
 	]
 
 emailpat = re.compile( """\\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\\b""", re.UNICODE )
