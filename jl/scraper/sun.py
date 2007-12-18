@@ -156,7 +156,9 @@ def Extract( html, context ):
 		# closes the column2 div before the main article. If that is the
 		# case, just use the whole soup instead...
 		col2 = soup
-		h1 = col2.h1
+		# need to skip the h1 banner at top of page
+		artmodule = soup.find( text=re.compile(".*BEGIN: Module - Main Article.*"))
+		h1 = artmodule.findNext('h1')
 
 	titletxt = h1.renderContents(None).strip()
 	titletxt = ukmedia.FromHTML( titletxt )
@@ -288,7 +290,10 @@ def main():
 		store = ArticleDB.DummyArticleDB()	# testing
 	else:
 		store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract, maxerrors=50 )
+
+	# use a huge maxerrors because of the sheer volume of articles we
+	# pick up in the crawl
+	ukmedia.ProcessArticles( found, store, Extract, maxerrors=150 )
 
 	return 0
 
