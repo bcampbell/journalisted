@@ -99,7 +99,7 @@ def FindArticles():
 				context = {
 					'title': title,
 					'srcurl': url,
-					'srcid': url,
+					'srcid': CalcSrcID(url),
 					'permalink': url,
 					'lastseen': fetchtime,
 					'srcorgname' : srcorgname,
@@ -112,18 +112,12 @@ def FindArticles():
 
 
 
-# work out a unique id for this url
-# (must be unique across the times)
 def CalcSrcID( url ):
+	""" work out a unique id for this url (must be unique across the times)"""
 
-	# URL is of form:
-	#   http://www.timesonline.co.uk/article/0,,378-2335932,00.html
-	# big number is id.
-	
-	idpat = re.compile( 'article/.*?,.*?,[0-9]+-([0-9]+),[0-9]*\.html' )
-	m = idpat.search( url )
-	return m.group(1)
-
+	# TODO: work out proper times srcids
+	# "http://www.timesonline.co.uk/tol/news/uk/article469471.ece"
+	return url
 
 
 def Extract( html, context ):
@@ -198,54 +192,36 @@ def Extract( html, context ):
 	return art
 
 
-def ScrapeSingleURL( url ):
-	html = ukmedia.FetchURL( url )
-	context = {
-		'srcurl': url,
-		'permalink': url,
-		'srcid': url,
-		'srcorgname': u'times',	# TODO: or sundaytimes
-	}
-
-	art = Extract( html, context )
-	ArticleDB.CheckArticle( art )
-	return art
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context['srcid'] = CalcSrcID( url )
+	context['srcorgname'] = u'times'	# TODO: or sundaytimes!
+	context['lastseen'] = datetime.now()
+	return context
 
 
 def main():
-	DEBUG_OUTPUT_TO_DIR = False#True
-	if DEBUG_OUTPUT_TO_DIR:
-		if not os.path.exists("output"):
-			os.mkdir("output")
-		sys.stdout = open("output/news_"+"times"+".txt", 'w')
-		sys.stderr = sys.stdout
-
 	parser = OptionParser()
 	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun")
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
 	(options, args) = parser.parse_args()
 
 	found = []
 	if options.url:
-		# just scrape a single article
-		url = options.url
-		context = {
-			'srcurl': url,
-			'permalink': url,
-			'srcid': url,
-			'srcorgname': u'times',	# TODO: or sundaytimes
-			'lastseen': datetime.now(),
-		}
+		context = ContextFromURL( options.url )
 		found.append( context )
 	else:
-		# find _all_ articles
 		found = found + FindArticles()
 
 	if options.dryrun:
 		store = ArticleDB.DummyArticleDB()	# testing
 	else:
 		store = ArticleDB.ArticleDB()
+
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0
