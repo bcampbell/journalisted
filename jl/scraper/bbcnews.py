@@ -9,8 +9,8 @@
 # TODO:
 #
 
-import getopt
 import re
+from optparse import OptionParser
 from datetime import datetime
 import sys
 
@@ -105,28 +105,58 @@ def Extract( html, context ):
 # url.
 idpat = re.compile( '/(\d+)\.stm$' )
 
-def ScrubFunc( context, entry ):
-	m = idpat.search( context['srcurl'] )
+def CalcSrcID( url ):
+	""" returns None if it's not an article (probably a blog) """
+
+	m = idpat.search( url )
 	if not m:
-#		ukmedia.DBUG2( "SUPPRESS " + context['title'] + " -- " + context['srcurl'] + "\n" )
 		return None		# suppress this article (probably a blog)
+	return m.group(1)
 
-	# Also we use this number as the unique id for the beeb, as a story
-	# can have multiple paths (eg uk vs international version)
-	context['srcid'] = m.group(1)
 
+def ScrubFunc( context, entry ):
+
+	# a story can have multiple paths (eg uk vs international version)
+	srcid = CalcSrcID( context['srcurl'] )
+	if not srcid:
+		return None	# suppress it
+
+	context['srcid'] = srcid
+	return context
+
+
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context['srcid'] = CalcSrcID( url )
+	context['srcorgname'] = u'bbcnews'
+	context['lastseen'] = datetime.now()
 	return context
 
 
 def main():
-	opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
-	# TODO: filter out "Your Stories" page
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
+	(options, args) = parser.parse_args()
 
-#	for f in found:
-#		print ("%s" % ( f['title'] )).encode( "utf-8" )
-	store = ArticleDB.ArticleDB()
+	found = []
+	if options.url:
+		context = ContextFromURL( options.url )
+		print context
+		found.append( context )
+	else:
+		# TODO: filter out "Your Stories" page
+		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
+
+	if options.dryrun:
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
+
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0

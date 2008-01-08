@@ -4,6 +4,9 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
+# TODO:
+# - extract better srcids, instead of using whole url
+#
 
 import re
 from datetime import datetime

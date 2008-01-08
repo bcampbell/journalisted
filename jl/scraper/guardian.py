@@ -25,8 +25,11 @@
 #
 # TODO:
 # - extract journo names from descriptions if possible...
-#
-#
+# - REALLY need to sort out the guardian/observer issue - no reliable way
+#   of telling which paper it's from using just the url. Likely to be a
+#   problem with other papers too (particularly local papers): multiple
+#   papers sharing a single CMS...
+
 import re
 from datetime import date,datetime,timedelta
 import time
@@ -470,12 +473,13 @@ def DupeCheckFunc( artid, art ):
 
 
 
-def FindSingleArticleFromURL( url ):
+def ContextFromURL( url ):
 	url = TidyURL( url )
 
 	context = {}
 	context['permalink'] = url
 	context['srcid'] = CalcSrcID( url )
+	context['srcorgname'] = u'guardian'		# hmmm... should handle observer too...
 
 	if WhichFormat( url ) == 'newformat':
 		# force whole article on single page
@@ -491,22 +495,22 @@ def FindSingleArticleFromURL( url ):
 def main():
 	parser = OptionParser()
 	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	#parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+
 	(options, args) = parser.parse_args()
 
-
+	found = []
 	if options.url:
-		context = FindSingleArticleFromURL( options.url )
-		if context:
-			html = ukmedia.FetchURL( context['srcurl'] )
-			art = Extract( html, context )
-			ukmedia.PrettyDump( art )
-		return
+		context = ContextFromURL( options.url )
+		found.append( context )
+	else:
+		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'guardian', ScrubFunc )
 
-	#Test( sys.argv[1] )
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, None, ScrubFunc )
+	if options.dryrun:
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
 
-	store = ArticleDB.ArticleDB()
 	ukmedia.ProcessArticles( found, store, Extract, DupeCheckFunc )
 
 	return 0
