@@ -342,10 +342,15 @@ def OldExtract( soup, context ):
 	if s:
 		s.extract()
 
+	# cull out embedded video player
+	for cruft in bodydiv.findAll( 'div', { 'class': 'embed' } ):
+		cruft.extract()
+
 	text = bodydiv.renderContents( None )
 
 	art[ 'content' ] = ukmedia.SanitiseHTML( text )
 
+	desc = u''
 	if 'description' in art:
 		# we just use the description passed in (from the RSS feed)
 		desc = ukmedia.FromHTML( art['description'] )
@@ -353,6 +358,12 @@ def OldExtract( soup, context ):
 		# try using the first para as description
 		desc = unicode( bodydiv.find( text=True ) )
 		desc = ukmedia.FromHTML( desc )
+
+	if desc == u'':	# still no luck? try the intro block
+		intro = a.findPreviousSibling( 'font', size='3' )
+		if intro:
+			introtext = intro.renderContents(None)
+			desc = ukmedia.FromHTML( introtext )
 
 	art[ 'description' ] =  desc
 
