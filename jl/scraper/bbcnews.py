@@ -146,7 +146,6 @@ def main():
 	found = []
 	if options.url:
 		context = ContextFromURL( options.url )
-		print context
 		found.append( context )
 	else:
 		# TODO: filter out "Your Stories" page

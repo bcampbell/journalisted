@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+#
+# TODO: ParseDatetime should be more generic. Just look for common
+# date and time formats anywhere in a string...
+#
 
 import codecs
 import htmlentitydefs
@@ -68,6 +72,9 @@ datecrackers = [
 	# "26 May 2007, 02:10:36 BST" (newsoftheworld)
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
 
+	# "2:43pm BST 16/04/2007" (telegraph, after munging)
+	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+BST\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE ),
+
 	# "20:12pm 23rd November 2007" (dailymail)
 	re.compile( """(?P<hour>\d{1,2}):(?P<min>\d\d)\w\w\s+(?P<day>\d{1,2})\w+\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE),
 
@@ -93,7 +100,9 @@ datecrackers = [
 	# '11 Dec 2007' (Sun (article date))
 	re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
 	# 03/09/2007' (Sky News blogs)
-	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE )
+	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE ),
+
+
 	]
 
 

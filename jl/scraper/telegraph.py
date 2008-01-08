@@ -3,8 +3,16 @@
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
+#
+# TODO:
+# - better sundaytelegraph handling
+# - tidy URLs ( strip jsessionid etc)
+#	  http://www.telegraph.co.uk/earth/main.jhtml?view=DETAILS&grid=&xml=/earth/2007/07/19/easeabird119.xml
+#     (strip view param)
+#
 
 import re
+from optparse import OptionParser
 from datetime import datetime
 import sys
 import os
@@ -15,38 +23,6 @@ from JL import ArticleDB,ukmedia
 
 
 rssfeeds = {
-#	'Breaking News': 'http://www.telegraph.co.uk/newsfeed/rss/news-breaking_news.xml',
-#	'International News': 'http://www.telegraph.co.uk/newsfeed/rss/news-international_news.xml',
-#	'UK News': 'http://www.telegraph.co.uk/newsfeed/rss/news-uk_news.xml',
-#	'Business': 'http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml',
-#	'Personal finance': 'http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml',
-#	'Opinion': 'http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_opinion.xml',
-#	'Leaders': 'http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_leaders.xml',
-#ben	'Sport': 'http://www.telegraph.co.uk/newsfeed/rss/sport.xml',
-#ben	'Football': 'http://www.telegraph.co.uk/newsfeed/rss/sport-football.xml',
-#ben	'Cricket': 'http://www.telegraph.co.uk/newsfeed/rss/sport-cricket.xml',
-#ben	'Rugby Union': 'http://www.telegraph.co.uk/newsfeed/rss/sport-rugby_union.xml',
-#ben	'Golf': 'http://www.telegraph.co.uk/newsfeed/rss/sport-golf.xml',
-
-#	'Arts': 'http://www.telegraph.co.uk/newsfeed/rss/arts.xml',
-#	'Books': 'http://www.telegraph.co.uk/newsfeed/rss/arts-books.xml',
-#	'Connected': 'http://www.telegraph.co.uk/newsfeed/rss/connected.xml',
-#	'Education': 'http://www.telegraph.co.uk/newsfeed/rss/education.xml',
-#	'Expat': 'http://www.telegraph.co.uk/newsfeed/rss/global.xml',
-#	'Fashion': 'http://www.telegraph.co.uk/newsfeed/rss/fashion.xml',
-#	'Gardening': 'http://www.telegraph.co.uk/newsfeed/rss/gardening.xml',
-#	'Health': 'http://www.telegraph.co.uk/newsfeed/rss/health.xml',
-#	'Motoring': 'http://www.telegraph.co.uk/newsfeed/rss/motoring.xml',
-#ben	'Property': 'http://www.telegraph.co.uk/newsfeed/rss/property.xml',
-
-	# scraper handles travel articles OK, but they often have huge bylines with descriptions in them... so leave em out for now...
-	# eg "The scooter holiday is an exhilarating way to catch the sights, sounds and smells of Italy, as Gregory Peck demonstrated 50 years ago. In Chianti, Charles Starmer-Smith follows his lead."
-	# sigh.
-
-#ben	'Travel': 'http://www.telegraph.co.uk/newsfeed/rss/travel.xml',
-#	'Wine': 'http://www.telegraph.co.uk/newsfeed/rss/wine.xml',
-	
-	
     "Telegraph | Arts": 
 # title="Telegraph | Arts"				xmlUrl=
     "http://www.telegraph.co.uk/newsfeed/rss/arts.xml",
@@ -180,18 +156,6 @@ rssfeeds = {
 }
 
 
-srcidpat = re.compile( """main\.jhtml\?xml=(.*?)$""" )
-
-#def CalcPrintURL( fullurl ):
-#	m = srcidpat.search( fullurl )
-#	srcid = m.group(1)
-#	print srcid
-#	printerurl = "http://www.telegraph.co.uk/core/Content/displayPrintable.jhtml?xml=" + srcid
-#	print printerurl
-#	return printerurl
-
-
-# return datetime, or None if matching fails
 
 
 
@@ -229,10 +193,19 @@ def Extract( html, context ):
 	title = u' '.join( title.split() )
 	art['title'] = title
 
-	# we just use pubdate passed in from RSS, but might be better getting
-	# it from the page (it has a 'last updated' item)
-	# filedspan = soup.find( 'span', { 'class': 'filed' } )
+	# try to get pubdate from the page:
 	#    Last Updated: <span style="color:#000">2:43pm BST</span>&nbsp;16/04/2007
+	filedspan = soup.find( 'span', { 'class': 'filed' } )
+	if filedspan:
+		# clean it up before passing to ParseDateTime...
+		datetext = filedspan.renderContents(None)
+		datetext = datetext.replace( "&nsbp;", " " )
+		datetext = ukmedia.FromHTML( datetext )
+		datetext = re.sub( "Last Updated:\s+", "", datetext )
+		pubdate = ukmedia.ParseDateTime( datetext )
+		art['pubdate'] = pubdate
+	# else just use one from context, if any... (eg from rss feed)
+
 
 	# NOTE: in a lot of arts, motoring etc... we could get writer from
 	# the first paragraph ("... Fred Smith reports",
@@ -383,43 +356,42 @@ def ScrubFunc( context, entry ):
 	return context
 
 
+
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context['srcid'] =  url
+	context['srcorgname'] = u'telegraph'	# TODO sunday telegraph!!!
+	context['lastseen'] = datetime.now()
+	return context
+
+
+
+
 def main():
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
-	# test	
-#	author = "Karen SparckJones"
-#	author = re.sub(u'\\b([A-Z][a-z]+)([A-Z][a-z]+)\\b', '\\1-\\2', author)	# convert SparckJones to Sparck-Jones (that's how they encode it)
-#	print author
-#	return 0
+	(options, args) = parser.parse_args()
 
-	#debug test auto-byline-o-matic
-#	print ukmedia.ExtractAuthorFromParagraph('The A380, the world\'s largest passenger plane, touched down in Sydney this morning, reports Francisca Kellett.')
-#	return 0
-	
-	DEBUG_OUTPUT_TO_DIR = False
-	if DEBUG_OUTPUT_TO_DIR:
-		if not os.path.exists("output"):
-			os.mkdir("output")
-		sys.stdout = open("output/news_"+"telegraph"+".txt", 'w')
-		sys.stderr = sys.stdout
+	found = []
+	if options.url:
+		context = ContextFromURL( options.url )
+		found.append( context )
+	else:
+		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
 
-	# DEBUG just one:
-#	rssfeeds = {
-#   "Telegraph | Glbal":
-#    "http://www.telegraph.co.uk/newsfeed/rss/global.xml",
-#	}
-
-
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
-
-	if False:#debug
+	if options.dryrun:
 		store = ArticleDB.DummyArticleDB()	# testing
 	else:
 		store = ArticleDB.ArticleDB()
+
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0
-
-
 
 if __name__ == "__main__":
     sys.exit(main())
