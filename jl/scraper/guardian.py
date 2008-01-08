@@ -289,6 +289,8 @@ def OldExtract( soup, context ):
 	a = t.findNextSibling( 'font', size='2' )
 	namedatepat = re.compile( "(.*?)<br />(.*?)<br /><a href=\".*?\">(.*?)</a>", re.UNICODE )
 
+
+
 	preamble = a.b.renderContents(None)
 	m = namedatepat.search( preamble )
 	if m:
@@ -322,6 +324,13 @@ def OldExtract( soup, context ):
 		# TODO: search for "More articles by [name]" link to get author
 		art[ 'pubdate' ] = ukmedia.ParseDateTime( m.group(1) )
 
+	# sometimes there's an intro/summary para just before the byline...
+	# can look for authors in here
+	if art['byline'] == u'':
+		intro = a.findPreviousSibling( 'font', size='3' )
+		if intro:
+			introtext = intro.renderContents(None)
+			art['byline'] = ukmedia.ExtractAuthorFromParagraph( introtext )
 
 	bodydiv = articlediv.find( 'div', id='GuardianArticleBody' )
 
@@ -479,7 +488,12 @@ def ContextFromURL( url ):
 	context = {}
 	context['permalink'] = url
 	context['srcid'] = CalcSrcID( url )
-	context['srcorgname'] = u'guardian'		# hmmm... should handle observer too...
+
+	# not a 100% reliable test...
+	if url.find( "observer.guardian.co.uk" ) == -1:
+		context['srcorgname'] = u'guardian'
+	else:
+		context['srcorgname'] = u'observer'
 
 	if WhichFormat( url ) == 'newformat':
 		# force whole article on single page

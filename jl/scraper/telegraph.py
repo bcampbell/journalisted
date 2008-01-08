@@ -235,7 +235,7 @@ def Extract( html, context ):
 
 	# Some articles have a hidden bit where the author name is stored:	
 	# fill in author name:
-	if True: #not byline:
+	if not byline:
 		# cv.c6="/property/features/article/2007/10/25/lpsemi125.xml|Max+Davidson";
 		authorMatch = re.search(u'cv.c6=".*?\|(.*?)";', html)
 		if authorMatch:
