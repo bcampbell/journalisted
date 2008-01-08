@@ -10,6 +10,7 @@
 
 import re
 from datetime import datetime
+from optparse import OptionParser
 import time
 import string
 import sys
@@ -57,8 +58,8 @@ sundaymirror_rssfeeds = {
 
 
 
-# mirror bylines have date in them which we don't need
-bylinetidypat = re.compile( """\s*(.*?)\s*\d{2}/\d{2}/\d{4}\s*""", re.UNICODE )
+# mirror bylines have date in
+bylinetidypat = re.compile( """\s*(.*?)\s*(\d{2}/\d{2}/\d{4})\s*""", re.UNICODE )
 
 
 
@@ -79,6 +80,7 @@ def Extract( html, context ):
 	rawbyline = bylinediv.renderContents(None)
 	m = bylinetidypat.match( rawbyline )
 	art['byline'] = m.group(1)
+	art['pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
 
 	# use first paragraph as description
 	firstpara = maindiv.find( 'p', {'class': 'art-p'} );
@@ -101,6 +103,16 @@ srcid_patterns = [
 	re.compile( "%26objectid=([0-9]+)%26""" )	# old url style
 	]
 
+def CalcSrcID( url ):
+	for pat in srcid_patterns:
+		m = pat.search( url )
+		if m:
+			break
+	if not m:
+		raise Exception, "Couldn't extract srcid from url ('%s')" % (url)
+	return m.group(1)
+
+
 def ScrubFunc( context, entry ):
 	title = context['title']
 	title = ukmedia.DescapeHTML( title )
@@ -116,17 +128,7 @@ def ScrubFunc( context, entry ):
 		raise Exception, "URL not from mirror.co.uk or sundaymirror.co.uk ('%s')" % (url)
 
 
-	for pat in srcid_patterns:
-		m = pat.search( url )
-		if m:
-			break
-
-	if not m:
-		raise Exception, "Couldn't extract srcid from url ('%s')" % (url)
-
-	srcid = m.group(1)
-
-	context[ 'srcid' ] = srcid
+	context[ 'srcid' ] = CalcSrcID( url )
 	context[ 'srcurl' ] = url
 	context[ 'permalink'] = url
 
@@ -135,24 +137,42 @@ def ScrubFunc( context, entry ):
 
 
 
-
-def ScrapeMirror():
-	found = ukmedia.FindArticlesFromRSS( mirror_rssfeeds, u'mirror', ScrubFunc )
-
-	store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract )
-
-
-def ScrapeSundayMirror():
-	found = ukmedia.FindArticlesFromRSS( sundaymirror_rssfeeds, u'sundaymirror', ScrubFunc )
-	store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract )
-
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context[ 'srcid' ] = CalcSrcID( url )
+	if url.find( 'sundaymirror.co.uk' ) == -1:
+		context['srcorgname'] = u'mirror'
+	else:
+		context['srcorgname'] = u'sundaymirror'
+	context['lastseen'] = datetime.now()
+	return context
 
 
 def main():
-	ScrapeMirror()
-	ScrapeSundayMirror()
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+
+	(options, args) = parser.parse_args()
+
+	found = []
+	if options.url:
+		context = ContextFromURL( options.url )
+		found.append( context )
+	else:
+		found = found + ukmedia.FindArticlesFromRSS( mirror_rssfeeds, u'mirror', ScrubFunc )
+		found = found + ukmedia.FindArticlesFromRSS( sundaymirror_rssfeeds, u'sundaymirror', ScrubFunc )
+
+	if options.dryrun:
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
+
+	ukmedia.ProcessArticles( found, store, Extract )
+
 	return 0
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@
 import getopt
 import re
 from datetime import datetime
+from optparse import OptionParser
 import sys
 
 sys.path.append("../pylib")
@@ -232,6 +233,8 @@ def Extract( html, context ):
 
 	# if we don't have a description, try the deckheader meta tag...
 	# <meta name="icx_deckheader" content="Stars of reality TV &ndash; and now the culprits blamed for spreading disease" />
+	if not 'description' in art:
+		art['description'] = u''
 	if not art['description'].strip():
 		deckheader = soup.find( 'meta', {'name':'icx_deckheader'} )
 		if deckheader:
@@ -273,6 +276,7 @@ def Extract( html, context ):
 			# cull out duds
 			if byline.lower() in ( u'leading article', u'the third leader' ):
 				byline = u''
+
 
 	art[ 'byline' ] = ukmedia.FromHTML( byline )
 
@@ -326,13 +330,36 @@ def ScrubFunc( context, entry ):
 
 
 
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context[ 'srcid' ] = url
+	context['srcorgname'] = u'independent'
+	context['lastseen'] = datetime.now()
+	return context
+
 
 def main():
-	opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
+	parser = OptionParser()
+	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'independent', ScrubFunc )
+	(options, args) = parser.parse_args()
 
-	store = ArticleDB.ArticleDB()
+	found = []
+	if options.url:
+		context = ContextFromURL( options.url )
+		found.append( context )
+	else:
+		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'independent', ScrubFunc )
+
+	if options.dryrun:
+		store = ArticleDB.DummyArticleDB()	# testing
+	else:
+		store = ArticleDB.ArticleDB()
+
 	ukmedia.ProcessArticles( found, store, Extract )
 
 	return 0

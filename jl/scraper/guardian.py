@@ -487,6 +487,8 @@ def ContextFromURL( url ):
 	else:
 		context['srcurl'] = url
 
+	context['lastseen'] = datetime.now()
+
 	return context
 
 
