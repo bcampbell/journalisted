@@ -564,9 +564,9 @@ def PrettyDump( art ):
 	print "=== %s ===" % (art['srcurl'])
 	for f in art:
 		if f != 'content':
-			print "%11s: %s" % (f,art[f])
-	print "---------------------------------"
-	print art['content']
-	print "---------------------------------"
+			print "%11s: %s" % (f,unicode( art[f] ).encode('utf-8') )
+	print "-----------content----------------------"
+	print art['content'].encode('utf-8')
+	print "----------------------------------------"
 	print
 

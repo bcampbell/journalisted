@@ -16,6 +16,8 @@ define('OPTION_WEB_DOMAIN', 'journa-list.dev');
 // Top-level URL of current website, without trailing /
 define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
 
+// root dir on filesystem (use to run scripts), without trailing /
+define('OPTION_JL_FSROOT', '/home/ben/proj/journa-list/jl');
 
 define('OPTION_JL_DISABLE_CACHE', '1');
 ?>
