@@ -12,15 +12,26 @@ require_once '../../phplib/utility.php';
 
 
 
-
+$period = get_http_var( 'period', null );
 $tag = get_http_var( 'tag', null );
 if( $tag )
 {
-	// list journos who've used that tag.
-	page_header( "Journalists who have mentioned \"{$tag}\"", array( 'menupage'=>'') );
-	print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
-	tag_emit_journo_list( $tag );
-	page_footer();
+	if( $period == 'today' )
+	{
+		// list journos who've used that tag today.
+		page_header( "Journalists who have mentioned \"{$tag}\" today", array( 'menupage'=>'') );
+		print "<h2>Journalists who have mentioned \"{$tag}\" today</h2>";
+		tag_emit_journo_list( $tag, null, $period );
+		page_footer();
+	}
+	else
+	{
+		// list journos who've used that tag.
+		page_header( "Journalists who have mentioned \"{$tag}\"", array( 'menupage'=>'') );
+		print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
+		tag_emit_journo_list( $tag );
+		page_footer();
+	}
 }
 else
 {

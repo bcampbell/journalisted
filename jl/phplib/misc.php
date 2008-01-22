@@ -56,16 +56,18 @@ function SafeMailto( $addr, $text='' )
 
 
 // generate a link for a tag
-function tag_gen_link( $tag, $journo_ref=null )
+function tag_gen_link( $tag, $journo_ref=null, $period=null )
 {
-    if( $journo_ref )
-        return sprintf( "/%s/%s", $journo_ref, urlencode($tag) );
-    else
-        return sprintf( "/tags/%s", urlencode($tag));
+	$l = '/' . ($journo_ref ? $journo_ref:'tags');
+	if( $period )
+		$l = $l . '/' . $period;
+	$l = $l . '/' . urlencode($tag);
+
+	return $l;
 }
 
 
-function tag_display_cloud( &$tags, $journo_ref=null )
+function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 {
 	$minsize = 10;
 	$maxsize = 24;
@@ -87,14 +89,14 @@ function tag_display_cloud( &$tags, $journo_ref=null )
 		else
 			$size = $minsize + ( (($freq-$low)*($maxsize-$minsize)) / ($high-$low)  );
 
-		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_ref ), $size, $tag);
+		printf( "&nbsp;<a href=\"%s\" style=\"font-size: %dpx\">%s</a>&nbsp;\n", tag_gen_link( $tag, $journo_ref, $period ), $size, $tag);
 	}
 
 }
 
 
 
-function tag_cloud_from_query( &$q, $journo_ref=null )
+function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 {
 	$tags = array();
 	while( ($row = db_fetch_array( $q )) )
@@ -104,18 +106,24 @@ function tag_cloud_from_query( &$q, $journo_ref=null )
 		$tags[ $tag ] = intval( $freq );
 	}
 	ksort( $tags );
-	tag_display_cloud( $tags, $journo_ref );
+	tag_display_cloud( $tags, $journo_ref, $period );
 }
 
 
 // emit a list of links to journos who use this tag
-function tag_emit_journo_list( $tag, $excludejourno_id=null )
+function tag_emit_journo_list( $tag, $excludejourno_id=null, $period=null )
 {
-	// TODO: should only include active articles (ie article.status='a')
+	$periodcond = '';
+	if( $period == 'today' )
+		$periodcond = "  AND a.pubdate > NOW() - INTERVAL '1 day' ";
+
 	$sql = "SELECT SUM(freq), j.id, j.ref, j.prettyname ".
-		"FROM (journo j INNER JOIN journo_attr a ON (j.id=a.journo_id) ) ".
-            "INNER JOIN article_tag t ON (t.article_id=a.article_id) ".
+		"FROM ((journo j INNER JOIN journo_attr attr ON (j.id=attr.journo_id) ) ".
+		"  INNER JOIN article_tag t ON (t.article_id=attr.article_id)) ".
+		"    INNER JOIN article a ON (t.article_id=a.id) ".
 		"WHERE t.tag=? ".
+		"  AND a.status='a' ".
+		$periodcond .
 		"GROUP BY j.id,j.ref,j.prettyname ".
 		"ORDER BY SUM DESC";
 	$q = db_query( $sql, $tag );

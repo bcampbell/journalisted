@@ -563,7 +563,7 @@ function FetchAverages()
 	if( $avgs !== NULL )
 		return $avgs;
 
-	$refreshinterval = 60*60*2;		// 2 hours
+	$refreshinterval = 60*60*24*7;		// 7 days
 
 	$avgs = db_getRow( "SELECT date_part('epoch', now()-last_updated) AS elapsed, ".
 			"wc_total, wc_avg, wc_min, wc_max, num_articles ".

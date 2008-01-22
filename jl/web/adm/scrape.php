@@ -6,12 +6,17 @@
 chdir( dirname(dirname(__FILE__)) );
 
 require_once '../conf/general';
-require_once '../phplib/page.php';
+//require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
+require_once '../../phplib/utility.php';
+require_once '../phplib/adm.php';
 
 
 $scraperdir = OPTION_JL_FSROOT . '/scraper';
+
+
+admPageHeader();
 
 $url = get_http_var( 'url', '' );
 $action = get_http_var( 'action' );
@@ -33,11 +38,9 @@ print_r( $_POST );
 print "</pre>";
 */
 
+
 ?>
-<html>
-<head></head>
-<body>
-<h1>scrape single url</h1>
+<h2>scrape single url</h2>
 
 <form method="post">
 <label for="url">URL of story to scrape:</label><br/>
@@ -69,13 +72,14 @@ foreach( $scrapers as $k=>$v )
 
 if( $action == 'Go' && $url != '')
 {
+	/* Do it! */
 	$cmd = $scraperdir . "/" . $scrapers[$scraper];
 	if( $preview )
 		$cmd = $cmd . ' -d';
 	$cmd = $cmd . ' -u "' . $url . '"';
 	$cmd = $cmd . ' 2>&1';
 
-	print "<h2>Output</h2>\n";
+	print "<h3>Output</h3>\n";
 	print "<small><tt>$cmd</tt></small>\n";
 	print "<hr>\n";
 
@@ -84,12 +88,13 @@ if( $action == 'Go' && $url != '')
 	print "<hr>\n";
 }
 
+admPageFooter();
 
-?>
-</body>
-</html>
 
-<?php
+
+/**********************************/
+
+
 
 function run($command) {
 	ob_start();

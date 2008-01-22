@@ -132,7 +132,7 @@ EOT;
 	$r = db_getRow( $sql );
 	if( $r )
 	{
-		$taglink = tag_gen_link( $r['tag'] );
+		$taglink = tag_gen_link( $r['tag'], null, 'today' );
 		printf( "<li>%d journalists have written about <a href=\"%s\">%s</a> today</li><br>\n",
 			$r['count'], $taglink, $r['tag'] );
 	}
@@ -156,12 +156,12 @@ function emit_whoswritingaboutwhat()
 
 	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
 		"FROM ( article a INNER JOIN article_tag t ON ( a.id=t.article_id AND t.kind <> 'c') ) ".
-		"WHERE a.pubdate > NOW() - interval '24 hours' ".
+		"WHERE a.pubdate > NOW() - interval '24 hours' AND a.status='a' ".
 		"GROUP BY t.tag ".
 		"ORDER BY freq DESC " .
 		"LIMIT 32";
 	$q = db_query( $sql );
-	tag_cloud_from_query( $q );
+	tag_cloud_from_query( $q, null, 'today' );
 
 ?>
 <p>...click one to see which journalists are writing about it</p>
