@@ -1,7 +1,10 @@
-#!/usr/bin/env python
+# ukmedia.py
+# Assorted helper routines for scraping.
 #
-# TODO: ParseDatetime should be more generic. Just look for common
+# TODO:
+# - ParseDatetime should be more generic. Just look for common
 # date and time formats anywhere in a string...
+# - rename "ukmedia" to something more appropriate
 #
 
 import codecs
@@ -285,6 +288,9 @@ def DBUG2( msg ):
 
 
 
+#-------------------------------------------------------------------------
+# Assorted scraping stuff
+#
 
 def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 	""" Get a list of current articles """
@@ -569,4 +575,7 @@ def PrettyDump( art ):
 	print art['content'].encode('utf-8')
 	print "----------------------------------------"
 	print
+
+
+
 

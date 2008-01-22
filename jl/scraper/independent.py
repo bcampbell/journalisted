@@ -7,12 +7,11 @@
 import getopt
 import re
 from datetime import datetime
-from optparse import OptionParser
 import sys
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import ukmedia, ScraperUtils
 
 
 # sources used by FindArticles
@@ -329,6 +328,10 @@ def ScrubFunc( context, entry ):
 	return context
 
 
+def FindArticles():
+	"""get a set of articles to scrape from the rss feeds """
+	return ukmedia.FindArticlesFromRSS( rssfeeds, u'independent', ScrubFunc )
+
 
 def ContextFromURL( url ):
 	"""Build up an article scrape context from a bare url."""
@@ -341,29 +344,6 @@ def ContextFromURL( url ):
 	return context
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-
-	(options, args) = parser.parse_args()
-
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'independent', ScrubFunc )
-
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
-	ukmedia.ProcessArticles( found, store, Extract )
-
-	return 0
-
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

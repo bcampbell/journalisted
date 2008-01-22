@@ -30,11 +30,10 @@ import urllib2
 import sys
 import traceback
 from datetime import date,datetime
-from optparse import OptionParser
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import ukmedia,ScraperUtils
 
 
 
@@ -271,32 +270,8 @@ def ContextFromURL( url ):
 
 
 
-
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-
-	(options, args) = parser.parse_args()
-
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		found = found + FindArticles()
-
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
+if __name__ == "__main__":
 	# use a huge maxerrors because of the sheer volume of articles we
 	# pick up in the crawl
-	ukmedia.ProcessArticles( found, store, Extract, maxerrors=150 )
-
-	return 0
-
-if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=150 )
 

@@ -29,16 +29,17 @@
 #   of telling which paper it's from using just the url. Likely to be a
 #   problem with other papers too (particularly local papers): multiple
 #   papers sharing a single CMS...
+# - CRUFT Removal! We've started picking up lots of rubbish at the
+#   beginning of new-format articles...
 
 import re
 from datetime import date,datetime,timedelta
 import time
 import sys
-from optparse import OptionParser
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import DB,ArticleDB,ukmedia
+from JL import DB,ScraperUtils,ukmedia
 
 
 rssfeeds = {
@@ -494,6 +495,7 @@ def DupeCheckFunc( artid, art ):
 
 
 def ContextFromURL( url ):
+	"""get a context ready for scraping a single url"""
 	url = TidyURL( url )
 
 	context = {}
@@ -519,28 +521,11 @@ def ContextFromURL( url ):
 
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
-	(options, args) = parser.parse_args()
+def FindArticles():
+	""" get current active articles via RSS feeds """
+	return ukmedia.FindArticlesFromRSS( rssfeeds, u'guardian', ScrubFunc )
 
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'guardian', ScrubFunc )
-
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
-	ukmedia.ProcessArticles( found, store, Extract, DupeCheckFunc )
-
-	return 0
 
 
 
@@ -559,8 +544,8 @@ c.close()
 c=None
 
 
-if __name__ == "__main__":
-    sys.exit(main())
 
+if __name__ == "__main__":
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, DupeCheckFunc )
 
 

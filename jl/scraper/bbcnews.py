@@ -10,13 +10,12 @@
 #
 
 import re
-from optparse import OptionParser
 from datetime import datetime
 import sys
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup, Comment
-from JL import ArticleDB,ukmedia
+from JL import ukmedia, ScraperUtils
 
 # sources used by FindArticles
 rssfeeds = {
@@ -114,8 +113,9 @@ def CalcSrcID( url ):
 	return m.group(1)
 
 
-def ScrubFunc( context, entry ):
 
+def ScrubFunc( context, entry ):
+	""" per-article callback for processing RSS feeds """
 	# a story can have multiple paths (eg uk vs international version)
 	srcid = CalcSrcID( context['srcurl'] )
 	if not srcid:
@@ -123,6 +123,12 @@ def ScrubFunc( context, entry ):
 
 	context['srcid'] = srcid
 	return context
+
+
+def FindArticles():
+	""" get a set of articles to scrape from the bbc rss feeds """
+	# TODO: filter out "Your Stories" page
+	return ukmedia.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
 
 
 def ContextFromURL( url ):
@@ -136,30 +142,6 @@ def ContextFromURL( url ):
 	return context
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-
-	(options, args) = parser.parse_args()
-
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		# TODO: filter out "Your Stories" page
-		found = found + ukmedia.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
-
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
-	ukmedia.ProcessArticles( found, store, Extract )
-
-	return 0
-
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

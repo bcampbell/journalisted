@@ -12,11 +12,10 @@ import re
 from datetime import datetime
 import sys
 import os
-from optparse import OptionParser
 
 sys.path.append("../pylib")
 import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import ukmedia, ScraperUtils
 
 # NOTES:
 #
@@ -206,29 +205,7 @@ def ContextFromURL( url ):
 	return context
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-
-	(options, args) = parser.parse_args()
-
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		found = found + FindArticles()
-
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
-	ukmedia.ProcessArticles( found, store, Extract )
-
-	return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

@@ -10,14 +10,13 @@
 
 import re
 from datetime import datetime
-from optparse import OptionParser
 import time
 import string
 import sys
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import ukmedia, ScraperUtils
 
 # Full list of mirror rss feeds is at http://www.mirror.co.uk/more/
 mirror_rssfeeds = {
@@ -151,30 +150,15 @@ def ContextFromURL( url ):
 	return context
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
 
-	(options, args) = parser.parse_args()
+def FindArticles():
+	found = ukmedia.FindArticlesFromRSS( mirror_rssfeeds, u'mirror', ScrubFunc )
+	found = found + ukmedia.FindArticlesFromRSS( sundaymirror_rssfeeds, u'sundaymirror', ScrubFunc )
+	return found
 
-	found = []
-	if options.url:
-		context = ContextFromURL( options.url )
-		found.append( context )
-	else:
-		found = found + ukmedia.FindArticlesFromRSS( mirror_rssfeeds, u'mirror', ScrubFunc )
-		found = found + ukmedia.FindArticlesFromRSS( sundaymirror_rssfeeds, u'sundaymirror', ScrubFunc )
 
-	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
-	else:
-		store = ArticleDB.ArticleDB()
-
-	ukmedia.ProcessArticles( found, store, Extract )
-
-	return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+
 

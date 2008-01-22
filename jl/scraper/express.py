@@ -3,6 +3,10 @@
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
+#
+# TODO:
+# cruft removal: "SEARCH NEWS / SHOWBIZ for:"
+#
 
 import sys
 import re
@@ -11,7 +15,7 @@ import sys
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
-from JL import ukmedia, ArticleDB
+from JL import ukmedia, ScraperUtils
 
 
 expressroot = u'http://www.express.co.uk'
@@ -50,15 +54,6 @@ rssfeeds = {
 
 
 # eg '02/09/06'
-def CrackDate( raw ):
-	dpat = re.compile( '([0-9]{2})/([0-9]{2})/([0-9]{2})' )
-
-	m=dpat.search(raw)
-	day = int( m.group(1) )
-	month = int( m.group(2) )
-	year = int( '20' + m.group(3) )
-
-	return datetime( year, month, day )
 
 
 def Extract( html, context ):
@@ -108,14 +103,22 @@ def Extract( html, context ):
 
 
 
-def main():
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'express' )
+def FindArticles():
+	""" get a set of articles to scrape from the express rss feeds """
+	return ukmedia.FindArticlesFromRSS( rssfeeds, u'express' )
 
-	store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract )
 
-	return 0
+def ContextFromURL( url ):
+	"""Build up an article scrape context from a bare url."""
+	context = {}
+	context['srcurl'] = url
+	context['permalink'] = url
+	context['srcid'] = url
+	context['srcorgname'] = u'express'
+	context['lastseen'] = datetime.now()
+	return context
+
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

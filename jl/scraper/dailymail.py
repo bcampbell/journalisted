@@ -11,11 +11,10 @@
 import re
 from datetime import datetime
 import sys
-from optparse import OptionParser
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
-from JL import ArticleDB,ukmedia
+from JL import ukmedia,ScraperUtils
 
 
 rssfeeds = {
@@ -268,44 +267,27 @@ def ScrubFunc( context, entry ):
 	return context
 
 
-def ScrapeSingleURL( url ):
-	html = ukmedia.FetchURL( url )
+def ContextFromURL( url ):
+	"""Set up for scraping a single article from a bare url"""
+	url = TidyURL( url )
 	context = {
 		'srcurl': url,
 		'permalink': url,
 		'srcid': url,
 		'srcorgname': u'dailymail',
+		'lastseen': datetime.now(),
 	}
-
-	art = Extract( html, context )
-	if art:
-		ArticleDB.CheckArticle( art )
-	return art
+	return context
 
 
-def main():
-	parser = OptionParser()
-	parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-	#parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-	(options, args) = parser.parse_args()
-
-	if options.url:
-		# just scrape and dump a single url (no store)
-		art = ScrapeSingleURL( options.url )
-		if art:
-			ukmedia.PrettyDump( art )
-		return
-
+def FindArticles():
+	"""Look for recent articles"""
 	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
 	# extra articles not from RSS feeds...
 	found = found + FindColumnistArticles()
-	
-	store = ArticleDB.ArticleDB()
-	ukmedia.ProcessArticles( found, store, Extract )
+	return found
 
-
-	return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 
