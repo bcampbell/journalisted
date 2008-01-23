@@ -29,8 +29,10 @@
 #   of telling which paper it's from using just the url. Likely to be a
 #   problem with other papers too (particularly local papers): multiple
 #   papers sharing a single CMS...
-# - CRUFT Removal! We've started picking up lots of rubbish at the
-#   beginning of new-format articles...
+#
+# - For new-format articles, could use class attr in body element to
+#   ignore polls and other cruft. <body class="article"> is probably
+#   the only one we should accept...
 
 import re
 from datetime import date,datetime,timedelta
@@ -198,8 +200,6 @@ def Extract( html, context ):
 	title = ukmedia.FromHTML(title)
 	art[ 'title' ] = title
 
-	# just use description from context (from rss feed)
-	# TODO: could also check 'stand-first' para?
 
 	contentdiv = soup.find( 'div', id="content" )
 
@@ -236,9 +236,9 @@ def Extract( html, context ):
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
 	contentdiv.find('ul', id='article-toolbox').extract()
-	contentdiv.find('div', id='send-share').extract()
-	contentdiv.find('div', id='send-email').extract()
 	contentdiv.find('div', id='contact').extract()
+	for cruft in contentdiv.findAll( 'div', {'class': 'send'} ):
+		cruft.extract()
 
 	# images
 	for cruft in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
@@ -265,9 +265,15 @@ def Extract( html, context ):
 		for element in morediv.contents:
 			textpart.append( element )
 
+	# look for first-stand para first (appears in 'article-header')
+	# (could also try meta 'description')
+	descpara = headerdiv.find( 'p', {'id':'stand-first'} )
+	if not descpara:
+		descpara = textpart.p	# no? just use first para of text instead.
+	art['description'] = ukmedia.FromHTML( descpara.prettify(None) )
+
 	# that's it!
 	art['content'] = textpart.prettify(None)
-
 	return art
 
 
