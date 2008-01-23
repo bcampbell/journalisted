@@ -285,6 +285,11 @@ function RemoveJourno( $art, $journo_id )
 
 	db_query( "DELETE FROM journo_attr WHERE article_id=? AND journo_id=?",
 		$article_id, $journo_id );
+
+	/* make sure the journos page gets updated on next view */
+	$cachename = sprintf( "j%s", $journo_id );
+	db_query( "DELETE FROM htmlcache WHERE name=?", $cachename );
+
 	/* TODO: LOG IT! */
 	db_commit();
 	print( "<strong>REMOVED JOURNO</strong>" );
@@ -379,6 +384,11 @@ function AddJourno( $art, $journo_id )
 {
 	db_query( "INSERT INTO journo_attr (journo_id, article_id) VALUES (?,?)",
 		$journo_id, $art['id'] );
+
+	/* make sure the journos page gets updated on next view */
+	$cachename = sprintf( "j%s", $journo_id );
+	db_query( "DELETE FROM htmlcache WHERE name=?", $cachename );
+
 	/* TODO: LOG IT! */
 	db_commit();
 	print( "<strong>ADDED JOURNO</strong>" );
