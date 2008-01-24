@@ -184,7 +184,7 @@ def ProcessByline( article_id, byline, srcorgid ):
 		journo_id = Journo.FindJourno( conn, d['name'], srcorgid )
 		if not journo_id:
 			journo_id = Journo.CreateNewJourno( conn, d['name'] )
-			ukmedia.DBUG2( " NEW journo '%s' (id: %s)\n" %(d['name'],journo_id) )
+			ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, d['name']) )
 
 		# credit journo with writing this article
 		Journo.AttributeArticle( conn, journo_id, article_id )

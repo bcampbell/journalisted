@@ -374,10 +374,6 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 
 			if store.ArticleExists( context['srcorgname'], context['srcid'] ):
 				continue;	# skip it - we've already got it
 
-			# gtb!debug, for debugging tricky cases:
-#			if context['srcurl']!='http://www.telegraph.co.uk/money/main.jhtml?xml=/money/2007/11/03/cmjessica03.xml':
-#				continue;
-
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
 			
 			# some extra, last minute context :-)
@@ -387,7 +383,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 
 
 			if art:
 				artid = store.Add( art )
-				DBUG2( "%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
+				DBUG2( "%s: [a%s '%s'] (%s)\n" % (art['srcorgname'], artid, art['title'], art['byline']) );
 				newcount = newcount + 1
 				# if there is a post-processing fn, call it
 				if postfn:
@@ -494,9 +490,9 @@ def ExtractAuthorFromParagraph(para):
 			break
 
 	if author!=u'':
-		print "    Byline-o-matic: ",confidence," ",author," <- ",para.encode('latin-1','replace'),""
+		DBUG2( u"  Byline-o-matic: %s %s <- \"%s\"\n" % ( confidence,author,para ) )
 	else:
-		print "    Byline-o-matic failed on: ",para.encode('latin-1','replace')
+		DBUG2( u"  Byline-o-matic failed on: \"%s\"\n" %(para) )
 
 	return author
 
