@@ -104,6 +104,18 @@ function run($command) {
 
 	$ret = str_replace( "<", "&lt;", $ret );
 	$ret = str_replace( ">", "&gt;", $ret );
+	$ret = MarkupLog( $ret );
 	return "<p><pre>$ret</pre></p>";
+}
+
+
+function MarkupLog( $txt )
+{
+#	artpat = re.compile( "\\[a([0-9]+)(\\s*'(.*?)')?\\s*\\]" )
+#	journopat = re.compile( "\\[j([0-9]+)(\\s*'(.*?)')?\\s*\\]" )
+
+	$html = preg_replace( "/\\[a([0-9]+)(\\s*'(.*?)')?\\s*\\]/", "<a href=\"/adm/article?article_id=\\1\">\\0</a>", $txt );
+
+	return $html;
 }
 
