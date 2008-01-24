@@ -90,6 +90,8 @@ class ArticleDB:
 		# parse byline to assign/create journos
 		ProcessByline( id, art['byline'], srcorg )
 
+		ukmedia.DBUG2( u"%s: [a%s '%s'] (%s)\n" % (art['srcorgname'], id, art['title'], art['byline']) );
+
 		# TODO: rollback on error!
 		return id
 
@@ -124,6 +126,7 @@ class DummyArticleDB:
 		artid = self.id
 
 		self.id = artid + 1
+		ukmedia.DBUG2( u"%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
 		return artid
 
 	def ArticleExists( self, srcorgname, srcid ):

@@ -383,7 +383,6 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 
 
 			if art:
 				artid = store.Add( art )
-				DBUG2( "%s: [a%s '%s'] (%s)\n" % (art['srcorgname'], artid, art['title'], art['byline']) );
 				newcount = newcount + 1
 				# if there is a post-processing fn, call it
 				if postfn:
