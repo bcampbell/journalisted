@@ -163,7 +163,7 @@ def Extract( html, context ):
 	# get headline
 	headline = articlediv.find( 'h1' )
 	art[ 'title' ] = headline.renderContents( None )
-	art[ 'title' ] = ukmedia.DescapeHTML( art['title'] )
+	art[ 'title' ] = ukmedia.FromHTML( art['title'] )
 
 	# get date posted
 	# two formats used:
