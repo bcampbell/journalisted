@@ -25,6 +25,8 @@ $scraper = get_http_var( 'scraper', 'guardian' );
 
 
 $scrapers = array( 'bbcnews' => 'bbcnews.py',
+	'dailymail' => 'dailymail.py',
+	'express' => 'express.py',
 	'guardian' => 'guardian.py',
 	'independent' => 'independent.py',
 	'mirror' => 'mirror.py',
