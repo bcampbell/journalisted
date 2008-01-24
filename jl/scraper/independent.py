@@ -3,6 +3,10 @@
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
+#
+# TODO: migrate to new RSS feeds
+#
+
 
 import getopt
 import re
@@ -217,14 +221,112 @@ rssfeeds = {
 #	'      Jobs': 'http://classified.independent.co.uk/jobs/index.jsp?service=rss',
 	}
 
+# things that this scraper might mistakenly use as a byline:
+dudbylines = [ u'leading article', u'leadinga article', u'the third leader' ]
+
 
 
 def Extract( html, context ):
-	"""Parse the html of a single article
+	"""Extract article from html"""
 
-	html -- the article html
-	context -- any extra info we have about the article (from the rss feed)
-	"""
+	art = context
+	soup = BeautifulSoup( html )
+
+	articlediv = soup.find( 'div', { 'id':'article' } )
+
+	# the headline
+	headline = articlediv.find( 'h1' )
+	art['title'] = ukmedia.FromHTML( headline.renderContents(None) )
+
+	# some articles have taglines
+	taglinepara = articlediv.find('p',{'class':'tagline'})
+
+	# "info" para contains byline, date
+	infopara = articlediv.find( 'p', {'class':'info'} )
+
+	# date fmt: "Thursday, 24 January 2008"
+	pubdatetext = infopara.em.renderContents(None)
+	art['pubdate'] = ukmedia.ParseDateTime( pubdatetext )
+
+	# a couple of ways to get byline...
+	byline = u''
+	authorelement = infopara.find('author')
+	if authorelement:
+		# it's got a _proper_ byline!
+		byline = authorelement.renderContents(None)
+
+	if byline == u'' and taglinepara:
+		# if there's a tagline, try the byline-o-matic on it:
+		byline = ukmedia.ExtractAuthorFromParagraph( taglinepara.renderContents(None) )
+
+	if byline == u'':
+		# a lot of stories (particularly comment pieces) have
+		# name in title...
+		# eg "Janet Street-Porter: Our politicians know nothing of real life"
+		m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
+		if m:
+			byline = m.group(1)
+			# cull out duds
+			if byline.lower() in dudbylines:
+				byline = u''
+
+
+	art['byline'] = ukmedia.FromHTML( byline )
+
+
+	# article text is in "body" div
+	bodydiv = articlediv.find( 'div',{'class':'body'} )
+
+	# Kill cruft:
+
+	#"<a href="http://indyblogs.typepad.com/openhouse/have_your_say/index.html" target="new"> Click here to have your say</a>"
+	for cruft in bodydiv.findAll( 'a', {'href':'http://indyblogs.typepad.com/openhouse/have_your_say/index.html'} ):
+		cruft.extract()
+
+	#"<a id="proximic_proxit:aid=inm&query_url=http://www.independent.co.uk/news/world/middle-east/freedom-for-gaza-but-for-one-day-only-773189.html" title="Click here to explore further" onclick="return false;">Interesting? Click here to explore further</a>"
+	for cruft in bodydiv.findAll( 'a', {'title':'Click here to explore further'} ):
+		cruft.extract()
+
+
+	contenttext = bodydiv.renderContents(None)
+	contenttext = ukmedia.SanitiseHTML( contenttext )
+	contenttext = contenttext.strip()
+
+	art['content'] = contenttext
+
+	# description from tagline
+	if taglinepara:
+		art['description'] = ukmedia.FromHTML( taglinepara.renderContents(None) )
+	else:
+		# use first para of main text
+		art['description'] = ukmedia.FromHTML( FirstPara( contenttext ) )
+
+	return art
+
+
+def FirstPara( html ):
+	""" try and extract the first paragraph from some html """
+
+	# first try text before first <p> (or </p>, because it might be broken)
+	m = re.match( "\\s*(.*?)\\s*<([/])?p>", html, re.IGNORECASE|re.DOTALL )
+	p = m.group(1)
+	if len(p) > 10:
+		return p
+
+	# get first non-empty para
+	cnt=0
+	for m in re.finditer( "<p>\\s*(.*?)\\s*</p>", html, re.IGNORECASE|re.DOTALL ):
+		p = m.group(1).strip()
+		if len(p) > 0:
+			return p;
+
+	# no joy.
+	return None
+
+
+
+def OLDExtract( html, context ):
+	"""parser for old (pre 24jan2008) format articles, just in case we need it..."""
 
 	art = context
 
@@ -273,7 +375,7 @@ def Extract( html, context ):
 		if m:
 			byline = m.group(1)
 			# cull out duds
-			if byline.lower() in ( u'leading article', u'the third leader' ):
+			if byline.lower() in dudbylines:
 				byline = u''
 
 
@@ -319,12 +421,19 @@ def CrackDate( raw ):
 	return datetime( year,month,day )
 
 
-
+def TidyURL( url ):
+	""" strip off cruft from URLs """
+	url = re.sub( "[?]r=RSS", "", url )
+	return url
 
 
 def ScrubFunc( context, entry ):
 	""" description contains html entities and tags...  scrub it! """
 	context[ 'description' ] = ukmedia.FromHTML( context['description'] )
+	url = TidyURL( context['srcurl'] )
+	context['srcid'] = url
+	context['srcurl'] = url
+	context['permalink'] = url
 	return context
 
 
@@ -335,6 +444,7 @@ def FindArticles():
 
 def ContextFromURL( url ):
 	"""Build up an article scrape context from a bare url."""
+	url = TidyURL( url )
 	context = {}
 	context['srcurl'] = url
 	context['permalink'] = url

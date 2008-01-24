@@ -1,7 +1,8 @@
-Log changes made due to scraper breakage here!
+Log changes made due to website changes here!
+(want to get an idea of how often the newspapers change their systems...)
 
 2007-07-23 Mirror: new url format broke scraper
 2007-07-26 Guardian moving to a new backend
-2007-09-04 Guardian: new-style pages had untrimmed whitespace in bylines
 2007-10-?? Sun: totally new website format
+2008-01-23 Independent: new website
 
