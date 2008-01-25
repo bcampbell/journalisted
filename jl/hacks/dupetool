@@ -9,21 +9,43 @@
 #
 # Some papers publish additional edits as new stories, with new srcid.
 #
+# TODO:
+# - look at collecting ids during  FindDupeGroups()
+# - option to compare article content (with allowances for different
+#   whitespace/html markup)
+#
 
 
+from optparse import OptionParser
 import sys
 
 sys.path.append( "../pylib" )
 from JL import Tags,DB
 
 
-
-
-
-def FindDupeGroups( conn ):
+def FindDupeGroups( conn, settings ):
 	""" find groups of articles with same title, published within 1 day of each other """
 	c = conn.cursor()
-	c.execute( """select srcorg,title,count(*) as cnt FROM article GROUP BY title,srcorg,status HAVING status='a' AND count(*)>1 AND max(pubdate)-min(pubdate)<=interval '1 day'""" )
+	params = settings
+
+	query = "SELECT srcorg,title,count(*) as cnt FROM article "
+
+	conditions = []
+	if params['age']:
+		conditions.append( "pubdate > now()- interval %(age)s" )
+	if params['srcorgid']:
+		conditions.append( "srcorg=%(srcorgid)s" )
+	if conditions:
+		query = query + "WHERE " + " AND ".join(conditions)
+
+	query = query + """GROUP BY title,srcorg,status 
+		HAVING status='a'
+			AND count(*)>1
+			AND max(pubdate)-min(pubdate)<=interval '1 day'"""
+
+#	print query
+#	print params
+	c.execute( query, params )
 
 	dupegroups = []
 	while 1:
@@ -37,57 +59,77 @@ def FindDupeGroups( conn ):
 
 
 
-def HandleDupeGroup( conn, dg ):
+def HandleDupeGroup( conn, dg, settings ):
 	""" Hide all but one article in a group of dupes """
 	(srcorg,title,cnt) = ( dg['srcorg'],dg['title'],dg['cnt'] )
 
 	c = conn.cursor()
 
-	# keep the one with the highest srcid
-	c.execute( """SELECT id,srcid FROM article WHERE srcorg=%s AND title=%s ORDER BY srcid DESC""", srcorg, title )
+	params = { 'srcorg': srcorg, 'title':title }
+	conds = ["srcorg=%(srcorg)s", "title=%(title)s" ]
+	if settings['age']:
+		params['age'] = settings['age']
+		conds.append( "pubdate>now() - interval %(age)s" )
+
+	q = "SELECT id,srcid FROM article"
+	q = q + " WHERE " + " AND ".join(conds)
+	# keep the one scraped most recently
+	# (previously used "ORDER BY srcid DESC")
+	q = q + " ORDER BY lastscraped DESC"
+	c.execute( q, params )
 	found = c.fetchall()
 
 	if len( found ) != cnt:
 		raise Exception, "uh-oh! (%d %s)" % (srcorg, title)
 
+	# make sure the first one returned is active...
 	c2 = conn.cursor()
-	print "%d %s" %(srcorg, title)
-	print " keep %s" %( found[0]['srcid'] )
-	c2.execute( "UPDATE article SET status='a' WHERE id=%s", found[0]['id'] )
+	print "%s (srcorg=%d)" %(title,srcorg)
+	f = found[0]
+	c2.execute( "UPDATE article SET status='a' WHERE id=%s", f['id'] )
+	print " keep [a%s] srcid=%s" %( f['id'], f['srcid'] )
 
+	# ... and hide the rest!
 	for f in found[1:]:
 		c2.execute( "UPDATE article SET status='d' WHERE id =%s", f['id'] )
-		print " discard %s" %( f['srcid'] )
+		print " discard [a%s] srcid=%s" %( f['id'],f['srcid'] )
 
-def Usage():
-	print "Usage:"
-	print "./dupetool list"
-	print "./dupetool hidedupes"
-	sys.exit(0)
 
 
 def main():
-	if len(sys.argv) <= 1:
-		Usage()
+	parser = OptionParser()
+	#parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+	parser.add_option("-a", "--age", dest="age", help="how far back to look ('1 day' , '1 month' (default), '1 year', 'forever' etc...)", default='1 month', metavar="AGE" )
+	parser.add_option("-o", "--org", dest="srcorg", help="restrict search to one source organisation", default=None, metavar="SRCORGID" )
+	parser.add_option("-k", "--kill", action="store_true", dest="killdupes", help="kill duplicates (by changing their status flag to 'd')")
 
-	if sys.argv[1] == 'list':
-		conn = DB.Connect()
-		dupegroups = FindDupeGroups(conn)
-		print "%d groups found" % len(dupegroups)
+	(options, args) = parser.parse_args()
+
+	conn = DB.Connect()
+
+	settings = { 'age':options.age, 'srcorgid':None }
+	if options.age != 'forever':
+		settings['age']  = None
+	if options.srcorg:
+		# todo: allow lookup by name
+		settings['srcorgid'] = int( options.srcorg )
+
+	dupegroups = FindDupeGroups(conn, settings )
+	print "%d groups found" % len(dupegroups)
+	if not options.killdupes:
 		for d in dupegroups:
 			print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
-		conn.commit()
-	elif sys.argv[1] == 'hidedupes':
-		conn = DB.Connect()
-		dupegroups = FindDupeGroups(conn)
-		print "%d groups found" % len(dupegroups)
+
+	if options.killdupes:
 		for d in dupegroups:
-			HandleDupeGroup( conn, d )
+			HandleDupeGroup( conn, d, settings )
 	#		print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
-		conn.commit()
+	#	conn.commit()
+		conn.rollback()
 
-	else:
-		Usage()
 
-main()
+if __name__ == "__main__":
+	main()
+
+
 
