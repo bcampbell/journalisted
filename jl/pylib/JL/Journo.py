@@ -597,6 +597,9 @@ def AttributeArticle( conn, journo_id, article_id ):
 	q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", journo_id, article_id )
 	if not q.fetchone():
 		q.execute( "INSERT INTO journo_attr (journo_id,article_id) VALUES(%s,%s)", journo_id, article_id )
+		# also clear the html cache for that journos page
+		cachename = 'j%s' % (journo_id)
+		q.execute( "DELETE FROM htmlcache WHERE name=%s", cachename )
 	q.close()
 
 

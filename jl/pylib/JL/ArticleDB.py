@@ -85,10 +85,10 @@ class ArticleDB:
 
 		Tags.Generate( self.conn, id, art['content'] )
 
-		self.conn.commit()
 
 		# parse byline to assign/create journos
-		ProcessByline( id, art['byline'], srcorg )
+		ProcessByline( self.conn, id, art['byline'], srcorg )
+		self.conn.commit()
 
 		ukmedia.DBUG2( u"%s: [a%s '%s'] (%s)\n" % (art['srcorgname'], id, art['title'], art['byline']) );
 
@@ -172,7 +172,7 @@ def CheckArticle(art):
 
 
 
-def ProcessByline( article_id, byline, srcorgid ):
+def ProcessByline( conn, article_id, byline, srcorgid ):
 	""" Parse byline and assign to journos (creates journos along the way) """
 	details = Byline.CrackByline( byline )
 	if details is None:
@@ -180,7 +180,6 @@ def ProcessByline( article_id, byline, srcorgid ):
 
 	attributed = []
 
-	conn = DB.Connect()
 	# reminder: a byline can contain multiple journos
 	for d in details:
 		# is journo already in DB?
@@ -196,7 +195,6 @@ def ProcessByline( article_id, byline, srcorgid ):
 
 		if d.has_key('title'):
 			Journo.SeenJobTitle( conn, journo_id, d['title'], datetime.now(), srcorgid )
-		conn.commit()
 
 	return attributed
 
