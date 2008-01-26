@@ -299,29 +299,11 @@ def Extract( html, context ):
 		art['description'] = ukmedia.FromHTML( taglinepara.renderContents(None) )
 	else:
 		# use first para of main text
-		art['description'] = ukmedia.FromHTML( FirstPara( contenttext ) )
+		art['description'] = ukmedia.FromHTML( ukmedia.FirstPara( contenttext ) )
 
 	return art
 
 
-def FirstPara( html ):
-	""" try and extract the first paragraph from some html """
-
-	# first try text before first <p> (or </p>, because it might be broken)
-	m = re.match( "\\s*(.*?)\\s*<([/])?p>", html, re.IGNORECASE|re.DOTALL )
-	p = m.group(1)
-	if len(p) > 10:
-		return p
-
-	# get first non-empty para
-	cnt=0
-	for m in re.finditer( "<p>\\s*(.*?)\\s*</p>", html, re.IGNORECASE|re.DOTALL ):
-		p = m.group(1).strip()
-		if len(p) > 0:
-			return p;
-
-	# no joy.
-	return None
 
 
 

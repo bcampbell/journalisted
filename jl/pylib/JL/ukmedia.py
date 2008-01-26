@@ -316,7 +316,11 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 			#Each item is a dictionary mapping properties to values
 			url = entry.link		# will be guid if no link attr
 			title = entry.title
-			desc = entry.summary
+			if hasattr(entry, 'summary'):
+				desc = entry.summary
+			else:
+				desc = u''
+
 			if hasattr(entry, 'updated_parsed'):
 				pubdate = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
 			else:
@@ -573,4 +577,31 @@ def PrettyDump( art ):
 
 
 
+def FirstPara( html ):
+	""" try and extract the first paragraph from some html
+	
+	result is text with all html tags stripped
+	"""
+
+
+	# first try text before first <p> (or </p>, because it might be broken)
+	m = re.match( "\\s*(.*?)\\s*<([/])?p>", html, re.IGNORECASE|re.DOTALL )
+	if m:
+		p = FromHTML(m.group(1))
+		if len(p) > 10:
+			return p
+
+	# get first non-empty para
+	cnt=0
+	for m in re.finditer( "<p>\\s*(.*?)\\s*</p>", html, re.IGNORECASE|re.DOTALL ):
+		p = FromHTML( m.group(1) )
+		if len(p) > 0:
+			return p;
+
+	# no joy - just try and return the first 50 words
+	words = FromHTML(html).split()
+	if len( words ) > 0:
+		return u' '.join(words[:50] ) + "..."
+
+	return u''
 
