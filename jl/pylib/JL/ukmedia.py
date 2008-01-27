@@ -605,3 +605,14 @@ def FirstPara( html ):
 
 	return u''
 
+
+
+def decap_repl(m):
+	""" helper for DecapNames() """
+	return m.group(0).title()
+
+def DecapNames( txt ):
+	""" transform any ALL-CAPS words (>=3 letters) into titlecase """
+	pat = re.compile( '\\b[A-Z]{3,}\\b' )
+	return pat.sub( decap_repl, txt )
+
