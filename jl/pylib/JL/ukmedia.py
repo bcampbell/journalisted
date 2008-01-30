@@ -321,10 +321,10 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 			else:
 				desc = u''
 
+			pubdate = None
 			if hasattr(entry, 'updated_parsed'):
-				pubdate = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
-			else:
-				pubdate = None
+				if entry.updated_parsed:
+					pubdate = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
 
 #			print "New desc: ",desc.encode('latin-1','replace')
 

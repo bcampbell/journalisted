@@ -110,12 +110,16 @@ function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 }
 
 
+
+
 // emit a list of links to journos who use this tag
 function tag_emit_journo_list( $tag, $excludejourno_id=null, $period=null )
 {
 	$periodcond = '';
 	if( $period == 'today' )
 		$periodcond = "  AND a.pubdate > NOW() - INTERVAL '1 day' ";
+	else	// HACKY HACK HACK! TODO: FIXME!
+		$periodcond = "  AND a.pubdate > NOW() - INTERVAL '7 days' ";
 
 	$sql = "SELECT SUM(freq), j.id, j.ref, j.prettyname ".
 		"FROM ((journo j INNER JOIN journo_attr attr ON (j.id=attr.journo_id) ) ".
