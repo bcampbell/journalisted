@@ -79,7 +79,7 @@ function AlphabeticalList()
 		print "last name (<a href=\"list?o=f\">order by first name</a>)";
 	print "</p>\n";
 
-	$q = db_query( "SELECT ref,prettyname,{$orderfield} FROM journo ORDER BY {$orderfield}" );
+	$q = db_query( "SELECT ref,prettyname,{$orderfield} FROM journo WHERE status='a' ORDER BY {$orderfield}" );
 
 	/* slurp in all the returned journos, and index them by letter */
 	$phonebook = EmptyPhonebook();
@@ -138,7 +138,7 @@ Find a journalist by name:
 <?php
 	
 	$pat = strtolower( "%{$name}%" );
-	$q = db_query( "SELECT ref,prettyname FROM journo WHERE LOWER(prettyname) LIKE( ? )", $pat );
+	$q = db_query( "SELECT ref,prettyname FROM journo WHERE LOWER(prettyname) LIKE( ? ) AND status='a'", $pat );
 
 	$cnt = 0;
 	print "<ul>\n";
@@ -166,8 +166,8 @@ function FindByOutlet( $outlet )
 
 	$sql = "SELECT j.ref, j.prettyname, j.lastname, count(a.id) " .
 		"FROM (( article a INNER JOIN journo_attr ja ON (a.status='a' AND a.id=ja.article_id) ) " .
-			"INNER JOIN journo j ON j.id=ja.journo_id ) " .
-		"WHERE a.srcorg=? " .
+			"INNER JOIN journo j ON (j.status='a' AND j.id=ja.journo_id) ) " .
+		"WHERE a.srcorg=?  " .
 		"GROUP BY j.ref,j.prettyname,j.lastname " .
 		"ORDER BY count DESC";
 
@@ -197,6 +197,7 @@ SELECT j.id AS journo_id, j.ref, j.prettyname, a.id AS article_id,a.title,a.perm
 	FROM ((article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
 		INNER JOIN journo j ON j.id=attr.journo_id)
 	WHERE a.status='a'
+		AND j.status='a'
 		AND a.content ilike ?
 		AND a.pubdate>now()-interval '1 month'
 	ORDER BY j.id

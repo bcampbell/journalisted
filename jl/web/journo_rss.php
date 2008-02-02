@@ -15,7 +15,7 @@ require_once '../../phplib/utility.php';
 
 $ref = strtolower( get_http_var( 'ref' ) );
 
-$journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+$journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=? AND status='a'", $ref );
 
 header('Content-type: text/xml;');
 

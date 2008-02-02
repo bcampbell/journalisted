@@ -16,7 +16,7 @@ require_once '../../phplib/utility.php';
 
 $ref = strtolower( get_http_var( 'ref' ) );
 
-$journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+$journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE status='a' AND ref=?", $ref );
 // stats for this journo
 $stats = FetchJournoStats( $journo );
 

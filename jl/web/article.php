@@ -38,7 +38,7 @@ function emit_page_findarticles( $findtext,$ref=null )
 {
 	if( $ref )
 	{
-		$journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+		$journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE status='a' AND ref=?", $ref );
 		$pagetitle = sprintf( "Articles by %s containing \"%s\"", $journo['prettyname'], $findtext );
 	}
 	else

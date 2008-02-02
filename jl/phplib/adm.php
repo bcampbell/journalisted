@@ -22,7 +22,8 @@ function admPageHeader()
 </head>
 <body>
 <h1>journa-list admin</h1>
-<a href="article">Find articles</a> |
+<a href="journo">Journos</a> |
+<a href="article">Articles</a> |
 <a href="scrape">Scrape</a>
 <hr>
 <?php

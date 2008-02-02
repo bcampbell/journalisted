@@ -597,11 +597,26 @@ def AttributeArticle( conn, journo_id, article_id ):
 	q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", journo_id, article_id )
 	if not q.fetchone():
 		q.execute( "INSERT INTO journo_attr (journo_id,article_id) VALUES(%s,%s)", journo_id, article_id )
+
+		# activate journalist if need be
+		UpdateJournoStatus( conn, journo_id )
+
 		# also clear the html cache for that journos page
 		cachename = 'j%s' % (journo_id)
 		q.execute( "DELETE FROM htmlcache WHERE name=%s", cachename )
 	q.close()
 
+
+def UpdateJournoStatus( conn, journo_id ):
+	""" activate the journos status if they've got more than one active article and they've not been hidden """
+
+	q = conn.cursor()
+	# count number of articles
+	q.execute( "SELECT COUNT(*) FROM journo_attr ja INNER JOIN article a ON (a.id=ja.article_id AND a.status='a') WHERE ja.journo_id=%s", journo_id )
+	r = q.fetchone()
+	if r[0] > 1:
+		q.execute( "UPDATE journo SET status='a' WHERE id=%s AND status='i'", journo_id )
+	q.close()
 
 def SeenJobTitle( conn, journo_id, jobtitle, whenseen, srcorg ):
 	""" add a link to assign a jobtitle to a journo """

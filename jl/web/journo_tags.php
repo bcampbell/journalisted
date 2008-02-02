@@ -14,7 +14,7 @@ require_once '../../phplib/utility.php';
 
 /* get journo identifier (eg 'fred-bloggs') */
 $ref = strtolower( get_http_var( 'ref' ) );
-$journo = db_getRow( 'SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?', $ref );
+$journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=? AND status='a'", $ref );
 
 if(!$journo)
 {

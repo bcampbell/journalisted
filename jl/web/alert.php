@@ -20,7 +20,7 @@ require_once '../../phplib/importparams.php';
 if( get_http_var( 'Add' ) )
 {
 	$journo_ref = get_http_var( 'j' );
-	$jname = db_getOne( 'SELECT prettyname FROM journo WHERE ref=?', $journo_ref );
+	$jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
 
 	// adding an alert...
 	$r = array(
@@ -32,7 +32,7 @@ if( get_http_var( 'Add' ) )
 else if( get_http_var( 'Remove' ) )
 {
 	$journo_ref = get_http_var( 'j' );
-	$jname = db_getOne( 'SELECT prettyname FROM journo WHERE ref=?', $journo_ref );
+	$jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
 
 	// remove an alert...
 	$r = array(
@@ -103,7 +103,7 @@ page_footer();
 
 function DoAddAlert( $P, $journo_ref )
 {
-	$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $journo_ref );
+	$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
 	if( !$journo )
 		err( "bad journalist ref" );
 
@@ -259,7 +259,7 @@ Look up journalist by name:
 	if( $lookup )
 	{
 		$pat = strtolower( "%{$lookup}%" );
-		$q = db_query( "SELECT ref,prettyname FROM journo WHERE LOWER(prettyname) LIKE( ? )", $pat );
+		$q = db_query( "SELECT ref,prettyname FROM journo WHERE status='a' AND LOWER(prettyname) LIKE( ? )", $pat );
 
 		$cnt = 0;
 		print "<ul>\n";
