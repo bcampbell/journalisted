@@ -264,7 +264,7 @@ function EmitAttribution( $art )
 	print( "<ul>\n" );
 	foreach( $journos as $j )
 	{
-		$journo_url = "/" . $j['ref'];
+		$journo_url = "/adm/journo?journo_id=" . $j['id'];
 		$removal_url = sprintf( "?article_id=%s&action=remove_journo&journo_id=%s",
 			$article_id, $j['id'] );
 
@@ -302,7 +302,7 @@ function RemoveJourno( $art, $journo_id )
 function ConfirmRemoveJourno( $art, $journo_id )
 {
 	$j = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
-	$journo_url = "/" . $j['ref'];
+	$journo_url = "/adm/journo?journo_id=" . $j['id'];
 
 ?>
 <form method="post" action="/adm/article">
@@ -351,7 +351,7 @@ function LookupJourno( $art, $lookup )
 function EmitAddJournoForm( $art, $journo )
 {
 	$prettyname = $journo['prettyname'];
-	$url = '/'.$journo['ref'];
+	$url = '/adm/journo?journo_id='.$journo['id'];
 	$journo_id = $journo['id'];
 ?>
 <form method="post" action="/adm/article">
