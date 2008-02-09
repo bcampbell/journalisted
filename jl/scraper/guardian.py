@@ -235,8 +235,12 @@ def Extract( html, context ):
 
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
-	contentdiv.find('ul', id='article-toolbox').extract()
-	contentdiv.find('div', id='contact').extract()
+	cruft = contentdiv.find('ul', id='article-toolbox')
+	if cruft:
+		cruft.extract()
+	cruft = contentdiv.find('div', id='contact')
+	if cruft:
+		cruft.extract()
 	for cruft in contentdiv.findAll( 'div', {'class': 'send'} ):
 		cruft.extract()
 

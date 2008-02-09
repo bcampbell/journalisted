@@ -131,18 +131,18 @@ def Extract( html, context ):
 	art['title'] = h1.renderContents(None).strip()
 	art['title'] = ukmedia.DescapeHTML( ukmedia.StripHTML( art['title'] ) )
 
+	byline = u''
 	# times stuffs up bylines for obituaries (used for date span instead)
-	if art['srcurl'].find( '/obituaries/' ) != -1:
-		art['byline'] = u''
-	else:
+	if art['srcurl'].find( '/obituaries/' ) == -1:
 		authdiv = soup.find( 'div', {'class':'article-author'} )
-		byline = authdiv.find( 'span', { 'class': 'byline' } )
-		if byline:
-			art['byline'] = byline.renderContents( None )
-			art['byline'] = ukmedia.StripHTML( art['byline'] )
-			art['byline'] = ukmedia.DescapeHTML( art['byline'] ).strip()
-		else:
-			art['byline'] = byline = u''
+		if authdiv:
+			bylinespan = authdiv.find( 'span', { 'class': 'byline' } )
+			if bylinespan:
+				byline = bylinespan.renderContents( None )
+				byline = ukmedia.StripHTML( byline )
+				byline = ukmedia.DescapeHTML( byline )
+				byline = u' '.join( byline.split() )
+	art['byline'] = byline
 
 	paginationstart = soup.find( text=re.compile('^\s*Pagination\s*$') )
 	paginationend = soup.find( text=re.compile('^\s*End of pagination\s*$') )

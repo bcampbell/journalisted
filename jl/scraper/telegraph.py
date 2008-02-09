@@ -242,8 +242,10 @@ def Extract( html, context ):
 			author = re.sub(u'\+',' ',author) 										# convert + signs to spaces
 			author = re.sub(u'\\b([A-Z][a-z]{3,})([A-Z][a-z]+)\\b', '\\1-\\2', author)	# convert SparckJones to Sparck-Jones (that's how they encode it)
 			# n.b. {3,} makes McTaggart not go to Mc-Taggart... bit hacky
-			art['byline'] = author
-	
+
+			# discard "healthtelegraph", "fashiontelegraph" etc...
+			if author.lower().find( 'telegraph' ) == -1:
+				art['byline'] = unicode( author )
 
 	# text (all paras use 'story' or 'story2' class, so just discard everything else!)
 	# build up a new soup with only the story text in it
@@ -256,7 +258,8 @@ def Extract( html, context ):
 		author = ukmedia.ExtractAuthorFromParagraph(art['description'])
 		if author!=u'':
 			art['byline'] = author
-		
+
+	
 # DEBUG:
 #	if ('byline2' in art) and ('byline' in art) and art['byline2']!=art['byline']:
 #		print "byline2: "+art['byline2']+" ("+art['byline']

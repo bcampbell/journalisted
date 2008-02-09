@@ -164,9 +164,9 @@ def Extract( html, context ):
 	art['title'] = titletxt
 
 
-	if html.find( "<!-- BEGIN: Module - Main Article -->" ) == -1:
-		ukmedia.DBUG2( "IGNORE non-story '%s' (%s)\n" % (art['title'], art['srcurl']) );
-		return None
+#	if html.find( "<!-- BEGIN: Module - Main Article -->" ) == -1:
+#		ukmedia.DBUG2( "IGNORE non-story '%s' (%s)\n" % (art['title'], art['srcurl']) );
+#		return None
 
 
 	# ignore some known pages
