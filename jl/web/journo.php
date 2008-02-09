@@ -273,18 +273,18 @@ function emit_block_friendlystats( $journo )
 	}
 
 	// more or less articles than average journo?
-	print( "<li>\n" );
 	$diff = (float)$stats['num_articles'] / (float)$avg['num_articles'];
-	if( $diff < 0.8 )
-		print( "Fewer bylined articles than the average journalist" );
-	elseif( $diff > 1.2 )
-		print("More bylined articles than the average journalist");
-	else
-		print("About the same number of bylined articles as the average journalist");
-	print( "</li>\n" );
+	if( $diff >= 0.8 )
+	{
+		print( "<li>\n" );
+		if( $diff > 1.2 )
+			print("More bylined articles than the average journalist");
+		else
+			print("About the same number of bylined articles as the average journalist");
+		print( "</li>\n" );
+	}
 
 	print( "</ul>\n" );
-
 	echo $basedDisclaimer;
 	
 	print( "\n" );
