@@ -162,8 +162,8 @@ def Extract( html, context ):
 
 # to get unique id out of url
 srcid_patterns = [
-	re.compile( "-89520-([0-9]+)/$""" ),	# mirror
-	re.compile( "-98487-([0-9]+)/$""" ),	# sundaymirror
+	re.compile( "-89520-([0-9]+)/([?].*)?$""" ),	# mirror
+	re.compile( "-98487-([0-9]+)/([?].*)?$""" ),	# sundaymirror
 	re.compile( "%26objectid=([0-9]+)%26""" )	# old url style
 	]
 
