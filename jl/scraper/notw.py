@@ -7,10 +7,15 @@
 # (http://www.affero.org/oagpl.html)
 #
 #
+# NOTW have their content split into two: their own website, and on
+# notw.typepad.com. Perhaps the former is for stuff that appears in
+# print, and the typepad stuff is additional online-only content?
+#
+# notw rss feeds look pretty useless, so we do a shallow crawl for links.
+# the typepad rss feeds would probably be OK...
+#
 # TODO:
-# pubdate
-#
-#
+# Can we split the crawling out (similar code in sun.py)?
 
 import sys
 import re
@@ -25,8 +30,6 @@ from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
 
-# notw rss feeds look pretty useless.
-# the typepad ones would probably be OK...
 
 
 
@@ -133,6 +136,8 @@ def Extract( html, context ):
 
 
 def Extract_typepad( html, context ):
+	"""extractor for notw.typepad.com articles"""
+
 	art = context
 	soup = BeautifulSoup( html )
 
@@ -204,6 +209,7 @@ def Extract_typepad( html, context ):
 
 
 def Extract_notw( html, context ):
+	"""extractor for newsoftheworld.co.uk articles"""
 	art = context
 
 	# notw claims to be iso-8859-1, but it seems to be windows-1252 really
@@ -243,7 +249,6 @@ def Extract_notw( html, context ):
 			cruft.extract()
 
 
-#	art['pubdate'] = pubdate
 	content = td.renderContents( None )
 	content = ukmedia.SanitiseHTML( content )
 	art['content'] = content
@@ -251,11 +256,21 @@ def Extract_notw( html, context ):
 	art['description'] = ukmedia.FirstPara( content )
 
 
+
+	# get year from meta tags, eg:
+	#<meta name="date" content="10 February 2008" />
+	meta = soup.find( 'meta', {'name':'date'} )
+	m = re.search( '\\b(\\d{4})\\b', meta['content'] )
+	year = m.group(1)
+	# but meta has unreliable format, so get day and month from url...
+	m = re.search( '/(\\d{2})(\\d{2})[^/]+[.]shtml', art['srcurl'] )
+	day = m.group(1)
+	month = m.group(2)
+	
+	art['pubdate'] = datetime( int(year),int(month),int(day) )
+
 	return art
 
-
-def ScrubFunc( context, entry ):
-	return context
 
 
 
