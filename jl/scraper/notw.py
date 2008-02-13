@@ -25,10 +25,9 @@ from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
 
+# notw rss feeds look pretty useless.
+# the typepad ones would probably be OK...
 
-rssfeeds = {
-#	'News / Showbiz': 'http://www.express.co.uk/rss/news.xml',
-}
 
 
 def FindArticles():
@@ -53,7 +52,8 @@ def FindArticles():
 crawled = set()
 
 # 
-articleurlpat = re.compile( "http:[/][/]www[.]newsoftheworld[.]co[.]uk[/][0-9]+.*[.]shtml(#.*?)?([?].*)?" )
+notw_artpat = re.compile( "newsoftheworld[.]co[.]uk[/][0-9]+.*[.]shtml(#.*?)?([?].*)?" )
+typepad_artpat = re.compile( "notw.typepad.com/.*/\\d{4}/\\d{2}/.*[.]html" )
 
 def Crawl( url, depth=0 ):
 	"""Recursively crawl the sun website looking for article links.
@@ -88,21 +88,23 @@ def Crawl( url, depth=0 ):
 		if not a.has_key( 'href' ):
 			continue
 		href = a['href'].strip()
-
-		if href.startswith( 'javascript:' ):
-			continue
-		if href.startswith( 'mailto:' ):
-			continue
+		href = href.replace( '../', '' )	# cheesiness
 
 
-		# handle relative links
 		href = urlparse.urljoin( url, href )
 
-		# discard external sites, discussion pages, login pages etc...
-		if not href.startswith( 'http://www.newsoftheworld.co.uk' ):
+		o = urlparse.urlparse( href)
+		if o[0] != 'http':
 			continue
 
-		if articleurlpat.match( href ):
+		# discard external sites
+		if o[1] not in ( 'www.newsoftheworld.co.uk', 'notw.typepad.com' ):
+			continue
+
+		# trim off fragments (eg '#comments')
+		href = urlparse.urlunparse( (o[0], o[1], o[2], o[3], o[4],'') )
+
+		if notw_artpat.search( href ) or typepad_artpat.search(href):
 			articlelinks.add( href )
 		else:
 			indexlinks.add( href )
@@ -121,7 +123,87 @@ def Crawl( url, depth=0 ):
 
 
 
+
 def Extract( html, context ):
+	o = urlparse.urlparse( context['srcurl'] )
+	if o[1] == 'notw.typepad.com':
+		return Extract_typepad( html, context )		
+	else:
+		return Extract_notw( html, context )		
+
+
+def Extract_typepad( html, context ):
+	art = context
+	soup = BeautifulSoup( html )
+
+	ediv = soup.find( 'div', {'class':'entry'} )
+	h3 = ediv.find( 'h3', {'class':'entry-header'} )
+	#contentdiv = ediv.find( 'div', {'class':'entry-content'} )
+	bodydiv = ediv.find( 'div', {'class':'entry-body'} )
+	morediv = ediv.find( 'div', {'class':'entry-more'} )
+	footerspan = soup.find( 'span', {'class':'post-footers'} )
+
+	headline = h3.renderContents(None)
+	headline = ukmedia.FromHTML( headline )
+	art['title'] = headline
+
+
+
+	byline = u''
+	footertxt = footerspan.renderContents(None)
+	footercracker = re.compile( "Posted by\\s+(.*?)\\s+on\\s+(.*?\\s+at\\s+.*?)\\s*", re.UNICODE )
+	m = footercracker.search(footertxt)
+	if m:
+		byline = m.group(1)
+		datetxt = m.group(2)
+	else:
+		# "Posted at 12:01 AM"
+		d = soup.find( 'h2', {'class':'date-header'} ).renderContents(None)
+		m = re.search( "Posted at\\s+(.*)", footertxt )
+		datetxt = d + u' ' + m.group(1)
+
+	# often, the first non-empty para is byline
+	if byline == u'' or byline == u'Online Team':
+		for p in bodydiv.findAll('p'):
+			txt = ukmedia.FromHTML( p.renderContents( None ) )
+			if not txt:
+				continue
+			m = re.match( "By\\s+((\\b\\w+(\\s+|\\b)){2,3})\\s*$" , txt, re.UNICODE|re.IGNORECASE )
+			if m:
+				byline = m.group(1)
+				p.extract()
+			break
+
+
+	# can sometimes get proper author from blog title...
+	if byline == u'' or byline == u'Online Team':
+		t = soup.find('title')
+		tpat = re.compile( "\\s*((\\b\\w+\\b){2,3}):", re.UNICODE )
+		m = tpat.search( t.renderContents(None) )
+		if m:
+			byline = m.group(1)
+
+
+	art['byline'] = byline
+	art['pubdate'] = ukmedia.ParseDateTime( datetxt )
+
+
+	content = bodydiv.renderContents(None)
+	if morediv:
+		content = content + morediv.renderContents(None)
+	content = ukmedia.SanitiseHTML( content )
+	art['content'] = content
+
+	art['description'] = ukmedia.FromHTML( ukmedia.FirstPara( content ) )
+
+
+	return art
+
+
+
+
+
+def Extract_notw( html, context ):
 	art = context
 
 	# notw claims to be iso-8859-1, but it seems to be windows-1252 really
@@ -177,15 +259,16 @@ def ScrubFunc( context, entry ):
 
 
 
-# pattern to extract unique id from urls
-# eg:
-# "http://www.newsoftheworld.co.uk/1002_scroungers.shtml"
-idpat = re.compile( "/([0-9]+[^/]*[.]shtml)$" )
-
-
 def CalcSrcID( url ):
-	m = idpat.search( url )
-	return m.group(1)
+	o = urlparse.urlparse( url )
+	if o[1] == 'notw.typepad.com':
+		# "http://notw.typepad.com/hyland/2008/01/no-sniping-ross.html"
+		return o[2]
+	else:
+		# "http://www.newsoftheworld.co.uk/1002_scroungers.shtml"
+		notw_idpat = re.compile( "/([0-9]+[^/]*[.]shtml)$" )
+		m = notw_idpat.search( url )
+		return m.group(1)
 
 
 def ContextFromURL( url ):
@@ -200,9 +283,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-#    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
-
-	lst = FindArticles()
-	for l in lst:
-		print l['srcurl']
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 
