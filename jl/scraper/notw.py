@@ -167,8 +167,11 @@ def Extract_typepad( html, context ):
 		m = re.search( "Posted at\\s+(.*)", footertxt )
 		datetxt = d + u' ' + m.group(1)
 
+	if byline == u'Online Team':
+		byline = u''
+
 	# often, the first non-empty para is byline
-	if byline == u'' or byline == u'Online Team':
+	if byline == u'':
 		for p in bodydiv.findAll('p'):
 			txt = ukmedia.FromHTML( p.renderContents( None ) )
 			if not txt:
@@ -181,7 +184,7 @@ def Extract_typepad( html, context ):
 
 
 	# can sometimes get proper author from blog title...
-	if byline == u'' or byline == u'Online Team':
+	if byline == u'':
 		t = soup.find('title')
 		tpat = re.compile( "\\s*((\\b\\w+\\b){2,3}):", re.UNICODE )
 		m = tpat.search( t.renderContents(None) )
@@ -212,23 +215,52 @@ def Extract_notw( html, context ):
 	"""extractor for newsoftheworld.co.uk articles"""
 	art = context
 
+
+	if re.search( 'Sorry,\\s+the\\s+story\\s+you\\s+are\\s+looking\\s+for\\s+has\\s+been\\s+removed.', html ):
+		ukmedia.DBUG2( "IGNORE missing article (%s)\n" % ( art['srcurl']) );
+		return None
+
 	# notw claims to be iso-8859-1, but it seems to be windows-1252 really
 	soup = BeautifulSoup( html, fromEncoding = 'windows-1252' )
 
+	# look for the table cell which contains the article
+	h = soup.find( 'h1' )
+	if not h:
+		h = soup.find( 'h2' )
+	td = h.parent
 
-	# sometimes have a graphical headline and a text one...
+	# headlines are a total mess. Sometimes only have a graphic headline.
+	# in prefered order:
+	# first non-blank <h1>
+	# The beginning of the page title
+	# first non-blank <h2>
+
 	headline = u''
 	for h1 in soup.findAll( 'h1' ):
 		headline = h1.renderContents( None )
 		headline = ukmedia.FromHTML( headline )
 		headline = u' '.join( headline.split() )
+		h1.extract()
 		if headline != u'':
 			break
 
+	if headline == u'':
+		m = re.match( '(.*?)\\s*[|]', soup.title.renderContents(None) )
+		if m:
+			headline = m.group(1)
+			headline = ukmedia.DescapeHTML( headline )
+			headline = u' '.join( headline.split() )
+
+	if headline == u'':
+		for h2 in soup.findAll( 'h2' ):
+			headline = h2.renderContents( None )
+			headline = ukmedia.FromHTML( headline )
+			headline = u' '.join( headline.split() )
+			if headline != u'':
+				break
+
 	art['title'] = headline
 
-	td = h1.parent
-	h1.extract()
 
 	byline = u''
 	bylinep = td.find( 'p', {'class':'byline'} )
@@ -263,7 +295,7 @@ def Extract_notw( html, context ):
 	m = re.search( '\\b(\\d{4})\\b', meta['content'] )
 	year = m.group(1)
 	# but meta has unreliable format, so get day and month from url...
-	m = re.search( '/(\\d{2})(\\d{2})[^/]+[.]shtml', art['srcurl'] )
+	m = re.search( '/(\\d{2})_?(\\d{2})[^/]+[.]shtml', art['srcurl'] )
 	day = m.group(1)
 	month = m.group(2)
 	
@@ -298,5 +330,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
 

@@ -80,6 +80,9 @@ datecrackers = [
 
 	# "20:12pm 23rd November 2007" (dailymail)
 	re.compile( """(?P<hour>\d{1,2}):(?P<min>\d\d)\w\w\s+(?P<day>\d{1,2})\w+\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE),
+	# "February 10 2008 22:05" (ft)
+	re.compile( """(?P<month>\w+)\s+(?P<day>\d+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE ),
+
 
 	# for BLOGS:
 	
@@ -94,13 +97,15 @@ datecrackers = [
 	re.compile( """((?P<month>\w+)\s+(?P<day>\d+),\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
 	# 'October 15, 2007' (Times blogs)
-	re.compile( """(?P<month>\w+) (?P<day>\d+), (?P<year>\d{4})""", re.UNICODE ),
+	# 'February 12 2008' (Herald)
+	re.compile( """(?P<month>\w+)\\s+(?P<day>\d+),?\\s+(?P<year>\d{4})""", re.UNICODE ),
 	
 	# 'Monday, 22 October 2007' (Independent blogs, Sun (page date))
 	re.compile( """\w+,\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
 	
 	# '22 October 2007' (Sky News blogs)
 	# '11 Dec 2007' (Sun (article date))
+	# '12 February 2008' (scotsman)
 	re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
 	# 03/09/2007' (Sky News blogs)
 	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE ),
@@ -231,6 +236,7 @@ def descape_entity(m):
 #  #nnnnn; => unicode char
 # etc
 def DescapeHTML(s):
+
 	return descapepat.sub(descape_entity, s)
 
 #escape HTML entities ('<' => '&gt;' etc...)
