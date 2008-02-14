@@ -190,10 +190,24 @@ def Extract( html, context ):
 	soup = BeautifulSoup( html, fromEncoding='utf-8' )
 
 
+	# check for and ignore broken pages
 	artdiv = soup.find( 'div', {'id':'viewarticle'} )
 	if not artdiv and html.find( "The article has been unable to display.") != -1:
 		ukmedia.DBUG2( "IGNORE article ('unable to display') (%s)\n" % ( art['srcurl']) );
 		return None
+
+	# pull out source publication
+	# eg"<li> <span id="spanPub"> <strong> Source: </strong> The Scotsman </span> </li>"
+	# "Press Association"
+	# "The Scotsman"
+	# "Scotland On Sunday"
+	# "Edinburgh Evening News"
+	source = u''
+	pubspan = soup.find( 'span', {'id':'spanPub'} )
+	txt = ukmedia.FromHTML( pubspan.renderContents(None) )
+	m = re.search( u'Source:\\s+(.*)\\s*$', txt )
+	if m:
+		source = m.group(1)
 
 	h1 = artdiv.find('h1')
 
@@ -225,6 +239,9 @@ def Extract( html, context ):
 #	if not byline and '/opinion/' in art['srcurl']:
 #		byline = ukmedia.ExtractAuthorFromParagraph( ukmedia.DecapNames(desc) )
 
+	# Should we even store press association articles?
+	if byline == u'' and source.lower() == 'press association':
+		art['byline'] = u'PA'
 
 	art['byline'] = byline
 
@@ -251,9 +268,6 @@ def Extract( html, context ):
 	li.strong.extract()
 	datetxt = li.renderContents( None ).strip()
 	art['pubdate'] = ukmedia.ParseDateTime( datetxt )
-
-	# pull out publication
-	# eg"<li> <span id="spanPub"> <strong> Source: </strong> The Scotsman </span> </li>"
 
 	return art
 
