@@ -57,6 +57,8 @@ def MonthNumber( name ):
 
 # various different datetime formats
 datecrackers = [
+	# 3:19pm on Tue 29 Jan 08 (herald blogs)
+	re.compile( """(?P<hour>\d+):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+(on\s+)?(\w+)\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d+)""", re.UNICODE|re.IGNORECASE ),
 	# "2007/03/18 10:59:02"
 	re.compile( """(?P<year>\d{4})/(?P<month>\d\d)/(?P<day>\d\d) (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
 
@@ -112,7 +114,6 @@ datecrackers = [
 
 
 	]
-
 
 def GetGroup(m,nm):
 	"""cheesy little helper for ParseDateTime()"""
