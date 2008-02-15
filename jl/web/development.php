@@ -10,7 +10,7 @@ page_header( "Development" );
 
 <h2>Development</h2>
 
-Journa-list is an open source project.
+Journalisted is an open source project.
 
 <p>
 The main project page is <a href="http://code.google.com/p/journa-list/">here</a> (hosted at code.google.com).

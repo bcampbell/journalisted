@@ -45,7 +45,7 @@ function page_header( $title, $params=array() )
 <body>
 
 	<div id="head">
-		<h1><a href="/"><span></span>Journa-list</a></h1>
+		<h1><a href="/"><span></span>Journalisted</a></h1>
 		<h2>&#0133;read all about them!</h2>
 		<p>
 			<strong>FREE!</strong><br />

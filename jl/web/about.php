@@ -10,11 +10,11 @@ require_once '../../phplib/db.php';
 page_header( "About", array( 'menupage'=>'about' ) );
 
 ?>
-<h2>About Journa-list</h2>
+<h2>About Journalisted</h2>
 
 
-<h3>What is journa-list?</h3>
-<p>Journa-list is an independent, not-for-profit website built to make it easier for the public to find out more about journalists and what they write about.</p>
+<h3>What is Journalisted?</h3>
+<p>Journalisted is an independent, not-for-profit website built to make it easier for the public to find out more about journalists and what they write about.</p>
 <p>It is non-commercial and non-partisan. It is intended to make the news media more transparent and accountable on behalf of the public (as opposed to journalists or PR). It is an initiative of the Media Standards Trust, a charitable body set up to find ways to foster high standards in news.</p>
 <p>It has been funded - on a very limited budget - by a number of charitable foundations (particularly Esmee Fairbairn and Joseph Rowntree) and by individual Board members of the Media Standards Trust.</p>
 <p>It is the first UK website - after <a href="http://www.byliner.com">www.byliner.com</a> - to offer a free searchable database of UK national journalists published by one of 14 news outlets online (who write under a byline), with links to their current and previous articles, and some basic statistics about their work.</p>
@@ -74,7 +74,7 @@ We would very much like:
 <li>To be able to allow people to compare articles to press releases and other marketing material.</li>
 </ul>
 <p>To do any of this, however, we need support. If you would like to support us please do 
-<?=SafeMailto( $contactemail . '?subject=journa-list', 'get in touch' );?>.</p>
+<?=SafeMailto( $contactemail . '?subject=journalisted', 'get in touch' );?>.</p>
 
 <h3>Credits</h3>
 <p>

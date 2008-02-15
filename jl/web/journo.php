@@ -313,7 +313,7 @@ function emit_block_bynumbers( $journo )
 
 ?>
 <div class="boxwide bynumbers">
-<h3>Journa-list by numbers (since <?php echo $stats['first_pubdate'];?>)</h3>
+<h3>Journalisted by numbers (since <?php echo $stats['first_pubdate'];?>)</h3>
 <div class="boxwide-content">
 <?php
 

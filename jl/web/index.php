@@ -36,7 +36,7 @@ function emit_front_page()
 <div id="contenthead">
 <img src="/images/paper.png" alt="" />
 
-<p>Journa-list is an independent, non-commercial website built to help the public navigate the news</p>
+<p>Journalisted is an independent, non-commercial website built to help the public navigate the news</p>
 
 <form action="/list" method="get" class="frontform">
  <label for="name">Find out more about a journalist</label>
