@@ -91,18 +91,17 @@ body, #menu, #head {
 }
 
 #head h1 {
-/*  width:289px; */
-  width: 299px; /* title_beta.png width */
+  width: 364px; /* title_beta.png width */
   overflow:hidden;
-  height:73px;
+  height: 82px;
   margin: 0px 0px 0 0;
 }
 
 #head h1 a span {
   margin-bottom:-0px;
 /* width:289px; */
-  width: 299px; /* title_beta.png width */
-  height:73px;
+  width: 364px; /* title_beta.png width */
+  height: 82px;
   display:block;
   position: relative;
   z-index: 1;

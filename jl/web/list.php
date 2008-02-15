@@ -33,7 +33,10 @@ else if( $searchtext )
 {
 	$pagetitle = "Articles mentioning \"$searchtext\"";
 	page_header( $pagetitle );
-	FindByText( $searchtext );
+/*	FindByText( $searchtext ); */
+?>
+<p>Sorry, the search facility has been temporarily disabled.</p>
+<?php
 	page_footer();
 }
 else
