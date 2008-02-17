@@ -28,3 +28,33 @@ function gen_mailto()
 	document.write( 'lto:' + addr + '">' + text + '</a>' );
 }
 
+
+/* Safari supports a 'placeholder' attribute on text input elements
+ * to display greyed-out text which disappears automatically.
+ * This Fn sets up similar behaviour for non-Safari browsers.
+ * By Jordan Harper,
+ * http://www.beyondstandards.com/archives/input-placeholders/
+ */
+function activatePlaceholders() {
+	var detect = navigator.userAgent.toLowerCase();
+	if (detect.indexOf("safari") > 0) return false;
+	var inputs = document.getElementsByTagName("input");
+	for (var i=0;i<inputs.length;i++) {
+		if (inputs[i].getAttribute("type") == "text") {
+			if (inputs[i].getAttribute("placeholder") && inputs[i].getAttribute("placeholder").length > 0) {
+				inputs[i].value = inputs[i].getAttribute("placeholder");
+				inputs[i].onclick = function() {
+					if (this.value == this.getAttribute("placeholder")) {
+						this.value = "";
+					}
+					return false;
+				}
+				inputs[i].onblur = function() {
+					if (this.value.length < 1) {
+						this.value = this.getAttribute("placeholder");
+					}
+				}
+			}
+		}
+	}
+}

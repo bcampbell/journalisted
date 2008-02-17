@@ -6,7 +6,16 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
 
-page_header( "", array( 'menupage'=>'cover') );
+// setup for placeholder text in input forms
+$head_extra = <<<EOT
+  <script type="text/javascript" language="JavaScript">
+    window.onload=function() {
+      activatePlaceholders();
+    }
+  </script>
+EOT;
+
+page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
 
 // recalculate front page once every 4 hours
 cache_emit( 'frontpage', 'emit_front_page', 4*60*60 );
@@ -40,7 +49,7 @@ function emit_front_page()
 
 <form action="/list" method="get" class="frontform">
  <label for="name">Find out more about a journalist</label>
-<input type="text" value="" title="type journalist name here" id="name" name="name" class="text" />
+<input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
 <input type="submit" value="Find" />
 </form>
 
@@ -60,7 +69,7 @@ function emit_front_page()
 <form action="/list" method="get" class="frontform">
  <label for="find">Compare coverage by different journalists</label>
 
- <input type="text" value="" title="type subject here" id="search" name="search" class="text" />
+ <input type="text" value="" title="type subject here" id="search" name="search" class="text" placeholder="type subject here"/>
  <input type="submit" value="Find" />
 </form>
 
