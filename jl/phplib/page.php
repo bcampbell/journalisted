@@ -38,8 +38,24 @@ function page_header( $title, $params=array() )
 		}
 	}
 
+	$js = array( "/jl.js" );
+	if (array_key_exists('js_extra', $params))
+	{
+		//print_r( $params['js_extra'] );
+		$js = array_merge( $js, $params['js_extra'] );
+	}
+
+	foreach( $js as $s ) {
+//		print $s;
+  		printf("  <script type=\"text/javascript\" src=\"%s\"></script>\n",$s);
+	}
+
+	
+	if (array_key_exists('head_extra', $params)) {
+		print $params['head_extra'];
+	}
 ?>
-  <script type="text/javascript" src="/jl.js"></script>
+
 </head>
 
 <body>
