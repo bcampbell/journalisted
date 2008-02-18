@@ -44,6 +44,7 @@ def FindArticles():
 
 	found = []
 	for url in urls:
+		print url
 		found.append( ContextFromURL( url ) )
 
 	return found
@@ -65,7 +66,7 @@ def Crawl( url, depth=0 ):
 	"""
 
 	global crawled
-	maxdepth = 1	# Very shallow. We only go 1 level down.
+	maxdepth = 2	# Very shallow. We only go 2 levels in.
 
 	if depth==0:	# Starting a new crawl?
 		crawled = set()
@@ -75,6 +76,10 @@ def Crawl( url, depth=0 ):
 
 	if url in crawled:
 		ukmedia.DBUG2( "(already visited '%s')\n" % (url) )
+		return articlelinks
+
+	if '/mobile/' in url:
+		ukmedia.DBUG2( "SKIP mobile page (%s)\n" % (url) )
 		return articlelinks
 
 	try:
@@ -108,6 +113,8 @@ def Crawl( url, depth=0 ):
 		href = urlparse.urlunparse( (o[0], o[1], o[2], o[3], o[4],'') )
 
 		if notw_artpat.search( href ) or typepad_artpat.search(href):
+			# trim off parameters
+			href = urlparse.urlunparse( (o[0], o[1], o[2], '', '', '') )
 			articlelinks.add( href )
 		else:
 			indexlinks.add( href )
