@@ -33,10 +33,12 @@ else if( $searchtext )
 {
 	$pagetitle = "Articles mentioning \"$searchtext\"";
 	page_header( $pagetitle );
-/*	FindByText( $searchtext ); */
+//	FindByText( $searchtext );
 ?>
-<p>Sorry, the search facility has been temporarily disabled.</p>
+<p>Sorry - search has been disabled, pending a hardware upgrade.</p>
+<p>We expect it to be back up and running early in March.</p>
 <?php
+
 	page_footer();
 }
 else
@@ -202,12 +204,12 @@ SELECT j.id AS journo_id, j.ref, j.prettyname, a.id AS article_id,a.title,a.perm
 	WHERE a.status='a'
 		AND j.status='a'
 		AND a.content ilike ?
-		AND a.pubdate>now()-interval '1 month'
+		AND a.pubdate>now()-interval '5 days'
 	ORDER BY j.id
 EOT;
 	$q = db_query( $sql, '%'.$searchtext.'%' );
 
-	printf( "<h2>Articles within the last month mentioning \"%s\"</h2>", $searchtext );
+	printf( "<h2>Articles within the last five days mentioning \"%s\"</h2>", $searchtext );
 
 	// want to group articles by journo
 	$journo_id = null;
