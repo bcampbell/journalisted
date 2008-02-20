@@ -1,0 +1,93 @@
+notes on getting a local install of journalisted.com up and running...
+
+
+Prequisites
+-----------
+
+apache
+ - version not too important
+ - need mod_rewrite, php
+ - other webservers might work (eg IIS)
+
+postgresql
+ - not too fussy about version (Currently using 8.2)
+
+php
+ - php4 works, php5 is probably better
+ - postgresql bindings
+ - HTML_QuickForm (used by admin pages only)
+ - needs to be able to run from commandline, as well as webserver
+
+python2.4
+ - postgresql bindings (we use PyPgSQL)
+
+mySociety phplib and pylib
+ - available from their CVS
+
+On Ubuntu/Debian, this basically boils down to:
+$ apt-get install libapache2 libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-pgsql
+$ svn checkout http://journa-list.googlecode.com/svn/trunk/ journa-list
+$ cd journa-list
+$ export CVSROOT=":pserver:anonymous@cvs.mysociety.org:/repos"
+$ cvs checkout -d phplib mysociety/phplib
+$ cvs checkout -d pylib mysociety/pylib
+
+Setting up all this is much more fiddly under Windows and Mac, but can
+definitely be done.
+
+
+
+DB Setup
+--------
+
+
+(as postgres user, eg sudo -u postgres bash)
+$ createuser --no-superuser --createdb --no-createrole mst
+
+
+$ sudoedit /etc/postgresql/8.2/main/pg_hba.conf
+
+Add the line:
+
+local  all  all  trust
+
+(is order important? might have to be higher than a similar line with
+other authetication)
+
+
+Apache
+------
+
+Set up HOSTS file to map journalisted.dev to localhost.
+
+Add new file, /etc/apache2/sites-available/www.journalisted.dev:
+
+  <VirtualHost *>
+    ServerName www.journalisted.dev
+    ServerAlias journalisted.dev *.journalisted.dev
+    DocumentRoot /home/ben/proj/journa-list/jl/web
+  </VirtualHost>
+
+Enable the site with:
+
+  $ sudo a2ensite www.journa-listed.dev
+
+
+Make sure mod_rewrite is enabled:
+  $ sudo a2enmod rewrite
+
+Tell apache to reread the configuration:
+  $ sudo /etc/init.d/apache2 reload
+
+
+Site Config
+-----------
+
+ $ cd journa-list/jl
+ $ cp conf/general conf/general
+ $ cp conf/httpd.conf web/.htaccess
+
+Check settings in conf/general. In particular, check the postgresql port
+number against your postgresql.conf
+
+

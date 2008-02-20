@@ -15,11 +15,16 @@ Kill the old db:
   $ dropdb mst
 
 Create the new one:
-  $ createdb -E latin-1 mst
+  $ createdb -E latin-1 -U mst mst
 
-as superuser:
-
+as a database superuser:
   CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;
+
+eg:
+  $ sudo -u postgres psql
+  postgres=# CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;
+  postgres=# \q
+
 
 Load backup:
 
