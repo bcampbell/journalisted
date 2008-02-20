@@ -9,7 +9,6 @@
 #
 # TODO:
 # - could get journo email addresses from bylines
-# - factor out and rewrite crawler (Should use an active edge list)
 
 import sys
 import re
@@ -21,18 +20,20 @@ import urllib2
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
+from SpiderPig import SpiderPig
 
 
-# herald rss feeds not very complete, so just crawl the site for links instead!
-UNUSED_rssfeeds = {
-	'Sport': 'http://www.theherald.co.uk/sport/headlines/rss.xml',
-	'News': 'http://www.theherald.co.uk/news/news/rss.xml',
-	'Features': 'http://www.theherald.co.uk/features/features/rss.xml',
-	'Business': 'http://www.theherald.co.uk/business/news/rss.xml',
-	'Politics': 'http://www.theherald.co.uk/politics/news/rss.xml',
-	'Going Out': 'http://www.theherald.co.uk/goingout/top/rss.xml',
-}
 
+# pattern to extract unique id from urls
+# main news site urls:
+# "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
+# blog urls:
+# "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
+idpat = re.compile( "/((display)|(index)[.]var[.].*[.]php)" )
+
+
+# pattern to find blog rss feeds on the blog index pages
+blogrsspat = re.compile( "http://www.theherald.co.uk/(.*)/rss.xml" )
 
 
 
@@ -41,100 +42,89 @@ def FindArticles():
 
 	Returns a list of scrape contexts, one for each article.
 	"""
+	ukmedia.DBUG2( "*** herald ***: looking for blog entries...\n" )
+	found = FindBlogEntries()
 	ukmedia.DBUG2( "*** herald ***: looking for articles...\n" )
+	found = found + FindArticlesBySpidering()
 
-	# a bit messy - but do blogs first by themselves (as we only go in one level)
-	urls = Crawl( 'http://www.theherald.co.uk/heraldblogs' )
-	urls = urls | Crawl( 'http://www.theherald.co.uk' )
-	found = []
-	for url in urls:
-		found.append( ContextFromURL( url ) )
+	ukmedia.DBUG2( "found %d articles in total\n" % (len(found)) )
+	return found
+
+
+def blog_url_handler( feedlist, url, depth, a ):
+	""" SpiderPig callback for searching out links of blog rss feeds """
+	if depth>2:
+		return None
+
+	if a.find( text=re.compile( 'LINK' ) ):
+		#print "%d BLOGINDEX: %s" %(depth, url)
+		return url
+
+	m = blogrsspat.search( url )
+	if m:
+		blogname = m.group(1)
+		if not blogname in feedlist:
+		#	print "%d RSS '%s': %s" %(depth,blogname,url)
+			feedlist[blogname] = url
+
+def FindBlogEntries():
+	"""spider to find blog RSS feeds, then use the articles from the feeds"""
+	feeds = {}
+	pig = SpiderPig( blog_url_handler, userdata=feeds, logfunc=ukmedia.DBUG2 )
+	pig.AddSeed( 'http://www.theherald.co.uk/heraldblogs' )
+	pig.Go()
+
+	found = ukmedia.FindArticlesFromRSS( feeds, u'herald', ScrubFunc );
 
 	return found
 
 
+def art_url_handler( arturls, url, depth, a ):
+	""" SpiderPig callback for searching out article links """
 
-# keep track of pages visited by Crawl(), so we don't process them
-# multiple times
-crawled = set()
+	# follow up to three links in
+	if depth > 3:
+		return None
 
-#
-acceptedhosts = [ 'www.theherald.co.uk' ]
-artpats = [ re.compile( "/((display)|(index)[.]var[.].*[.]php)" ) ]
+	# we use the class attribute to decide what sort of link it is
+	if not a.has_key('class'):
+		return None
+
+	classes = a['class'].split()
+
+	# links to articles...
+	# We record them but don't follow them.
+	if ('headlineLink' in classes) or ('sectTopHeadline' in classes):
+		if idpat.search( url ):
+			# Might actually be a link to a page listing more articles...
+			if re.match( u'\\s*More\\s*...\\s*', a.renderContents(None) ):
+				return url
+			# OK we think it's an article!
+			arturls.add(url)
+		return None
+
+	# links to other lists of articles
+	if ('channelLink' in classes) or ('navLink' in classes):
+		return url
+
+	return None
 
 
-def Crawl( url, depth=0 ):
-	"""Recursively crawl website looking for article links.
+def FindArticlesBySpidering():
+	""" spider through the site looking for articles """
+	urls = set()
+	pig = SpiderPig( art_url_handler, userdata=urls, logfunc=ukmedia.DBUG2 )
+	pig.AddSeed( 'http://www.theherald.co.uk' )
+	pig.Go()
 
-	Returns a set containing article urls.
-	"""
+	found = []
+	for url in urls:
+		found.append( ContextFromURL( url ) )
 
-	global crawled
-	maxdepth = 1	# Very shallow. We only go 1 level down.
+	ukmedia.DBUG( "spidering found %d articles\n" %(len(found)) )
+	return found
 
-	if depth==0:	# Starting a new crawl?
-		crawled = set()
 
-	articlelinks = set()
-	indexlinks = set()
-
-	if url in crawled:
-		ukmedia.DBUG2( "(already visited '%s')\n" % (url) )
-		return articlelinks
-
-	try:
-		html = ukmedia.FetchURL( url )
-	except urllib2.HTTPError, e:
-		# continue even if we get http errors (bound to be a borked
-		# link or two)
-		traceback.print_exc()
-		print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
-		return articlelinks
-
-	soup = BeautifulSoup( html )
-	for a in soup.findAll( 'a' ):
-		if not a.has_key( 'href' ):
-			continue
-		href = a['href'].strip()
-		href = href.replace( '../', '' )	# cheesiness
-
-		href = urlparse.urljoin( url, href )
-
-		o = urlparse.urlparse( href)
-		if o[0] != 'http':
-			continue
-
-		# discard external sites
-		if o[1] not in acceptedhosts:
-			continue
-
-		# trim off fragments (eg '#comments')
-		href = urlparse.urlunparse( (o[0], o[1], o[2], o[3], o[4],'') )
-
-		is_article = 0
-		for pat in artpats:
-			if pat.search( href ):
-				is_article = 1
-				break
-
-		if is_article:
-			# trim off parameters
-			href = urlparse.urlunparse( (o[0], o[1], o[2], '', '', '') )
-			articlelinks.add( href )
-		else:
-			indexlinks.add( href )
-
-	crawled.add( url )
-	ukmedia.DBUG2( "Crawled '%s' (depth=%d), found %d articles\n" % ( url, depth, len( articlelinks ) ) )
-
-	if depth < maxdepth:
-		for l in indexlinks:
-			if not (l in crawled):
-				articlelinks = articlelinks | Crawl( l, depth+1 )
-			else:
-				ukmedia.DBUG2( "  [already visited '%s']\n" % (l) )
-
-	return articlelinks
 
 
 
@@ -232,6 +222,9 @@ def news_Extract( html, context ):
 def blog_Extract( html, context ):
 	"""extract function for handling blog entries"""
 
+	if html.find( "No blog entries found." ) != -1:	
+		ukmedia.DBUG2( "IGNORE missing blog entry (%s)\n" % (context[srcurl]) )
+		return None
 
 	art = context
 	soup = BeautifulSoup( html )
@@ -249,7 +242,10 @@ def blog_Extract( html, context ):
 	art['byline'] = byline
 
 	datespan = headbox.find( 'span', {'class':'itdate'} )
+	# replace 'today' with current date
+	today = datetime.now().strftime( '%a %d %b %Y' )
 	datetxt = ukmedia.FromHTML( datespan.renderContents(None) )
+	datetxt = datetxt.replace( 'today', today )
 	art['pubdate'] = ukmedia.ParseDateTime( datetxt )
 
 	content = entdiv.renderContents(None)
@@ -263,16 +259,9 @@ def blog_Extract( html, context ):
 
 
 def ScrubFunc( context, entry ):
+	context['srcid'] = CalcSrcID( context['srcurl'] )
 	return context
 
-
-
-# pattern to extract unique id from urls
-# main news site urls:
-# "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
-# blog urls:
-# "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
-idpat = re.compile( "/((display)|(index)[.]var[.].*[.]php)" )
 
 
 
