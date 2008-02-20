@@ -1,3 +1,3 @@
 
-INSERT INTO organisation (id,shortname,prettyname) VALUES (16,'notw','News of the World');
+INSERT INTO organisation (id,shortname,prettyname) VALUES (17,'notw','News of the World');
 

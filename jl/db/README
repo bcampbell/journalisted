@@ -2,6 +2,13 @@ This directory holds changes to be applied to the live database.
 After a change has been applied, the sql file should be moved into the
 "applied" dir. There is currently no master schema file maintained.
 
+schema.sql is a dump of the database schema, which may or may not be up to
+date :-)
+basedata.sql is a dump of just the organisation table, which the scrapers
+need.
+
+All these notes assume your database is called 'mst' and there is a database
+user also called 'mst'.
 
 Text is utf-8 encoded and stored in a latin-1 DB. So the DB _thinks_ it's
 got latin-1 text, but the backend and website know that that text is really
