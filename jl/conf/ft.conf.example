@@ -1,0 +1,10 @@
+# login details for ft.com
+# (ie a valid subscription is required)
+# - change username, password to correct values
+# - rename to ft.conf
+# - should only be readable by the user which does the scraping:
+# 	$ chmod 600 ft.conf
+
+username = bob@bobcorp.com
+password = bobbobobo
+

@@ -29,7 +29,7 @@ from SpiderPig import SpiderPig
 # "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
 # blog urls:
 # "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
-idpat = re.compile( "/((display)|(index)[.]var[.].*[.]php)" )
+idpat = re.compile( "/((display|index)[.]var[.].*[.]php)" )
 
 
 # pattern to find blog rss feeds on the blog index pages
@@ -42,9 +42,9 @@ def FindArticles():
 
 	Returns a list of scrape contexts, one for each article.
 	"""
-	ukmedia.DBUG2( "*** herald ***: looking for blog entries...\n" )
+	ukmedia.DBUG2( "*** herald ***: spidering for blog rss feeds...\n" )
 	found = FindBlogEntries()
-	ukmedia.DBUG2( "*** herald ***: looking for articles...\n" )
+	ukmedia.DBUG2( "*** herald ***: spidering for article links...\n" )
 	found = found + FindArticlesBySpidering()
 
 	ukmedia.DBUG2( "found %d articles in total\n" % (len(found)) )
@@ -210,6 +210,15 @@ def news_Extract( html, context ):
 		today = datetime.now().strftime( '%a %d %b %Y' )
 		pubdatetxt = pubdatetxt.replace( 'today', today )
 
+	if pubdatetxt == u'':
+		# if still no date, try the web issue date at top of page...
+		# (which will be todays date, rather than real date... but best we can do)
+		issuedate = soup.find( 'td', {'align':'right', 'class':'issueDate'} )
+		if issuedate:
+			pubdatetxt = issuedate.renderContents(None)
+
+	pubdatetxt = ukmedia.FromHTML( pubdatetxt )
+
 	art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
 	art['byline'] = byline
 	art['title'] = headline
@@ -233,6 +242,7 @@ def blog_Extract( html, context ):
 	headbox = entdiv.findPreviousSibling( 'div', {'class':'b_box'} )
 
 	headline = headbox.a.renderContents(None).strip()
+	headline = ukmedia.FromHTML( headline )
 	art['title'] = headline
 
 	byline = u''

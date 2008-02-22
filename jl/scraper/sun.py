@@ -220,7 +220,7 @@ def Extract( html, context ):
 
 	art['byline'] = bylinetxt
 
-
+	contenttxt = u''
 	# first para has 'first-para' class
 	# (sometimes have multiple first-paras, so use first non-empty one)
 	for p in col2.findAll('p', { 'class': re.compile( '\\bfirst-para\\b' ) } ):
