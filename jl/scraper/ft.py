@@ -240,6 +240,9 @@ def Extract_article( html, context ):
 	""" extract fn for FT main articles """
 	art = context
 	soup = BeautifulSoup( html )
+#	print "============================"
+#	print soup.prettify('utf-8')
+#	print "============================"
 
 	headerdiv = soup.find( 'div', {'class':'ft-story-header'} )
 	
@@ -249,6 +252,18 @@ def Extract_article( html, context ):
 
 	art['title'] = headline
 
+
+	# Check for reuters/NYT stories
+	footerp = soup.find( 'p', {'class':'ft-story-footer'} )
+	if footerp:
+		txt = footerp.renderContents(None)
+		if u'Reuters Limited' in txt:
+			ukmedia.DBUG2( "IGNORE: Reuters item '%s' (%s)\n" % (headline, art['srcurl']) )
+			return None
+		if u'The New York Times Company' in txt:
+			ukmedia.DBUG2( "IGNORE: NYT item '%s' (%s)\n" % (headline, art['srcurl']) )
+			return None
+
     # "Published: February 10 2008 22:05 | Last updated: February 10 2008 22:05"
 	datepat = re.compile( u"Published:\\s+(.*?)\\s*[|]", re.UNICODE )
 
@@ -256,8 +271,8 @@ def Extract_article( html, context ):
 	pubdate = None
 	for p in headerdiv.findAll( 'p' ):
 		txt = p.renderContents( None )
-		if txt.find( u'By Reuters' ) != -1:
-			ukmedia.DBUG2( "IGNORE: Reuters item '%s' (%s')\n" % (headline, art['srcurl']) )
+		if u'By Reuters' in txt:
+			ukmedia.DBUG2( "IGNORE: Reuters-bylined item '%s' (%s)\n" % (headline, art['srcurl']) )
 			return None
 
 		m = datepat.match( txt )
@@ -283,6 +298,18 @@ def Extract_article( html, context ):
 
 	content = bodydiv.renderContents( None )
 	content = ukmedia.SanitiseHTML( content )
+	content = content.strip()
+
+	# some really screwed up pages have an extra body element wrapped around
+	# the article text... sigh...
+	# (in those cases, the previous code should through up empty content)
+	if content == u'':
+		bs = soup.findAll('body')
+		if len(bs) > 1:
+			print "Extra body div!"
+			content = bs[-1].renderContents( None )
+			content = ukmedia.SanitiseHTML( content )
+
 	art['content'] = content
 
 	art['description'] = ukmedia.FirstPara( content )
@@ -290,7 +317,12 @@ def Extract_article( html, context ):
 
 
 	if soup.find( 'div', {'id':'DRMUpsell'} ):
-		raise Exception, "Uh-oh... we're being shortchanged... (login failed?)"
+		pagetitle = soup.title.renderContents(None)
+		if u'/ Lex /' in pagetitle:
+			ukmedia.DBUG2( "IGNORE: Lex Premium-subscriber-only '%s' (%s')\n" % (headline, art['srcurl']) )
+			return None
+		else:
+			raise Exception, "Uh-oh... we're being shortchanged... (login failed?)"
 
 	return art
 
