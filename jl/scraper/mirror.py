@@ -132,7 +132,7 @@ def Extract( html, context ):
 	bylinediv = maindiv.find( 'h2', { 'class': 'art-byline' } )
 	rawbyline = bylinediv.renderContents(None)
 	m = bylinetidypat.match( rawbyline )
-	art['byline'] = m.group(1)
+	art['byline'] = ukmedia.FromHTML( m.group(1) )
 	art['pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
 
 	# use first paragraph as description
