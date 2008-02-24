@@ -208,7 +208,7 @@ function login_page() {
 
 		$subject = $values['reason_email_subject'];
 		$from_name = "journa-list";
-		$from_email = "team@" . OPTION_WEB_DOMAIN;
+		$from_email = OPTION_TEAM_EMAIL;
 		jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
 
 

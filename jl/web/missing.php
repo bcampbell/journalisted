@@ -53,7 +53,7 @@ An article may not appear on a journalist's page if:
 </p>
 <?php
 
-	$contactemail = "team@" . OPTION_WEB_DOMAIN;
+	$contactemail = OPTION_TEAM_EMAIL;
 	if( $journo )
 		$subject = "Missing information for {$journo['prettyname']}";
 	else

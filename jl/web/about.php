@@ -51,7 +51,7 @@ page_header( "About", array( 'menupage'=>'about' ) );
 
 <?php
 
-	$contactemail = "team@" . OPTION_WEB_DOMAIN;
+	$contactemail = OPTION_TEAM_EMAIL;
 	$subject = "Suggestions for site";
 
 ?>

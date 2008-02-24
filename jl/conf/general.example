@@ -13,6 +13,9 @@ define('OPTION_PHP_MAINDB', 'JL');
 define('OPTION_WEB_HOST', 'www');
 define('OPTION_WEB_DOMAIN', 'journa-list.dev');
 
+// main support email address
+define('OPTION_TEAM_EMAIL', 'team@' . OPTION_WEB_DOMAIN );
+
 // Top-level URL of current website, without trailing /
 define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
 

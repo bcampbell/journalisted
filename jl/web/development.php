@@ -15,7 +15,9 @@ Journalisted is an open source project.
 <p>
 The main project page is <a href="http://code.google.com/p/journa-list/">here</a> (hosted at code.google.com).
 </p>
-
+<p>
+There is a public development <a href="http://groups.google.com/group/jl-dev">mailing list</a>.
+</p>
 <p>
 Currently, documentation on how the code works is a little... ummm... thin on the ground :-)
 This will be remedied in future. For now, if you have technical questions,

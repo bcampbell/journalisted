@@ -125,7 +125,7 @@ function page_footer( $params=array() )
 
 	gatso_report_html();
 
-	$contactemail = "team@" . OPTION_WEB_DOMAIN;
+	$contactemail = OPTION_TEAM_EMAIL;
 ?>
 <a href="/development">Development</a> |
 <?=SafeMailto( $contactemail, 'Contact us' );?>
