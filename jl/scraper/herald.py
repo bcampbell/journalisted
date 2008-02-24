@@ -196,13 +196,18 @@ def news_Extract( html, context ):
 	if byline == u'':
 		# but not obituaries (they always have a bit of bold at the top)...
 		if not 'obituaries' in art['srcurl']:
-			n = contentdiv.p.contents[0]
+			n=None
+			if len(contentdiv.p.contents) > 0:
+				n = contentdiv.p.contents[0]
 			if isinstance( n, BeautifulSoup.Tag ):
-				# and not if it's more than one line
+				# Want bold elements, with no <br>s inside them, but followed directly by a <br>...
 				if n.name == 'b' and not n.find( "br" ):
-					byline = n.renderContents(None)
-					n.extract()
-					# TODO: sometimes followed by place... (eg "in Paris<br />")
+					if isinstance( n.nextSibling, BeautifulSoup.Tag ) and n.nextSibling.name == 'br':
+						byline = n.renderContents(None)
+						byline = ukmedia.FromHTML( byline )
+						byline = u' '.join( byline.split() )
+						n.extract()
+						# TODO: sometimes followed by place... (eg "in Paris<br />")
 
 	headline = headlinediv.renderContents( None )
 	headline = ukmedia.FromHTML( headline )
