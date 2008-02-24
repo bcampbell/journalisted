@@ -46,6 +46,8 @@ function pretty_date( $t )
 ***************************************************************************/
 function SafeMailto( $addr, $text='' )
 {
+	$text = addslashes( $text );
+	$addr = addslashes( $addr );
 	$parts = array_reverse( preg_split( '/[.@]/', $addr ) );
 	
 	$out = "<script>gen_mailto( '$text', '" . implode( "','", $parts ). "');</script><noscript>$text</noscript>";
