@@ -18,7 +18,7 @@ import urlparse
 import urllib2
 
 sys.path.append("../pylib")
-from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
+import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 from SpiderPig import SpiderPig
 
@@ -169,7 +169,7 @@ def Extract( html, context ):
 def news_Extract( html, context ):
 	"""extract function for handling main news site articles"""
 	art = context
-	soup = BeautifulSoup( html )
+	soup = BeautifulSoup.BeautifulSoup( html )
 
 	# TODO: skip NEWS COMPILER pages?
 
@@ -191,6 +191,18 @@ def news_Extract( html, context ):
 	if byline == u'' and soup.find( 'div', {'class': re.compile('paNews') } ):
 		# it's from the Press Association
 		byline = u'PA'
+
+	# sometimes byline is first line of article text, in bold...
+	if byline == u'':
+		# but not obituaries (they always have a bit of bold at the top)...
+		if not 'obituaries' in art['srcurl']:
+			n = contentdiv.p.contents[0]
+			if isinstance( n, BeautifulSoup.Tag ):
+				# and not if it's more than one line
+				if n.name == 'b' and not n.find( "br" ):
+					byline = n.renderContents(None)
+					n.extract()
+					# TODO: sometimes followed by place... (eg "in Paris<br />")
 
 	headline = headlinediv.renderContents( None )
 	headline = ukmedia.FromHTML( headline )
@@ -236,7 +248,7 @@ def blog_Extract( html, context ):
 		return None
 
 	art = context
-	soup = BeautifulSoup( html )
+	soup = BeautifulSoup.BeautifulSoup( html )
 
 	entdiv = soup.find( 'div', {'class':'entry2'} )
 	headbox = entdiv.findPreviousSibling( 'div', {'class':'b_box'} )
@@ -277,6 +289,7 @@ def ScrubFunc( context, entry ):
 
 
 def CalcSrcID( url ):
+	url = url.lower()
 	m = idpat.search( url )
 	return m.group(1)
 
