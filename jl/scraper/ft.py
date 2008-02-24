@@ -407,7 +407,13 @@ def ScrubFunc( context, entry ):
 	if o[1] == 'ftalphaville.ft.com':
 		return None
 
-	context[ 'srcid'] = CalcSrcID( url )
+	# scrub off ",dwp_uuid=...." part from url...
+	url = re.sub( ",dwp_uuid=[0-9a-fA-F\\-]+","",url )
+
+	context['srcurl'] = url
+	context['permalink'] = url
+
+	context['srcid'] = CalcSrcID( url )
 	return context
 
 
@@ -419,7 +425,7 @@ def FindArticles():
 # eg
 # "http://www.ft.com/cms/s/8ca13fba-d80d-11dc-98f7-0000779fd2ac.html"
 # "http://www.ft.com/cms/s/0/6be90c0c-e0ab-11dc-b0d7-0000779fd2ac,dwp_uuid=89fe9472-9c7f-11da-8762-0000779e2340.html"
-art_idpat = re.compile( "/([^/]+)[.]html" )
+art_idpat = re.compile( "/([^/]+)(,dwp_uuid=[0-9a-fA-F\\-]+)?[.]html" )
 # blog urls look like this:
 # http://blogs.ft.com/brusselsblog/2008/02/hanging-by-a-thhtml/
 blog_idpat = re.compile( "blogs.ft.com/(.*)$" )
@@ -442,6 +448,9 @@ def ContextFromURL( url ):
 	context['srcid'] = CalcSrcID( url )
 	context['srcorgname'] = u'ft'
 	context['lastseen'] = datetime.now()
+
+	# to clean the url...
+	context = ScrubFunc( context, None )
 	return context
 
 
