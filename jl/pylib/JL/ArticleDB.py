@@ -138,13 +138,19 @@ def CheckArticle(art):
 	tagpat = re.compile( "<.*?>", re.UNICODE )
 	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
-	# check for missing/blank fields
-	for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
+	# check for missing/null fields
+	for f in ('title','description','content', 'permalink', 'srcurl','srcid','lastscraped','pubdate' ):
 		if not (f in art):
 			raise Exception, ( "missing '%s' field!" % (f) )
+		if not art[f]:
+			raise Exception, ( "null '%s' field!" % (f) )
+
+	# check for empty strings
+	for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
 		s= art[f]
-		if s.strip() == '':
+		if s.strip() == u'':
 			raise Exception, ( "blank '%s' field!" % (f) )
+
 
 #	print "CheckArticle byline: ["+art['byline']+"]"
 	# make sure assorted fields are unicode
