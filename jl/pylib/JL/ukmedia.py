@@ -68,6 +68,9 @@ datecrackers = [
 	# "09-Apr-2007 00:00" (times, sundaytimes)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
+	# "4:48PM GMT 22/02/2008" (telegraph html articles)
+	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+GMT\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
+
 	# "09-Apr-07 00:00" (scotsman)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{2}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
@@ -78,7 +81,7 @@ datecrackers = [
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
 
 	# "2:43pm BST 16/04/2007" (telegraph, after munging)
-	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+BST\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE ),
+	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+BST\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
 
 	# "20:12pm 23rd November 2007" (dailymail)
 	re.compile( """(?P<hour>\d{1,2}):(?P<min>\d\d)\w\w\s+(?P<day>\d{1,2})\w+\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE),

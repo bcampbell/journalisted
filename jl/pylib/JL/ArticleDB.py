@@ -136,7 +136,7 @@ class DummyArticleDB:
 
 def CheckArticle(art):
 	tagpat = re.compile( "<.*?>", re.UNICODE )
-	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
+#	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
 	# check for missing/null fields
 	for f in ('title','description','content', 'permalink', 'srcurl','srcid','lastscraped','pubdate' ):
@@ -169,7 +169,7 @@ def CheckArticle(art):
 	# check for unwanted html tags & entities
 	for f in ( 'title','byline','description' ):
 		s = art[f]
-		if entpat.search( s ):
+		if s != ukmedia.DescapeHTML( s ):
 			raise Exception, ( "%s contains html entities ('%s')" % (f,s.encode('latin-1','replace')) )
 		if tagpat.search( s ):
 			raise Exception, ( "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace')) )
