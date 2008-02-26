@@ -4,152 +4,88 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
+#
+# Telegraph seems to have three different formats:
+# .xml, .html and blogs (.htm).
+# The blog ones are done by blogs.py
+#
 # TODO:
 # - better sundaytelegraph handling
 # - tidy URLs ( strip jsessionid etc)
 #	  http://www.telegraph.co.uk/earth/main.jhtml?view=DETAILS&grid=&xml=/earth/2007/07/19/easeabird119.xml
 #     (strip view param)
+# - handle multi-page articles (currently only pick up first page)
 #
 
 import re
 from datetime import datetime
 import sys
 import os
+import urlparse
 
 sys.path.append("../pylib")
-from BeautifulSoup import BeautifulSoup
+import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 
 
 rssfeeds = {
-    "Telegraph | Arts": 
-# title="Telegraph | Arts"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/arts.xml",
-    "Telegraph | Books": 
-# title="Telegraph | Books"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/arts-books.xml",
-    "Telegraph | Digital Life":
-# title="Telegraph | Digital Life"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/connected.xml",
+    "Telegraph | Arts": "http://www.telegraph.co.uk/newsfeed/rss/arts.xml",
+    "Telegraph | Books": "http://www.telegraph.co.uk/newsfeed/rss/arts-books.xml",
+    "Telegraph | Digital Life": "http://www.telegraph.co.uk/newsfeed/rss/connected.xml",
 
-    "Telegraph | Earth": 
-# title="Telegraph | Earth"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/earth.xml",
-    "Telegraph | Science news":
-# title="Telegraph | Science news"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/earth-science.xml",
-    "Telegraph | Education":
-# title="Telegraph | Education"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/education.xml",
-    "Telegraph | Expat": 
-# title="Telegraph | Expat"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/global.xml",
-    "Telegraph | Fashion":
-# title="Telegraph | Fashion"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/fashion.xml",
-    "Telegraph | Gardening":
-# title="Telegraph | Gardening"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/gardening.xml",
-    "Telegraph | Health":
-# title="Telegraph | Health"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/health.xml",
-    "Telegraph | Motoring":
-# title="Telegraph | Motoring"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/motoring.xml",
-    "Telegraph | News | All":
-# title="Telegraph | News | All"	 			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/news.xml",
-    "Telegraph | News | Major":
-# title="Telegraph | News | Major" 			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/news-major.xml",
-    "Telegraph | News | UK":
-# title="Telegraph | News | UK" 				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/news-uk_news.xml",
-    "Telegraph | News | International":
-# title="Telegraph | News | International"		xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/news-international_news.xml",
+    "Telegraph | Earth": "http://www.telegraph.co.uk/newsfeed/rss/earth.xml",
+    "Telegraph | Science news": "http://www.telegraph.co.uk/newsfeed/rss/earth-science.xml",
+    "Telegraph | Education": "http://www.telegraph.co.uk/newsfeed/rss/education.xml",
+    "Telegraph | Expat": "http://www.telegraph.co.uk/newsfeed/rss/global.xml",
+    "Telegraph | Fashion": "http://www.telegraph.co.uk/newsfeed/rss/fashion.xml",
+    "Telegraph | Gardening": "http://www.telegraph.co.uk/newsfeed/rss/gardening.xml",
+    "Telegraph | Health": "http://www.telegraph.co.uk/newsfeed/rss/health.xml",
+    "Telegraph | Motoring": "http://www.telegraph.co.uk/newsfeed/rss/motoring.xml",
+    "Telegraph | News | All": "http://www.telegraph.co.uk/newsfeed/rss/news.xml",
+    "Telegraph | News | Major": "http://www.telegraph.co.uk/newsfeed/rss/news-major.xml",
+    "Telegraph | News | UK": "http://www.telegraph.co.uk/newsfeed/rss/news-uk_news.xml",
+    "Telegraph | News | International": "http://www.telegraph.co.uk/newsfeed/rss/news-international_news.xml",
       
       # BLOGS:
-#    "Telegraph | News | Blog Yourview":
-# title="Telegraph | News | Blog Yourview"		xmlUrl=
- #   "http://www.telegraph.co.uk/newsfeed/rss/news-blog-yourview.xml",
+#    "Telegraph | News | Blog Yourview": "http://www.telegraph.co.uk/newsfeed/rss/news-blog-yourview.xml",
   
   
-    "Telegraph | News | Business":
-# title="Telegraph | News | Business"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml",
-    "Telegraph | Your Money":
-# title="Telegraph | Your Money"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml",
+    "Telegraph | News | Business": "http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml",
+    "Telegraph | Your Money": "http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml",
       
       # blogs?
-#    "Telegraph | Opinion":
-# title="Telegraph | Opinion"			 	xmlUrl=
-#    "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_opinion.xml",
+#    "Telegraph | Opinion": "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_opinion.xml",
 
 
-    "Telegraph | Leaders":
-# title="Telegraph | Leaders"			 	xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_leaders.xml",
-    "Telegraph | Property":
-# title="Telegraph | Property"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/property.xml",
-    "Telegraph | Sport": 
-# title="Telegraph | Sport"			 	xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport.xml",
-    "Telegraph | Sport | Football":
-# title="Telegraph | Sport | Football"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-football.xml",
-    "Telegraph | Sport | Premiership Football":
-# title="Telegraph | Sport | Premiership Football"        xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-football-premiership.xml",
-    "Telegraph | Sport | Cricket":
-# title="Telegraph | Sport | Cricket"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-cricket.xml",
+    "Telegraph | Leaders": "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_leaders.xml",
+    "Telegraph | Property": "http://www.telegraph.co.uk/newsfeed/rss/property.xml",
+    "Telegraph | Sport": "http://www.telegraph.co.uk/newsfeed/rss/sport.xml",
+    "Telegraph | Sport | Football": "http://www.telegraph.co.uk/newsfeed/rss/sport-football.xml",
+    "Telegraph | Sport | Premiership Football": "http://www.telegraph.co.uk/newsfeed/rss/sport-football-premiership.xml",
+    "Telegraph | Sport | Cricket": "http://www.telegraph.co.uk/newsfeed/rss/sport-cricket.xml",
 
 # doesn't work?
-#    "Telegraph | Sport | International Cricket":
-# title="Telegraph | Sport | International Cricket"	xmlUrl=
-#    "http://www.telegraph.co.uk/newsfeed/rss/sport-international_cricket.xml",
-    "Telegraph | Sport | Rugby Union":
-# title="Telegraph | Sport | Rugby Union"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-rugby_union.xml",
-    "Telegraph | Sport | Golf":
-# title="Telegraph | Sport | Golf"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-golf.xml",
-    "Telegraph | Sport | Tennis":
-# title="Telegraph | Sport | Tennis"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-tennis.xml",
-    "Telegraph | Sport | Motor Sport":
-# title="Telegraph | Sport | Motor Sport"			xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/sport-motor_sport.xml",
-    "Telegraph | Travel":
-# title="Telegraph | Travel"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/travel.xml",
-    "Telegraph | Wine": 
-# title="Telegraph | Wine"				xmlUrl=
-    "http://www.telegraph.co.uk/newsfeed/rss/wine.xml",
-  #  "Telegraph | Podcast":
-# title="Telegraph | Podcast"				xmlUrl=
-  #  "http://www.telegraph.co.uk/newsfeed/rss/podcast.xml",
-  #  "Telegraph | Podcast | mp3":
-# title="Telegraph | Podcast | mp3"			xmlUrl=
-  #  "http://www.telegraph.co.uk/newsfeed/rss/podcastmp3.xml",
+#    "Telegraph | Sport | International Cricket": "http://www.telegraph.co.uk/newsfeed/rss/sport-international_cricket.xml",
+    "Telegraph | Sport | Rugby Union": "http://www.telegraph.co.uk/newsfeed/rss/sport-rugby_union.xml",
+    "Telegraph | Sport | Golf": "http://www.telegraph.co.uk/newsfeed/rss/sport-golf.xml",
+    "Telegraph | Sport | Tennis": "http://www.telegraph.co.uk/newsfeed/rss/sport-tennis.xml",
+    "Telegraph | Sport | Motor Sport": "http://www.telegraph.co.uk/newsfeed/rss/sport-motor_sport.xml",
+    "Telegraph | Travel": "http://www.telegraph.co.uk/newsfeed/rss/travel.xml",
+    "Telegraph | Wine": "http://www.telegraph.co.uk/newsfeed/rss/wine.xml",
+  #  "Telegraph | Podcast": "http://www.telegraph.co.uk/newsfeed/rss/podcast.xml",
+  #  "Telegraph | Podcast | mp3": "http://www.telegraph.co.uk/newsfeed/rss/podcastmp3.xml",
   
   # seems to cause an error:
 #    "Telegraph | Top Ten Stories":
-# title="Telegraph | Top Ten Stories"                     xmlUrl=
  #   "http://stats.telegraph.co.uk/rss/topten.xml",
       # type="rss" language="en-gb" /> 
 
 	# blogs style?
 #    "Telegraph | My Telegraph":
-# title="Telegraph | My Telegraph"                        xmlUrl=
 #    "http://my.telegraph.co.uk/feed.rss"
       # type="rss" language="en-gb" />   
 
  #   "Telegraph | Blogs | All Posts":
-# title="Telegraph | Blogs | All Posts"                   xmlUrl=
  #   "http://blogs.telegraph.co.uk/Feed.rss"
 
 }
@@ -161,7 +97,90 @@ rssfeeds = {
 
 
 def Extract( html, context ):
+	# blog url format: (handled by blogs.py)
+	# http://blogs.telegraph.co.uk/politics/threelinewhip/feb/speakerfurorenotclasswarfare.htm
 
+	o = urlparse.urlparse( context['srcurl'] )
+
+	if o[2].endswith( ".html" ):
+		# HTML article url format:
+		#   http://www.telegraph.co.uk/travel/africaandindianocean/maldives/759764/Maldives-family-holiday-Game-Boys-v-snorkels.html
+		return Extract_HTML_Article( html, context )
+
+	if o[2].endswith( ".jhtml" ):
+		# XML article url format:
+		#   http://www.telegraph.co.uk/news/main.jhtml?xml=/news/2008/02/25/ncameron125.xml
+		return Extract_XML_Article( html, context )
+
+#	if o[1] == "blogs.telegraph.co.uk":
+#		ukmedia.DBUG2( "IGNORE: blog ('%s')\n" % ( context['srcurl']) )
+#		return None
+
+	raise Exception, "Uh-oh... don't know how to handle url '%s'" % (context['srcurl'])
+
+
+
+def Extract_HTML_Article( html, context ):
+	""" extract fn for HTML format articles
+	
+	we use the printer version, as it should be all on a single page
+	"""
+
+	art = context
+	soup = BeautifulSoup.BeautifulSoup( html )
+
+	headline = soup.h1.renderContents(None)
+	headline = ukmedia.FromHTML( headline )
+	headline = u' '.join( headline.split() )
+
+	desc = u''
+	h2 = soup.find('h2')
+	if h2:
+		desc = ukmedia.FromHTML( h2.renderContents(None) )
+		desc = u' '.join( desc.split() )
+
+	byline = u''
+	bylinediv = soup.find( 'div', {'class':'byline'} )
+	if bylinediv:
+		byline = bylinediv.renderContents(None)
+		byline = ukmedia.FromHTML( byline )
+		byline = u' '.join( byline.split() )
+	if byline == u'' and desc:
+		# if no byline, try and guess from description
+		byline = ukmedia.ExtractAuthorFromParagraph( desc )
+
+
+	datelinediv = soup.find( 'div', {'class':'date'} )
+	pubdatetxt = ukmedia.FromHTML( datelinediv.renderContents(None) )
+	pubdate = ukmedia.ParseDateTime( pubdatetxt )
+
+	contentdiv = soup.find( 'div', {'id':'body'} )
+	if not contentdiv:
+		# some articles don't have body div... sigh...
+		soup2 = BeautifulSoup.BeautifulSoup()
+		contentdiv = BeautifulSoup.Tag( soup2, 'div' )
+		soup2.insert( 0, contentdiv )
+
+		last = soup.find( 'div', {'class':'from'} )
+		e = h2.nextSibling
+		while e and e != last:
+			n = e.nextSibling
+			contentdiv.append(e)
+			e = n
+
+	content = contentdiv.renderContents(None)
+	content = ukmedia.SanitiseHTML( content )
+
+	art['title'] = headline
+	art['byline'] = byline
+	art['description'] = desc
+	art['content'] = content
+	art['pubdate'] = pubdate
+
+	return art
+
+
+def Extract_XML_Article( html, context ):
 	# Sometimes the telegraph has missing articles.
 	# But the website doesn't return proper 404 (page not found) errors.
 	# Instead, it redirects to an error page which has a 200 (OK) code.
@@ -175,7 +194,7 @@ def Extract( html, context ):
 
 
 
-	soup = BeautifulSoup( html )
+	soup = BeautifulSoup.BeautifulSoup( html )
 
 	headline = soup.find( 'h1' )
 	if not headline:
@@ -249,7 +268,7 @@ def Extract( html, context ):
 
 	# text (all paras use 'story' or 'story2' class, so just discard everything else!)
 	# build up a new soup with only the story text in it
-	textpart = BeautifulSoup()
+	textpart = BeautifulSoup.BeautifulSoup()
 
 	art['description'] = ExtractParas( soup, textpart )
 
@@ -296,17 +315,6 @@ def Extract( html, context ):
 	content = ukmedia.SanitiseHTML( content )
 	art['content'] = content
 
-	if False:		# debug
-		print "\n\nARTICLE (+RSS CONTEXT) FIELDS:"
-		for a in art.keys():
-			# hack:
-			print "\n",a,": ",
-			if type(art[a])==type(u""):
-				print art[a].encode('latin-1','replace')
-			else:
-				print str(art[a])
-
-
 	return art
 
 
@@ -336,25 +344,71 @@ def ExtractParas( soup, textpart ):
 	return desc
 
 
-def ScrubFunc( context, entry ):
-	# suppress cruft pages
-#	if context['title'] == 'Slideshowxl':
-#		return None
-	if context['title'] == 'Horoscopes':
-		return None
 
-	# skip slideshow pages, eg
-	# "http://www.telegraph.co.uk/health/main.jhtml?xml=/health/2007/07/10/pixbeauty110.xml",
-	slideshow_pattern = pat=re.compile( '/pix\\w+[.]xml$' )
-	if slideshow_pattern.search( context['srcurl'] ):
-		return None
+def CalcSrcID( url ):
+	""" extract unique id from url """
+
+	o = urlparse.urlparse( url )
+
+	if o[2].lower().endswith( ".html" ):
+		# eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html?service=print
+		html_art_pat = re.compile( "/(\d+/[^/]+[.]html)$" )
+		m = html_art_pat.search( o[2].lower() )
+		if m:
+			return m.group(1)
+	elif o[2].lower().endswith( ".jhtml" ):
+		# TODO: we should use only the "xml=..." part (but requires db tidying)
+		if re.search( "[.]jhtml[?](.*?)xml=/.*[.]xml$", url ):
+			return url
+
+	# blogs not supported here...
+
+	return None
+
+
+def ScrubFunc( context, entry ):
+	""" tidy up context, work out srcid etc... entry param not used """
 
 	# we'll assume that all articles published on a Sunday are from
 	# the sunday telegraph...
-	if context['pubdate'].strftime( '%a' ).lower() == 'sun':
+	# TODO: telegraph and sunday telegraph should share srcid space...
+	if ('pubdate' in context) and (context['pubdate'].strftime( '%a' ).lower() == 'sun'):
 		context['srcorgname'] = u'sundaytelegraph'
 	else:
 		context['srcorgname'] = u'telegraph'
+
+	url = context['srcurl']
+	o = urlparse.urlparse( url )
+	if o[2].lower().endswith( ".html" ):
+		# it's an html article...
+		# eg "http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html"
+		# trim off all params, fragments...
+		context['permalink'] = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+		# use printer version for scraping
+		context['srcurl'] = urlparse.urlunparse( (o[0],o[1],o[2],'','service=print','') );
+		context['srcid'] = CalcSrcID( url )
+
+	elif o[2].lower().endswith( ".jhtml" ):
+		# it's an xml-based article
+		# eg "http://www.telegraph.co.uk/money/main.jhtml?xml=/money/2008/02/26/bcnpersim126.xml"
+
+		context['srcid'] = CalcSrcID( url )
+
+		# suppress cruft pages
+		if ('title' in context) and (context['title'] == 'Horoscopes'):
+			return None
+
+		# skip slideshow pages, eg
+		# "http://www.telegraph.co.uk/health/main.jhtml?xml=/health/2007/07/10/pixbeauty110.xml",
+		slideshow_pattern = pat=re.compile( '/pix\\w+[.]xml$' )
+		if slideshow_pattern.search( context['srcurl'] ):
+			return None
+
+	else:
+		# blog? some other unsupported page...
+		return None
+
+
 	return context
 
 
@@ -364,9 +418,12 @@ def ContextFromURL( url ):
 	context = {}
 	context['srcurl'] = url
 	context['permalink'] = url
-	context['srcid'] =  url
-	context['srcorgname'] = u'telegraph'	# TODO sunday telegraph!!!
+	context['srcid'] = url
 	context['lastseen'] = datetime.now()
+
+	# apply the various url-munging rules :-)
+	context = ScrubFunc( context, None )
+
 	return context
 
 
