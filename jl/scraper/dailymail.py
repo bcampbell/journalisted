@@ -266,6 +266,8 @@ def ScrubFunc( context, entry ):
 	context['srcid'] = url
 	return context
 
+def CalcSrcID( url ):
+	return TidyURL( url )
 
 def ContextFromURL( url ):
 	"""Set up for scraping a single article from a bare url"""
@@ -273,8 +275,8 @@ def ContextFromURL( url ):
 	context = {
 		'srcurl': url,
 		'permalink': url,
-		'srcid': url,
-		'srcorgname': u'dailymail',
+		'srcid': CalcSrcID( url ),
+		'srcorgname': u'dailymail', 
 		'lastseen': datetime.now(),
 	}
 	return context
