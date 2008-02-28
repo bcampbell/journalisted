@@ -69,7 +69,7 @@ datecrackers = [
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
 
 	# "4:48PM GMT 22/02/2008" (telegraph html articles)
-	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+GMT\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
+	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+GMT\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
 
 	# "09-Apr-07 00:00" (scotsman)
 	re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{2}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
@@ -81,7 +81,7 @@ datecrackers = [
 	re.compile( """(?P<day>\d\d) (?P<month>\w+) (?P<year>\d{4}), (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d) BST""", re.UNICODE ),
 
 	# "2:43pm BST 16/04/2007" (telegraph, after munging)
-	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)((?P<am>am)|(?P<pm>pm))\s+BST\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
+	re.compile( "(?P<hour>\d{1,2}):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+BST\s+(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{2,4})", re.UNICODE|re.IGNORECASE ),
 
 	# "20:12pm 23rd November 2007" (dailymail)
 	re.compile( """(?P<hour>\d{1,2}):(?P<min>\d\d)\w\w\s+(?P<day>\d{1,2})\w+\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE),
@@ -180,7 +180,7 @@ def ParseDateTime( datestring ):
 
 tagopenpat = re.compile( "<(\w+)(\s+.*?)?\s*(/\s*)?>", re.UNICODE|re.DOTALL )
 tagclosepat = re.compile( "<\s*/\s*(\w+)\s*>", re.UNICODE|re.DOTALL )
-acceptabletags = [ 'p', 'h1','h2','h3','h4','h5','br','b','i','em','li','ul','ol','strong' ]
+acceptabletags = [ 'p', 'h1','h2','h3','h4','h5','br','b','i','em','li','ul','ol','strong', 'blockquote', 'a' ]
 
 commentkillpat = re.compile( u"<!--.*?-->", re.UNICODE|re.DOTALL )
 emptyparapat = re.compile( u"<p>\s*</p>", re.IGNORECASE|re.UNICODE|re.DOTALL )
@@ -188,6 +188,12 @@ emptyparapat = re.compile( u"<p>\s*</p>", re.IGNORECASE|re.UNICODE|re.DOTALL )
 def SanitiseHTML_handleopen(m):
 	tag = m.group(1).lower()
 	if tag in acceptabletags:
+		# special case - allow <a> to keep href attr:
+		if tag == 'a':
+			m2 = re.search( ('(href=\".*?\")'), m.group(2) )
+			if m2:
+				return u"<a %s>" % (m2.group(1) )
+
 		return u"<%s>" % (tag)
 	else:
 		return u''
