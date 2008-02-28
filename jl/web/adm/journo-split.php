@@ -38,6 +38,7 @@ function FormParamsFromHTTPVars()
 	$params = array();
 
 	$params['from_ref'] = get_http_var( 'from_ref', '' );
+	$params['new_from_ref'] = get_http_var( 'new_from_ref', '' );
 	$params['split_orgids'] = get_http_var( 'split_orgids', array() );
 	$params['to_ref'] = get_http_var( 'to_ref', '' );
 	$params['action'] = get_http_var( 'action', '' );
@@ -86,16 +87,53 @@ Articles from which outlets should be split out to the new journo?<br />
 
 ?>
 <br />
-Which journo should the articles be moved to?<br />
-<small>(eg 'fred-smith-2'. will be created if it doesn't exist)</small><br />
+Move to existing journo? (leave blank to create a new journo):<br />
+<small>(eg 'fred-smythe')</small><br />
 <input type="text" name="to_ref" value="<?=$params['to_ref'];?>" /><br />
 <input type="hidden" name="action" value="preview" />
-<input type="submit" value="Submit" /><br />
+<input type="submit" value="Preview" /><br />
 </form>
 <?php
 
 }
 
+
+/* return a ref, stripped of it's number postfix (if any) */
+function RefBase( $ref )
+{
+	$m = array();
+	if( preg_match( '/^(.*?)(-\d+)?$/', $ref, &$m ) > 0 )
+	{
+		return $m[1];
+	}
+	return null;
+}
+
+/* return the numeric postfix of a ref, or null if none */
+function RefNum( $ref )
+{
+	$m = array();
+	if( preg_match( '/^(.*)-(\d+)$/', $ref, &$m ) > 0 )
+	{
+		return (int)$m[2];
+	}
+	return null;
+}
+
+/* search for an unused ref based on $baseref */
+function NextFreeRef( $baseref, $startnum )
+{
+	$n = $startnum;
+	while(1)
+	{
+		$ref = sprintf("%s-%d", $baseref,$n );
+		if( db_getRow( "SELECT id FROM journo WHERE ref=?",$ref ) )
+			++$n;			/* it's used */
+		else
+			return $ref;	/* it's free! */
+	}
+	/* never gets here... */
+}
 
 function EmitPreview( $params )
 {
@@ -105,8 +143,40 @@ function EmitPreview( $params )
 		$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $params['from_ref'] );
 	if( !$journo )
 	{
-		printf( "<p>Can't find '%s'</p>\n", $params['from_ref'] );
+		printf( "<p>Can't find journo '%s'</p>\n", $params['from_ref'] );
 		return;
+	}
+
+	if( $params['to_ref'] )
+	{
+		/* if a to_ref was set, make sure it exists! */
+		if( !db_getRow( "SELECT id FROM journo WHERE ref=?", $params['to_ref'] ) )
+		{
+			printf( "<p>Can't find destination journo '%s'</p>\n", $params['to_ref'] );
+			return;
+		}
+	}
+	else
+	{
+		/* no to_ref, so we need to:
+		 *
+		 * a) add a number postfix (if it doesn't already
+		 *    have one) to rename from_ref.
+		 */
+		$baseref = RefBase( $params['from_ref'] );
+		$num = RefNum( $params['from_ref'] );
+		if( $num === null )
+		{
+			/* add number postfix */
+			$params['new_from_ref'] = NextFreeRef( $baseref, 1 );
+			$num = RefNum( $params['new_from_ref'] ) + 1;
+		}
+
+		/*
+		 * b) calculate an appropriate new ref for the (new)
+		 *    dest journo.
+		 */
+		$params['to_ref'] = NextFreeRef( $baseref, $num );
 	}
 
 	printf("<h2>%s</h2>\n", $journo['prettyname'] );
@@ -128,9 +198,25 @@ function EmitPreview( $params )
 	}
 	print( "</table>\n" );
 
+
+	print( "<ul>\n" );
+	if( $params['new_from_ref'] )
+	{
+		printf( "<li>This will rename '%s' to '%s'</li>\n",
+			$params['from_ref'], $params['new_from_ref'] );
+	}
+	if( !db_getRow( "SELECT id FROM journo WHERE ref=?", $params['to_ref'] ) )
+	{
+		printf( "<li>This will create new journo: '%s'</li>\n",
+			$params['to_ref'] );
+	}
+
+	print( "</ul>\n" );
+
 ?>
 <form>
 <input type="hidden" name="from_ref" value="<?=$params['from_ref'];?>" />
+<input type="hidden" name="new_from_ref" value="<?=$params['new_from_ref'];?>" />
 <input type="hidden" name="to_ref" value="<?=$params['to_ref'];?>" />
 <?php
 	foreach( $params['split_orgids'] as $idx=>$val )
@@ -141,7 +227,7 @@ function EmitPreview( $params )
 	}
 ?>
 <input type="hidden" name="action" value="confirm" />
-<input type="submit" value="SPLIT JOURNO!" /><br />
+<input type="submit" value="Do it!" /><br />
 </form>
 <?php
 
@@ -152,11 +238,12 @@ function EmitPreview( $params )
  */
 function journoCreate( &$j )
 {
-	db_do( "INSERT INTO journo (ref,prettyname,lastname,firstname,created) VALUES (?,?,?,?,NOW())",
+	db_do( "INSERT INTO journo (ref,prettyname,lastname,firstname,status,created) VALUES (?,?,?,?,?,NOW())",
 		$j['ref'],
 		$j['prettyname'],
 		$j['lastname'],
-		$j['firstname'] );
+		$j['firstname'],
+		$j['status'] );
 	$j['id'] = db_getOne( "SELECT currval( 'journo_id_seq' )" );
 
 // deprecated
@@ -170,7 +257,6 @@ function journoCreate( &$j )
 
 function SplitJourno( $params )
 {
-	$fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['from_ref'] );
 
 	if( !$params['to_ref'] )
 	{
@@ -178,7 +264,19 @@ function SplitJourno( $params )
 		return;
 	}
 
-	$toj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['to_ref'] );
+	/* do we want to change the ref of the from journo? */
+	if( $params['new_from_ref'] )
+	{
+		db_do( "UPDATE journo SET ref=? WHERE ref=?",
+			$params['new_from_ref'],
+			$params['from_ref'] );
+		$params['from_ref'] = $params['new_from_ref'];
+	}
+
+
+	$fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $params['from_ref'] );
+
+	$toj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $params['to_ref'] );
 	if( !$toj )
 	{
 		// to_ref doesn't exist - Create New Journo!
@@ -217,14 +315,17 @@ EOD;
 
 	// TODO: other data to move??? links? email?
 
+
+	// Clear the htmlcache for the to and from journos
+	cache_clear( 'j'.$fromj['id'] );
+	cache_clear( 'j'.$toj['id'] );
+
 	db_commit();
 
 	print "<p>It worked!</p>\n";
 
 	printf( "from: <a href=\"/%s\">%s (id %d)</a><br />\n", $fromj['ref'],$fromj['ref'], $fromj['id'] );
 	printf( "to: <a href=\"/%s\">%s (id %d)</a><br />\n", $toj['ref'],$toj['ref'], $toj['id'] );
-
-
 
 }
 

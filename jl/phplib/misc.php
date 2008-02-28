@@ -282,4 +282,10 @@ function cache_emit( $cacheid, $genfunc, $maxage )
 }
 
 
+function cache_clear( $cacheid )
+{
+	db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
+	db_commit();
+}
+
 ?>
