@@ -110,6 +110,7 @@ function emit_stats()
 		"FROM ((article a INNER JOIN journo_attr attr ON attr.article_id=a.id) ".
 			"INNER JOIN journo j ON attr.journo_id=j.id) ".
 		"WHERE a.status='a' ".
+			"AND j.status='a' ".
 			"AND a.pubdate > NOW()-interval '1 day' ".
 			"AND a.pubdate <= NOW() ".
 		"GROUP BY j.ref,j.prettyname ".
