@@ -112,7 +112,7 @@ sundaymirror_rssfeeds = {
 
 
 # mirror bylines have date in
-bylinetidypat = re.compile( """\s*(.*?)\s*(\d{2}/\d{2}/\d{4})\s*""", re.UNICODE )
+bylinetidypat = re.compile( """\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*""", re.UNICODE )
 
 
 
@@ -130,9 +130,9 @@ def Extract( html, context ):
 	art['title'] = ukmedia.UncapsTitle( art['title'] )		# don't like ALL CAPS HEADLINES!  
 
 	bylinediv = maindiv.find( 'h2', { 'class': 'art-byline' } )
-	rawbyline = bylinediv.renderContents(None)
+	rawbyline = ukmedia.FromHTML( bylinediv.renderContents(None) )
 	m = bylinetidypat.match( rawbyline )
-	art['byline'] = ukmedia.FromHTML( m.group(1) )
+	art['byline'] = m.group(1)
 	art['pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
 
 	# use first paragraph as description

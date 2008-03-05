@@ -112,8 +112,8 @@ datecrackers = [
 	# '11 Dec 2007' (Sun (article date))
 	# '12 February 2008' (scotsman)
 	re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
-	# 03/09/2007' (Sky News blogs)
-	re.compile( """(?P<day>\d\d)/(?P<month>\d\d)/(?P<year>\d{4})""", re.UNICODE ),
+	# 03/09/2007' (Sky News blogs, mirror)
+	re.compile( """(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})""", re.UNICODE ),
 
 
 	]

@@ -371,6 +371,10 @@ def Extract( html, context ):
 	# "Edinburgh Evening News"
 	source = u''
 	pubspan = soup.find( 'span', {'id':'spanPub'} )
+	if not pubspan:
+		ukmedia.DBUG2( "IGNORE article (borked?) (%s)\n" % ( art['srcurl']) );
+		return None
+
 	txt = ukmedia.FromHTML( pubspan.renderContents(None) )
 	m = re.search( u'Source:\\s+(.*)\\s*$', txt )
 	if m:
@@ -461,6 +465,10 @@ def CalcSrcID( url ):
 
 def ScrubFunc( context, entry ):
 	context['srcid'] = CalcSrcID( context['srcurl'] )
+
+	# ignore pa items
+	if '/pa-entertainment-news/' in context['srcurl']:
+		return None
 	return context
 
 
