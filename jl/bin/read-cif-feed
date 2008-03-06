@@ -24,7 +24,14 @@ def dump_feed(feed_url, encoding=DEFAULT_ENCODING):
     try:
         rss = urllib2.urlopen(feed_url).read()
     except urllib2.URLError, e:
-        sys.exit('Download failed: %s %s' % (feed_url, '(%s: %s)' % tuple(e.reason)))
+        try:
+            reason = '(%s: %s)' % tuple(e.reason)
+        except:
+            try:
+                reason = str(e.reason)
+            except:
+                reason = '(%s)' % e
+        sys.exit('Download failed: %s %s' % (feed_url, reason))
     feed = feedparser.parse(rss)
     for entry in feed.entries:
         print 'Title:',   oneliner(entry.title, encoding)
