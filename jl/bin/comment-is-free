@@ -8,7 +8,7 @@ import urllib2
 import sys
 
 sys.path.append( "../pylib" )
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, SoupStrainer
 from JL import ukmedia
 
 
@@ -20,15 +20,25 @@ def ParseContributors( html ):
 
 	soup = BeautifulSoup( html )
 
+	def soup_findAll(tag, attrs):  # iterative soup.findAll to speed debugging
+		strainer = SoupStrainer(tag, attrs)
+		for x in soup.recursiveChildGenerator():
+			found = strainer.search(x)
+			if found: yield found
+
 	profiles = []
-	for authordiv in soup.findAll( 'div', { 'class':'authorazentry' } ):
+	for authordiv in soup_findAll('div', {'class':'authorazentry'}):
 		name = authordiv.h1.a.string
 		name = ukmedia.DescapeHTML( name )
 		a = authordiv.find( text="Profile" ).parent;
 		profile_url = a['href']
-#		print name, profile_url
+		feed_url = profile_url.replace('/profile.html', '/index.xml')
+		biodiv = authordiv.find('div', {'class': 'authorbio'})
+		bio = biodiv.p.renderContents(None)
+#		print name, profile_url, feed_url, bio
 
-		profiles.append( {'name': name, 'profile_url': profile_url } )
+		profiles.append({'name': name, 'profile_url': profile_url,
+		                 'feed_url': feed_url, 'bio': bio})
 
 	return profiles
 
@@ -40,7 +50,9 @@ def Output( profiles, fout ):
 	for p in profiles:
 		fout.write( "  <journo>\n" )
 		fout.write( "   <name>%s</name>\n" %( p['name'].encode(encoding) ) )
+		fout.write( "   <bio>%s</bio>\n" %( p['bio'].encode(encoding) ) )
 		fout.write( "   <weblink url=\"%s\">%s</weblink>\n" % ( p['profile_url'], 'Profile page on Comment Is Free' ) )
+		fout.write( "   <feed url=\"%s\">%s</feed>\n" % ( p['feed_url'], 'RSS feed of articles on Comment Is Free' ) )
 		fout.write( "  </journo>\n" )
 	fout.write( " </journodata>\n" )
 	fout.write( "</xml>\n" );
