@@ -45,7 +45,7 @@ def main():
 	pages = FetchWikipediaJournos()
 	for pagename in pages:
 		#
-		rawname = re.sub( "\\s+\\(.*\)$", "", pagename ).lower()
+		rawname = re.sub( r"\s+\(.*\)$", "", pagename ).lower()
 
 		c.execute( 'SELECT alias, journo_id FROM journo_alias WHERE alias=%s', rawname )
 		j = c.fetchone()
