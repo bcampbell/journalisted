@@ -16,25 +16,25 @@ in utf-8). At some point we'll tidy it up so the database knows it's storing
 utf-8.
 
 
-To restore from a backup:
+To restore from a backup or initialize fresh database:
+
+(Windows users should use "psql -U postgres" as an Administrator wherever
+"sudo -u postgres psql" appears.)
 
 Kill the old db:
-  $ dropdb mst
+  $ dropdb -U mst mst
 
 Create the new one:
-  $ createdb -E latin-1 -U mst mst
+  $ createdb -U mst -E latin-1 mst
 
-as a database superuser:
-  CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;
+Allow PL/PgSQL stored procedures:
+  $ sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;"
 
-eg:
-  $ sudo -u postgres psql
-  postgres=# CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;
-  postgres=# \q
-
+To initialize database:
+  $ psql -U mst mst -f jl/db/schema.sql
+  $ psql -U mst mst -f jl/db/basedata.sql
 
 Load backup:
-
   $ bzcat [backupfile] | psql -U mst mst
-
-
+or if you have a password set on the mst user:
+  $ bzcat [backupfile] > /tmp/blah  &&  psql -U mst mst -f /tmp/blah  &&  rm /tmp/blah

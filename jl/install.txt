@@ -33,26 +33,32 @@ $ cvs checkout -d phplib mysociety/phplib
 $ cvs checkout -d pylib mysociety/pylib
 
 Setting up all this is much more fiddly under Windows and Mac, but can
-definitely be done.
+definitely be done. Windows users can do the CVS parts by e.g. installing
+TortoiseCVS and doing:
 
+> path c:\Program Files\TortoiseCVS\;%PATH%
+> set CVS_RSH=TortoisePlink.exe
+> set CVSROOT=:pserver:anonymous@cvs.mysociety.org:/repos
+> cvs checkout -d phplib mysociety/phplib
+> cvs checkout -d pylib mysociety/pylib
 
 
 DB Setup
 --------
 
 
-(as postgres user, eg sudo -u postgres bash)
-$ createuser --no-superuser --createdb --no-createrole mst
+$ sudo createuser -U postgres --no-superuser --createdb --no-createrole mst
+$ sudo psql -U postgres -c "alter user mst with password 'mstPass'"
+$ sudo pg_ctl reload -D /etc/postgresql/8.2/main/
+(Windows: pg_ctl reload -D "C:\Program Files\PostgreSQL\8.2\data\")
 
+Test:
+$ psql -U mst -l
+with password "mstPass".
 
-$ sudoedit /etc/postgresql/8.2/main/pg_hba.conf
-
-Add the line:
-
-local  all  all  trust
-
-(is order important? might have to be higher than a similar line with
-other authetication)
+Further info:
+    http://wiki.rubyonrails.org/rails/pages/PostgreSQL
+    http://webpy.org/install_macosx
 
 
 Apache
@@ -84,7 +90,7 @@ Site Config
 -----------
 
  $ cd journa-list/jl
- $ cp conf/general conf/general
+ $ cp conf/general.example conf/general
  $ cp conf/httpd.conf web/.htaccess
 
 Check settings in conf/general. In particular, check the postgresql port
