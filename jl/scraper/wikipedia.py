@@ -14,7 +14,7 @@ from BeautifulSoup import BeautifulSoup
 
 def ScrapeArticle(url):
     info = {}
-    req = urllib2.Request(url, headers={'User-Agent': 'asdoijad'}) #FIXME
+    req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
     html = urllib2.urlopen(req).read()
     soup = BeautifulSoup(html)
     
