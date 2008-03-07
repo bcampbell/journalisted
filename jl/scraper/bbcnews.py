@@ -14,6 +14,7 @@
 import re
 from datetime import datetime
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup, Comment
@@ -209,6 +210,31 @@ rssfeeds = {
 
 
 
+# example bbc news url:
+# "http://news.bbc.co.uk/1/hi/world/africa/7268903.stm"
+idpat = re.compile( '/(\d+)\.stm$' )
+
+
+def CalcSrcID( url ):
+	""" Extract unique srcid from url. Returns None if this scraper doesn't handle it."""
+
+	o = urlparse.urlparse(url)
+	if o[1] != 'news.bbc.co.uk':
+		return None
+
+	# blogs are all at "blogs.bbc.co.uk" (old?) and
+	# "www.bbc.co.uk/blogs/", but we leave that to blogs.py for now...
+	# also blogs have .html or .shtml extension
+
+	m = idpat.search( url )
+	if not m:
+		return None		# suppress this article (probably a blog)
+
+	return 'bbcnews_' + m.group(1)
+
+
+
+
 def Extract( html, context ):
 	"""Parse the html of a single article
 
@@ -297,18 +323,6 @@ def Extract( html, context ):
 
 
 
-# bbc news rss feeds have lots of blogs and other things in them which
-# we don't parse here. We identify news articles by the number in their
-# url.
-idpat = re.compile( '/(\d+)\.stm$' )
-
-def CalcSrcID( url ):
-	""" returns None if it's not an article (probably a blog) """
-
-	m = idpat.search( url )
-	if not m:
-		return None		# suppress this article (probably a blog)
-	return m.group(1)
 
 
 

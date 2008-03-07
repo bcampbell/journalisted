@@ -6,16 +6,16 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
-# TODO:
-# - how to handle NY times articles on FT site?
 #
-#
-#
-
-
+# NOTES:
+# This scraper handles both blogs and news articles
 # Login form is a separate page, in a iframe:
 # http://media.ft.com/h/subs2.html
-
+#
+# TODO:
+# - how to handle NY times articles on FT site?
+# - handle ft Lex articles?
+#
 
 import sys
 import re
@@ -240,9 +240,6 @@ def Extract_article( html, context ):
 	""" extract fn for FT main articles """
 	art = context
 	soup = BeautifulSoup( html )
-#	print "============================"
-#	print soup.prettify('utf-8')
-#	print "============================"
 
 	headerdiv = soup.find( 'div', {'class':'ft-story-header'} )
 	
@@ -431,13 +428,19 @@ art_idpat = re.compile( "/([^/]+)(,dwp_uuid=[0-9a-fA-F\\-]+)?[.]html" )
 blog_idpat = re.compile( "blogs.ft.com/(.*)$" )
 
 def CalcSrcID( url ):
+	""" generate a unique srcid from an ft url """
+	o = urlparse.urlparse( url )
+	if not re.match( "(\w+[.])?ft[.]com$", o[1] ):
+		return None
+
 	m = art_idpat.search( url )
 	if m:
-		return m.group(1)
+		return 'ft_' + m.group(1)
 	m = blog_idpat.search( url )
 	if m:
-		return m.group(1)
-	raise Exception, "Couldn't extract srcid from url '%s'" % (url)
+		return 'ftblog_' + m.group(1)
+
+	return None
 
 
 def ContextFromURL( url ):

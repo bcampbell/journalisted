@@ -7,10 +7,14 @@
 # TODO:
 # - columnists require separate scrape path (no rss feeds!)?
 #
+# Notes:
+# - www.dailymail.co.uk and www.mailonsunday.co.uk are interchangable
+#
 
 import re
 from datetime import datetime
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -98,7 +102,7 @@ def FindColumnistArticles():
 		url = TidyURL( 'http://www.dailymail.co.uk' + h.a['href'] )
 
 		context = {
-			'srcid': url,
+			'srcid': CalcSrcID( url ),
 			'srcurl': url,
 			'permalink': url,
 			'srcorgname' : srcorgname,
@@ -263,11 +267,24 @@ def ScrubFunc( context, entry ):
 
 	context['srcurl'] = url
 	context['permalink'] = url
-	context['srcid'] = url
+	context['srcid'] = CalcSrcID( url )
 	return context
 
+
+idpat = re.compile( "\\bin_article_id=(\d+)" )
+
 def CalcSrcID( url ):
-	return TidyURL( url )
+	""" Generate a unique srcid from a url """
+	o = urlparse.urlparse( url )
+	# blogs are handled by blogs.py
+	if o[1] not in ( 'www.dailymail.co.uk', 'www.mailonsunday.co.uk' ):
+		return None
+
+	m = idpat.search( url )
+	if not m:
+		return None
+
+	return 'dailymail_' + m.group(1)
 
 def ContextFromURL( url ):
 	"""Set up for scraping a single article from a bare url"""

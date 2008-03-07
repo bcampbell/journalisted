@@ -31,6 +31,18 @@ from SpiderPig import SpiderPig
 # "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
 idpat = re.compile( "/((display|index)[.]var[.].*[.]php)" )
 
+def CalcSrcID( url ):
+	""" extract unique srcid from url """
+	url = url.lower()
+	o = urlparse.urlparse( url )
+	if not o[1].endswith( 'theherald.co.uk' ):
+		return None
+
+	m = idpat.search( o[2] )
+	if m:
+		return 'herald_' + m.group(1)
+	else:
+		return None
 
 # pattern to find blog rss feeds on the blog index pages
 blogrsspat = re.compile( "http://www.theherald.co.uk/(.*)/rss.xml" )
@@ -293,10 +305,6 @@ def ScrubFunc( context, entry ):
 
 
 
-def CalcSrcID( url ):
-	url = url.lower()
-	m = idpat.search( url )
-	return m.group(1)
 
 
 def ContextFromURL( url ):

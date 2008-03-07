@@ -12,6 +12,7 @@ import re
 from datetime import datetime
 import sys
 import os
+import urlparse
 
 sys.path.append("../pylib")
 import BeautifulSoup
@@ -28,8 +29,6 @@ from JL import ukmedia, ScraperUtils
 # each days edition which contains links to all the headlines for that day.
 # That's what we want.
 
-
-linkpat = re.compile( '^/.*?/article[0-9]+\.ece$' )
 
 # lots of links on the page which we don't want, so we'll
 # look for sections with links we _do_ want...
@@ -113,13 +112,26 @@ def FindArticles():
 	return foundarticles
 
 
+# http://www.timesonline.co.uk/tol/news/politics/article3471714.ece
+srcidpat_ece = re.compile( '/(article[0-9]+\.ece)$' )
 
 def CalcSrcID( url ):
-	""" work out a unique id for this url (must be unique across the times)"""
+	""" work out a unique srcid for this url """
 
-	# TODO: work out proper times srcids
-	# "http://www.timesonline.co.uk/tol/news/uk/article469471.ece"
-	return url
+	o = urlparse.urlparse( url )
+
+	if o[1].endswith( 'typepad.com' ):
+		# times blogs handled in blogs.py
+		return None
+
+	if not o[1].endswith( 'timesonline.co.uk' ):
+		return None
+
+	m = srcidpat_ece.search( o[2] )
+	if m:
+		return 'times_' + m.group(1)
+
+	return None
 
 
 def Extract( html, context ):

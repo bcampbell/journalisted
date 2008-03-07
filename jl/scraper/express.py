@@ -11,6 +11,7 @@ import sys
 import re
 from datetime import datetime
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
@@ -70,6 +71,25 @@ rssfeeds = {
 	'Property': 'http://express.co.uk/rss/property.xml'
 }
 
+# url formats:
+# http://www.dailyexpress.co.uk/posts/view/13737
+# http://www.express.co.uk/posts/view/25358/HISTORY-The-Queen-60-Years-Of-Marriage-8-30pm-ITV1
+srcidpat = re.compile( "/posts/view/(\d+)(/.*)?$" )
+
+def CalcSrcID( url ):
+	""" Work out a unique srcid from an express url """
+	o = urlparse.urlparse( url )
+ 	expressdomains = ( 'dailyexpress.co.uk', 'express.co.uk', 'sundayexpress.co.uk', 'sundayexpress.co.uk' )
+	
+	d = re.sub( '^www[.]', '', o[1] )
+	if d not in expressdomains:
+		return None
+
+	m = srcidpat.search( url )
+	if not m:
+		return None
+
+	return 'express_' + m.group(1)
 
 
 
@@ -160,6 +180,8 @@ def ScrubFunc( context, entry ):
 	if context['srcurl'].startswith( "http://venus.netro42.com" ):
 		return None
 
+	context['srcid'] = CalcSrcID( context['srcurl'] )
+
 	return context
 
 
@@ -174,7 +196,7 @@ def ContextFromURL( url ):
 	context = {}
 	context['srcurl'] = url
 	context['permalink'] = url
-	context['srcid'] = url
+	context['srcid'] = CalcSrcID( url )
 	context['srcorgname'] = u'express'
 	context['lastseen'] = datetime.now()
 	return context

@@ -13,6 +13,7 @@ from datetime import datetime
 import time
 import string
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -162,19 +163,30 @@ def Extract( html, context ):
 
 # to get unique id out of url
 srcid_patterns = [
-	re.compile( "-89520-([0-9]+)/([?].*)?$""" ),	# mirror
-	re.compile( "-98487-([0-9]+)/([?].*)?$""" ),	# sundaymirror
-	re.compile( "%26objectid=([0-9]+)%26""" )	# old url style
+	# mirror:
+	# http://www.mirror.co.uk/news/topstories/2008/02/29/prince-harry-to-be-withdrawn-from-afghanistan-89520-20335665/
+	re.compile( "-(89520-[0-9]+)/([?].*)?$""" ),
+	# sundaymirror:
+	# http://www.sundaymirror.co.uk/news/sunday/2008/02/24/commons-speaker-michael-martin-in-new-expenses-scandal-98487-20329121/
+	re.compile( "-(98487-[0-9]+)/([?].*)?$""" ),
+	re.compile( "%26(objectid=[0-9]+)%26""" )	# old url style
 	]
 
 def CalcSrcID( url ):
+	""" Calculate a unique srcid from a url """
+	o = urlparse.urlparse( url )
+
+	if not o[1].endswith( 'mirror.co.uk' ) and not o[1].endswith('sundaymirror.co.uk'):
+		return None
+
 	for pat in srcid_patterns:
 		m = pat.search( url )
 		if m:
 			break
 	if not m:
-		raise Exception, "Couldn't extract srcid from url ('%s')" % (url)
-	return m.group(1)
+		return None
+
+	return 'mirror_' + m.group(1)
 
 
 def ScrubFunc( context, entry ):

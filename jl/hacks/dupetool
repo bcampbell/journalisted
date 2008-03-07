@@ -115,10 +115,10 @@ def main():
 		settings['srcorgid'] = int( options.srcorg )
 
 	dupegroups = FindDupeGroups(conn, settings )
-	print "%d groups found" % len(dupegroups)
 	if not options.killdupes:
 		for d in dupegroups:
 			print "%d: %s (srcorg=%d)" % (d['cnt'],d['title'],d['srcorg'])
+	print "%d sets of dupes found" % len(dupegroups)
 
 	if options.killdupes:
 		for d in dupegroups:

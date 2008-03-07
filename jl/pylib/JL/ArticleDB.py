@@ -96,13 +96,12 @@ class ArticleDB:
 		return id
 
 
-	def ArticleExists( self, srcorgname, srcid ):
+	def ArticleExists( self, srcid ):
 		"""returns non-zero if article is already in the DB"""
 
-		srcorg = self.orgmap[ srcorgname ]
 		cursor = self.conn.cursor()
-		q = 'SELECT count(*) FROM article WHERE srcorg=%s AND srcid=%s'
-		cursor.execute( q, ( srcorg, srcid ) )
+		q = 'SELECT count(*) FROM article WHERE srcid=%s'
+		cursor.execute( q, ( srcid ) )
 		r = cursor.fetchone()[0]
 		cursor.close()
 
@@ -129,7 +128,7 @@ class DummyArticleDB:
 		ukmedia.DBUG2( u"%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
 		return artid
 
-	def ArticleExists( self, srcorgname, srcid ):
+	def ArticleExists( self, srcid ):
 		return 0
 
 
@@ -139,7 +138,7 @@ def CheckArticle(art):
 #	entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
 	# check for missing/null fields
-	for f in ('title','description','content', 'permalink', 'srcurl','srcid','lastscraped','pubdate' ):
+	for f in ('title','description','content', 'permalink', 'srcurl','srcid','srcorgname','lastscraped','pubdate' ):
 		if not (f in art):
 			raise Exception, ( "missing '%s' field!" % (f) )
 		if not art[f]:

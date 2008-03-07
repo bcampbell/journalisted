@@ -30,6 +30,7 @@ import urllib2
 import sys
 import traceback
 from datetime import date,datetime
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -37,13 +38,29 @@ from JL import ukmedia,ScraperUtils
 
 
 
-calcsrcid_pat = re.compile( '.*[/]article(\\d+)[.]ece' )
+# current url format:
+# http://www.thesun.co.uk/sol/homepage/news/royals/article862982.ece
+srcidpat_ecestyle = re.compile( '/(article\\d+[.]ece)$' )
+
+# Old url format, no longer used (vignette storyserver cms, I think)
+# http://www.thesun.co.uk/article/0,,2007400986,00.html
+srcidpat_oldstyle = re.compile( '/(article/[^/]+[.]html)$' )
 
 def CalcSrcID( url ):
-	"""Extract a Sun-specific ID from a URL."""
-	m = calcsrcid_pat.match( url )
+	"""Extract a unique srcid from url"""
+
+	o = urlparse.urlparse( url )
+	if not o[1].endswith( 'thesun.co.uk' ):
+		return None
+
+	m = srcidpat_ecestyle.search( o[2] )
 	if m:
-		return m.group(1)
+		return 'sun_' + m.group(1)
+
+	m = srcidpat_oldstyle.search( o[2] )
+	if m:
+		return 'sun_' + m.group(1)
+
 	return None
 
 

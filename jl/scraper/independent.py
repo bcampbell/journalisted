@@ -4,7 +4,26 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
-# TODO: migrate to new RSS feeds
+# Scraper for the independent
+#
+# NOTES:
+#
+# They changed over to a new system around the end of 2007/beginning of
+# 2008.
+# Old format urls look like:
+#   http://news.independent.co.uk/world/middle_east/article2790961.ece
+# New ones look like:
+#   http://www.independent.co.uk/news/uk/home-news/harry-set-to-be-pulled-out-of-afghanistan-789513.html
+#
+# Unfortunately it doesn't look like they redirect the old format ones to
+# the new format, so they've broken a lot of our permalinks :-(
+#
+# For blogs, hostnames indyblogs.typepad.com and blogs.independent.co.uk
+# are interchangable.
+#
+# TODO:
+#  - migrate to new RSS feeds (at last check their rss index still had
+#    the old ones only (which still work fine)
 #
 
 
@@ -12,6 +31,7 @@ import getopt
 import re
 from datetime import datetime
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -226,6 +246,43 @@ dudbylines = [ u'leading article', u'leadinga article', u'the third leader' ]
 
 
 
+# new-format url (the number is the important bit - the text you
+# can fiddle with and still get the same article :-)
+# http://www.independent.co.uk/news/uk/home-news/harry-set-to-be-pulled-out-of-afghanistan-789513.html
+srcidpat_newformat = re.compile( '/[^/]+-(\d+)[.]html$' )
+
+# old-format url
+# http://news.independent.co.uk/world/middle_east/article2790961.ece
+srcidpat_oldformat = re.compile( '/(article\d+[.]ece)$' )
+
+# http://indyblogs.typepad.com/independent/2007/11/terrorism-whos-.html
+# http://blogs.independent.co.uk/independent/2007/12/the-fife-diet.html
+
+def CalcSrcID( url ):
+	""" Calculate a unique srcid from a url """
+
+
+	o = urlparse.urlparse( url )
+	# we don't handle blogs here (see blogs.py instead).
+	if o[1] in ( 'indyblogs.typepad.com', 'blogs.independent.co.uk' ):
+		return None
+
+	if not o[1].endswith( ".independent.co.uk" ):
+		return None
+
+	m = srcidpat_newformat.search( o[2] )
+	if m:
+		return 'independent_' + m.group(1)
+
+	# probably never encounter the old format urls (they seem to
+	# have been turned off now)... but just in case:
+	m = srcidpat_oldformat.search( o[2] )
+	if m:
+		return 'independent_' + m.group(1)
+
+	return None
+
+
 def Extract( html, context ):
 	"""Extract article from html"""
 
@@ -413,7 +470,7 @@ def ScrubFunc( context, entry ):
 	""" description contains html entities and tags...  scrub it! """
 	context[ 'description' ] = ukmedia.FromHTML( context['description'] )
 	url = TidyURL( context['srcurl'] )
-	context['srcid'] = url
+	context['srcid'] = CalcSrcID( url )
 	context['srcurl'] = url
 	context['permalink'] = url
 	return context
@@ -430,7 +487,7 @@ def ContextFromURL( url ):
 	context = {}
 	context['srcurl'] = url
 	context['permalink'] = url
-	context[ 'srcid' ] = url
+	context['srcid'] = CalcSrcID( url )
 	context['srcorgname'] = u'independent'
 	context['lastseen'] = datetime.now()
 	return context

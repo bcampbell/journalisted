@@ -344,24 +344,33 @@ def ExtractParas( soup, textpart ):
 	return desc
 
 
+# eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html?service=print
+srcidpat_html = re.compile( "/(\d+)/[^/]+[.]html$" )
+
+# http://www.telegraph.co.uk/earth/main.jhtml?xml=/earth/2008/03/02/earecycling102.xml
+# pick out the xml=part
+srcidpat_xml = re.compile( "(xml=.*[.]xml)" )
 
 def CalcSrcID( url ):
 	""" extract unique id from url """
 
+	url = url.lower()
+
 	o = urlparse.urlparse( url )
 
-	if o[2].lower().endswith( ".html" ):
-		# eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html?service=print
-		html_art_pat = re.compile( "/(\d+/[^/]+[.]html)$" )
-		m = html_art_pat.search( o[2].lower() )
-		if m:
-			return m.group(1)
-	elif o[2].lower().endswith( ".jhtml" ):
-		# TODO: we should use only the "xml=..." part (but requires db tidying)
-		if re.search( "[.]jhtml[?](.*?)xml=/.*[.]xml$", url ):
-			return url
+	if not o[1].endswith( 'telegraph.co.uk' ):
+		return None
+	if o[1].startswith( "blogs." ):
+		return None		# blogs handled in blogs.py
 
-	# blogs not supported here...
+	m = srcidpat_html.search( o[2] )
+	if m:
+		return 'telegraph_' + m.group(1)
+
+	# pick out from the the "xml=" param
+	m = srcidpat_xml.search( o[4] )
+	if m:
+		return 'telegraph_' + m.group(1)
 
 	return None
 

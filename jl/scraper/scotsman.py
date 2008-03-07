@@ -1,11 +1,16 @@
 #!/usr/bin/env python2.4
 #
-# Scraper for The Scotsman
+# Scraper for The Scotsman and Scotland on Sunday
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
+# NOTES:
+# Same article urls work on both thescotsman.scotsman.com and
+# scotlandonsunday.scotsman.com.
+#
+
 
 import sys
 import re
@@ -459,8 +464,17 @@ idpat = re.compile( "/([^/]+[.][0-9]+[.]jp)" )
 
 def CalcSrcID( url ):
 	""" extract unique id from url """
-	m = idpat.search( url )
-	return m.group(1)
+
+	o = urlparse.urlparse( url )
+	# thescotsman.scotsman.com, scotlandonsunday.scotsman.com
+	if not o[1].endswith( 'scotsman.com' ):
+		return None
+
+	m = idpat.search( o[2] )
+	if m:
+		return 'scotsman_' + m.group(1)
+
+	return None
 
 
 def ScrubFunc( context, entry ):

@@ -367,6 +367,9 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 				# mungefunc can suppress by returning None.
 				if not context:
 					continue
+				if not context.get( 'srcid', None ):
+					DBUG2( "WARNING: missing/null srcid! ('%s')" % (context['srcurl']) )
+
 
 			foundarticles.append( context )
 	DBUG2( "found %d articles.\n" % ( len(foundarticles) ) )
@@ -391,7 +394,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 
 
 	for context in foundarticles:
 		try:
-			if store.ArticleExists( context['srcorgname'], context['srcid'] ):
+			if store.ArticleExists( context['srcid'] ):
 				continue;	# skip it - we've already got it
 
 			html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )

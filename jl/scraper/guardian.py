@@ -38,6 +38,7 @@ import re
 from datetime import date,datetime,timedelta
 import time
 import sys
+import urlparse
 
 sys.path.append("../pylib")
 from BeautifulSoup import BeautifulSoup
@@ -390,30 +391,35 @@ def TidyURL( url ):
 	return url
 
 
-# pattern to extract storyserver id from url
-idpat = re.compile( u'.*[/](.*)[.]html$', re.UNICODE )
+# patterns to extract srcids
+# (just match against path part, as there could be params (eg "?page=all")
+
+# "http://education.guardian.co.uk/schools/story/0,,2261002,00.html"
+srcidpat_storyserver = re.compile( u'.*[/]([0-9,-]+)[.]html$' )
+
+# "http://www.guardian.co.uk/world/2008/feb/29/afghanistan.terrorism"
+srcidpat_newformat = re.compile( u'.*/(\d{4}/.*?/\d+/.*(?![.]html))$' )
 
 def CalcSrcID( url ):
-	""" Extract a srcid from the URL.
+	""" Extract a unique srcid from the URL """
+	o = urlparse.urlparse( url )
+	if not re.search( "(.*[.])?guardian.co.uk$", o[1] ) and not re.search( "(.*[.])?observer.co.uk$", o[1] ) and not re.search( "(.*[.])?guardianunlimited.co.uk$", o[1] ):
+		return None
 
-	srcid should uniquely identify the article within the source organisation.
-	If an outlet has obvious internal IDs in the URL, then we can use them.
-	Otherwise we can just use the whole URL, although we need to be careful
-	that the outlet doesn't have multiple urls for a single article, or
-	we'll get dupes...
-	srcorg and srcid together uniquely identify a single article in the DB.
-	"""
+	if 'blogs' in o[1]:
+		return None		# blogs handled by blogs.py...
 
-	m = idpat.search( url )
+	m = srcidpat_storyserver.search( o[2] )
 	if m:
 		# old (storyserver) format
-		srcid = m.group(1)
-	else:
-		# new format, or comment-is-free
-		# - use whole url as srcid
-		srcid = url
+		return 'guardian_' + m.group(1)
+	
+	m = srcidpat_newformat.search( o[2] )
+	if m:
+		# new format
+		return 'guardian_' + m.group(1)
 
-	return srcid
+	return None
 
 
 def ScrubFunc( context, entry ):
