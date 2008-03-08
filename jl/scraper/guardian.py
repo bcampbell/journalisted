@@ -6,16 +6,8 @@
 #
 # Scraper for the guardian and observer
 #
-# NOTE: guardian unlimited is changing their backend. They're doing it
-# section by section and new system looks a lot cleaner, so hopefully we
-# can remove some of the hackery in this scraper one day!
-#
-# Current sections using new system:
-#  science
-#  technology
-#  environment
-#  travel
-#  media
+# NOTE: guardian unlimited has updated their site. They were using
+# vignette storyserver, but have now written their own I think.
 #
 # Main RSS page doesn't seem be be updated with feeds from new sections
 # (presumably it'll be rejigged once the transition is complete)
@@ -24,12 +16,11 @@
 # click through all the subsection frontpages and look for the RSS link.
 #
 # TODO:
+# - Update RSS feed list - currently a mix of old and new ones. Probably
+#   should scrape the list from their site, but can't do that until they
+#   have a proper rss index, if they ever do...
 # - extract journo names from descriptions if possible...
-# - REALLY need to sort out the guardian/observer issue - no reliable way
-#   of telling which paper it's from using just the url. Likely to be a
-#   problem with other papers too (particularly local papers): multiple
-#   papers sharing a single CMS...
-#
+# - sort out guardian/observer from within Extract fn
 # - For new-format articles, could use class attr in body element to
 #   ignore polls and other cruft. <body class="article"> is probably
 #   the only one we should accept...
@@ -46,51 +37,48 @@ from JL import DB,ScraperUtils,ukmedia
 
 
 rssfeeds = {
-	'Guardian Unlimited front page':'http://www.guardian.co.uk/rssfeed/0,,1,00.xml',
-	'UK latest': 'http://www.guardian.co.uk/rssfeed/0,,11,00.xml',
-	'World latest': 'http://www.guardian.co.uk/rssfeed/0,,12,00.xml',
-	'Guardian Unlimited Football': 'http://www.guardian.co.uk/rssfeed/0,,5,00.xml',
-	'Guardian Unlimited Business': 'http://www.guardian.co.uk/rssfeed/0,,24,00.xml',
-	'Education Guardian': 'http://www.guardian.co.uk/rssfeed/0,,8,00.xml',
-	'Guardian Unlimited Books': 'http://www.guardian.co.uk/rssfeed/0,,10,00.xml',
-	'Guardian Unlimited Comment': 'http://www.guardian.co.uk/rssfeed/0,,27,00.xml',
-	'Guardian Unlimited Environment': 'http://www.guardian.co.uk/rssfeed/0,,29,00.xml',
-	'Guardian Unlimited Film news': 'http://www.guardian.co.uk/rssfeed/0,,16,00.xml',
-	'Guardian Unlimited Leaders': 'http://www.guardian.co.uk/rssfeed/0,,28,00.xml',
-	'Guardian Unlimited Politics': 'http://www.guardian.co.uk/rssfeed/0,15065,19,00.xml',
-	'Guardian Unlimited Science': 'http://www.guardian.co.uk/rssfeed/0,,18,00.xml',
-	'Guardian Unlimited Shopping': 'http://www.guardian.co.uk/rssfeed/0,,22,00.xml',
-	'Guardian Unlimited Sport': 'http://www.guardian.co.uk/rssfeed/0,,7,00.xml',
-	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
-	'Guardian Unlimited The Guide': 'http://www.guardian.co.uk/rssfeed/0,,21,00.xml',
-	# OLD media guardian rss
-	'Media Guardian': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
-	'The Observer': 'http://www.guardian.co.uk/rssfeed/0,,15,00.xml',
-	'Society Guardian': 'http://www.guardian.co.uk/rssfeed/0,,9,00.xml',
-#	'Guardian Unlimited Business Insight': 'http://blogs.guardian.co.uk/businessinsight/index.rdf',
-#	'Guardian Unlimited Gamesblog': 'http://blogs.guardian.co.uk/games/index.rdf',
-#	'Guardian Unlimited Newsblog': 'http://blogs.guardian.co.uk/news/index.rdf',
-#	'Guardian Unlimited Onlineblog': 'http://blogs.guardian.co.uk/technology/index.xml',
-#	'Guardian Abroad': 'http://www.guardianabroad.co.uk/rss.xml',
 
-	# education guardian
-	'Education Guardian': 'http://www.guardian.co.uk/rssfeed/0,,8,00.xml',
-	'Education Guardian TEFL news': 'http://www.guardian.co.uk/rssfeed/0,,30,00.xml',
+	# these two _should_ be everything from the printed editions of the guardian and observer...
+	'Latest from the Guardian': 'http://www.guardian.co.uk/theguardian/all/rss',
+	'Latest from the Observer':	'http://www.guardian.co.uk/theobserver/all/rss',
 
-	# Life and style
-	'Guardian Unlimited Life and Style': 'http://www.guardian.co.uk/rssfeed/0,,44,00.xml',
-	'Guardian Unlimited Life and Style Food': 'http://www.guardian.co.uk/rssfeed/0,,46,00.xml',
+	# front page
+	'guardian.co.uk home | guardian.co.uk': 'http://www.guardian.co.uk/rss',
 
-
-	# http://arts.guardian.co.uk/
-	'Guardian Unlimited Art': 'http://www.guardian.co.uk/rssfeed/0,,40,00.xml',
-#	'Guardian Unlimited: Arts blog':'http://blogs.guardian.co.uk/arts/atom.xml',
-	# already got books
-
-	# http://business.guardian.co.uk/
-	'Guardian Unlimited Business - more business news': 'http://www.guardian.co.uk/rssfeed/0,,25,00.xml',
+	# NEWS
+	'guardian.co.uk UK news': 'http://www.guardian.co.uk/uk/rss',
+	'guardian.co.uk World news': 'http://www.guardian.co.uk/world/rss',
+	'Guardian America | guardian.co.uk': 'http://www.guardian.co.uk/america/rss',
+	'guardian.co.uk Politics': 'http://www.guardian.co.uk/politics/rss',
+	'guardian.co.uk Media': 'http://www.guardian.co.uk/media/rss',
 
 	# (section names IN CAPS below are new-style sections, with new rss feeds)
+
+	# BUSINESS - http://www.guardian.co.uk/business
+	'guardian.co.uk Business': 'http://www.guardian.co.uk/business/rss',
+	'guardian.co.uk Business: Banking sector': 'http://www.guardian.co.uk/business/banking/rss',
+	'guardian.co.uk Business: Pharmaceuticals industry': 'http://www.guardian.co.uk/business/pharmaceuticals/rss',
+	'guardian.co.uk Business: Retail industry': 'http://www.guardian.co.uk/business/retail/rss',
+	'guardian.co.uk Business: Mining': 'http://www.guardian.co.uk/business/mining/rss',
+	'guardian.co.uk Business: Oil and gas industry': 'http://www.guardian.co.uk/business/oil/rss',
+	'guardian.co.uk Business: Automotive industry': 'http://www.guardian.co.uk/business/automotive/rss',
+	'guardian.co.uk Business: Construction industry': 'http://www.guardian.co.uk/business/construction/rss',
+	'guardian.co.uk Business: Healthcare industry': 'http://www.guardian.co.uk/business/healthcare/rss',
+	'guardian.co.uk Business: Insurance industry': 'http://www.guardian.co.uk/business/insurance/rss',
+	'guardian.co.uk Business: Mergers and acquisitions': 'http://www.guardian.co.uk/business/mergersandacquisitions/rss',
+	'guardian.co.uk Business: Technology': 'http://www.guardian.co.uk/business/technology/rss',
+	'guardian.co.uk Business: Travel & leisure': 'http://www.guardian.co.uk/business/travelleisure/rss',
+	'guardian.co.uk Business: Utilities': 'http://www.guardian.co.uk/business/utilities/rss',
+	'guardian.co.uk Business: Market forces column': 'http://www.guardian.co.uk/business/marketforces/rss',
+	'guardian.co.uk Business: Credit crunch': 'http://www.guardian.co.uk/business/creditcrunch/rss',
+	'guardian.co.uk Business: Economics': 'http://www.guardian.co.uk/business/economics/rss',
+	'guardian.co.uk Business: Interest rates': 'http://www.guardian.co.uk/business/interestrates/rss',
+	'guardian.co.uk Business: US economy': 'http://www.guardian.co.uk/business/useconomy/rss',
+	'guardian.co.uk Business: Viewpoint column': 'http://www.guardian.co.uk/business/series/viewpointcolumn/rss',
+	'guardian.co.uk Business: Private equity': 'http://www.guardian.co.uk/business/privateequity/rss',
+	'guardian.co.uk Business: Andrew Clark on America': 'http://www.guardian.co.uk/business/series/andrewclarkonamerica/rss',
+	'guardian.co.uk Business: David Gow on Europe': 'http://www.guardian.co.uk/business/series/davidgowoneurope/rss',
+
 
 	# ENVIRONMENT - http://www.guardian.co.uk/environment
 	'Guardian Unlimited Environment': 'http://www.guardian.co.uk/environment/rss',
@@ -136,6 +124,46 @@ rssfeeds = {
 	'Guardian Unlimited Media: Radio': 'http://www.guardian.co.uk/media/radio/rss',
 	'Guardian Unlimited Media: Marketing and PR': 'http://www.guardian.co.uk/media/marketingandpr/rss',
 	'Guardian Unlimited Media: Media business': 'http://www.guardian.co.uk/media/mediabusiness/rss',
+
+
+	# OLD STYLE FEEDS FROM HERE ON:
+
+	'Guardian Unlimited front page':'http://www.guardian.co.uk/rssfeed/0,,1,00.xml',
+	'UK latest': 'http://www.guardian.co.uk/rssfeed/0,,11,00.xml',
+	'World latest': 'http://www.guardian.co.uk/rssfeed/0,,12,00.xml',
+	'Guardian Unlimited Football': 'http://www.guardian.co.uk/rssfeed/0,,5,00.xml',
+#	'Guardian Unlimited Business': 'http://www.guardian.co.uk/rssfeed/0,,24,00.xml',
+	'Education Guardian': 'http://www.guardian.co.uk/rssfeed/0,,8,00.xml',
+	'Guardian Unlimited Books': 'http://www.guardian.co.uk/rssfeed/0,,10,00.xml',
+	'Guardian Unlimited Comment': 'http://www.guardian.co.uk/rssfeed/0,,27,00.xml',
+	'Guardian Unlimited Environment': 'http://www.guardian.co.uk/rssfeed/0,,29,00.xml',
+	'Guardian Unlimited Film news': 'http://www.guardian.co.uk/rssfeed/0,,16,00.xml',
+	'Guardian Unlimited Leaders': 'http://www.guardian.co.uk/rssfeed/0,,28,00.xml',
+	'Guardian Unlimited Politics': 'http://www.guardian.co.uk/rssfeed/0,15065,19,00.xml',
+	'Guardian Unlimited Science': 'http://www.guardian.co.uk/rssfeed/0,,18,00.xml',
+	'Guardian Unlimited Shopping': 'http://www.guardian.co.uk/rssfeed/0,,22,00.xml',
+	'Guardian Unlimited Sport': 'http://www.guardian.co.uk/rssfeed/0,,7,00.xml',
+	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
+	'Guardian Unlimited The Guide': 'http://www.guardian.co.uk/rssfeed/0,,21,00.xml',
+	# OLD media guardian rss
+	'Media Guardian': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
+	'The Observer': 'http://www.guardian.co.uk/rssfeed/0,,15,00.xml',
+	'Society Guardian': 'http://www.guardian.co.uk/rssfeed/0,,9,00.xml',
+
+	# education guardian
+	'Education Guardian': 'http://www.guardian.co.uk/rssfeed/0,,8,00.xml',
+	'Education Guardian TEFL news': 'http://www.guardian.co.uk/rssfeed/0,,30,00.xml',
+
+	# Life and style
+	'Guardian Unlimited Life and Style': 'http://www.guardian.co.uk/rssfeed/0,,44,00.xml',
+	'Guardian Unlimited Life and Style Food': 'http://www.guardian.co.uk/rssfeed/0,,46,00.xml',
+
+
+	# http://arts.guardian.co.uk/
+	'Guardian Unlimited Art': 'http://www.guardian.co.uk/rssfeed/0,,40,00.xml',
+#	'Guardian Unlimited: Arts blog':'http://blogs.guardian.co.uk/arts/atom.xml',
+	# already got books
+
 	# these blogs covered by separate scraper (blogs.py)
 #	'Media Monkey': 'http://blogs.guardian.co.uk/mediamonkey/atom.xml',
 #	'Guardian Unlimited: Organ Grinder': 'http://blogs.guardian.co.uk/organgrinder/atom.xml',
@@ -147,8 +175,6 @@ rssfeeds = {
 
 	'Guardian Unlimited Music': 'http://www.guardian.co.uk/rssfeed/0,,39,00.xml',
 	'Guardian Unlimited Theatre & performance art': 'http://www.guardian.co.uk/rssfeed/0,,41,00.xml',
-
-
 
 	# these I found by trying out URLs - Ben
 
@@ -279,6 +305,9 @@ def Extract( html, context ):
 
 	# that's it!
 	art['content'] = textpart.prettify(None)
+
+	if art['description'] == u'':
+		art['description'] = ukmedia.FirstPara( art['content'] );
 	return art
 
 
@@ -315,18 +344,10 @@ def OldExtract( soup, context ):
 		publication = publication.lower()
 		if publication.find( 'observer' ) != -1:
 			# article says it's from observer
-			if 'srcorgname' in art:
-				if art['srcorgname'] != u'observer':
-					raise Exception, ("Observer article found with wrong srcorgname" )
-			else:
-				art['srcorgname'] = u'observer';
+			art['srcorgname'] = u'observer';
 		else:
 			# article not from observer
-			if 'srcorgname' in art:
-				if art['srcorgname'] != u'guardian':
-					raise Exception, ("Guardian article found with wrong srcorgname" )
-			else:
-				art['srcorgname'] = u'guardian';
+			art['srcorgname'] = u'guardian';
 
 	else:
 		art[ 'byline' ] = u''
@@ -458,18 +479,11 @@ def ScrubFunc( context, entry ):
 		ukmedia.DBUG2( "IGNORE travel section link '%s' (%s)\n" % (context['title'], url) );
 		return None
 
-	# we don't handle gallery pages...
-	if url.find( '/gallery/') != -1:
-		ukmedia.DBUG2( "IGNORE gallery '%s' (%s)\n" % (context['title'], url) );
-		return None
-	# ... or videos....
-	if url.find( '/video/') != -1:
-		ukmedia.DBUG2( "IGNORE video page '%s' (%s)\n" % (context['title'], url) );
-		return None
-	# ...or quizes
-	if url.find( '/quiz/') != -1:
-		ukmedia.DBUG2( "IGNORE quiz '%s' (%s)\n" % (context['title'], url) );
-		return None
+	for bad in ( 'gallery', 'video', 'quiz', 'slideshow', 'poll' ):
+		s = "/%s/" % (bad) 
+		if s in url:
+			ukmedia.DBUG2( "IGNORE %s page '%s' (%s)\n" % ( bad, context['title'], url) );
+			return None
 
 	return context
 
