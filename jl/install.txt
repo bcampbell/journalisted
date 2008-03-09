@@ -25,7 +25,7 @@ mySociety phplib and pylib
  - available from their CVS
 
 On Ubuntu/Debian, this basically boils down to:
-$ apt-get install libapache2 libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-pgsql
+$ apt-get install apache2 cvs libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-pgsql
 $ svn checkout http://journa-list.googlecode.com/svn/trunk/ journa-list
 $ cd journa-list
 $ export CVSROOT=":pserver:anonymous@cvs.mysociety.org:/repos"
@@ -46,6 +46,8 @@ TortoiseCVS and doing:
 DB Setup
 --------
 
+Note that the --no-superuser and --no-createrole flags are only available 
+in Postgres 8.2 and higher, omit them for older version.
 
 $ sudo createuser -U postgres --no-superuser --createdb --no-createrole mst
 $ sudo psql -U postgres -c "alter user mst with password 'mstPass'"
@@ -59,6 +61,33 @@ with password "mstPass".
 Further info:
     http://wiki.rubyonrails.org/rails/pages/PostgreSQL
     http://webpy.org/install_macosx
+    
+    
+DB Setup in Ubuntu 6.06  + Postgres 8.1
+---------------------------------------
+The above didn't work for me, here's what did after apt-get had performed
+the initial install (also see https://help.ubuntu.com/community/PostgreSQL)
+
+$ sudo -u postgres psql template1
+ALTER USER postgres WITH ENCRYPTED PASSWORD ' <***password***> ';
+ \q
+
+$ sudo -u postgres createuser -D -A -P mst
+$ sudo -u postgres createdb -E latin-1 -O mst mst
+
+groupadd msg
+useradd -m -g mst -s /bin/bash mst
+ 
+
+sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;"
+sudo -u mst psql mst -f schema.sql
+sudo -u mst psql mst -f basedata.sql
+
+the last commands produces some errors:
+
+psql:basedata.sql:6: ERROR:  parameter "standard_conforming_strings" cannot be changed
+psql:basedata.sql:25: ERROR:  relation "organisation" already exists
+psql:basedata.sql:61: ERROR:  multiple primary keys for table "organisation" are not allowed
 
 
 Apache
