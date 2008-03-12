@@ -2,8 +2,9 @@
 # Assorted helper routines for scraping.
 #
 # TODO:
-# - ParseDatetime should be more generic. Just look for common
+# - ParseDateTime should be more generic. Just look for common
 # date and time formats anywhere in a string...
+# (replace with python-dateutil)
 # - rename "ukmedia" to something more appropriate
 #
 
@@ -57,6 +58,9 @@ def MonthNumber( name ):
 
 # various different datetime formats
 datecrackers = [
+	# "2008-03-10 13:21:36 GMT" (technorati api)
+	re.compile( """(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)\s+(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
+	
 	# 3:19pm on Tue 29 Jan 08 (herald blogs)
 	re.compile( """(?P<hour>\d+):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+(on\s+)?(\w+)\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d+)""", re.UNICODE|re.IGNORECASE ),
 	# "2007/03/18 10:59:02"

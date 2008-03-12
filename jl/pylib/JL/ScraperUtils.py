@@ -8,7 +8,7 @@ import sys
 import ukmedia, ArticleDB
 
 
-def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxerrors=10  ):
+def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxerrors=20  ):
 	"""A generic(ish) main function that all scrapers can use
 
 	Scrapers pass in callbacks:
