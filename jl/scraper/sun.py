@@ -174,7 +174,13 @@ def Extract( html, context ):
 		col2 = soup
 		# need to skip the h1 banner at top of page
 		artmodule = soup.find( text=re.compile(".*BEGIN: Module - Main Article.*"))
-		h1 = artmodule.findNext('h1')
+		if artmodule:
+			h1 = artmodule.findNext('h1')
+		else:
+			#sigh... sometimes they have "roottag" at the start of the article.
+			# What is "roottag"? good question...
+			roottag = soup.find( 'roottag' )
+			h1 = roottag.findPrevious( 'h1' )
 
 	titletxt = h1.renderContents(None).strip()
 	titletxt = ukmedia.FromHTML( titletxt )
@@ -238,6 +244,7 @@ def Extract( html, context ):
 	art['byline'] = bylinetxt
 
 	contenttxt = u''
+	desctxt = u''
 	# first para has 'first-para' class
 	# (sometimes have multiple first-paras, so use first non-empty one)
 	for p in col2.findAll('p', { 'class': re.compile( '\\bfirst-para\\b' ) } ):
@@ -255,6 +262,9 @@ def Extract( html, context ):
 		contenttxt += para.prettify(None)
 
 	contenttxt = ukmedia.SanitiseHTML( contenttxt );
+
+	if desctxt == u'':
+		desctxt = ukmedia.FirstPara( contenttxt )
 
 	art['content'] = contenttxt
 	art['description'] = desctxt

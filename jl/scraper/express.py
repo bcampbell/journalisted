@@ -107,7 +107,7 @@ def Extract( html, context ):
 
 	missing = soup.find( 'p', text=u"The article you are looking for does not exist.  It may have been deleted." )
 	if missing:
-		ukmedia.DBUG2( "IGNORE missing article '%s' (%s)" % (art['title'],art['srcurl'] ) )
+		ukmedia.DBUG2( "IGNORE missing article '%s' (%s)\n" % (art['title'],art['srcurl'] ) )
 		return None
 
 	headline = wrapdiv.find( 'h1', { 'class':'articleHeading' } )
