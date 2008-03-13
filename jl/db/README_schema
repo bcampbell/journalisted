@@ -92,18 +92,19 @@ srcorg (integer, not null)
 into the "organisation" table).
 
 srcid (text, not null)
- A unique ID which identifies the article within the source organisation.
- srcorg + srcid together should form a unique indentifier for the article
- over the whole database.
- Often, srcid can just be the same as srcurl, but not always. Some
- sites have multiple urls pointing at the same article.
- Often, sites expose their internal database IDs in the URL. If this is
- the case, then it makes sense to extract this from the url and use it
- as the srcid.
+ A unique ID which identifies the article within database.
+ (uniqueness not yet enforced in the database, but might be in future)
+ Often sites can have multiple urls which refer to the same article.
+ Which is a pain.
+ But luckily, sites usually expose some kind of uniqueness in the URL,
+ for example, their internal database IDs.
  eg:
  http://news.independent.co.uk/uk/politics/article3061121.ece
- For this independent url, it's pretty obvious that 3061121 is their
- internal database id.
+ For this independent url, it's pretty obvious that 3061121 is going to
+ be unique.
+ srcid generation is pretty newspaper-specific, but must be unique. To
+ ensure this, most srcids start with the name of the newspaper
+ eg "independent_article3061121.ece"
 
 lastscraped (timestamp)
  When the article was last scraped
