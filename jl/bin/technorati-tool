@@ -1,0 +1,251 @@
+#!/usr/bin/env python2.4
+# (BenC)
+#
+# Tool to search technorati for blog links to any of the
+# news outlets we cover. Said links are matched to articles
+# in out database by adding them to the 'article_bloglink'
+# table.
+#
+# We're using the technorati cosmos api
+#   http://www.technorati.com/developers/api/cosmos.html
+#
+# Technorati allow up to 500 calls to their api each day, so we
+# want to try and stay below that limit.
+# via the python technorati wrapper at:
+#   http://www.myelin.co.nz/technorati_py/'
+#
+
+from optparse import OptionParser
+import sys
+
+sys.path.append( "../pylib" )
+import technorati
+from JL import ukmedia,DB
+
+sys.path.append( "../scraper" )
+import scrapefront
+
+keyfile = '../conf/technorati_api_key'
+
+key = open(keyfile).readline().strip()
+
+# to get all the unique domains from the database:
+#
+# select srcorg, substring( srcurl from '(?:https?://)?(.*?)/.*$') as site
+#   from article group by srcorg,site order by srcorg;
+#
+
+# www.blah.com and blah.com are equivalent, but
+# sports.blah.com and politics.blah.com require separate requests
+#
+# mq is the max number of queries we'll do (each query returns up to 100 items)
+#
+sites = (
+	{ 'mq':1, 'site':'arts.independent.co.uk' },
+	{ 'mq':1, 'site':'comment.independent.co.uk' },
+	{ 'mq':1, 'site':'environment.independent.co.uk' },
+	{ 'mq':1, 'site':'money.independent.co.uk' },
+	{ 'mq':1, 'site':'news.independent.co.uk' },
+	{ 'mq':1, 'site':'sport.independent.co.uk' },
+	{ 'mq':1, 'site':'student.independent.co.uk' },
+	{ 'mq':1, 'site':'travel.independent.co.uk' },
+	{ 'mq':3, 'site':'independent.co.uk' },
+#	{ 'mq':1, 'site':'bazblog.dailymail.co.uk' },
+#	{ 'mq':1, 'site':'bikeride.dailymail.co.uk' },
+#	{ 'mq':1, 'site':'broganblog.dailymail.co.uk' },
+#	{ 'mq':1, 'site':'fashionblog.dailymail.co.uk' },
+#	{ 'mq':1, 'site':'feeds.feedburner.com' },
+#	{ 'mq':1, 'site':'hitchensblog.mailonsunday.co.uk' },
+#	{ 'mq':1, 'site':'katie.nicholl.mailonsunday.co.uk' },
+	{ 'mq':3, 'site':'dailymail.co.uk' },
+	{ 'mq':3, 'site':'express.co.uk' },
+	{ 'mq':3, 'site':'dailyexpress.co.uk' },
+	{ 'mq':1, 'site':'arts.guardian.co.uk' },
+#	{ 'mq':1, 'site':'blogs.guardian.co.uk' },
+	{ 'mq':1, 'site':'books.guardian.co.uk' },
+	{ 'mq':1, 'site':'business.guardian.co.uk' },
+	{ 'mq':1, 'site':'education.guardian.co.uk' },
+	{ 'mq':1, 'site':'environment.guardian.co.uk' },
+	{ 'mq':1, 'site':'film.guardian.co.uk' },
+	{ 'mq':1, 'site':'football.guardian.co.uk' },
+	{ 'mq':1, 'site':'lifeandhealth.guardian.co.uk' },
+	{ 'mq':1, 'site':'media.guardian.co.uk' },
+	{ 'mq':1, 'site':'money.guardian.co.uk' },
+	{ 'mq':1, 'site':'music.guardian.co.uk' },
+	{ 'mq':1, 'site':'observer.guardian.co.uk' },
+	{ 'mq':1, 'site':'politics.guardian.co.uk' },
+	{ 'mq':1, 'site':'shopping.guardian.co.uk' },
+	{ 'mq':1, 'site':'society.guardian.co.uk' },
+	{ 'mq':1, 'site':'sport.guardian.co.uk' },
+	{ 'mq':1, 'site':'technology.guardian.co.uk' },
+	{ 'mq':3, 'site':'guardian.co.uk' },
+	{ 'mq':3, 'site':'sundaymirror.co.uk' },
+	{ 'mq':3, 'site':'telegraph.co.uk' },
+#	{ 'mq':1, 'site':'adamboulton.typepad.com' },
+#	{ 'mq':1, 'site':'martinstanford.typepad.com' },
+#	{ 'mq':1, 'site':'skynews3.typepad.com' },
+#	{ 'mq':1, 'site':'skynews4.typepad.com' },
+#	{ 'mq':1, 'site':'skynews5.typepad.com' },
+#	{ 'mq':1, 'site':'skynews6.typepad.com' },
+#	{ 'mq':1, 'site':'skynews7.typepad.com' },
+#	{ 'mq':1, 'site':'skynews8.typepad.com' },
+#	{ 'mq':1, 'site':'skynews.typepad.com' },
+	{ 'mq':3, 'site':'thescotsman.scotsman.com' },
+	{ 'mq':3, 'site':'scotlandonsunday.scotsman.com' },
+	{ 'mq':3, 'site':'blogs.ft.com' },
+	{ 'mq':3, 'site':'ft.com' },
+	{ 'mq':3, 'site':'theherald.co.uk' },
+	)
+
+
+def TotalRequiredQueries():
+	""" count the total number of queries we've got planned """
+	cnt = 0;
+	for s in sites:
+		cnt += s[ 'mq']
+	return cnt
+
+
+def FindLinks( site, maxqueries ):
+	results = []
+
+	cnt = 0
+	while cnt<maxqueries:
+		foo = technorati.getCosmos( site, 
+			start=1+(cnt*100),
+			limit=100,
+			querytype=None,
+			current=None,
+			license_key=key )
+
+		cnt=cnt+1
+		if len(foo) == 0:
+			break	# run out of results to fetch!
+
+#	print "Found %d links" % ( foo['inboundlinks'] )
+
+		for item in foo['inbound']:
+			r = {
+				'blogname': item['weblog']['name'],
+				'blogurl': item['weblog']['url'],
+				'nearestpermalink': item.get( 'nearestpermalink', '' ),
+				'linkurl': item['linkurl'],
+				'linkcreated': ukmedia.ParseDateTime( item['linkcreated'] ),
+				'excerpt': item['excerpt']
+				}
+
+			results.append( r )
+
+	return results
+
+
+def LoadLinkIntoDB( conn, l ):
+	c = conn.cursor()
+
+	srcid = scrapefront.CalcSrcID( l['linkurl'] )
+
+	c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND linkurl=%s",
+		l['nearestpermalink'], l['linkurl'] );
+
+	row = c.fetchone()
+	if row:
+		bloglinkid = row['id']
+		print "already had bloglink '%s'" %(l['nearestpermalink'])
+		return bloglinkid	# already in db
+
+	c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
+	articles = c.fetchall()
+	if len(articles) < 1:
+		return	None	# no matching article
+	if len(articles)>1:
+		print "WARNING: multiple articles with same srcid (%s)" % (srcid)
+
+	article_id = articles[0]['id']
+	c.execute( """INSERT INTO article_bloglink
+		( nearestpermalink, blogname, blogurl, linkurl, linkcreated, excerpt, via, article_id )
+		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
+		l['nearestpermalink'],
+		l['blogname'],
+		l['blogurl'],
+		l['linkurl'],
+		"%s" %(l['linkcreated']),
+		l['excerpt'],
+		'technorati',
+		article_id)
+
+	c.execute( "select currval('article_bloglink_id_seq')" )
+	bloglinkid = c.fetchone()[0]
+	print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, srcid, l['nearestpermalink'] )
+	c.close()
+
+	conn.commit()
+
+	return bloglinkid
+
+
+
+def ProcessLinks( conn, links ):
+	matchcnt = 0
+	for l in links:
+		bloglinkid = LoadLinkIntoDB( conn, l )
+		if bloglinkid:
+			matchcnt = matchcnt + 1
+	return matchcnt
+
+
+def DoSite( conn, sitename, maxqueries ):
+	links = FindLinks( sitename, maxqueries )
+	matches = ProcessLinks( conn, links )
+
+	percent = (matches*100)/len(links)
+	print "%s: matched %d of %d (%d%%)" % (sitename, matches, len(links), percent )
+
+	return (matches, len(links), percent)
+
+
+
+
+
+def main():
+	parser = OptionParser()
+
+	parser.add_option("-c", "--count-queries",
+		action="store_true", dest="count_queries", default=False,
+		help="print out the number of technorati api queries are planned, then exit")
+
+	parser.add_option("-s", "--site",
+		action="store", dest="single_site",
+		help="execute a single query for site")
+	(options, args) = parser.parse_args()
+
+	if options.count_queries:
+		print "%d queries planned" % ( TotalRequiredQueries() )
+		return
+
+
+	conn = DB.Connect()
+
+	if options.single_site:
+		DoSite( conn, options.single_site, 1 )
+		return
+
+
+	# Do it!
+
+	link_cnt = 0
+	match_cnt = 0
+	for site in sites:
+		sitename = site['site']
+		maxqueries = site['mq']
+		( nummatches, numlinks, percentmatched ) = DoSite( conn, sitename, maxqueries )
+		link_cnt = link_cnt + numlinks
+		match_cnt = match_cnt + nummatches
+
+	print "OVERALL: matched %d of %d (%d%%)" %( match_cnt, link_cnt, (match_cnt*100)/link_cnt )
+
+
+
+
+if __name__ == "__main__":
+	main()
+
