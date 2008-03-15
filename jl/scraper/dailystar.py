@@ -44,7 +44,7 @@ def Extract( html, context ):
 	art['title'] = ukmedia.DescapeHTML( art['title' ] )
 
 	pubdate = articletd.find( 'h4' )
-	art['pubdate'] = CrackDate( pubdate.renderContents() )
+	art['pubdate'] = CrackDate( pubdate.renderContents(None) )
 
 	content = articletd.find( 'h2' )
 
