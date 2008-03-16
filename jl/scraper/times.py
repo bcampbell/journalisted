@@ -62,7 +62,7 @@ def FindArticles():
 
 	daypages = {}
 	for link in soup.findAll( 'a', {'class':"link-06c"} ):
-		day = link.renderContents().strip()
+		day = link.renderContents(None).strip()
 		if day in days:
 			daypages[day] = siteroot + link['href']
 
