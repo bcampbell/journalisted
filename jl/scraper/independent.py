@@ -421,7 +421,7 @@ def OLDExtract( html, context ):
 	art[ 'byline' ] = ukmedia.FromHTML( byline )
 
 	pubdate = articlediv.find( 'h4' )
-	art[ 'pubdate' ] = CrackDate( pubdate.renderContents() )
+	art[ 'pubdate' ] = CrackDate( pubdate.renderContents(None) )
 
 	body = articlediv.find( 'div', id='bodyCopyContent' )
 
