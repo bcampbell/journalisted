@@ -6,8 +6,9 @@
 import re
 import urllib2
 import sys
-from optparse import OptionParser
 
+from optparse import OptionParser
+from datetime import datetime
 
 
 sys.path.append( "../pylib" )
@@ -77,20 +78,23 @@ def Output( profiles, fout ):
 #Output( profiles, sys.stdout )
 
 
-# NOTE: it looks like comment-is-free actually uses the same format as
-# the guardian blogs... but I didn't realise that until I'd written it
-# Oh well.
-# Ben
+# Comment Is Free uses several formats, and has overlaps with the Guardian
+# and Observer blog formats. Extract falls back to Extract2 or Extract3 as needed,
+# which change the 'guardian-format' appropriately.
+#
 def Extract( html, context ):
 	""" extract a single comment-is-free article """
 	art = context
 	soup = BeautifulSoup( html )
 
 	# div with headline and summary
-	topdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsiderightcolumntop'} );
-
-	art['description'] = topdiv.find( 'p',{'class':'standfirst'} ).renderContents( None )
-	art['title'] = topdiv.h1.renderContents(None)
+	topdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsiderightcolumntop'} )
+	if topdiv is None:
+		return Extract2(soup, context)  # a different format
+	
+	desc = topdiv.find( 'p',{'class':'standfirst'} ).renderContents( None )
+	art['description'] = ukmedia.FirstPara(desc)
+	art['title'] = topdiv.h1.renderContents(None).strip()
 
 
 	# left column has author
@@ -109,12 +113,93 @@ def Extract( html, context ):
 	baselinediv.extract()
 	content = rightdiv.renderContents(None)
 	# strip off cruft at end - links to del.icio.us and digg and stuff...
-	cruftpat = re.compile( u'<p><small><a href="http://del\\.icio\\.us/post.*$', re.DOTALL )
+	cruftpat = re.compile( ur'\s*(?:<br\s*/>+\s*)*<p><small><a href="http:/+del\.icio\.us/post.*$', re.DOTALL )
+	content = cruftpat.sub( u'', content )
+	# alternative form of cruft:
+	cruftpat = re.compile( ur'^\s*(?:<(?:br|p)(?:\s*/)?>+\s*)*<(?:strong|b)>.*$', re.DOTALL | re.MULTILINE )
 	content = cruftpat.sub( u'', content )
 	art['content'] = content
 
 	return art
 
+def Extract2(soup, context):
+	'''
+	A scraper for a rather simplistic format, probably blogging software. (Vignette?)
+	'''
+	div = soup.find('div', {'id': 'GuardianArticle'})
+	if div is None:
+		return Extract3(soup, context)
+	descline = div.h1.findNext('font', {'size': '3'}) or u''
+	if descline:
+		marker = descline
+		descline = descline.renderContents(None)
+	else:
+		marker = div.h1
+	dateline = marker.findNext('font').b.renderContents(None)
+	body = div.find('div', {'id': 'GuardianArticleBody'}).renderContents(None)
+	try:
+		body, bio = re.split(r'<p>\s*<b>\s*&(?:#183|middot);\s*</b>', body)  # end of article marker
+		bio = '<p>' + bio.lstrip()  # put the <p> back
+	except ValueError:
+		bio = u''
+	if not descline:
+		descline = ukmedia.FirstPara(body)
+	byline = ukmedia.FromHTML(descline)
+	# But the javascript-generated sidebar may provide a more accurate byline
+	for script_tag in soup.findAll('script'):
+		src = dict(script_tag.attrs).get('src', '')
+		if re.match(r'http://.*?/\d+_twocolumnleftcolumninsideleftcolumn.js$', src):
+			js = urllib2.urlopen(src).read()
+			if not isinstance(js, unicode):
+				js = unicode(js, 'utf-8')
+			m = re.search(ur'document\.createTextNode\("All (.*?) articles"\)', js, re.UNICODE)
+			if m:
+				byline = m.group(1)
+			# And while we're at it, we might as well get a unique author id:
+			m = re.search(ur'profilelinka\.setAttribute\("href", "(.*?)"\)', js, re.UNICODE)
+			if m:
+				context['author_id'] = m.group(1)
+
+	art = context
+	art['guardian-format'] = 'commentisfree.py (2)' ####### OVERRIDE ########
+	art['title'] = ukmedia.FromHTML(div.h1.renderContents(None))
+	art['description'] = ukmedia.FromHTML(descline)
+	art['byline'] = byline
+	art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
+	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
+	art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
+	return art
+
+def Extract3(soup, context):
+	'''
+	A scraper for a relatively recent version of this format (e.g. 6 Mar 2008).
+	'''
+	# e.g. http://www.guardian.co.uk/commentisfree/2008/mar/06/games
+	ul = soup.find('div', id='content').ul  # class="article-attributes no-pic"
+	byline = ul.find('li', {'class': 'byline'}).renderContents(None).strip()
+	byline = ukmedia.FromHTML(byline)
+	pubdate = ul.find('li', {'class': 'date'}).renderContents(None)
+	publication = ul.find('li', {'class': 'publication'}).a.string
+	assert publication in ('The Guardian', 'The Observer'), publication  # if not, we want to know
+	historyByline = soup.find('div', id='history-byline')
+	siblings = historyByline.parent.contents
+	body_elements = siblings[siblings.index(historyByline)+1:]
+	body = ''.join([unicode(x) for x in body_elements]).strip()
+	assert 'About this article' not in body, body  # just in case
+	descline = soup.find('meta', {'name':'description'})['content']
+	descline = ukmedia.FromHTML(descline)
+	if descline.startswith(byline + ': '):
+		descline = descline[len(byline + ': '):]
+	art = context
+	art['guardian-format'] = 'commentisfree.py (3)' ####### OVERRIDE ########
+	art['title'] = ukmedia.FromHTML(soup.h1.renderContents(None))
+	art['description'] = descline
+	art['byline'] = byline
+	art['pubdate'] = ukmedia.ParseDateTime(pubdate)
+	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
+	if publication=='The Observer':
+		art['srcorgname'] = u'observer'
+	return art
 
 def ScrapeSingleURL( url ):
 	html = ukmedia.FetchURL( url )
@@ -122,7 +207,9 @@ def ScrapeSingleURL( url ):
 		'srcurl': url,
 		'permalink': url,
 		'srcid': url,
-		'srcorg': u'guardian'
+		'srcorg': u'guardian',
+		'srcorgname': u'The Guardian',
+		'lastscraped': datetime.now()
 	}
 
 	art = Extract( html, context )
@@ -134,7 +221,7 @@ def PrettyDump( art ):
 		if f != 'content':
 			print "%s: %s" % (f,art[f])
 	print "---------------------------------"
-	print art['content']
+	print art['content'].encode('latin-1', 'replace')
 	print "---------------------------------"
 
 

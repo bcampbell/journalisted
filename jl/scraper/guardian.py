@@ -260,6 +260,9 @@ def Extract( html, context ):
 		else:
 			art['srcorgname'] = u'guardian'
 
+	if 'srcid' not in art and '--dryrun' in sys.argv or '-d' in sys.argv:
+		art['srcid'] = 'DRYRUN'
+	
 	# now strip out all non-text bits of content div
 	attrsdiv.extract()
 	cruft = contentdiv.find('ul', id='article-toolbox')
@@ -288,25 +291,38 @@ def Extract( html, context ):
 
 	# move all the remaining elements into a fresh soup
 	textpart = BeautifulSoup()
-	for element in contentdiv.contents:
-		textpart.append( element )
+	for element in list(contentdiv.contents):
+		textpart.append(element)  # removes from contentdiv!
 
 	# if there was a folding bit, add its contents to the new soup too
 	if morediv:
-		for element in morediv.contents:
-			textpart.append( element )
+		for element in list(morediv.contents):
+			textpart.append(element)  # removes from morediv!
+
+	# Description
+	desc = None
 
 	# look for first-stand para first (appears in 'article-header')
-	# (could also try meta 'description')
 	descpara = headerdiv.find( 'p', {'id':'stand-first'} )
-	if not descpara:
-		descpara = textpart.p	# no? just use first para of text instead.
-	art['description'] = ukmedia.FromHTML( descpara.prettify(None) )
+	if descpara:
+		desc = ukmedia.FromHTML( descpara.prettify(None) )
+
+	if not desc:  # long first para
+		# use <meta name="description" content="XXXXX">
+		meta_desc = soup.head.find('meta', {'name': 'description'})
+		if meta_desc and 'content' in dict(meta_desc.attrs):
+			desc = meta_desc['content']
+
+	if not desc:
+		descpara = textpart.p  # no? just use first para of text instead.
+		desc = ukmedia.FromHTML( descpara.prettify(None) )
+
+	art['description'] = ukmedia.DescapeHTML(desc)
 
 	# that's it!
-	art['content'] = textpart.prettify(None)
+	art['content'] = ukmedia.SanitiseHTML( textpart.prettify(None) )
 
-	if art['description'] == u'':
+	if not art['description']:
 		art['description'] = ukmedia.FirstPara( art['content'] );
 	return art
 
@@ -479,8 +495,8 @@ def ScrubFunc( context, entry ):
 		ukmedia.DBUG2( "IGNORE travel section link '%s' (%s)\n" % (context['title'], url) );
 		return None
 
-	for bad in ( 'gallery', 'video', 'quiz', 'slideshow', 'poll' ):
-		s = "/%s/" % (bad) 
+	for bad in ( 'gallery', 'video', 'quiz', 'slideshow', 'poll', 'cartoon' ):
+		s = "/%s/" % (bad)
 		if s in url:
 			ukmedia.DBUG2( "IGNORE %s page '%s' (%s)\n" % ( bad, context['title'], url) );
 			return None
