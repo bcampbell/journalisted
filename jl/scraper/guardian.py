@@ -332,7 +332,12 @@ def Extract( html, context ):
 
 # extractor for old style articles...
 def OldExtract( soup, context ):
+	# Phasing this scraper out, it's the only way to solve the scraper duplication.
+	from commentisfree import Extract2
+	return Extract2(soup, context)
+	
 	art = context
+	art['guardian-format'] = 'guardian.py (2)'  ###### OVERRIDE #######
 
 #	soup = BeautifulSoup( html )
 	articlediv = soup.find( 'div', id='GuardianArticle' )
