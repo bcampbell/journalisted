@@ -394,12 +394,22 @@ def Extract_blog( html, context ):
 
 def ScrubFunc( context, entry ):
 
+
 	url = context['srcurl']
 	o = urlparse.urlparse( url )
 
+
+	if o[1] == 'feeds.feedburner.com':
+		# some of the FT feeds (the blogs?) redirect to feedburner.
+		# Luckily, the feedburner feeds have a special entry
+		# which contains the original link
+		# (we also have to do this in dailymail.py)
+		url = entry.feedburner_origlink
+		o = urlparse.urlparse( url )
+
 	if url == 'http://www.ft.com/dbpodcast':
 		return None
-	
+
 	# don't scrape alphaville yet...
 	if o[1] == 'ftalphaville.ft.com':
 		return None
