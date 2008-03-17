@@ -172,9 +172,32 @@ def CheckArticle(art):
 			raise Exception, ( "%s contains html entities ('%s')" % (f,s.encode('latin-1','replace')) )
 		if tagpat.search( s ):
 			raise Exception, ( "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace')) )
+	
+	# fix link URLs, then check for relative links
+	for f in ('content', 'bio'):
+		if f in art:
+			art[f] = FixLinkURLs(art[f])
+			for link in re.findall(r'''href\s*=\s*['"](.*?)['"]''', art[f]):
+				link = link.strip()
+				if link and not re.match(r'https?://|mailto:', link):
+					raise Exception("%s contains relative links ('%s')" %
+									(f, 'href="%s"' % link.encode('latin-1','replace')))
 
 
-
+def FixLinkURLs(html):
+	""" Fix common errors in URLs in hyperlinks. """
+	# Using regexps works better than BeautifulSoup for this.
+	
+	def fixup(match):
+		url = match.group(1) or match.group(2) or ''
+		url = re.sub('http:/(?=[^/])', 'http://', url)
+		url = re.sub('https:/(?=[^/])', 'https://', url)
+		url = re.sub(r'e?mail\s*to[:=]\s*', 'mailto:', url)
+		url = re.sub(r'^(?=[a-zA-Z\.]+@[a-zA-Z\.]+)', 'mailto:', url)
+		url = re.sub(r'^(?:http\.)?www\.', 'http://www.', url)
+		return 'href="%s"' % url
+	
+	return re.sub(r'''href\s*=\s*(?:['"](.*?)['"]|(\S*?)(?=\>))''', fixup, html)
 
 
 def ProcessByline( conn, article_id, byline, srcorgid ):
