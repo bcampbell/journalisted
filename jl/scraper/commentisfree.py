@@ -160,7 +160,18 @@ def Extract2(soup, context):
 	                  flags=re.UNICODE | re.DOTALL).sub(' ', body)
 	if not descline:
 		descline = ukmedia.FirstPara(body)
-	byline = ukmedia.FromHTML(descline)
+	
+	byline = None
+	pos = dateline.find('<br />')
+	if pos > -1:
+		# Check that format appears to be "AUTHOR<br />DATE ..."
+		days = 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+		for day in days:
+			if dateline[pos+len('<br />'):].startswith(day):
+				byline = dateline[:pos]
+	if not byline:
+		byline = ukmedia.ExtractAuthorFromParagraph(descline)
+	
 	# But the javascript-generated sidebar may provide a more accurate byline
 	for script_tag in soup.findAll('script'):
 		src = dict(script_tag.attrs).get('src', '')
@@ -180,7 +191,7 @@ def Extract2(soup, context):
 	art['guardian-format'] = 'commentisfree.py (2)' ####### OVERRIDE ########
 	art['title'] = ukmedia.FromHTML(div.h1.renderContents(None))
 	art['description'] = ukmedia.FromHTML(descline)
-	art['byline'] = ukmedia.ExtractAuthorFromParagraph(byline)
+	art['byline'] = byline
 	art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
 	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
 	art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
