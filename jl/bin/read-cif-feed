@@ -20,7 +20,7 @@ def oneliner(s, encoding=DEFAULT_ENCODING):
     assert isinstance(s, unicode), s
     return s.encode(encoding).replace('\n', '&#10;')
 
-def dump_feed(feed_url, encoding=DEFAULT_ENCODING):
+def dump_feed(feed_url, urlonly=False, encoding=DEFAULT_ENCODING):
     try:
         rss = urllib2.urlopen(feed_url).read()
     except urllib2.URLError, e:
@@ -34,10 +34,13 @@ def dump_feed(feed_url, encoding=DEFAULT_ENCODING):
         sys.exit('Download failed: %s %s' % (feed_url, reason))
     feed = feedparser.parse(rss)
     for entry in feed.entries:
-        print 'Title:',   oneliner(entry.title, encoding)
-        print 'Summary:', oneliner(entry.summary, encoding)
-        print 'URL:',     oneliner(entry.link, encoding)
-        print
+        if urlonly:
+            print oneliner(entry.link)
+        else:
+            print 'Title:',   oneliner(entry.title, encoding)
+            print 'Summary:', oneliner(entry.summary, encoding)
+            print 'URL:',     oneliner(entry.link, encoding)
+            print
 
 def find_journo_feed(journo, cif_xml_filename):
     xml = file(cif_xml_filename).read()
@@ -73,6 +76,10 @@ if __name__=='__main__':
     if guess:
         args.remove('--guess')
 
+    urlonly = '--urlonly' in args
+    if urlonly:
+        args.remove('--urlonly')
+
     cachepath = None
     for arg in args:
         if arg.startswith('--from='):  # FIXME: doesn't allow --from PATH
@@ -84,13 +91,16 @@ if __name__=='__main__':
             'usage: read-cif-feed [options] JOURNO [CIF_XML]\n'
             + __doc__.strip() + '\n'
             'JOURNO is the name or identifier of a Comment Is Free journalist\n'
-            'and CIF_XML is the output XML from comment-is-free.\n'
+            'and CIF_XML is the output XML from comment-is-free. Use "all" to\n'
+            'scrape the feeds for all journalists.\n'
             '\n'
             'options:\n'
             '  --from=PATH  Use version found at PATH (url, file or directory)\n'
             '               Supports any feed, not just Comment Is Free.\n'
             '\n'
             '  --guess      Ignore (or omit) CIF_XML, guess the feed URL instead.\n'
+            '\n'
+            '  --urlonly    Only output URLs.\n'
             '\n'
             'Newlines in the output are encoded as &#10; so the output can be '
             'parsed\nwith line-oriented parsers.')
@@ -106,6 +116,20 @@ if __name__=='__main__':
         show_help()
     
     feed_url = None
+    
+    if len(args)>=1 and args[0]=='all':
+        if len(args)==1:
+            sys.exit('No CIF_XML. You must provide CIF_XML when using "all".')
+        elif len(args)==2 and args[0]=='all':
+            cif_xml = args[1]
+            for line in file(cif_xml):
+                match = re.search('<feed url="(.*?)">', line)
+                if match:
+                    dump_feed(match.group(1), urlonly=urlonly)
+            sys.exit()
+        else:
+            print >>sys.stderr, "Unexpected arguments provided."
+            show_help()
     
     if len(args)==2:
         feed_url = find_journo_feed(*args)
@@ -136,7 +160,7 @@ if __name__=='__main__':
 #    print args, feed_url
     
     if feed_url:
-        dump_feed(feed_url)
+        dump_feed(feed_url, urlonly=urlonly)
     else:
         if len(args)==1:
             sys.exit('No CIF_XML found, try providing one or using --guess or --from=PATH.')
