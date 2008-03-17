@@ -99,7 +99,7 @@ def Extract( html, context ):
 
 	# left column has author
 	leftdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsideleftcolumn'} );
-	art['byline'] = ukmedia.FromHTML( leftdiv.h2.a.renderContents(None) )
+	art['byline'] = ukmedia.ExtractAuthorFromParagraph( leftdiv.h2.a.renderContents(None) )
 
 	# right column has most other stuff (including main content)
 	rightdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsiderightcolumn'} )
@@ -126,6 +126,11 @@ def Extract2(soup, context):
 	'''
 	A scraper for a rather simplistic format, probably blogging software. (Vignette?)
 	'''
+	###
+	# This duplicates guardian.py's OldExtract for a lot of articles.
+	# I don't currently have a good way to decide which to use,
+	# the two should probably be united.
+	###
 	div = soup.find('div', {'id': 'GuardianArticle'})
 	if div is None:
 		return Extract3(soup, context)
@@ -138,10 +143,21 @@ def Extract2(soup, context):
 	dateline = marker.findNext('font').b.renderContents(None)
 	body = div.find('div', {'id': 'GuardianArticleBody'}).renderContents(None)
 	try:
-		body, bio = re.split(r'<p>\s*<b>\s*&(?:#183|middot);\s*</b>', body)  # end of article marker
-		bio = '<p>' + bio.lstrip()  # put the <p> back
+		bits = re.split(r'<p>\s*<b>\s*&(?:#183|middot);\s*</b>', body)  # end of article marker
+		body, bios = bits[0], bits[1:]
+		for bio in list(bios):
+			if 'will be appearing' in bio:
+				bios.remove(bio)
+		if bios:
+			bio = u'<p>' + u'\n\n<p>'.join([bio.lstrip() for bio in bios])  # put the <p> back
+		else:
+			bio = u''
 	except ValueError:
 		bio = u''
+	# They've taken to inserting section breaks in a really unpleasant way, as in
+	# http://lifeandhealth.guardian.co.uk/family/story/0,,2265583,00.html
+	body = re.compile(r'<p>\s*<script.*?<a name="article_continue"></a>\s*</div>\s*',
+	                  flags=re.UNICODE | re.DOTALL).sub(' ', body)
 	if not descline:
 		descline = ukmedia.FirstPara(body)
 	byline = ukmedia.FromHTML(descline)
@@ -164,7 +180,7 @@ def Extract2(soup, context):
 	art['guardian-format'] = 'commentisfree.py (2)' ####### OVERRIDE ########
 	art['title'] = ukmedia.FromHTML(div.h1.renderContents(None))
 	art['description'] = ukmedia.FromHTML(descline)
-	art['byline'] = byline
+	art['byline'] = ukmedia.ExtractAuthorFromParagraph(byline)
 	art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
 	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
 	art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
@@ -177,7 +193,7 @@ def Extract3(soup, context):
 	# e.g. http://www.guardian.co.uk/commentisfree/2008/mar/06/games
 	ul = soup.find('div', id='content').ul  # class="article-attributes no-pic"
 	byline = ul.find('li', {'class': 'byline'}).renderContents(None).strip()
-	byline = ukmedia.FromHTML(byline)
+	byline = ukmedia.ExtractAuthorFromParagraph(byline)
 	pubdate = ul.find('li', {'class': 'date'}).renderContents(None)
 	publication = ul.find('li', {'class': 'publication'}).a.string
 	assert publication in ('The Guardian', 'The Observer'), publication  # if not, we want to know
