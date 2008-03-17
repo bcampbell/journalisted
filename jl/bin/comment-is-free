@@ -57,10 +57,13 @@ def Output( profiles, fout ):
 	fout.write( " </journodata>\n" )
 	fout.write( "</xml>\n" );
 
-f = urllib2.urlopen( contributors_url )
-html = f.read()
-f.close()
-profiles = ParseContributors(html)
-Output( profiles, sys.stdout )
 
-
+if __name__=='__main__':
+	if '--help' in sys.argv or '-h' in sys.argv:
+		sys.exit('usage: comment-is-free\n'
+		         'Outputs an XML file containing the feed for each journalist.')
+	f = urllib2.urlopen( contributors_url )
+	html = f.read()
+	f.close()
+	profiles = ParseContributors(html)
+	Output( profiles, sys.stdout )
