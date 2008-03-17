@@ -515,12 +515,51 @@ def ExtractAuthorFromParagraph(para):
 		if author:
 			break
 
-	if author!=u'':
+	if not author:
+		author = BylineOMatic2(para)
+		confidence = 'FALLBACK'
+	
+	if author:
 		DBUG2( u"  Byline-o-matic: %s %s <- \"%s\"\n" % ( confidence,author,para ) )
-	else:
+	
+	if not author:
 		DBUG2( u"  Byline-o-matic failed on: \"%s\"\n" %(para) )
 
-	return author
+	return author or u''
+
+
+def BylineOMatic2(para):
+	'''Fallback implementation for things that byline-o-matic would otherwise fail on.'''
+	patterns = [
+		# || indicates full-stop, question mark, comma, hyphen or start or end.
+		r" talks to %s about ",
+		r" writes %s||",
+		r" argues %s||",
+		r" says %s||",
+		r" asks %s||",
+		r", finds %s||",
+		r"||%s(?:,(?: \w+)?,)? finds out||",
+		r"||%s(?:,(?: \w+)?,)? finds out ",
+		r"||%s(?:,(?: \w+)?,)? meets ",
+		r"||%s(?:,(?: \w+)?,)? looks at ",
+		r"||%s(?:,(?: \w+)?,)? asks ",
+		r"||%s(?:,(?: \w+)?,)? has fun at ",
+		r"||%s on ",
+		r"||%s tries ",
+		r"||%s unpicks ",
+		r"^%s has ",
+		# remember to add a comma after each pattern!
+	]
+	regexps = []
+	for pattern in patterns:
+		pattern = pattern % '(?P<author>[A-Z][a-zA-Z\-]+(?: [A-Z]\.)*(?: [A-Z][a-zA-Z\-]+)+)'
+		pattern = pattern.replace(' ', r'\s+').replace('||', r'(?:[\.,\-\?]|^|$)\s*')
+		regexps.append(pattern)
+	for regexp in regexps:
+		match = re.search(regexp, para)
+		if match:
+			return match.group('author')
+	#import pdb; pdb.set_trace()  # for debugging failures
 
 
 def GetCacheFilename(url):
@@ -549,7 +588,9 @@ def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
 			else:
 				if OFFLINE:
 					return None
-				f = urllib2.urlopen(url)
+				time.sleep(1)  # so Wikipedia doesn't ban us!
+				req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
+				f = urllib2.urlopen(req)
 				dat = f.read()
 				# cache it:
 				if USE_CACHE:
