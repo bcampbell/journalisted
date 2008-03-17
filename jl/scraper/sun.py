@@ -210,17 +210,12 @@ def Extract( html, context ):
 	# get page date (it's in format "Friday, December 14, 2007")
 	#pagedatetxt = soup.find( 'p', {'id':"masthead-date"}).string.strip()
 
-	for author in col2.findAll( 'p', { 'class': re.compile( '\\bauthor\\b' ) } ):
+	for author in soup.findAll( 'p', { 'class': re.compile( '\\bauthor\\b' ) } ):
 		txt = author.renderContents( None ).strip()
 		if txt == '':
 			continue
 		if txt.find( 'Email the author' ) != -1:
 			continue		# ignore email links
-
-#		print "-----"
-#		print txt
-#		print "-----"
-
 
 		m = re.match( u'Published:\s+(.*)', txt )
 		if m:
@@ -253,6 +248,9 @@ def Extract( html, context ):
 		if desctxt != u'':
 			break
 
+
+
+
 	# other paras have 'article' class
 	# KNOWN issue - some subheadings are done with non-article class paras...
 	for para in col2.findAll( 'p', { 'class': re.compile( '\\barticle\\b' ) } ):
@@ -262,6 +260,23 @@ def Extract( html, context ):
 		contenttxt += para.prettify(None)
 
 	contenttxt = ukmedia.SanitiseHTML( contenttxt );
+
+
+
+	# if no joy, try just using the roottag element to grab
+	# the main text (tags are mismatched, so just use regex
+	# to pull out the roottag data and prettify it with a new soup)
+	if contenttxt == u'':
+		m = re.search( "<roottag>(.*)</roottag>", html, re.DOTALL )
+		if m:
+			roottag_soup = BeautifulSoup( m.group(1), fromEncoding=soup.originalEncoding )
+			for cruft in roottag_soup.findAll( 'div' ):
+				cruft.extract()
+			contenttxt = roottag_soup.renderContents( None )
+			contenttxt = ukmedia.SanitiseHTML( contenttxt );
+			desctxt = ukmedia.FirstPara( contenttxt )
+			
+
 
 	if desctxt == u'':
 		desctxt = ukmedia.FirstPara( contenttxt )
