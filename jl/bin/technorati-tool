@@ -14,20 +14,72 @@
 # via the python technorati wrapper at:
 #   http://www.myelin.co.nz/technorati_py/'
 #
+# Big problem with the technorati cosmos api is that it doesn't
+# provide the title of the individual blog posting, so
+# we go and try to scrape that from the blog itself...
+#
+# TODO: Should move out domainname list so that other scrapers can use it,
+#		and to make it more obvious to maintain.
+#       Try and keep things DRY...
+#
 
 from optparse import OptionParser
 import sys
+import re
+import traceback
 
 sys.path.append( "../pylib" )
 import technorati
 from JL import ukmedia,DB
+from BeautifulSoup import BeautifulSoup
 
+# scraperfront used to map urls to article srcids
 sys.path.append( "../scraper" )
 import scrapefront
 
+
+# text file containing bare technorati api key (and nothing else)
 keyfile = '../conf/technorati_api_key'
 
 key = open(keyfile).readline().strip()
+
+
+class LinkStats:
+	""" counts on how many links we've processed """
+	def __init__(self):
+		self.added = 0			# new, added to DB
+		self.existed = 0		# already had in DB
+		self.missing = 0		# can't find article for in DB
+		self.not_handled = 0	# not handled by our scrapers
+
+	def Accumulate( self, other ):
+		""" add one a set of stats to this one """
+		self.added += other.added
+		self.existed += other.existed
+		self.missing += other.missing
+		self.not_handled += other.not_handled
+
+	def Total( self ):
+		""" total number of links we've accounted for """
+		return self.added + self.existed + self.missing + self.not_handled
+
+	def Report( self ):
+		if self.Total() == 0:
+			return "No links processed"
+		else:
+			return "%d out of %d good (%d%%) - %d added, %d existed, %d missing, %d not handled" % (
+				self.added + self.existed,
+				self.Total(),
+				((self.added + self.existed) * 100) / self.Total(),
+				self.added,
+				self.existed,
+				self.missing,
+				self.not_handled,
+				)
+			
+			
+
+
 
 # to get all the unique domains from the database:
 #
@@ -111,12 +163,24 @@ def FindLinks( site, maxqueries ):
 
 	cnt = 0
 	while cnt<maxqueries:
-		foo = technorati.getCosmos( site, 
-			start=1+(cnt*100),
-			limit=100,
-			querytype=None,
-			current=None,
-			license_key=key )
+		errcnt = 0
+		while 1:
+			try:
+				foo = technorati.getCosmos( site, 
+					start=1+(cnt*100),
+					limit=100,
+					querytype=None,
+					current=None,
+					license_key=key )
+				break
+			except Exception, e:
+				if isinstance( e, KeyboardInterrupt ):
+					raise
+				traceback.print_exc()
+				errcnt += 1
+				if errcnt>=3:
+					print "QUITTING - run out of retries"
+					raise
 
 		cnt=cnt+1
 		if len(foo) == 0:
@@ -126,12 +190,12 @@ def FindLinks( site, maxqueries ):
 
 		for item in foo['inbound']:
 			r = {
-				'blogname': item['weblog']['name'],
+				'blogname': item['weblog']['name'].decode('utf-8'),
 				'blogurl': item['weblog']['url'],
 				'nearestpermalink': item.get( 'nearestpermalink', '' ),
 				'linkurl': item['linkurl'],
 				'linkcreated': ukmedia.ParseDateTime( item['linkcreated'] ),
-				'excerpt': item['excerpt']
+				'excerpt': item['excerpt'].decode('utf-8'),
 				}
 
 			results.append( r )
@@ -139,69 +203,185 @@ def FindLinks( site, maxqueries ):
 	return results
 
 
-def LoadLinkIntoDB( conn, l ):
+
+
+def LoadBlogLinkIntoDB( conn, l, stats ):
+	""" Try and load a single blog link entry into the article_bloglink table """
 	c = conn.cursor()
 
+	#
 	srcid = scrapefront.CalcSrcID( l['linkurl'] )
+	if srcid == None:
+		# url is not handled by our scrapers...
+		stats.not_handled += 1
+		return
 
+	# link already in table?
 	c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND linkurl=%s",
 		l['nearestpermalink'], l['linkurl'] );
-
 	row = c.fetchone()
 	if row:
+		# already in db
 		bloglinkid = row['id']
-		print "already had bloglink '%s'" %(l['nearestpermalink'])
-		return bloglinkid	# already in db
+#		print "already had bloglink '%s'" %(l['nearestpermalink'])
+		stats.existed += 1
+		return
 
+	#
 	c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
 	articles = c.fetchall()
 	if len(articles) < 1:
-		return	None	# no matching article
+		# can't find article in DB
+		stats.missing += 1
+		return
 	if len(articles)>1:
 		print "WARNING: multiple articles with same srcid (%s)" % (srcid)
 
+
+	# OK, we can add the bloglink!
+
+	# first, try and scrape a title for it:
+	l['title'] = u''
+	if l['nearestpermalink'] != '':
+		t = ScrapeBlogTitle( l['nearestpermalink'] )
+		if t:
+			l['title'] = t
+
+	# now insert it into the database
 	article_id = articles[0]['id']
 	c.execute( """INSERT INTO article_bloglink
-		( nearestpermalink, blogname, blogurl, linkurl, linkcreated, excerpt, via, article_id )
-		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
+		( nearestpermalink, title, blogname, blogurl, linkurl, linkcreated, excerpt, via, article_id )
+		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s,%s )""",
 		l['nearestpermalink'],
-		l['blogname'],
+		l['title'].encode('utf-8'),
+		l['blogname'].encode('utf-8'),
 		l['blogurl'],
 		l['linkurl'],
 		"%s" %(l['linkcreated']),
-		l['excerpt'],
+		l['excerpt'].encode('utf-8'),
 		'technorati',
 		article_id)
 
 	c.execute( "select currval('article_bloglink_id_seq')" )
 	bloglinkid = c.fetchone()[0]
-	print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, srcid, l['nearestpermalink'] )
+#	print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, srcid, l['nearestpermalink'] )
 	c.close()
 
 	conn.commit()
 
-	return bloglinkid
+	stats.added += 1
+	return
 
-
-
-def ProcessLinks( conn, links ):
-	matchcnt = 0
-	for l in links:
-		bloglinkid = LoadLinkIntoDB( conn, l )
-		if bloglinkid:
-			matchcnt = matchcnt + 1
-	return matchcnt
 
 
 def DoSite( conn, sitename, maxqueries ):
+	stats = LinkStats()
 	links = FindLinks( sitename, maxqueries )
-	matches = ProcessLinks( conn, links )
+	for l in links:
+		LoadBlogLinkIntoDB( conn, l, stats )
+	print "%s: %s" % ( sitename, stats.Report() )
+	return stats
 
-	percent = (matches*100)/len(links)
-	print "%s: matched %d of %d (%d%%)" % (sitename, matches, len(links), percent )
 
-	return (matches, len(links), percent)
 
+def ScrapeBlogTitle( url ):
+	"""tries to scrape the name of a blog posting from it's webpage"""
+
+	# pick off last part of the url
+	m = re.search( r"/([^/]+)/?$", url )
+	if not m:
+		return None
+
+	lookfor = unicode( m.group(1), 'utf-8' ).lower()
+	lookfor = re.sub( '[.](.*?)$', '', lookfor )	# strip extension
+
+	# tidy it up a bit
+	lookfor = lookfor.replace( '-', ' ' )
+	lookfor = lookfor.replace( '_', ' ' )
+	lookfor = re.sub( '[^\w\s]', '', lookfor )
+
+	# build up a regex pattern to match our 
+	pat = lookfor
+	pat = re.sub( r"\s+", r'[\W]+', pat )	# tolerate commas, colons etc...
+	pat = re.sub( r"nt", r'n[\W]?t', pat )	# cant => can't
+	pat = re.sub( r"im", r'i[\W]?m', pat )	# im => I'm
+	pat = re.sub( r"s\b", r'[\W]?s', pat )	# bobs => bob's
+
+	try:
+		html = ukmedia.FetchURL( url, timeout=10 )
+	except Exception, e:
+		# lots of blogs disappear on us...
+		if isinstance( e, KeyboardInterrupt ):
+			raise
+		return None
+
+	soup = BeautifulSoup( html )
+
+#	print "looking for '%s'" % (lookfor)
+#	print " (pat '%s')" % (pat)
+
+	best = None
+	for t in soup.findAll( text=re.compile(pat,re.IGNORECASE) ):
+		candidate = unicode( t ).strip()
+		# skip anything that looks like javascript or html
+		if re.search( '[_={}<>]', candidate ):
+			continue
+		if "()" in candidate:
+			continue
+
+		if not best or (len(candidate) < len(best)):
+			best = candidate
+#			print " best: '%s'" % (best)
+
+
+	# if that failed, look through all the headings for one
+	# that contains all the words in our lookfor string
+	if best == None:
+		words = lookfor.split()
+		for h in soup.findAll( ['h1','h2','h3','h4'] ):
+			for t in h.findAll( text=True ):
+				candidate = unicode( t ).strip()
+				cnt = 0
+				lcand = candidate.lower()
+				# all non-numeric words are in the candidate?
+				for w in words:
+					if w.isdigit() or w in lcand:
+						cnt += 1
+				if cnt == len(words):	# all words are there
+					if not best or (len(candidate) < len(best)):
+						best = candidate
+
+	# last resort - use the <title>
+	if best == None:
+		t = soup.find('title')
+		if t:
+			best = t.renderContents(None)
+
+	# resolve any html entities
+	if best:
+		best = ukmedia.DescapeHTML( best )
+
+	return best
+
+
+def Test():
+	conn = DB.Connect()
+	c = conn.cursor()
+
+	c.execute( "select nearestpermalink from article_bloglink where title is null" )
+	while 1:
+		row = c.fetchone()
+		if not row:
+			break
+
+		url = row['nearestpermalink' ]
+		if url:
+			print url
+			title = ScrapeBlogTitle( url )
+			if title:
+				print " => '%s'" % (title)
+			else:
+				print " nothing"
 
 
 
@@ -215,8 +395,22 @@ def main():
 
 	parser.add_option("-s", "--site",
 		action="store", dest="single_site",
-		help="execute a single query for site")
+		help="execute a single query for site url")
+
+	parser.add_option("-t", "--title-lookup",
+		action="store", dest="title_lookup",
+		help="try and scrape a title from a blog post")
+
 	(options, args) = parser.parse_args()
+
+	if options.title_lookup:
+		title = ScrapeBlogTitle( options.title_lookup )
+		if title:
+			print "%s" % (title)
+		else:
+			print "couldn't determine title"
+		return
+
 
 	if options.count_queries:
 		print "%d queries planned" % ( TotalRequiredQueries() )
@@ -232,17 +426,15 @@ def main():
 
 	# Do it!
 
-	link_cnt = 0
-	match_cnt = 0
+	overallstats = LinkStats()
 	for site in sites:
 		sitename = site['site']
 		maxqueries = site['mq']
-		( nummatches, numlinks, percentmatched ) = DoSite( conn, sitename, maxqueries )
-		link_cnt = link_cnt + numlinks
-		match_cnt = match_cnt + nummatches
+		stats = DoSite( conn, sitename, maxqueries )
+		overallstats.Accumulate( stats )
 
-	print "OVERALL: matched %d of %d (%d%%)" %( match_cnt, link_cnt, (match_cnt*100)/link_cnt )
 
+	print "OVERALL: %s" % ( overallstats.Report() )
 
 
 
