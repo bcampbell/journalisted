@@ -291,6 +291,9 @@ def Extract( html, context ):
 
 	articlediv = soup.find( 'div', { 'id':'article' } )
 
+	if not art['srcid'] and ('-d' in sys.argv or '--dryrun' in sys.argv):
+		art['srcid'] = art['srcurl']
+
 	# the headline
 	headline = articlediv.find( 'h1' )
 	art['title'] = ukmedia.FromHTML( headline.renderContents(None) )
@@ -312,6 +315,15 @@ def Extract( html, context ):
 		# it's got a _proper_ byline!
 		byline = authorelement.renderContents(None)
 
+	# Big names have their own sections which makes bylining them easy
+	if not byline:
+		try:
+			as = soup.find('div', id='breadcrumbs').findAll('a')
+			if as[-2].string in ('Commentators', 'Columnists'):
+				byline = as[-1].string
+		except (IndexError, AttributeError):
+			pass
+	
 	if byline == u'' and taglinepara:
 		# if there's a tagline, try the byline-o-matic on it:
 		byline = ukmedia.ExtractAuthorFromParagraph( taglinepara.renderContents(None) )
