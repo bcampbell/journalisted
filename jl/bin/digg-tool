@@ -1,0 +1,182 @@
+#!/usr/bin/env python2.4
+# 2008-03-19  BenC  Initial version
+#
+# Scraper which looks for references to newspaper articles
+# on digg.com and loads the number of diggs, comments etc
+# into our database.
+#
+
+import sys
+from datetime import datetime
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from digg import *
+from JL import DB,ukmedia
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+APPKEY = 'http://www.scumways.com'
+
+domains = [
+	'independent.co.uk',
+	'dailymail.co.uk',
+	'mailonsunday.co.uk',
+	'dailymail.co.uk',
+	'express.co.uk',
+	'dailyexpress.co.uk',
+	'guardian.co.uk',
+	'mirror.co.uk',
+	'sundaymirror.co.uk',
+	'telegraph.co.uk',
+	'scotsman.com',
+	'ft.com',
+	'theherald.co.uk',
+	'news.bbc.co.uk'
+]
+
+
+
+class Stats:
+	""" counts on how many entries we've processed """
+	def __init__(self):
+		self.matched = 0			# matched to DB
+		self.missing = 0		# can't find article for in DB
+		self.not_handled = 0	# not handled by our scrapers
+
+	def Accumulate( self, other ):
+		""" add one a set of stats to this one """
+		self.matched += other.matched
+		self.missing += other.missing
+		self.not_handled += other.not_handled
+
+	def Total( self ):
+		""" total number of links we've accounted for """
+		return self.matched + self.missing + self.not_handled
+
+	def Report( self ):
+		if self.Total() == 0:
+			return "None processed"
+		else:
+			return "%d entries - %d matched (%d%%), %d missing, %d not handled" % (
+				self.Total(),
+				self.matched,
+				(self.matched * 100) / self.Total(),
+				self.missing,
+				self.not_handled,
+				)
+
+
+
+digg = Digg(APPKEY)
+
+
+
+def FetchFromDigg( domain, total=500 ):
+	"""Try and find 'numentries' stories on Digg with the given domain"""
+	entries = []
+	got = 0
+	while got < total:
+		count = total-got
+		if count > 100:
+			count = 100
+
+		errcnt = 0
+		while 1:
+			try:
+				stories = digg.getStories( offset=got,count=count, domain=domain )
+				break
+			except Exception,err:
+				if isinstance( err, KeyboardInterrupt ):
+					raise
+				errcnt += 1
+				if errcnt >= 3:
+					ukmedia.DBUG( "ABORTING - too many errors\n" )
+					raise
+				print >>sys.stderr, sys.exc_info()
+				ukmedia.DBUG( "Retrying... (%d)\n" % (errcnt) )
+
+		if total > int(stories.total):
+			total = int(stories.total)
+
+		count = int( stories.count )
+
+		got += count
+		ukmedia.DBUG2( "%s: got %d/%d\n" % (domain,got,total) )
+		for s in stories:
+			e = {
+				'url': s.link,
+				'num_diggs': s.diggs,
+				'num_comments': s.comments,
+				'digg_url': s.href,
+				'submitted': datetime.fromtimestamp( int( s.submit_date ) ),
+				}
+			entries.append(e)
+	return entries
+
+
+def LoadEntries( conn, entries ):
+	"""Load fetched digg entries into the database"""
+
+	stats = Stats()
+	c = conn.cursor()
+	for e in entries:
+		srcid = scrapefront.CalcSrcID( e['url'] )
+		if not srcid:
+			# not handled
+			stats.not_handled += 1
+			continue
+
+		# look for article id
+		c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
+		articles = c.fetchall()
+		if len(articles) < 1:
+			# can't find article in DB
+			stats.missing += 1
+			continue
+
+		if len(articles)>1:
+			print "WARNING: multiple articles with same srcid (%s)" % (srcid)
+		article_id = articles[0]['id']
+
+		# found article in db - insert/replace it's digg entry
+		c.execute( """DELETE FROM article_diggs WHERE article_id=%s""", article_id )
+		c.execute( """INSERT INTO article_diggs (article_id,num_diggs,num_comments,digg_url,submitted) VALUES (%s,%s,%s,%s,%s)""",
+			article_id,
+			e['num_diggs'],
+			e['num_comments'],
+			e['digg_url'],
+			"%s" % (e['submitted']) )
+
+		conn.commit()
+		stats.matched += 1
+	return stats
+
+
+def DoDomain( conn, domain ):
+	"""Fetch digg entries for domain and try to load them into our db"""
+	entries = FetchFromDigg( domain )
+	stats = LoadEntries( conn, entries )
+
+	ukmedia.DBUG( "%s: %s\n" %( domain,stats.Report() ) )
+	return stats
+
+
+
+def main():
+	conn = DB.Connect()
+
+	overallstats = Stats()
+	for d in domains:
+		stats = DoDomain( conn, d )
+		overallstats.Accumulate( stats )
+
+	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+
+
+if __name__ == "__main__":
+	main()
+
