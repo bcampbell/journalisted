@@ -1,0 +1,145 @@
+#!/usr/bin/env python2.4
+# 2008-03-20  BenC  Initial version
+#
+# Scraper which looks for references to newspaper articles
+# on newsvine.com and loads them into our database.
+#
+
+
+#http://top.newsvine.com/index?filter=comments&range=1&i=0&c=100
+
+import sys
+import re
+import urllib	# for urlencode
+from datetime import datetime
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB,ukmedia,CommentLink
+from BeautifulSoup import BeautifulSoup
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+# range:
+# 1 = last 24 hours
+# 4 = last week
+# 5 = last month
+# 7 = last year
+# 8 = all time
+
+def FetchTop( filter='comments', range=1, i=0, c=100 ):
+	args = {
+		'filter':filter,	# 'comments', 'votes'
+		'range':range,		# 1=last 24 hours
+		'i': i,				# offset
+		'c': c				# count (max 100)
+		}
+
+	url = 'http://top.newsvine.com/index?%s' % ( urllib.urlencode(args) )
+
+	ukmedia.DBUG2( "fetching %s\n" % (url) )
+	html = ukmedia.FetchURL( url )
+
+	results = []
+
+	soup = BeautifulSoup( html )
+
+	altlist = soup.find( 'div', {'class':'altlist'} )
+	for item in altlist.findAll( 'div', { 'class': re.compile('item') } ):
+
+		# is there an external link?
+		extlink = item.find( 'a', {'class':'external'} )
+		if not extlink:
+			continue	# only looking for external articles
+
+		entry = {}
+		entry['source'] = 'newsvine'
+		entry['score'] = None		# not (yet) picking up the votes
+
+		# url of the item
+		entry['url'] = extlink['href']
+
+		# get title and newsvine url from heading
+		a = item.h3.a
+#		entry['title'] = a.renderContents( None )
+		entry['comment_url'] = a['href'] + '#comments'
+
+		if filter == 'comments':
+			altcount = item.findPreviousSibling( 'div', {'class':re.compile('altcount') } )
+			if altcount:
+				entry['num_comments'] = int( unicode( altcount.find( text=True ) ) )
+			else:
+				entry['num_comments'] = 0
+
+		results.append( entry )
+
+	return results
+
+
+
+def FetchTopMulti( filter='comments', range=1, numpages=5 ):
+	results = []
+	page = 0
+	while page<numpages:
+		c = 100
+		i = page*c
+		results.extend( FetchTop( filter=filter, range=range, i=i, c=c ) )
+		page += 1
+
+	return results
+
+
+def LoadEntries( conn, entries ):
+	"""Load fetched newsvine entries into the database"""
+
+	stats = CommentLink.Stats()
+	c = conn.cursor()
+	for e in entries:
+		srcid = scrapefront.CalcSrcID( e['url'] )
+		if not srcid:
+			# not handled
+			stats.not_handled += 1
+			continue
+		e['srcid'] = srcid
+
+		if CommentLink.AddCommentLink( conn, e ):
+			stats.matched += 1
+		else:
+			stats.missing += 1
+
+	return stats
+
+
+
+def main():
+	conn = DB.Connect()
+
+	overallstats = CommentLink.Stats()
+
+	# for last 24 hours...
+	results = FetchTopMulti( range = 1, numpages=5 )
+	stats = LoadEntries( conn, results )
+	overallstats.Accumulate( stats )
+	ukmedia.DBUG( "for last 24hrs: %s\n" % (stats.Report()) )
+
+	# for last week...
+	results = FetchTopMulti( range = 4, numpages=5 )
+	stats = LoadEntries( conn, results )
+	overallstats.Accumulate( stats )
+	ukmedia.DBUG( "for last week: %s\n" % (stats.Report()) )
+
+	# for last month...
+	results = FetchTopMulti( range = 5, numpages=5 )
+	stats = LoadEntries( conn, results )
+	overallstats.Accumulate( stats )
+	ukmedia.DBUG( "for last month: %s\n" % (stats.Report()) )
+
+	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+
+
+
+if __name__ == "__main__":
+	main()
+

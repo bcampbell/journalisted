@@ -1,0 +1,176 @@
+#!/usr/bin/env python2.4
+# 2008-03-21  BenC  Initial version
+#
+# Scraper which looks for references to newspaper articles
+# on reddit.com and loads info about comments etc
+# into our database.
+#
+
+
+
+import sys
+import re
+import urllib	# for urlencode
+from datetime import datetime
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB,ukmedia,CommentLink
+from BeautifulSoup import BeautifulSoup
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+domains = [
+	'independent.co.uk',
+	'dailymail.co.uk',
+	'mailonsunday.co.uk',
+	'express.co.uk',
+	'dailyexpress.co.uk',
+	'guardian.co.uk',
+	'mirror.co.uk',
+	'sundaymirror.co.uk',
+	'telegraph.co.uk',
+	'scotsman.com',
+	'ft.com',
+	'theherald.co.uk',
+	'timesonline.co.uk',
+	'bbc.co.uk'
+]
+
+
+#http://reddit.com/search?advanced=True&all=&any=&phrase=&except=&author=&domain=dailyexpress.co.uk
+def FetchByDomain( domain, maxpages=3 ):
+	""" Fetch links from reddit.com pointing at domain
+
+	maxpages is how many requests will be made. Each request
+	returns up to 25 links.
+	This fn uses reddits search page, and scrapes the
+	results, following the "next" link to get mulitple pages.
+
+	returns a list of discovered links.
+	"""
+
+	results = []
+
+	args = { 'advanced':'True', 'domain': domain }
+	# other args that can be used for advanced search:
+	# all, any, phrase, except, author
+	# (seems to work fine if you leave them off)
+
+	url = "http://reddit.com/search?%s" %( urllib.urlencode(args) )
+
+	pagecnt = 0
+	while 1:
+		# keep looping until we've got all the pages we asked for
+
+		ukmedia.DBUG2( "fetching %s (page %d)\n" % (url,pagecnt) )
+		html = ukmedia.FetchURL( url )
+
+		soup = BeautifulSoup( html )
+
+		comment_pat = re.compile( r"(\d+)\s+(?:comment|comments)" )
+		score_pat = re.compile( r"(\d+)\s+(?:point|points)" )
+
+		for entry in soup.findAll( 'div', {'class':'entry'} ):
+			r = {}
+			r['source'] = 'reddit'
+
+			a = entry.find( 'a', {'class':re.compile('title') })
+			r['url'] = a['href']
+#			r['title'] = a.renderContents( None )
+
+			# pick out the number of comments and a link to them
+			commenta = entry.find( 'a', {'href':re.compile(r"/info/[^/]+/comments") } )
+			r['comment_url'] = u'http://reddit.com' + commenta['href']
+			m = comment_pat.search( commenta.renderContents(None) )
+			if m:
+				r['num_comments'] = int(m.group(1))
+			else:
+				r['num_comments'] = 0
+
+			# pick out number of points
+			scorespan = entry.find( 'span', {'id': re.compile(r"score_") } )
+			if scorespan:
+				m = score_pat.search( scorespan.renderContents(None) )
+				r['score'] = int(m.group(1))
+			else:
+				r['score'] = 0
+
+			results.append( r )
+
+		# another page?
+
+		# don't get more than maxpages...
+		pagecnt += 1
+		if pagecnt >= maxpages:
+			break		# that'll do.
+
+		# follow link to next page:
+		url = None
+		for t in soup.findAll( text=re.compile("^\s*next\s*$") ):
+			if getattr( t.parent, "name" ) == 'a':
+				href = t.parent['href']
+				if href.startswith('/search'):
+					# that's the one!
+					url = "http://reddit.com" + href
+					break
+
+		if not url:
+			break	# no more pages
+
+	return results
+
+
+
+def LoadEntries( conn, entries ):
+	"""Load fetched reddit entries into the database"""
+
+	stats = CommentLink.Stats()
+	c = conn.cursor()
+	for e in entries:
+		srcid = scrapefront.CalcSrcID( e['url'] )
+		if not srcid:
+			# not handled
+			stats.not_handled += 1
+			continue
+		e['srcid'] = srcid
+
+		if CommentLink.AddCommentLink( conn, e ):
+			stats.matched += 1
+		else:
+			stats.missing += 1
+
+	return stats
+
+
+
+def DoDomain( conn, domain ):
+	"""Fetch reddit entries for domain and try to load them into db"""
+	entries = FetchByDomain( domain )
+	stats = LoadEntries( conn, entries )
+
+	ukmedia.DBUG( "%s: %s\n" %( domain,stats.Report() ) )
+	return stats
+
+
+
+
+
+def main():
+	conn = DB.Connect()
+
+	overallstats = CommentLink.Stats()
+	for d in domains:
+		stats = DoDomain( conn, d )
+		overallstats.Accumulate( stats )
+
+	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+
+
+
+if __name__ == "__main__":
+	main()
+

@@ -132,6 +132,7 @@ sites = (
 	{ 'mq':1, 'site':'technology.guardian.co.uk' },
 	{ 'mq':3, 'site':'guardian.co.uk' },
 	{ 'mq':3, 'site':'sundaymirror.co.uk' },
+	{ 'mq':3, 'site':'mirror.co.uk' },
 	{ 'mq':3, 'site':'telegraph.co.uk' },
 #	{ 'mq':1, 'site':'adamboulton.typepad.com' },
 #	{ 'mq':1, 'site':'martinstanford.typepad.com' },
@@ -179,7 +180,7 @@ def FindLinks( site, maxqueries ):
 				traceback.print_exc()
 				errcnt += 1
 				if errcnt>=3:
-					print "QUITTING - run out of retries"
+					print >>sys.__stderr__, "QUITTING - run out of retries"
 					raise
 
 		cnt=cnt+1
@@ -235,7 +236,7 @@ def LoadBlogLinkIntoDB( conn, l, stats ):
 		stats.missing += 1
 		return
 	if len(articles)>1:
-		print "WARNING: multiple articles with same srcid (%s)" % (srcid)
+		print >>sys.__stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
 
 
 	# OK, we can add the bloglink!
@@ -279,7 +280,7 @@ def DoSite( conn, sitename, maxqueries ):
 	links = FindLinks( sitename, maxqueries )
 	for l in links:
 		LoadBlogLinkIntoDB( conn, l, stats )
-	print "%s: %s" % ( sitename, stats.Report() )
+	ukmedia.DBUG( "%s: %s\n" % ( sitename, stats.Report() ) )
 	return stats
 
 
@@ -364,24 +365,6 @@ def ScrapeBlogTitle( url ):
 	return best
 
 
-def Test():
-	conn = DB.Connect()
-	c = conn.cursor()
-
-	c.execute( "select nearestpermalink from article_bloglink where title is null" )
-	while 1:
-		row = c.fetchone()
-		if not row:
-			break
-
-		url = row['nearestpermalink' ]
-		if url:
-			print url
-			title = ScrapeBlogTitle( url )
-			if title:
-				print " => '%s'" % (title)
-			else:
-				print " nothing"
 
 
 
@@ -433,8 +416,7 @@ def main():
 		stats = DoSite( conn, sitename, maxqueries )
 		overallstats.Accumulate( stats )
 
-
-	print "OVERALL: %s" % ( overallstats.Report() )
+	ukmedia.DBUG( "OVERALL: %s" % ( overallstats.Report() ) )
 
 
 

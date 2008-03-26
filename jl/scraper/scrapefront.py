@@ -38,3 +38,11 @@ def CalcSrcID( url ):
 	return None
 
 
+def PickScraper( url ):
+	""" returns the scraper which can handle the given url, or None """
+	for scraper in modules:
+		srcid = m.CalcSrcID( url )
+		if srcid:
+			return scraper
+	return None
+

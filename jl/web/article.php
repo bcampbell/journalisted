@@ -1,8 +1,8 @@
 <?php
 
 /* 
- * TODO: per week stats for journo (articles written this week)
-*/
+ *
+ */
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
@@ -99,20 +99,112 @@ function emit_article_info( $art )
 	print "<p>$desc</p>\n";
 
 	print "<a href=\"{$art['permalink']}\">Read the original article at $org</a>\n";
-
 ?>
-
-<br>
-<br>
-<div class="block">
-<h3>Tags</h3>
+<div class="boxwide tags">
+<h2>Subjects mentioned</h2>
+<div class="boxwide-content">
 
 <?php
 	$q = db_query( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
 	tag_cloud_from_query( $q );
 ?>
 </div>
+</div>
+
+<?php
+emit_elsewhereontheweb( $article_id );
+
+}
+
+
+
+
+function emit_elsewhereontheweb( $article_id )
+{
+
+?>
+<div class="boxwide">
+<h2>Elsewhere on the web</h2>
+<div class="boxwide-content">
+
 <?php
 
+	$q = db_query( "SELECT * FROM article_commentlink WHERE article_id=?", $article_id );
+	if( db_num_rows( $q ) > 0 )
+	{
+		print "<p>Bookmarked at:</p>\n";
+		print "<ul>\n";
+		while( $row = db_fetch_array( $q ) )
+		{
+			$source = $row['source'];
+
+			$comments = sprintf( "<a href=\"%s\">%d comments</a>", $row['comment_url'], $row['num_comments'] );
+
+			$score = '';
+			if( $row['score'] )
+				$score = sprintf( ", %d points", $row['score'] );
+
+			printf( "<li>%s (%s%s)</li>\n", $source, $comments, $score );
+		}
+		print "</ul>\n";
+	}
+
+
+	/* display blogs which reference this article */
+
+	$q = db_query( "SELECT * FROM article_bloglink WHERE article_id=? ORDER BY linkcreated DESC", $article_id );
+	if( db_num_rows( $q ) > 0 )
+	{
+		print "<p>Blogs linking to this article:</p>\n";
+		print "<ul>\n";
+		while( $row=db_fetch_array($q) )
+		{
+
+			printf("<li>%s</li>\n", gen_bloglink( $row ) );
+		}
+
+		print "</ul>\n";
+	}
+	else
+	{
+		print "<p>Don't know of any blogs referencing this article</p>\n";
+	}
+
+	// TODO: form to submit blog links
+?>
+
+
+</div>
+</div>
+
+<?php
+}
+
+
+
+/* return a prettified blog link */
+function gen_bloglink( $l )
+{
+	$blog_link = sprintf( "<a href=\"%s\">%s</a>", $l['blogurl'], $l['blogname'] );
+
+	$url = $l['nearestpermalink'];
+	if( !$url )
+	{
+		/* we don't have a permalink to that posting... */
+		$url = $l['blogurl'];
+	}
+
+	$title = $l['title'];
+	if( !$title )
+	{
+		$title = $l['blogname'];
+	}
+	$entry_link = sprintf( "<a href=\"%s\">%s</a>", $url, $title );
+
+	$linkdate = pretty_date(strtotime($l['linkcreated']));
+
+	$s = sprintf( "%s<br />\n<small>[posted at %s on %s]</small>\n", $entry_link, $blog_link, $linkdate );
+
+	return $s;
 }
 

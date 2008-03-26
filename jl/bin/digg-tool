@@ -3,7 +3,7 @@
 #
 # Scraper which looks for references to newspaper articles
 # on digg.com and loads the number of diggs, comments etc
-# into our database.
+# into our database, populating the article_commentlink table.
 #
 
 import sys
@@ -12,7 +12,7 @@ from optparse import OptionParser
 
 sys.path.append( "../pylib" )
 from digg import *
-from JL import DB,ukmedia
+from JL import DB,ukmedia,CommentLink
 
 # scraperfront used to map urls to article srcids
 sys.path.append( "../scraper" )
@@ -25,7 +25,6 @@ domains = [
 	'independent.co.uk',
 	'dailymail.co.uk',
 	'mailonsunday.co.uk',
-	'dailymail.co.uk',
 	'express.co.uk',
 	'dailyexpress.co.uk',
 	'guardian.co.uk',
@@ -35,44 +34,12 @@ domains = [
 	'scotsman.com',
 	'ft.com',
 	'theherald.co.uk',
-	'news.bbc.co.uk'
+	'timesonline.co.uk',
+	'bbc.co.uk'
 ]
 
 
-
-class Stats:
-	""" counts on how many entries we've processed """
-	def __init__(self):
-		self.matched = 0			# matched to DB
-		self.missing = 0		# can't find article for in DB
-		self.not_handled = 0	# not handled by our scrapers
-
-	def Accumulate( self, other ):
-		""" add one a set of stats to this one """
-		self.matched += other.matched
-		self.missing += other.missing
-		self.not_handled += other.not_handled
-
-	def Total( self ):
-		""" total number of links we've accounted for """
-		return self.matched + self.missing + self.not_handled
-
-	def Report( self ):
-		if self.Total() == 0:
-			return "None processed"
-		else:
-			return "%d entries - %d matched (%d%%), %d missing, %d not handled" % (
-				self.Total(),
-				self.matched,
-				(self.matched * 100) / self.Total(),
-				self.missing,
-				self.not_handled,
-				)
-
-
-
 digg = Digg(APPKEY)
-
 
 
 def FetchFromDigg( domain, total=500 ):
@@ -109,10 +76,11 @@ def FetchFromDigg( domain, total=500 ):
 		for s in stories:
 			e = {
 				'url': s.link,
-				'num_diggs': s.diggs,
+				'score': s.diggs,
 				'num_comments': s.comments,
-				'digg_url': s.href,
-				'submitted': datetime.fromtimestamp( int( s.submit_date ) ),
+				'comment_url': s.href,
+				'source': 'digg',
+#				'submitted': datetime.fromtimestamp( int( s.submit_date ) ),
 				}
 			entries.append(e)
 	return entries
@@ -121,7 +89,7 @@ def FetchFromDigg( domain, total=500 ):
 def LoadEntries( conn, entries ):
 	"""Load fetched digg entries into the database"""
 
-	stats = Stats()
+	stats = CommentLink.Stats()
 	c = conn.cursor()
 	for e in entries:
 		srcid = scrapefront.CalcSrcID( e['url'] )
@@ -129,35 +97,18 @@ def LoadEntries( conn, entries ):
 			# not handled
 			stats.not_handled += 1
 			continue
+		e['srcid'] = srcid
 
-		# look for article id
-		c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
-		articles = c.fetchall()
-		if len(articles) < 1:
-			# can't find article in DB
+		if CommentLink.AddCommentLink( conn, e ):
+			stats.matched += 1
+		else:
 			stats.missing += 1
-			continue
 
-		if len(articles)>1:
-			print "WARNING: multiple articles with same srcid (%s)" % (srcid)
-		article_id = articles[0]['id']
-
-		# found article in db - insert/replace it's digg entry
-		c.execute( """DELETE FROM article_diggs WHERE article_id=%s""", article_id )
-		c.execute( """INSERT INTO article_diggs (article_id,num_diggs,num_comments,digg_url,submitted) VALUES (%s,%s,%s,%s,%s)""",
-			article_id,
-			e['num_diggs'],
-			e['num_comments'],
-			e['digg_url'],
-			"%s" % (e['submitted']) )
-
-		conn.commit()
-		stats.matched += 1
 	return stats
 
 
 def DoDomain( conn, domain ):
-	"""Fetch digg entries for domain and try to load them into our db"""
+	"""Fetch digg entries for domain and try to load them into db"""
 	entries = FetchFromDigg( domain )
 	stats = LoadEntries( conn, entries )
 
@@ -169,7 +120,7 @@ def DoDomain( conn, domain ):
 def main():
 	conn = DB.Connect()
 
-	overallstats = Stats()
+	overallstats = CommentLink.Stats()
 	for d in domains:
 		stats = DoDomain( conn, d )
 		overallstats.Accumulate( stats )
