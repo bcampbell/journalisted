@@ -515,10 +515,11 @@ def ExtractAuthorFromParagraph(para):
 		if author:
 			break
 
-	if not author:
-		author = BylineOMatic2(para)
-		confidence = 'FALLBACK'
-	
+# BenC - disabled bylineomatic2 until we do some proper testing...
+#	if not author:
+#		author = BylineOMatic2(para)
+#		confidence = 'FALLBACK'
+
 	if author:
 		DBUG2( u"  Byline-o-matic: %s %s <- \"%s\"\n" % ( confidence,author,para ) )
 	
