@@ -191,7 +191,7 @@ def Extract2(soup, context):
 	art['guardian-format'] = 'commentisfree.py (2)' ####### OVERRIDE ########
 	art['title'] = ukmedia.FromHTML(div.h1.renderContents(None))
 	art['description'] = ukmedia.FromHTML(descline)
-	art['byline'] = byline
+	art['byline'] = byline.strip()
 	art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
 	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
 	art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
