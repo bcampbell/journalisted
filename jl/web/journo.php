@@ -178,8 +178,8 @@ function emit_blocks_articles( $journo, $allarticles )
 		$pubdate = pretty_date(strtotime($r['pubdate']));
 		$desc = $r['description'];
 		print "<p>\n";
-		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\", {$pubdate}, <em>{$org}</em>\n";
-		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small>\n";
+		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a><br/>\n";
+		print "<cite class=\"posted\"><a href=\"{$r['permalink']}\">{$pubdate}, <em>{$org}</em></a></cite>\n";
 		print "<blockquote>{$desc}</blockquote>\n";
 		print "</p>\n";
 
@@ -213,8 +213,8 @@ function emit_blocks_articles( $journo, $allarticles )
 		$pubdate = pretty_date(strtotime($r['pubdate']));
 		$desc = $r['description'];
 		print "<li>\n";
-		print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>, {$pubdate}, <em>{$org}</em>\n";
-		print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small>\n";
+		print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a><br/>\n";
+		print "<cite class=\"posted\"><a href=\"{$r['permalink']}\">{$pubdate}, <em>{$org}</em></a></cite>\n";
 		print "</li>\n";
 
 	}

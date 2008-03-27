@@ -60,6 +60,9 @@ body {
 .tags a {
   color:#666565;
 }
+.tags a:hover {
+  color:#333232;
+}
 
 .boxnarrow h2, .boxwide h3, .boxnarrow h3, .boxwide h2 { 
   padding:0 0 0 5px;
