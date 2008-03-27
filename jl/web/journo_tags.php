@@ -33,8 +33,12 @@ printf( "<h2>Articles by <a href=\"%s\">%s</a> mentioning \"%s\"</h2>",
 	$tag );
 tag_emit_matching_articles( $tag, $journo['id'] );
 
+/*
+Disabled by Francis - too slow, and Googlebot was crawling them all! 
+Needs a table with the frequency counts precomputed.
 print "<h2>Other journalists who have mentioned \"{$tag}\"</h2>";
 tag_emit_journo_list( $tag, $journo['id'] );
+*/
 
 page_footer();
 
