@@ -23,12 +23,12 @@ $stats = FetchJournoStats( $journo );
 
 
 // Disclaimers:
-$publishLink = "<a href=\"about#whichoutlets\"";
+$publishLink = "<a href=\"about#whichoutlets\">";
 $publishNum  = sprintf("%d", 14);	// hack!
-$publishInfo = $publishLink.">".$publishNum." news websites</a>";
+$publishInfo = $publishLink.$publishNum." news websites</a>";
 
-$publishDisclaimer = "<p style=\"text-align:right;font-size:x-small\">Published in one of ".$publishLink.">".$publishNum." news websites</a>.</p>";
-$basedDisclaimer = sprintf( "<p style=\"text-align:right;font-size:x-small\">Based on %d article%s published in %s since %s.</p>",
+$publishDisclaimer = "<p class=\"disclaimer\">Published in one of ".$publishLink.$publishNum." news websites</a>.</p>";
+$basedDisclaimer = sprintf( "<p class=\"disclaimer\">Based on %d article%s published in %s since %s.</p>",
 	$stats['num_articles'], 
 	$stats['num_articles']==1 ? "" : "s", // plural
 	$publishInfo,
@@ -86,12 +86,12 @@ function emit_journo()
 	print "<div id=\"maincolumn\">\n";
 
 ?>
-	<div style="background-color:blue; color:white; padding:5px;">
+	<div class="caution">
 		Caution: this list is not comprehensive but based on articles published on
-		<?=$publishLink?> style="color:white"><?=$publishNum?> UK national news websites</a>.
+		<?=$publishLink?><?=$publishNum?> UK national news websites</a>.
 		The information is collected automatically so there are bound to be mistakes.
 		Please 
-		<a style="color:white" href="/missing?j=<?=$journo['ref'];?>">let us know</a>
+		<a href="/missing?j=<?=$journo['ref'];?>">let us know</a>
 		when you find one so we can correct it.
 	</div>
 <?
@@ -104,7 +104,7 @@ function emit_journo()
 ?>
 <p>
 This is <b>not a comprehensive list of articles</b> for this journalist.
-It is based on articles published for <?=$publishLink?>><?=$publishNum?> UK news websites</a>.
+It is based on articles published for <?=$publishLink?><?=$publishNum?> UK news websites</a>.
 Click <a href="about#howcollected">here</a> to see how this information is gathered.
 </p>
 <?php

@@ -96,7 +96,19 @@ body {
   font-size:10px;
 }
 
+/* .posted - saying where an item (article, blog) was originally posted */
+.posted { font-style: normal; font-size: smaller; color:#666565; }
+.posted a { color:#666565; }
+.posted a:hover { color:#333232; }
 
+
+/* .disclaimer (eg"Based on N articles in M publications...") */
+
+.disclaimer { text-align:right; font-size:x-small }
+
+/* blue caution box on journo page */
+.caution { background-color:blue; color:white; padding:5px; }
+.caution a {color: white;}
 
 /* div for showing errors on forms */
 #errors {

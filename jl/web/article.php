@@ -29,8 +29,16 @@ function emit_page_article( $article_id )
 	$pagetitle = $art['title'];
 	page_header( $pagetitle );
 
-	emit_article_info( $art );
+	print "<div id=\"maincolumn\">\n";
 
+	emit_block_articleinfo( $art );
+	emit_block_commentlinks( $article_id );
+	emit_block_bloglinks( $article_id );
+	print "</div> <!-- end maincolumn -->\n";
+
+	print "<div id=\"smallcolumn\">\n\n";
+	emit_block_articletags( $article_id );
+	print "</div> <!-- end smallcolumn -->\n";
 	page_footer();
 }
 
@@ -82,7 +90,7 @@ function emit_page_findarticles( $findtext,$ref=null )
 
 
 
-function emit_article_info( $art )
+function emit_block_articleinfo( $art )
 {
 	$article_id = $art['id'];
 	$title = $art['title'];
@@ -96,41 +104,47 @@ function emit_article_info( $art )
 	print "<h2>$title</h2>\n";
 	print "$byline<br>\n";
 	print "$org, $pubdate<br>\n";
-	print "<p>$desc</p>\n";
+	print "<blockquote>$desc</blockquote>\n";
 
 	print "<a href=\"{$art['permalink']}\">Read the original article at $org</a>\n";
-?>
-<div class="boxwide tags">
-<h2>Subjects mentioned</h2>
-<div class="boxwide-content">
+}
 
+
+
+function emit_block_articletags( $article_id )
+{
+
+?>
+<div class="boxnarrow tags">
+<h2>Topics mentioned</h2>
+<div class="boxnarrow-content">
 <?php
+
 	$q = db_query( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
 	tag_cloud_from_query( $q );
+
 ?>
 </div>
 </div>
-
 <?php
-emit_elsewhereontheweb( $article_id );
 
 }
 
 
 
 
-function emit_elsewhereontheweb( $article_id )
+function emit_block_commentlinks( $article_id )
 {
 
 ?>
 <div class="boxwide">
-<h2>Elsewhere on the web</h2>
+<h2>What comments are people making about this article?</h2>
 <div class="boxwide-content">
-
 <?php
 
 	$q = db_query( "SELECT * FROM article_commentlink WHERE article_id=?", $article_id );
-	if( db_num_rows( $q ) > 0 )
+	$n = db_num_rows( $q );
+	if( $n > 0 )
 	{
 		print "<p>Bookmarked at:</p>\n";
 		print "<ul>\n";
@@ -148,14 +162,40 @@ function emit_elsewhereontheweb( $article_id )
 		}
 		print "</ul>\n";
 	}
+	else
+	{
+		print "<p>None known</p>\n";
+	}
+
+?>
+<p class="disclaimer">Based on data from
+<a href="http://digg.com">digg</a>,
+<a href="http://newsvine.com">newsvine</a> and
+<a href="http://reddit.com">reddit</a>
+</p>
+</div>
+</div>
+<?php
+
+}
 
 
-	/* display blogs which reference this article */
+
+/* display blogs which reference this article */
+function emit_block_bloglinks( $article_id )
+{
+
+?>
+<div class="boxwide">
+<h2>Which blogs are linking to this article?</h2>
+<div class="boxwide-content">
+<?php
 
 	$q = db_query( "SELECT * FROM article_bloglink WHERE article_id=? ORDER BY linkcreated DESC", $article_id );
-	if( db_num_rows( $q ) > 0 )
+	$n = db_num_rows( $q );
+	if( $n > 0 )
 	{
-		print "<p>Blogs linking to this article:</p>\n";
+		print "<p>$n blog posts link to this article:</p>\n";
 		print "<ul>\n";
 		while( $row=db_fetch_array($q) )
 		{
@@ -167,17 +207,17 @@ function emit_elsewhereontheweb( $article_id )
 	}
 	else
 	{
-		print "<p>Don't know of any blogs referencing this article</p>\n";
+		print "<p>None known</p>\n";
 	}
 
-	// TODO: form to submit blog links
+	// TODO: form to submit blog links?
+
 ?>
-
-
+<p class="disclaimer">Based on blogs recorded by <a href="http://technorati.com">Technorati</a></p>
 </div>
 </div>
-
 <?php
+
 }
 
 
@@ -203,7 +243,7 @@ function gen_bloglink( $l )
 
 	$linkdate = pretty_date(strtotime($l['linkcreated']));
 
-	$s = sprintf( "%s<br />\n<small>[posted at %s on %s]</small>\n", $entry_link, $blog_link, $linkdate );
+	$s = sprintf( "%s<br />\n<cite class=\"posted\">posted at %s on %s</cite>\n", $entry_link, $blog_link, $linkdate );
 
 	return $s;
 }
