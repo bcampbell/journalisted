@@ -131,6 +131,7 @@ sites = (
 	{ 'mq':1, 'site':'sport.guardian.co.uk' },
 	{ 'mq':1, 'site':'technology.guardian.co.uk' },
 	{ 'mq':3, 'site':'guardian.co.uk' },
+	{ 'mq':3, 'site':'thesun.co.uk' },
 	{ 'mq':3, 'site':'sundaymirror.co.uk' },
 	{ 'mq':3, 'site':'mirror.co.uk' },
 	{ 'mq':3, 'site':'telegraph.co.uk' },
@@ -148,6 +149,12 @@ sites = (
 	{ 'mq':3, 'site':'blogs.ft.com' },
 	{ 'mq':3, 'site':'ft.com' },
 	{ 'mq':3, 'site':'theherald.co.uk' },
+	{ 'mq':3, 'site':'timesonline.co.uk' },
+	{ 'mq':1, 'site':'driving.timesonline.co.uk' },
+	{ 'mq':1, 'site':'entertainment.timesonline.co.uk' },
+	{ 'mq':3, 'site':'news.bbc.co.uk' },
+	{ 'mq':3, 'site':'bbc.co.uk' },
+
 	)
 
 
@@ -217,18 +224,7 @@ def LoadBlogLinkIntoDB( conn, l, stats ):
 		stats.not_handled += 1
 		return
 
-	# link already in table?
-	c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND linkurl=%s",
-		l['nearestpermalink'], l['linkurl'] );
-	row = c.fetchone()
-	if row:
-		# already in db
-		bloglinkid = row['id']
-#		print "already had bloglink '%s'" %(l['nearestpermalink'])
-		stats.existed += 1
-		return
-
-	#
+	# Do we have that article in our DB?
 	c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
 	articles = c.fetchall()
 	if len(articles) < 1:
@@ -237,11 +233,24 @@ def LoadBlogLinkIntoDB( conn, l, stats ):
 		return
 	if len(articles)>1:
 		print >>sys.__stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
+	article_id = articles[0]['id']
+
+
+	# already got this bloglink?
+	c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND article_id=%s",
+		l['nearestpermalink'], article_id );
+	row = c.fetchone()
+	if row:
+		# already in db
+		bloglinkid = row['id']
+#		print "already had bloglink '%s'" %(l['nearestpermalink'])
+		stats.existed += 1
+		return
 
 
 	# OK, we can add the bloglink!
 
-	# first, try and scrape a title for it:
+	# first, try and scrape a title for it (ugh):
 	l['title'] = u''
 	if l['nearestpermalink'] != '':
 		t = ScrapeBlogTitle( l['nearestpermalink'] )
@@ -249,19 +258,17 @@ def LoadBlogLinkIntoDB( conn, l, stats ):
 			l['title'] = t
 
 	# now insert it into the database
-	article_id = articles[0]['id']
 	c.execute( """INSERT INTO article_bloglink
-		( nearestpermalink, title, blogname, blogurl, linkurl, linkcreated, excerpt, via, article_id )
-		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s,%s )""",
+		( article_id, nearestpermalink, title, blogname, blogurl, linkcreated, excerpt, source )
+		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
+		article_id,
 		l['nearestpermalink'],
 		l['title'].encode('utf-8'),
 		l['blogname'].encode('utf-8'),
 		l['blogurl'],
-		l['linkurl'],
 		"%s" %(l['linkcreated']),
 		l['excerpt'].encode('utf-8'),
-		'technorati',
-		article_id)
+		'technorati' )
 
 	c.execute( "select currval('article_bloglink_id_seq')" )
 	bloglinkid = c.fetchone()[0]

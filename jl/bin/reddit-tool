@@ -36,6 +36,7 @@ domains = [
 	'scotsman.com',
 	'ft.com',
 	'theherald.co.uk',
+	'thesun.co.uk',
 	'timesonline.co.uk',
 	'bbc.co.uk'
 ]
