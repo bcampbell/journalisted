@@ -26,6 +26,9 @@ function emit_page_article( $article_id )
 {
 	$art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
 
+	if( $art['status'] != 'a' )
+		return; /* TODO: a message or something... */
+
 	$pagetitle = $art['title'];
 	page_header( $pagetitle );
 
