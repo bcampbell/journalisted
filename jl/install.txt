@@ -94,6 +94,8 @@ Apache
 ------
 
 Set up HOSTS file to map journalisted.dev to localhost.
+(add the line "127.0.0.1 journalisted.dev" to
+\WINDOWS\system32\drivers\etc\hosts on Windows, /etc/hosts on Unix.)
 
 Add new file, /etc/apache2/sites-available/www.journalisted.dev:
 
@@ -102,6 +104,21 @@ Add new file, /etc/apache2/sites-available/www.journalisted.dev:
     ServerAlias journalisted.dev *.journalisted.dev
     DocumentRoot /home/ben/proj/journa-list/jl/web
   </VirtualHost>
+
+Additional settings you may need/want to add before </VirtualHost>:
+
+    # Allow using index.php
+    DirectoryIndex index.html index.php
+    
+    # Seems to be needed to allow using mod_rewrite
+    <Directory />
+        Options All
+        AllowOverride All
+    </Directory>
+    
+    # Where to store the logs
+    ErrorLog logs/journalisted-error_log
+    CustomLog logs/journalisted-access_log common
 
 Enable the site with:
 
@@ -113,6 +130,25 @@ Make sure mod_rewrite is enabled:
 
 Tell apache to reread the configuration:
   $ sudo /etc/init.d/apache2 reload
+
+
+PHP
+---
+
+Run "php --ini" to locate the configuration file to change.
+Make sure it has these settings set:
+
+  ; Enable the PHP scripting language engine under Apache.
+  engine = On
+  
+  ; Allow using "<?" to open PHP script blocks.
+  short_open_tag = On
+
+  ; A deprecated feature that we use (pass-by-reference in function calls).
+  allow_call_time_pass_reference = On
+
+  ; We don't currently support running in PHP's Safe Mode sandbox.
+  safe_mode = Off
 
 
 Site Config
