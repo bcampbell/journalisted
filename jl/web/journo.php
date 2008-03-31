@@ -499,6 +499,7 @@ function emit_block_overview( $journo )
 	print "<div class=\"boxwide-content\">\n";
 
 	emit_writtenfor( $journo );
+	emit_wikipedia_bio( $journo );
 
 	print "</div>\n";
 	print "</div>\n\n";
@@ -543,6 +544,21 @@ function emit_writtenfor( $journo )
 	echo $basedDisclaimer;
 }
 
+
+function emit_wikipedia_bio( $journo )
+{
+	$journo_id = $journo['id'];
+
+	$row = db_getRow("SELECT bio, url FROM scraped_wikipedia_journo, journo, journo_weblink " .
+	                 "WHERE journo_ref=? AND journo.ref=journo_ref AND journo_weblink.journo_id=journo.id",
+	                 $journo['ref']);
+	if ($row)
+	{
+    	print "<div class=\"bio-para\">\n";
+    	print $row['bio'];
+    	print " (source: <a href=\"" . $row['url'] . "\">Wikipedia</a>)</div>\n";
+	}
+}
 
 // join strings using ", " and " and "
 // eg ("foo", "bar", "wibble") => "foo, bar and wibble"
