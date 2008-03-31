@@ -1,0 +1,70 @@
+#!/usr/bin/python
+
+'''
+Commits the human-edited output from find-email to the database.
+'''
+
+import sys
+import re
+sys.path.insert(0, '../pylib/JL')
+import DB
+
+if __name__=='__main__':
+    args = sys.argv[1:]
+    if len(args) != 1 or args[0].startswith('-'):
+        sys.exit('usage: commit-email FILE\n'
+                 'where FILE is output from find-email, edited to remove incorrect addresses')
+
+lines = file(args[0]).readlines()
+email_lines, urls = [], {}
+for i, line in enumerate(lines):
+    line = line.strip()
+    if not line or line.startswith('#'): continue
+    if line.startswith('['):
+        m = re.match(r'\[(\d+)\](.*)', line)
+        if not m:
+            print >>sys.stderr, 'warning: malformed line %d' % (i+1)
+            continue
+        urls[int(m.group(1))] = m.group(2).strip()
+    else:
+        email_lines.append((i+1, line))
+
+db_rows = []
+for line_num, line in email_lines:
+    m = re.match(r'([a-zA-Z\.\-\_]+):(.*)', line)
+    if not m:
+        print >>sys.stderr, 'warning: malformed line %d' % line_num
+        continue
+    journo_ref, emails = m.groups()
+    emails = emails.strip()
+    if not emails:
+        continue
+    if re.search(r'\s', emails):
+        print >>sys.stderr, 'warning: multiple emails in line %d, ignoring' % line_num
+        continue
+    m = re.match(r'(.*?)\[(\d+)\]', emails)
+    if not m:
+        print >>sys.stderr, 'warning: malformed line %d' % line_num
+        continue
+    email, url_id = m.groups()
+    try:
+        url = urls[int(url_id)]
+    except KeyError:
+        url = ''
+        print >>sys.stderr, 'warning: missing URL %s' % url_id
+    db_rows.append((journo_ref, email, url))
+
+conn = DB.Connect()
+cur = conn.cursor()
+cur.execute("SELECT journo_ref, 1 FROM journo_email")
+rows = cur.fetchall()
+lookup = dict(rows)
+cur.execute('BEGIN')
+for journo_ref, email, url in db_rows:
+    if journo_ref in lookup:
+        cur.execute("UPDATE journo_email SET email=%s, srcurl=%s, srctype='article' "
+                    "WHERE journo_ref=%s", [journo_ref, email, url])
+    else:
+        cur.execute("INSERT INTO journo_email (journo_ref, email, srcurl, srctype) "
+                    "VALUES (%s, %s, %s, 'article')", [journo_ref, email, url])
+cur.execute('COMMIT')

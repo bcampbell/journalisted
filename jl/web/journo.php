@@ -500,6 +500,7 @@ function emit_block_overview( $journo )
 
 	emit_writtenfor( $journo );
 	emit_wikipedia_bio( $journo );
+	emit_journo_mailto( $journo );
 
 	print "</div>\n";
 	print "</div>\n\n";
@@ -547,8 +548,6 @@ function emit_writtenfor( $journo )
 
 function emit_wikipedia_bio( $journo )
 {
-	$journo_id = $journo['id'];
-
 	$row = db_getRow("SELECT bio, url FROM scraped_wikipedia_journo, journo, journo_weblink " .
 	                 "WHERE journo_ref=? AND journo.ref=journo_ref AND journo_weblink.journo_id=journo.id",
 	                 $journo['ref']);
@@ -557,6 +556,23 @@ function emit_wikipedia_bio( $journo )
     	print "<div class=\"bio-para\">\n";
     	print $row['bio'];
     	print " (source: <a href=\"" . $row['url'] . "\">Wikipedia</a>)</div>\n";
+	}
+}
+
+
+function emit_journo_mailto( $journo )
+{
+	$row = db_getRow("SELECT email, srcurl FROM journo_email WHERE journo_ref=?", $journo['ref']);
+	if ($row)
+	{
+    	$shorturl = $row['srcurl'];
+    	$matches = '';
+    	preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
+    	$shorturl = $matches[0];
+    	print ("<p><div class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
+    	       "<a href=\"mailto:" . $row['email'] . "\">" .
+    	       $row['email'] . "</a></span> " .
+    	       "(from <a href=\"" . $row['srcurl'] . "\">" . $shorturl . "</a>)</div></p>");
 	}
 }
 
