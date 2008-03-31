@@ -178,14 +178,14 @@ function emit_blocks_articles( $journo, $allarticles )
 		$pubdate = pretty_date(strtotime($r['pubdate']));
 		$desc = $r['description'];
 		print "<p>\n";
-		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a><br/>\n";
+		print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\"<br />\n";
 		print "<cite class=\"posted\"><a href=\"{$r['permalink']}\">{$pubdate}, <em>{$org}</em></a></cite>\n";
 		print "<blockquote>{$desc}</blockquote>\n";
 		print "</p>\n";
 
 	}
 
-//	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\"></a>\n",
+//	printf( "<a href=\"http://%s/%s/rss\"><img src=\"/img/rss.gif\" /></a>\n",
 //		OPTION_WEB_DOMAIN,
 //		$journo['ref'] );
 
@@ -437,7 +437,7 @@ function emit_block_rss( $journo, $rssurl )
 <div class="boxnarrow rss">
 <h3>Newsfeed</h3>
 <div class="boxnarrow-content">
-<a href="<?php echo $rssurl; ?>"><img src="/images/rss.gif"></a><br>
+<a href="<?php echo $rssurl; ?>"><img src="/images/rss.gif" /></a><br />
 Articles by <?php print $journo['prettyname']; ?>
 
 </div>
@@ -454,7 +454,7 @@ function emit_block_alerts( $journo )
 <div class="boxnarrow alert">
 <h3>My Journa-list</h3>
 <div class="boxnarrow-content">
-<a href="/alert?Add=1&j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
+<a href="/alert?Add=1&amp;j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
 </div>
 </div>
 
@@ -569,10 +569,10 @@ function emit_journo_mailto( $journo )
     	$matches = '';
     	preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
     	$shorturl = $matches[0];
-    	print ("<p><div class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
+    	print ("<p><span class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
     	       "<a href=\"mailto:" . $row['email'] . "\">" .
     	       $row['email'] . "</a></span> " .
-    	       "(from <a href=\"" . $row['srcurl'] . "\">" . $shorturl . "</a>)</div></p>");
+    	       "(from <a href=\"" . $row['srcurl'] . "\">" . $shorturl . "</a>)</span></p>");
 	}
 }
 
