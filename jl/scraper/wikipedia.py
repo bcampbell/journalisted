@@ -280,7 +280,10 @@ def Extract(html, context):
     text = re.sub(r',\s*\.', '.', text)
     
     context['content'] = text
-    context['bio'] = unicode(BeautifulSoup(text).p)
+
+    bio = BeautifulSoup(text).p.renderContents(None)
+    bio = re.sub('<b>(.*?)</b>', r'\1', bio)
+    context['bio'] = bio
     return context
 
 
