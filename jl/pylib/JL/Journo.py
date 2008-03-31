@@ -129,20 +129,19 @@ def MergeJourno(conn, fromRef, intoRef):
 	c = conn.cursor()
 	
 	# FROM
-	c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=\'"+fromRef+"\'")
+	c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", [fromRef])
 	row = c.fetchone()
 	assert row, "fromRef doesn't exist:"+fromRef
 	fromId = row[0]
 	fromPrettyname = row[2]
 	
 	# INTO
-	c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=\'"+intoRef+"\'")
+	c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", [intoRef])
 	row = c.fetchone()
 	if not row:
 		print "> Renaming Journo    ",fromRef,"->",intoRef
 		# INTO REF DOESN'T EXIST, SO JUST RENAME:
-		sqlTxt = u'UPDATE journo SET ref=\''+intoRef+u'\' WHERE ref=\''+fromRef+u'\''
-		c.execute(sqlTxt)
+		c.execute(u'UPDATE journo SET ref=%s WHERE ref=%s', [intoRef, fromRef])
 	else:
 		intoId = row[0]
 		intoPrettyname = row[2]		
