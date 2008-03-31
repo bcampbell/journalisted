@@ -34,7 +34,7 @@ function page_header( $title, $params=array() )
 	{
 		foreach ($params['rss'] as $rss_title => $rss_url)
 		{
-			printf( "  <link rel=\"alternate\" type=\"application/rss+xml\" title=\"%s\" href=\"%s\">\n", $rss_title, $rss_url );
+			printf( "  <link rel=\"alternate\" type=\"application/rss+xml\" title=\"%s\" href=\"%s\" />\n", $rss_title, $rss_url );
 		}
 	}
 
@@ -62,7 +62,7 @@ function page_header( $title, $params=array() )
 
 	<div id="head">
 		<h1><a href="/"><span></span>Journalisted</a></h1>
-		<h2>&#0133;read all about them!</h2>
+		<h2>&#8230;read all about them!</h2>
 		<p>
 			<strong>FREE!</strong><br />
 			<?php echo $datestring; ?><br />
