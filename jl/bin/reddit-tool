@@ -67,7 +67,7 @@ def FetchByDomain( domain, maxpages=3 ):
 	while 1:
 		# keep looping until we've got all the pages we asked for
 
-		ukmedia.DBUG2( "fetching %s (page %d)\n" % (url,pagecnt) )
+		ukmedia.DBUG2( "reddit-tool: fetching %s (page %d)\n" % (url,pagecnt) )
 		html = ukmedia.FetchURL( url )
 
 		soup = BeautifulSoup( html )
@@ -153,7 +153,7 @@ def DoDomain( conn, domain ):
 	entries = FetchByDomain( domain )
 	stats = LoadEntries( conn, entries )
 
-	ukmedia.DBUG( "%s: %s\n" %( domain,stats.Report() ) )
+	ukmedia.DBUG( "reddit-tool: %s: %s\n" %( domain,stats.Report() ) )
 	return stats
 
 
@@ -168,7 +168,7 @@ def main():
 		stats = DoDomain( conn, d )
 		overallstats.Accumulate( stats )
 
-	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+	ukmedia.DBUG( "reddit-tool: overall: %s" % (overallstats.Report()) )
 
 
 

@@ -39,7 +39,7 @@ def FetchTop( filter='comments', range=1, i=0, c=100 ):
 
 	url = 'http://top.newsvine.com/index?%s' % ( urllib.urlencode(args) )
 
-	ukmedia.DBUG2( "fetching %s\n" % (url) )
+	ukmedia.DBUG2( "newsvine-tool: fetching %s\n" % (url) )
 	html = ukmedia.FetchURL( url )
 
 	results = []
@@ -122,21 +122,21 @@ def main():
 	results = FetchTopMulti( range = 1, numpages=5 )
 	stats = LoadEntries( conn, results )
 	overallstats.Accumulate( stats )
-	ukmedia.DBUG( "for last 24hrs: %s\n" % (stats.Report()) )
+	ukmedia.DBUG( "newsvine-tool: for last 24hrs: %s\n" % (stats.Report()) )
 
 	# for last week...
 	results = FetchTopMulti( range = 4, numpages=5 )
 	stats = LoadEntries( conn, results )
 	overallstats.Accumulate( stats )
-	ukmedia.DBUG( "for last week: %s\n" % (stats.Report()) )
+	ukmedia.DBUG( "newsvine-tool: for last week: %s\n" % (stats.Report()) )
 
 	# for last month...
 	results = FetchTopMulti( range = 5, numpages=5 )
 	stats = LoadEntries( conn, results )
 	overallstats.Accumulate( stats )
-	ukmedia.DBUG( "for last month: %s\n" % (stats.Report()) )
+	ukmedia.DBUG( "newsvine-tool: for last month: %s\n" % (stats.Report()) )
 
-	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+	ukmedia.DBUG( "newsvine-tool: overall: %s" % (overallstats.Report()) )
 
 
 

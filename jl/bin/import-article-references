@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# one-stop invocation to search for external references to news
+# articles on social bookmarking sites and blogs.
+# (to run via cron during the small hours)
+
+./digg-tool
+./reddit-tool
+./newsvine-tool
+
+# technorati is the slow one...
+./technorati-tool
+

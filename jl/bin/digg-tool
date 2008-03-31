@@ -62,10 +62,10 @@ def FetchFromDigg( domain, total=500 ):
 					raise
 				errcnt += 1
 				if errcnt >= 3:
-					ukmedia.DBUG( "ABORTING - too many errors\n" )
+					ukmedia.DBUG( "digg-tool: ABORTING - too many errors\n" )
 					raise
 				print >>sys.stderr, sys.exc_info()
-				ukmedia.DBUG( "Retrying... (%d)\n" % (errcnt) )
+				ukmedia.DBUG( "digg-tool: Retrying... (%d)\n" % (errcnt) )
 
 		if total > int(stories.total):
 			total = int(stories.total)
@@ -73,7 +73,7 @@ def FetchFromDigg( domain, total=500 ):
 		count = int( stories.count )
 
 		got += count
-		ukmedia.DBUG2( "%s: got %d/%d\n" % (domain,got,total) )
+		ukmedia.DBUG2( "digg-tool: %s: got %d/%d\n" % (domain,got,total) )
 		for s in stories:
 			e = {
 				'url': s.link,
@@ -113,7 +113,7 @@ def DoDomain( conn, domain ):
 	entries = FetchFromDigg( domain )
 	stats = LoadEntries( conn, entries )
 
-	ukmedia.DBUG( "%s: %s\n" %( domain,stats.Report() ) )
+	ukmedia.DBUG( "digg-tool: %s: %s\n" %( domain,stats.Report() ) )
 	return stats
 
 
@@ -126,7 +126,7 @@ def main():
 		stats = DoDomain( conn, d )
 		overallstats.Accumulate( stats )
 
-	ukmedia.DBUG( "overall: %s" % (overallstats.Report()) )
+	ukmedia.DBUG( "digg-tool: overall: %s" % (overallstats.Report()) )
 
 
 if __name__ == "__main__":
