@@ -417,9 +417,9 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10 
 
 		except Exception, err:
 			if context.has_key( 'title' ):
-				msg = u"FAILED: '%s' (%s):" % (context['title'], context['srcurl'])
+				msg = u"FAILED: '%s' (%s):" % (context['title'], context['srcurl'].decode('utf-8'))
 			else:
-				msg = u"FAILED: (%s):" % (context['srcurl'])
+				msg = u"FAILED: (%s):" % (context['srcurl'].decode('utf-8'))
 
 			print >>sys.stderr, msg.encode( 'utf-8' )
 
@@ -589,7 +589,8 @@ def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
 			else:
 				if OFFLINE:
 					return None
-				time.sleep(1)  # so Wikipedia doesn't ban us!
+				if not url.startswith('file:'):
+					time.sleep(1)  # so the website (esp. Wikipedia) doesn't ban us!
 				req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
 				f = urllib2.urlopen(req)
 				dat = f.read()
