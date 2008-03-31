@@ -31,23 +31,36 @@ from JL import DB, ukmedia, ScraperUtils
 from datetime import datetime
 
 
-if 0: # not needed, provided by ScraperUtils with --url
-    def ScrapeArticle(url):
-        '''Wrapper for testing on a single URL.'''
-        context = ContextFromURL(url)
-        req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
-        html = urllib2.urlopen(req).read()
-        return Extract(html, context)
+class NoSuchArticle(Exception):
+    pass
+
+class DisambiguationNeeded(Exception):
+    '''Reached a disambiguation page'''
+
+class UnsureException(Exception):
+    '''May not be the right person'''
+
+class DeadPersonException(Exception):
+    '''This is an ex-person! Bereft of life, they write no more.'''
+
+
+# Not needed here (provided by ScraperUtils with --url), but used by updatewikipedialinks
+def ScrapeArticle(url):
+    '''Wrapper for testing on a single URL.'''
+    context = ContextFromURL(url)
+    req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
+    html = urllib2.urlopen(req).read()
+    return Extract(html, context)
 
 
 def Extract(html, context):
     ukmedia.DBUG2( "*** wikipedia ***: scraping %s\n" % context['srcurl'])
 
     if 'Wikipedia does not have an article with this exact name' in html:
-        raise Exception("No article with this exact name.")
+        raise NoSuchArticle("No article with this exact name.")
 
     if 'Wikipedia:Disambiguation' in html:
-        raise Exception("Disambiguation page")
+        raise DisambiguationNeeded("Disambiguation page")
 
     OCCUPATIONS = [
         'Journalist', 'Journalism', 'Science_journalist', 'Author', 'Writer',
@@ -65,7 +78,7 @@ def Extract(html, context):
     if tag.group(1)=='dd':
         # Check for "For ..., see ...".
         dd = re.search(r'<dd.*?>(.*?)</dd', html2, flags=re.DOTALL).group(1)
-        raise Exception("Unsure if this is the right person")
+        raise UnsureException("Unsure if this is the right person")
         # This test isn't picky enough:
         #
         #for job in OCCUPATIONS:
@@ -87,7 +100,7 @@ def Extract(html, context):
             if ('href="/wiki/%s"' % word) in html:
                 ok = True
         if not ok:
-            raise Exception("No link to writing-occupation page found, may be wrong person.")
+            raise UnsureException("No link to writing-occupation page found, may be wrong person.")
 
     m = re.search(r'<li id="lastmod"> This page was last modified on (.*?, at \d\d:\d\d).</li>', html)
     if m is None:
@@ -244,7 +257,7 @@ def Extract(html, context):
         if tagtext(heading)=='Death':
             for tag in htags:
                 for year in re.findall(r'19[0-9]\d(?!\d)', tag.renderContents(None)):
-                    raise Exception("ex-person! Died in %s!" % year)
+                    raise DeadPersonException("ex-person! Died in %s!" % year)
         tags += htags
     
     # Replace contents heading with an empty paragraph tag.
@@ -267,6 +280,7 @@ def Extract(html, context):
     text = re.sub(r',\s*\.', '.', text)
     
     context['content'] = text
+    context['bio'] = unicode(BeautifulSoup(text).p)
     return context
 
 
