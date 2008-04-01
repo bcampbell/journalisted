@@ -118,4 +118,48 @@ status ( character(1), default 'a' )
  'd'=duplicate
 
 
+journo table
+------------
+
+id (primary key)
+ unique id for the journo
+
+ref (text)
+ A unique string which identifies the journo. Used as the url for the
+ journos webpage - ie http://journalisted.com/{ref}
+ By convention, the ref is a lowercase version of the name (without any
+ title prefixes or postfixes), with spaces replaced by hyphens.
+ eg "Fred Smith" becomes "fred-smith"
+ Also, any non-url-safe characters (eg accented european character)
+ should be replaced by safe ones.
+ Note: * ref can be changed! *
+ When multiple journos are discovered with the same name, the convention
+ is to split them by adding a number to the end:
+ eg "fred-smith" is split into "fred-smith-1" and "fred-smith-2" etc..
+ The original 'fred-smith' is left unused, so that if someone types it
+ in as a url we can display a disambiguation/search page.
+
+prettyname (text)
+ Full display name (eg "Professor Fred J Smith MP")
+
+lastname (text)
+ Surname of journo, lowercase (eg "smith")
+
+firstname (text)
+ First name of journo lowercase (eg "fred")
+
+created (timestamp)
+ When the journo was first entered into the db.
+
+status (character(1))
+ single character
+ 'i' - inactive (journos start off in this state, and are not shown on the
+       site. They are automatically activated when they have 2 or more
+       articles.)
+ 'a' - active (normal, visible state)
+ 'h' - hidden (manually marked as hidden - for whatever reason, we don't
+       want this journo displayed (it might be a byline mistake, eg
+       "Liverpool Forward").
+
+
 
