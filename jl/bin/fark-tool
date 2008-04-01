@@ -1,0 +1,108 @@
+#!/usr/bin/env python2.4
+# 2008-03-20  BenC  Initial version
+#
+# Scraper which looks for references to newspaper articles
+# on fark.com and loads them into our database.
+# It uses the fark weekly archive page, which lists a weeks
+# worth of links.
+#
+# TODO: could also scrape some of the archive pages linked at
+# http://www.fark.com/archives/
+#
+
+import sys
+import re
+#import urllib	# for urlencode
+#from datetime import datetime
+#from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB,ukmedia,CommentLink
+from BeautifulSoup import BeautifulSoup
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+
+def ScrapeFarkPage( url ):
+
+	results = []
+
+	ukmedia.DBUG2( "fark-tool: fetching %s\n" % (url) )
+	html = ukmedia.FetchURL( url )
+
+	soup = BeautifulSoup( html )
+
+	commentlink_pat = re.compile( "http://forums[.]fark[.]com/cgi/fark/comments[.]pl[?]IDLink=\d+" )
+	commentcount_pat = re.compile( "[(](\d+)[)]" )
+	extlink_pat = re.compile( r"^http://go[.]fark[.]com/cgi/fark/go[.]pl[?]i=\d+&amp;l=(.*?)$" )
+
+	for item in soup.findAll( 'tr', {'class':'headlineRow'} ):
+		entry = {}
+		commentlink = item.find( 'a', href=commentlink_pat )
+		entry['comment_url'] = commentlink['href']
+
+		m = commentcount_pat.search( commentlink.renderContents(None) )
+		entry['num_comments'] = int( m.group(1) )
+
+
+		entry['source'] = 'fark'
+		entry['score'] = None		# no score metric on fark
+
+		# url of the item
+
+		extlink = item.find( 'a', href=extlink_pat )
+ 		href = extlink['href']
+		m = extlink_pat.match( href )
+		entry['url'] = m.group(1)
+
+#		print entry['num_comments'], entry['url'], '(', entry['comment_url'], ')'
+
+		results.append( entry )
+
+	return results
+
+
+
+
+def LoadEntries( conn, entries ):
+	""" load fetched entries into the database"""
+
+	stats = CommentLink.Stats()
+	c = conn.cursor()
+	for e in entries:
+		srcid = scrapefront.CalcSrcID( e['url'] )
+		if not srcid:
+			# not handled
+			stats.not_handled += 1
+			continue
+		e['srcid'] = srcid
+
+		if CommentLink.AddCommentLink( conn, e ):
+			stats.matched += 1
+		else:
+			stats.missing += 1
+
+	return stats
+
+
+
+def main():
+	conn = DB.Connect()
+
+	overallstats = CommentLink.Stats()
+
+	# fetch fark links for the last week:
+	results = ScrapeFarkPage( "http://www.fark.com/week.html" )
+
+	stats = LoadEntries( conn, results )
+	overallstats.Accumulate( stats )
+	ukmedia.DBUG( "fark-tool: overall: %s" % (overallstats.Report()) )
+
+
+
+if __name__ == "__main__":
+	main()
+
