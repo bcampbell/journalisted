@@ -548,7 +548,7 @@ function emit_writtenfor( $journo )
 
 function emit_wikipedia_bio( $journo )
 {
-	$row = db_getRow("SELECT bio, url FROM scraped_wikipedia_journo, journo, journo_weblink " .
+	$row = db_getRow("SELECT bio, url FROM journo_bio, journo, journo_weblink " .
 	                 "WHERE journo_ref=? AND journo.ref=journo_ref AND journo_weblink.journo_id=journo.id",
 	                 $journo['ref']);
 	if ($row)

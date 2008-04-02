@@ -36,7 +36,7 @@ def end_cursor(cur, ok):
 
 def store_context(context, journo_ref, cursor):
     '''
-    JSON-encodes context and stores it in scraped_wikipedia_journo table.
+    JSON-encodes context and stores it in journo_bio table.
     JSON has no datetime support, so datetimes in context get stringized.
     '''
     bio = context['bio'].encode('utf-8')
@@ -44,14 +44,14 @@ def store_context(context, journo_ref, cursor):
         if isinstance(v, datetime):
             context[k] = v.isoformat()[:19]
     context_json = simplejson.dumps(context).encode('utf-8')
-    cursor.execute("SELECT journo_ref FROM scraped_wikipedia_journo "
+    cursor.execute("SELECT journo_ref FROM journo_bio "
                    "WHERE journo_ref=%s", [journo_ref])
     if cursor.fetchone():
-        cursor.execute("UPDATE scraped_wikipedia_journo SET context=%s, bio=%s "
+        cursor.execute("UPDATE journo_bio SET context=%s, bio=%s "
                        "WHERE journo_ref=%s", [context_json, bio, journo_ref])
         cursor.fetchall()
     else:
-        cursor.execute("INSERT INTO scraped_wikipedia_journo (journo_ref, context, bio) "
+        cursor.execute("INSERT INTO journo_bio (journo_ref, context, bio) "
                        "VALUES (%s, %s, %s)", [journo_ref, context_json, bio])
         cursor.fetchall()
 
@@ -71,7 +71,7 @@ def scrape(journo_id, journo_ref, prettyname, url):
             c.execute("SELECT id FROM journo_weblink WHERE journo_id=%s", [journo_id])
             rows = c.fetchall()
             bio = store_context(scraped, journo_ref, c)
-            source = 'scraped_wikipedia_journo'
+            source = 'journo_bio'
             print 'Stored as %s:%s' % (source, journo_ref)
             print '\n    %s\n' % textwrap.fill(scraped['bio'].encode('utf-8')).replace('\n', '\n    ')
             if rows:
@@ -138,7 +138,7 @@ def UpdateJournos(rows):
 
 if __name__=='__main__':
     args = sys.argv[1:]
-    usage = ('Scrapes Wikipedia, populates the scraped_wikipedia_journo table.\n'
+    usage = ('Scrapes Wikipedia, populates the journo_bio table.\n'
              'usage: update-weblink [journo-ref]')
     if '--help' in args or '-h' in args:
         sys.exit(usage)
