@@ -1,0 +1,144 @@
+#!/usr/bin/env python
+
+'''
+Guesses an email address and performs a Yahoo query to check it.
+
+Edit the output to remove errors, then use commit-email to store.
+'''
+
+import sys
+import time
+import re
+import urllib, urllib2
+sys.path.insert(0, '../pylib/JL')
+import DB
+from BeautifulSoup import BeautifulStoneSoup
+
+
+YAHOO_APP_ID = 'FOciVcPV34HtoyxugwPtiV2gHPkgm9Z_y9.7M1KMARQLENAZO_AEr7fecK8q_RAxygZ.UPnAgA--'
+    # This is a Journalisted app ID, but 'YahooDemo' works too!
+
+
+def search_yahoo(email):
+    '''
+    Searches Yahoo for that email, looks at top ten hits,
+    returns (corrected_email, url) or None.
+    '''
+    YAHOO_URL = 'http://search.yahooapis.com/WebSearchService/V1/webSearch'
+    surname = email.split('@')[0].split('.')[-1]
+    domain = email.split('@')[1]
+    email_re = (
+        r'(?!comment|letters|userhelp|tech|editor|reader|arts\.diary|diary|friday.review)' +
+        r'(?:(?<=^)|(?<=[^a-zA-Z0-9\-\_\.]))[a-zA-Z0-9\-\_\.]+@%s(?=[^a-zA-Z0-9\-\_\.]|$)'
+        % re.escape(domain))
+    surname_email_re = email_re.replace('@', re.escape(surname)+'@')
+    email_re = re.compile(email_re)
+    surname_email_re = re.compile(surname_email_re)
+    search_url = YAHOO_URL + "?" + urllib.urlencode({
+        'results': 20,
+        'appid': YAHOO_APP_ID,
+        'query': '"%s" site:%s' % (email, domain)
+    })
+    req = urllib2.Request(search_url, headers={'User-Agent': 'JournalistedBot'})
+    xml = urllib2.urlopen(req).read()
+    soup = BeautifulStoneSoup(xml)
+    for result in soup.resultset('result'):
+        match = surname_email_re.search(result.summary.string or '')
+        if match:
+            return (match.group(), result.url.string)
+    for result in soup.resultset('result'):
+        match = email_re.search(result.summary.string or '')
+        if match:
+            return (match.group(), result.url.string)
+
+_conn = None
+
+def new_cursor(trans=True):
+    global _conn
+    if _conn == None:
+        _conn = DB.Connect()
+    cur = _conn.cursor()
+    if trans:
+        cur.execute('BEGIN')
+    return cur
+
+def commit(cur):
+    cur.execute('COMMIT')
+    cur.close()
+
+def rollback(cur):
+    cur.execute('ROLLBACK')
+    cur.close()
+
+def example():
+    c = new_cursor()
+    try:
+        pass #...
+    except:
+        rollback(c)
+        raise
+    else:
+        commit(c)
+
+
+def guess_email(journo_ref):
+    '''Returns a list of possible email addresses for this journalist.'''
+    c = new_cursor(trans=False)
+    c.execute("SELECT id FROM journo WHERE ref=%s LIMIT 2", [journo_ref])
+    rows = c.fetchall()
+    if len(rows)==0:
+        sys.exit("error: %s: No such journalist" % journo_ref)
+    assert len(rows)==1
+    journo_id = rows[0][0]
+    c.execute("SELECT permalink FROM article "
+              "WHERE id IN"
+                "(SELECT article_id FROM journo_attr WHERE journo_id=%s)",
+              [journo_id])
+    article_urls = [row[0] for row in c.fetchall()]
+    domains = {}
+    for url in article_urls:
+        match = re.match('.*?\.(.*?)/', url)
+        if not match:
+            print >>sys.stderr, "warning: failed to get domain from %r" % url
+            return []
+        domain = match.group(1)
+        domains[domain] = 1
+    domains = domains.keys()
+    prefix = journo_ref.replace('-', '.')
+    return ['%s@%s' % (prefix, domain) for domain in domains]
+
+def journos_needing_email():
+    c = new_cursor(trans=False)
+    c.execute("SELECT r.ref FROM (SELECT DISTINCT ref FROM journo) AS r "
+              "WHERE ref NOT IN (SELECT journo_ref FROM journo_email)")
+    return [row[0] for row in c.fetchall()]
+
+def run(journos):
+    found_urls = 0
+    for journo_ref in journos:
+        guesses = guess_email(journo_ref)
+        for email in guesses:
+            time.sleep(1)
+            got = search_yahoo(email)
+            if got:
+                corrected_email, url = got
+                found_urls += 1
+                print '%s: %s[%d]' % (journo_ref, corrected_email, found_urls)
+                print '[%d] %s' % (found_urls, url)
+                print
+                sys.stdout.flush()
+            else:
+                print >>sys.stderr, '%s: no matches' % email
+
+if __name__=='__main__':
+    args = sys.argv[1:]
+    usage = ('Scrapes Wikipedia, populates the journo_bio table.\n'
+             'usage: update-weblink [journo-ref]')
+    if '--help' in args or '-h' in args:
+        sys.exit(usage)
+    if len(args)==0:
+        run(journos_needing_email())
+    elif len(args)==1:
+        run([args[0]])
+    else:
+        sys.exit(usage)
