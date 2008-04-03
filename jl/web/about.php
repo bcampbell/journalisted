@@ -32,14 +32,18 @@ page_header( "About", array( 'menupage'=>'about' ) );
 <p>The site currently covers:
 <ul>
  <li>BBC News</li>
+ <li>Financial Times</li>
+ <li>Scotland on Sunday</li>
  <li>Sky News (Blogs only)</li>
  <li>The Daily Express</li>
  <li>The Daily Mail</li>
  <li>The Daily Telegraph</li>
  <li>The Guardian</li>
+ <li>The Herald</li>
  <li>The Independent</li>
  <li>The Mirror</li>
  <li>The Observer</li>
+ <li>The Scotsman</li>
  <li>The Sun</li>
  <li>The Sunday Mirror</li>
  <li>The Sunday Telegraph</li>

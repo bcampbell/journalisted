@@ -24,7 +24,7 @@ $stats = FetchJournoStats( $journo );
 
 // Disclaimers:
 $publishLink = "<a href=\"about#whichoutlets\">";
-$publishNum  = sprintf("%d", 14);	// hack!
+$publishNum  = sprintf("%d", 18);	// hack!
 $publishInfo = $publishLink.$publishNum." news websites</a>";
 
 $publishDisclaimer = "<p class=\"disclaimer\">Published in one of ".$publishLink.$publishNum." news websites</a>.</p>";
