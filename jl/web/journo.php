@@ -498,8 +498,8 @@ function emit_block_overview( $journo )
 	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 	print "<div class=\"boxwide-content\">\n";
 
-	emit_writtenfor( $journo );
 	emit_wikipedia_bio( $journo );
+	emit_writtenfor( $journo );
 	emit_journo_mailto( $journo );
 
 	print "</div>\n";
@@ -538,7 +538,7 @@ function emit_writtenfor( $journo )
 		$orglist[] = $s;
 	}
 
-	printf( "<p>Has written articles published in %s</p>", PrettyImplode( $orglist) );
+	printf( "<p>" . $journo['prettyname'] . " has written articles published in %s.</p>", PrettyImplode( $orglist) );
 
 	gatso_stop( 'writtenfor' );
 	
@@ -555,7 +555,7 @@ function emit_wikipedia_bio( $journo )
 	{
     	print "<div class=\"bio-para\">\n";
     	print $row['bio'];
-    	print " (source: <a href=\"" . $row['url'] . "\">Wikipedia</a>)</div>\n";
+    	print " <div class=\"disclaimer\">(source: <a href=\"" . $row['url'] . "\">Wikipedia</a>)</div></div>\n";
 	}
 }
 
