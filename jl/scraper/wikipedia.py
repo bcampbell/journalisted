@@ -332,8 +332,9 @@ def FindArticles():
     c.execute("SELECT prettyname FROM journo")
     found = []
     for row in c.fetchall():
+        prettyname = row[0].replace(' ', '_').encode('utf-8')
         ctx = ContextFromURL('http://en.wikipedia.org/wiki/%s'
-                             % row[0].replace(' ', '_'))
+                             % urllib.quote(prettyname))
         found.append(ctx)
     return found
 
