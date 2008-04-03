@@ -1,0 +1,124 @@
+#!/usr/bin/env python2.4
+# 2008-04-02  BenC  Initial version
+#
+# Scraper which looks for references to newspaper articles
+# on del.icio.us.com and loads them into our database.
+# It uses the del.ico.us search interface and scrapes the
+# resulting html.
+#
+
+import sys
+import re
+import urllib	# for urlencode
+#from datetime import datetime
+#from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB,ukmedia,CommentLink
+from BeautifulSoup import BeautifulSoup
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+BASEURL = 'http://del.icio.us'
+
+def DoSearch( searchphrase, maxpages=1 ):
+
+	# del.icio.us only lets us get up to 10 pages of results
+
+	results = []
+
+	page = 0
+
+	args = {
+		'setcount':'100',
+		'p': searchphrase
+	}
+	url = BASEURL + '/search/?%s' % ( urllib.urlencode(args) )
+
+	while 1:
+		ukmedia.DBUG2( "del.icio.us-tool: fetching %s\n" % (url) )
+		html = ukmedia.FetchURL( url )
+
+		soup = BeautifulSoup( html )
+
+		personcount_pat = re.compile( "saved by (\d+) (?:person|people)" )
+
+		for item in soup.findAll( 'li', {'class':'post'} ):
+			entry = {}
+			h4 = item.find( 'h4', {'class':'desc'} )
+			entry['url'] = h4.a['href']
+
+			pop = item.find( 'a', {'class':'pop'} )
+			entry['comment_url'] = BASEURL + pop['href']
+			m = personcount_pat.search( pop.renderContents(None) )
+			entry['score'] = int( m.group(1) )
+
+
+			# don't know how many comments there are - need to scrape
+			# that from individual pages...
+			entry['num_comments'] = None
+
+			entry['source'] = 'del.icio.us'
+
+			results.append( entry )
+
+		# next page please!
+		page += 1
+		if page >= maxpages:
+			break	# we've got enough
+
+		next = soup.find( text=re.compile("next\s+[&]raquo;") )
+		if next and getattr( next.parent, "name" ) == 'a':
+			url = BASEURL + next.parent['href']
+		else:
+			ukmedia.DBUG2( "del.icio.us-tool: no more result pages\n" )
+			break	# no more pages anyway
+
+	return results
+
+
+
+def LoadEntries( conn, entries ):
+	""" load fetched entries into the database"""
+
+	stats = CommentLink.Stats()
+	c = conn.cursor()
+	for e in entries:
+		srcid = scrapefront.CalcSrcID( e['url'] )
+		if not srcid:
+			# not handled
+			stats.not_handled += 1
+			continue
+		e['srcid'] = srcid
+
+		if CommentLink.AddCommentLink( conn, e ):
+			stats.matched += 1
+		else:
+			stats.missing += 1
+
+	return stats
+
+
+
+def main():
+	conn = DB.Connect()
+
+	overallstats = CommentLink.Stats()
+
+	search = 'news.bbc.co.uk OR guardian.co.uk OR scotsman.com OR dailymail.co.uk'
+	results = DoSearch( search, maxpages=5 )
+
+#	for r in results:
+#		print r['score'],r['comment_url']
+
+	stats = LoadEntries( conn, results )
+	overallstats.Accumulate( stats )
+	ukmedia.DBUG( "del.icio.us-tool: overall: %s" % (overallstats.Report()) )
+
+
+if __name__ == "__main__":
+	main()
+
