@@ -118,7 +118,8 @@ def Extract(html, context):
     
     # Remove relative links and [<number>] links.
     for a in soup.findAll('a'):
-        if a.string and re.match(r'\[\d+\]', a.string):
+        contents = a.renderContents(None)
+        if contents and re.match(r'\[\d+\]', contents):
             extract_li = False
             if a.parent and a.parent.name == 'li':
                 for sub in a.parent.contents:
@@ -132,7 +133,7 @@ def Extract(html, context):
             else:
                 a.extract()
         elif not a.get('href', '').startswith('http://'):
-            a.replaceWith(a.string or '')
+            replace_with_contents(a)
 
     # Remove [edit] spans in headings
     for span in soup.findAll('span', {'class': ['editsection', 'mw-headline']}):
@@ -314,6 +315,14 @@ def tagtext(tag, strip=True):  # much safer than tag.string
         text = text.strip()
     return text
 
+def replace_with_contents(tag):
+    '''Extracts a tag but keeps its contents.'''
+    parent, index = tag.parent, tag.parent.contents.index(tag)
+    children = tag.contents or []
+    tag.extract()
+    for child in children:
+        parent.insert(index, child)
+        index += 1
 
 
 def FindArticles():
