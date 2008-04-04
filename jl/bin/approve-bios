@@ -16,21 +16,32 @@ def new_cursor():
     if conn is None: conn = DB.Connect()
     return conn.cursor()
 
-def run(journos):
+def run(journos, active_only=False):
     cur = new_cursor()
+    active_clause = ""
+    if active_only:
+        active_clause = " AND journo.status='a'"
     if journos:
         holes = ','.join(['%s' for j in journos])
-        cur.execute('SELECT journo_ref FROM journo_bio '
-                    'WHERE journo_ref IN (%s)' % holes, journos)
+        cur.execute('SELECT journo_ref FROM journo_bio, journo '
+                    'WHERE journo_ref IN (%s) AND journo.ref=journo_ref %s'
+                    % (holes, active_clause),
+                    journos)
         refs = [ref for ref, in cur.fetchall()]
         for journo in journos:
             if journo not in refs:
-                print 'warning: no such journalist "%s"' % journo
-        cur.execute('SELECT id, journo_ref, bio FROM journo_bio '
-                    'WHERE journo_ref IN (%s)' % holes, journos)
+                if active_only:
+                    print 'warning: no such active journalist "%s"' % journo
+                else:
+                    print 'warning: no such journalist "%s"' % journo
+        cur.execute('SELECT journo_bio.id, journo_ref, bio FROM journo_bio, journo '
+                    'WHERE journo_ref IN (%s) AND journo.ref=journo_ref %s'
+                    % (holes, active_clause),
+                    journos)
     else:
-        cur.execute('SELECT id, journo_ref, bio FROM journo_bio '
-                    'WHERE NOT approved')
+        cur.execute('SELECT journo_bio.id, journo_ref, bio FROM journo_bio, journo '
+                    'WHERE NOT approved AND journo.ref=journo_ref %s'
+                    % active_clause)
     rows = cur.fetchall()
     for id, journo_ref, bio in rows:
         print journo_ref
@@ -45,12 +56,22 @@ def run(journos):
 if __name__=='__main__':
     args = sys.argv[1:]
     journos = []
+    active_only = False
     for arg in list(args):
+        if arg in ('-a', '--active'):
+            active_only = True
+            args.remove(arg)
         if re.match(r'[a-z]+[a-z\-]+$', arg):
             journos.append(arg)
             args.remove(arg)
     if args:
-        sys.exit('unknown argument: %s\n' % args[0] +
-                 'usage: python approve-bios\n' + __doc__.strip())
+        if '--help' in args or '-h' in args:
+            x = ''
+        else:
+            x = 'unknown argument: %s\n\n' % args[0]
+        sys.exit(x + __doc__.strip() + '\n\n' +
+                 'usage: python approve-bios [options]\n'
+                 'options:\n'
+                 '   -a, --active  only active journalists (those shown to users)')
     else:
-        run(journos)
+        run(journos, active_only=active_only)
