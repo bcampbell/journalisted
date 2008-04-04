@@ -203,8 +203,10 @@ def Extract3(soup, context):
 	'''
 	# e.g. http://www.guardian.co.uk/commentisfree/2008/mar/06/games
 	ul = soup.find('div', id='content').ul  # class="article-attributes no-pic"
-	byline = ul.find('li', {'class': 'byline'}).renderContents(None).strip()
-	byline = ukmedia.ExtractAuthorFromParagraph(byline)
+	byline = ul.find('li', {'class': 'byline'}) or u''
+	if byline:
+		byline = byline.renderContents(None).strip()
+		byline = ukmedia.ExtractAuthorFromParagraph(byline)
 	pubdate = ul.find('li', {'class': 'date'}).renderContents(None)
 	publication = ul.find('li', {'class': 'publication'}).a.string
 	assert publication in ('The Guardian', 'The Observer'), publication  # if not, we want to know
