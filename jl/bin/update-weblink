@@ -45,8 +45,10 @@ def store_context(context, journo_ref, cursor):
             context[k] = v.isoformat()[:19]
     context_json = simplejson.dumps(context).encode('utf-8')
     cursor.execute("SELECT journo_ref FROM journo_bio "
-                   "WHERE journo_ref=%s", [journo_ref])
-    if cursor.fetchone():
+                   "WHERE journo_ref=%s LIMIT 2", [journo_ref])
+    rows = cursor.fetchall()
+    assert len(rows)<2, "Multiple bios found, I don't know which to update"
+    if rows:
         cursor.execute("UPDATE journo_bio SET context=%s, bio=%s "
                        "WHERE journo_ref=%s", [context_json, bio, journo_ref])
         cursor.fetchall()
