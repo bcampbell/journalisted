@@ -49,12 +49,12 @@ def store_context(context, journo_ref, cursor):
     rows = cursor.fetchall()
     assert len(rows)<2, "Multiple bios found, I don't know which to update"
     if rows:
-        cursor.execute("UPDATE journo_bio SET context=%s, bio=%s "
+        cursor.execute("UPDATE journo_bio SET context=%s, bio=%s, approved=false "
                        "WHERE journo_ref=%s", [context_json, bio, journo_ref])
         cursor.fetchall()
     else:
-        cursor.execute("INSERT INTO journo_bio (journo_ref, context, bio) "
-                       "VALUES (%s, %s, %s)", [journo_ref, context_json, bio])
+        cursor.execute("INSERT INTO journo_bio (journo_ref, context, bio, approved) "
+                       "VALUES (%s, %s, %s, false)", [journo_ref, context_json, bio])
         cursor.fetchall()
 
 def scrape(journo_id, journo_ref, prettyname, url):
