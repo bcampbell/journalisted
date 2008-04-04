@@ -471,7 +471,7 @@ def ScrubFunc( context, entry ):
 	context['permalink'] = url;
 	context['srcid'] = CalcSrcID( url )
 
-	if WhichFormat( url ) == 'newformat':
+	if WhichFormat( url ) == 'newformat' and not url.startswith('file:'):
 		# force whole article on single page
 		context['srcurl'] = url + '?page=all'
 	else:
@@ -559,7 +559,7 @@ def ContextFromURL( url ):
 	else:
 		context['srcorgname'] = u'observer'
 
-	if WhichFormat( url ) == 'newformat':
+	if WhichFormat( url ) == 'newformat' and not url.startswith('file:'):
 		# force whole article on single page
 		context['srcurl'] = url + '?page=all'
 	else:
