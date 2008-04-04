@@ -572,7 +572,8 @@ function emit_journo_mailto( $journo )
     	print ("<p><span class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
     	       "<a href=\"mailto:" . $row['email'] . "\">" .
     	       $row['email'] . "</a></span> " .
-    	       "(from <a href=\"" . $row['srcurl'] . "\">" . $shorturl . "</a>)</span></p>");
+    	       "<span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
+    	       "\">" . $shorturl . "</a>)</span></span></p>");
 	}
 }
 
