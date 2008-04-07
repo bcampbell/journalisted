@@ -159,7 +159,7 @@ def Extract( html, context ):
 
 	# get Description
 	foo = soup.find( 'meta', {'name':'description'} )
-	art['description'] = foo[ 'content' ]
+	art['description'] = ReformatLines( foo[ 'content' ] )
 	art['description'] = ukmedia.FromHTML( art['description'] )
 
 	articlediv = soup.find( 'div', id='ArtContent' )
@@ -242,7 +242,7 @@ def Extract( html, context ):
 
 	# whatever is left is our text!
 	content = articlediv.renderContents( None )
-	art['content'] = ukmedia.SanitiseHTML( content )
+	art['content'] = ReformatLines( ukmedia.SanitiseHTML( content ) )
 	return art
 
 
@@ -254,7 +254,14 @@ def TidyURL( url ):
 	# trim off cruft
 	return urltrimpat.sub( "\\1", url )
 
-	
+def ReformatLines(content):
+	''' Replaces whitespace within paragraphs with single spaces. '''
+	paras = []
+	for para in content.split('<p'):
+		paras.append(re.sub(r'\s+', ' ', para))
+	content = '\n\n<p'.join(paras)
+	return content
+
 def ScrubFunc( context, entry ):
 	"""mungefunc for ukmedia.FindArticlesFromRSS()"""
 
