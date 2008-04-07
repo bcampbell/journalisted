@@ -180,7 +180,9 @@ def CheckArticle(art):
 			for link in re.findall(r'''href\s*=\s*['"](.*?)['"]''', art[f]):
 				link = link.strip()
 				if link and not re.match(r'https?://|mailto:', link):
-					raise Exception("%s contains relative links ('%s')" %
+#					raise Exception("%s contains relative links ('%s')" %
+#									(f, 'href="%s"' % link.encode('latin-1','replace')))
+					ukmedia.DBUG("%s contains relative links ('%s')\n" %
 									(f, 'href="%s"' % link.encode('latin-1','replace')))
 
 
