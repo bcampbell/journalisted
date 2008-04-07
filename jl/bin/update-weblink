@@ -99,7 +99,9 @@ def FindJournosNeedingWeblink():
     c = new_cursor('FindJournosNeedingWeblink')
     try:
         c.execute("SELECT id, ref, prettyname FROM journo "
-                  "ORDER BY journo.id IN (SELECT journo_id FROM journo_weblink), prettyname")
+                  "ORDER BY journo.status!='a',"  # active first, and prefer wikipedia-less
+                  "         journo.id IN (SELECT journo_id FROM journo_weblink),"
+                  "         prettyname")
         rows = c.fetchall()
     except:
         end_cursor(c, False)
