@@ -19,12 +19,14 @@ function admPageHeader()
 <html>
 <head>
 <title>journa-list admin</title>
+<style type="text/css" media="all">@import "/adm/admin-style.css";</style>
 </head>
 <body>
 <h1>journa-list admin</h1>
 <a href="journo">Journos</a> |
 <a href="article">Articles</a> |
-<a href="scrape">Scrape</a>
+<a href="scrape">Scrape</a> |
+<a href="journo-bios">Journo-Bios</a>
 <hr>
 <?php
 
