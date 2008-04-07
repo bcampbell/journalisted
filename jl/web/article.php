@@ -139,6 +139,14 @@ function emit_block_articletags( $article_id )
 function emit_block_commentlinks( $article_id )
 {
 
+	/* profile for various sites we source from - they all use their own terminology */
+	$profiles = array(
+		'digg' =>     array( 'scoreterm'=>'diggs' ),
+		'reddit' =>   array( 'scoreterm'=>'points' ),
+		'newsvine' => array( 'scoreterm'=>'votes' ),
+		'DEFAULT' =>  array( 'scoreterm'=>'points' ),
+	);
+
 ?>
 <div class="boxwide">
 <h2>What comments are people making about this article?</h2>
@@ -154,12 +162,17 @@ function emit_block_commentlinks( $article_id )
 		while( $row = db_fetch_array( $q ) )
 		{
 			$source = $row['source'];
+			if( array_key_exists( $source, $profiles ) ) {
+				$profile = $profiles[$source];
+			} else {
+				$profile = $profiles['DEFAULT'];
+			}
 
 			$comments = sprintf( "<a href=\"%s\">%d comments</a>", $row['comment_url'], $row['num_comments'] );
 
 			$score = '';
 			if( $row['score'] )
-				$score = sprintf( ", %d points", $row['score'] );
+				$score = sprintf( ", %d %s", $row['score'], $profile['scoreterm'] );
 
 			printf( "<li>%s (%s%s)</li>\n", $source, $comments, $score );
 		}
