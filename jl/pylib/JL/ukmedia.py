@@ -184,6 +184,8 @@ def ParseDateTime( datestring ):
 
 tagopenpat = re.compile( "<(\w+)(\s+.*?)?\s*(/\s*)?>", re.UNICODE|re.DOTALL )
 tagclosepat = re.compile( "<\s*/\s*(\w+)\s*>", re.UNICODE|re.DOTALL )
+emptylinkpat = re.compile ( "<a[^>]*?>\s*</a>", re.UNICODE )
+emptylinkpat2 = re.compile ( "<a\s*>(.*?)</a>", re.UNICODE|re.DOTALL )
 acceptabletags = [ 'p', 'h1','h2','h3','h4','h5','br','b','i','em','li','ul','ol','strong', 'blockquote', 'a' ]
 
 commentkillpat = re.compile( u"<!--.*?-->", re.UNICODE|re.DOTALL )
@@ -194,7 +196,7 @@ def SanitiseHTML_handleopen(m):
 	if tag in acceptabletags:
 		# special case - allow <a> to keep href attr:
 		if tag == 'a':
-			m2 = re.search( ('(href=\".*?\")'), m.group(2) )
+			m2 = re.search( ('(href=\".*?\")'), m.group(2) or '')
 			if m2:
 				return u"<a %s>" % (m2.group(1) )
 
@@ -215,7 +217,9 @@ def SanitiseHTML( html ):
 	html = tagclosepat.sub( SanitiseHTML_handleclose, html )
 	html = emptyparapat.sub( u'', html )
 	html = commentkillpat.sub( u'', html )
-	return html
+	html = emptylinkpat.sub( u'', html )
+	html = emptylinkpat2.sub( ur'\1', html )
+	return html.lstrip()
 
 
 
