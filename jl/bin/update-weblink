@@ -11,6 +11,7 @@ from wikipedia import NoSuchArticle
 
 
 PARANOID = False  # tries JohnDoe_(journalist), etc. before JohnDoe
+QUIET = False
 
 _conn = None  # DB connection, but use new_cursor() instead.
 _reasons = {}
@@ -58,14 +59,14 @@ def store_context(context, journo_ref, cursor):
         cursor.fetchall()
 
 def scrape(journo_id, journo_ref, prettyname, url):
-    print 'Trying:', url, '...'
+    if not QUIET: print 'Trying:', url, '...'
     try:
         time.sleep(1)
         scraped = wikipedia.ScrapeArticle(url)
     except NoSuchArticle:
         pass
     except Exception, e:
-        print 'Error:', e
+        if not QUIET: print 'Error:', e
     else:
         desc = 'Wikipedia: ' + prettyname
         c = new_cursor('scrape')
@@ -74,8 +75,9 @@ def scrape(journo_id, journo_ref, prettyname, url):
             rows = c.fetchall()
             bio = store_context(scraped, journo_ref, c)
             source = 'journo_bio'
-            print 'Stored as %s:%s' % (source, journo_ref)
-            print '\n    %s\n' % textwrap.fill(scraped['bio'].encode('utf-8')).replace('\n', '\n    ')
+            if not QUIET:
+                print 'Stored as %s:%s' % (source, journo_ref)
+                print '\n    %s\n' % textwrap.fill(scraped['bio'].encode('utf-8')).replace('\n', '\n    ')
             if rows:
                 assert len(rows)==1, 'Multiple weblinks found for journo %d!' % journo_id
                 query = (
@@ -143,7 +145,11 @@ def UpdateJournos(rows):
 if __name__=='__main__':
     args = sys.argv[1:]
     usage = ('Scrapes Wikipedia, populates the journo_bio table.\n'
-             'usage: update-weblink [journo-ref]')
+             'usage: update-weblink [-q] [journo-ref]')
+    if '--quiet' in args or '-q' in args:
+        QUIET = True
+        if '-q' in args: args.remove('-q')
+        if '--quiet' in args: args.remove('--quiet')
     if '--help' in args or '-h' in args:
         sys.exit(usage)
     if len(args)==0:
