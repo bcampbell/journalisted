@@ -17,6 +17,7 @@ require_once "HTML/QuickForm.php";
 
 $action = get_http_var( 'action' );
 $scrape = get_http_var( 'scrape' );
+$filter = get_http_var( 'filter','unapproved' );
 
 admPageHeader();
 
@@ -34,21 +35,22 @@ if ( $scrape )  // unsafe, but this is the admin interface
     print 'done.</pre></b><br />';
 }
 
+EmitFilterForm( $filter );
 switch( $action )
 {
 	case "approve":
 		$bio_ids = get_http_var( "bio_id" );
 		SetBios( $bio_ids, 't' );
-		EmitBioList();
+		EmitBioList($filter);
 		break;
 	case "unapprove":
 		$bio_ids = get_http_var( "bio_id" );
 		SetBios( $bio_ids, 'f' );
-		EmitBioList();
+		EmitBioList($filter);
 		break;
 
 	default:
-		EmitBioList();
+		EmitBioList($filter);
 		break;
 }
 
@@ -56,14 +58,39 @@ admPageFooter();
 
 /********************************/
 
-function EmitBioList()
+function EmitFilterForm( $filter )
 {
+	$f = array( 'all'=>'All bios', 'approved'=>'Approved bios only', 'unapproved'=>'Unapproved bios only' );
+
+?>
+<form method="get" action="/adm/journo-bios">
+Show
+<?= form_element_select( "filter", $f, $filter ); ?>
+ <input type="submit" name="submit" value="Find" />
+</form>
+<?php
+
+}
+
+
+
+function EmitBioList( $filter )
+{
+	$whereclause = '';
+	if( $filter=='approved' )
+		$whereclause = "WHERE b.approved='t'";
+	elseif( $filter=='unapproved' )
+		$whereclause = "WHERE b.approved='f'";
+
 	$sql = <<<EOT
 	SELECT j.prettyname, j.ref, b.journo_id, b.bio, b.approved, b.id as bio_id, w.url
 		FROM (journo_bio b INNER JOIN journo j ON j.id=b.journo_id
 		                   INNER JOIN journo_weblink w ON w.journo_id=b.journo_id)
-		ORDER BY j.id
+	$whereclause
+	ORDER BY j.id
 EOT;
+
+
 	$r = db_query( $sql );
 
 	printf( "<p>%d bios:</p>\n", db_num_rows($r) );
@@ -97,7 +124,7 @@ EOT;
 			$row['approved'] == 't' ? "bio_approved":"bio_unapproved",
 			$journo_link . " " . $journo_adm_link,
 			"<small>" . $row['bio'] . " (<a href=\"". $row['url'] .
-			"\">source</a>, <a href=\"?scrape=" . $row['ref'] . "\">re-scrape</a>)</small>",
+			"\">source</a>, <a href=\"?scrape=" . $row['ref'] . "&filter=" . $filter . "\">re-scrape</a>)</small>",
 			$row['approved']=='t' ? 'yes':'no',
 			$checkbox );
 	}
@@ -111,6 +138,7 @@ Action (with selected bios):
  <option value="unapprove">Unapprove</option>
 </select>
 <br />
+<?=form_element_hidden( 'filter', $filter ); ?>
 <input type="submit" name="submit" value="Do it" />
 
 </form>

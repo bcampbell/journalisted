@@ -45,3 +45,33 @@ function admPageFooter()
 }
 
 
+/* helpers for forms - maybe should have their own file... */
+
+/* return a select element. $options is array of options. */
+function form_element_select( $name, $options, $selected=null )
+{
+	$out = sprintf( "<select name=\"%s\">\n", $name );
+	foreach( $options as $k=>$v )
+	{
+		$s = ($k==$selected) ? 'selected ' : '';
+		$out .= sprintf( " <option %svalue=\"%s\">%s</option>\n", $s, $k, $v );
+	}
+	$out .= "</select>\n";
+
+	return $out;
+}
+
+/* return a hidden element */
+function form_element_hidden( $name, $value )
+{
+	return sprintf( "<input type=\"hidden\" name=\"%s\" value=\"%s\" />\n",
+		$name, $value );
+}
+
+
+/* return a submit button */
+function form_element_submit( $name, $buttonlabel )
+{
+	return sprintf("<input type=\"submit\" name=\"%s\" value=\"%s\" />\n", $name, $buttonlabel );
+}
+
