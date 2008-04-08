@@ -37,8 +37,8 @@ def run(journos, active_only=False):
                     print 'warning: no such journalist "%s"' % journo
         cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
                     'WHERE journo_id IN (%s) AND journo.id=journo_id %s'
-                    % (ids, active_clause),
-                    journos)
+                    % (holes, active_clause),
+                    ids)
     else:
         cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
                     'WHERE NOT approved AND journo.id=journo_id %s'
