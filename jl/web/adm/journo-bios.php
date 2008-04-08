@@ -16,6 +16,7 @@ require_once '../phplib/adm.php';
 require_once "HTML/QuickForm.php";
 
 $action = get_http_var( 'action' );
+$scrape = get_http_var( 'scrape' );
 
 admPageHeader();
 
@@ -25,6 +26,13 @@ admPageHeader();
 <p>Select bios with the checkboxes, then select the action you want
 to perform at the bottom of the page.</p>
 <?php
+
+if ( $scrape )  // unsafe, but this is the admin interface
+{
+    print "<b>Re-scraping $scrape... ";
+	system("python2.4 ../bin/update-weblink $scrape");
+    print 'done.</b><br />';
+}
 
 switch( $action )
 {
@@ -38,6 +46,7 @@ switch( $action )
 		SetBios( $bio_ids, 'f' );
 		EmitBioList();
 		break;
+
 	default:
 		EmitBioList();
 		break;
@@ -87,7 +96,8 @@ EOT;
 		printf( " <tr class=\"%s\">\n  <td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n </tr>\n",
 			$row['approved'] == 't' ? "bio_approved":"bio_unapproved",
 			$journo_link . " " . $journo_adm_link,
-			"<small>" . $row['bio'] . " (<a href=\"". $row['url'] ."\">source</a>)</small>",
+			"<small>" . $row['bio'] . " (<a href=\"". $row['url'] .
+			"\">source</a>, <a href=\"?scrape=" . $row['ref'] . "\">re-scrape</a>)</small>",
 			$row['approved']=='t' ? 'yes':'no',
 			$checkbox );
 	}
