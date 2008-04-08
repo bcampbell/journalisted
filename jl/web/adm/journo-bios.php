@@ -50,8 +50,8 @@ admPageFooter();
 function EmitBioList()
 {
 	$sql = <<<EOT
-	SELECT j.prettyname, j.ref, j.id as journo_id, b.bio, b.approved, b.id as bio_id
-		FROM (journo_bio b INNER JOIN journo j ON j.ref=b.journo_ref)
+	SELECT j.prettyname, j.ref, b.journo_id, b.bio, b.approved, b.id as bio_id
+		FROM (journo_bio b INNER JOIN journo j ON j.id=b.journo_id)
 		ORDER BY j.id
 EOT;
 	$r = db_query( $sql );
