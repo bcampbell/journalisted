@@ -106,6 +106,18 @@ def Extract(html, context):
     if m is None:
         raise Exception("No modification date.")  # probably no article
     context['pubdate'] = ukmedia.ParseDateTime(m.group(1))
+
+    # Extract infobox. Unfortunately BeautifulSoup isn't up to it.
+    infobox = None
+    m = re.compile('<table class="[^"]*infobox[^"]*?".*?>.*?</table>', re.DOTALL).search(html)
+    if m:
+        html = html[:m.start()] + html[m.end():]
+        infobox = m.group()
+        img_re = re.compile(r'<img .*?>', re.DOTALL)
+        try:
+            image = '<p>%s</p>' % img_re.findall(infobox)[0]
+        except IndexError:
+            image = ''
     
     soup = BeautifulSoup(html)
     
@@ -279,6 +291,8 @@ def Extract(html, context):
     
     # Replace ", ." with ".". Arises from our removing cross-references.
     text = re.sub(r',\s*\.', '.', text)
+    
+    text = image + text
     
     context['content'] = text
 
