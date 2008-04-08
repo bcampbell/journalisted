@@ -50,8 +50,9 @@ admPageFooter();
 function EmitBioList()
 {
 	$sql = <<<EOT
-	SELECT j.prettyname, j.ref, b.journo_id, b.bio, b.approved, b.id as bio_id
-		FROM (journo_bio b INNER JOIN journo j ON j.id=b.journo_id)
+	SELECT j.prettyname, j.ref, b.journo_id, b.bio, b.approved, b.id as bio_id, w.url
+		FROM (journo_bio b INNER JOIN journo j ON j.id=b.journo_id
+		                   INNER JOIN journo_weblink w ON w.journo_id=b.journo_id)
 		ORDER BY j.id
 EOT;
 	$r = db_query( $sql );
@@ -86,7 +87,7 @@ EOT;
 		printf( " <tr class=\"%s\">\n  <td>%s</td><td>%s</td><td>%s</td><td>%s</td>\n </tr>\n",
 			$row['approved'] == 't' ? "bio_approved":"bio_unapproved",
 			$journo_link . " " . $journo_adm_link,
-			"<small>" . $row['bio'] . "</small>",
+			"<small>" . $row['bio'] . " (<a href=\"". $row['url'] ."\">source</a>)</small>",
 			$row['approved']=='t' ? 'yes':'no',
 			$checkbox );
 	}
