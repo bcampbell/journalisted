@@ -10,6 +10,7 @@ import sys
 import time
 import re
 import urllib, urllib2
+sys.path.insert(0, '../pylib')
 sys.path.insert(0, '../pylib/JL')
 import DB
 from BeautifulSoup import BeautifulStoneSoup
@@ -110,8 +111,8 @@ def guess_email(journo_ref):
 
 def journos_needing_email():
     c = new_cursor(trans=False)
-    c.execute("SELECT r.ref FROM (SELECT DISTINCT ref FROM journo) AS r "
-              "WHERE ref NOT IN (SELECT journo_ref FROM journo_email)")
+    c.execute("SELECT ref FROM journo "
+              "WHERE id NOT IN (SELECT journo_id FROM journo_email)")
     return [row[0] for row in c.fetchall()]
 
 def run(journos):

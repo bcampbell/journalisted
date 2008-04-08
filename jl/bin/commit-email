@@ -56,15 +56,19 @@ for line_num, line in email_lines:
 
 conn = DB.Connect()
 cur = conn.cursor()
-cur.execute("SELECT journo_ref, 1 FROM journo_email")
+cur.execute("SELECT journo_id, 1 FROM journo_email")
 rows = cur.fetchall()
 lookup = dict(rows)
 cur.execute('BEGIN')
 for journo_ref, email, url in db_rows:
-    if journo_ref in lookup:
+    cur.execute("SELECT id FROM journo WHERE ref=journo_ref LIMIT 2")
+    rows = cur.fetchall()
+    assert len(rows)==1, "%s: %d matches, expected 1" % (journo_ref, len(rows))
+    journo_id = rows[0][0]
+    if journo_id in lookup:
         cur.execute("UPDATE journo_email SET email=%s, srcurl=%s, srctype='article' "
-                    "WHERE journo_ref=%s", [journo_ref, email, url])
+                    "WHERE journo_id=%s", [journo_id, email, url])
     else:
-        cur.execute("INSERT INTO journo_email (journo_ref, email, srcurl, srctype) "
-                    "VALUES (%s, %s, %s, 'article')", [journo_ref, email, url])
+        cur.execute("INSERT INTO journo_email (journo_id, email, srcurl, srctype) "
+                    "VALUES (%s, %s, %s, 'article')", [journo_id, email, url])
 cur.execute('COMMIT')

@@ -83,10 +83,13 @@ def main(journo_ref):
 def all_journos():
     cur = new_cursor()
     try:
-        cur.execute("SELECT DISTINCT ref FROM journo "
-                    "WHERE ref NOT IN (SELECT journo_ref FROM journo_email) "
+        cur.execute("SELECT id FROM journo")
+        num_journos = len(cur.fetchall())
+        cur.execute("SELECT id FROM journo "
+                    "WHERE id NOT IN (SELECT journo_id FROM journo_email) "
                     "ORDER BY ref")
         rows = cur.fetchall()
+        assert len(rows)==num_journos, "Repeated journo ref detected!"
         end_cursor(cur, True)
         return [row[0] for row in rows]
     except:
