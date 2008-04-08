@@ -110,13 +110,22 @@ Action (with selected bios):
 
 function SetBios( $bio_ids, $val )
 {
+	$cnt = 0;
 	foreach( $bio_ids as $bio_id )
 	{
-		db_do( "UPDATE journo_bio SET approved=? WHERE id=?",
-			$val, $bio_id );
+		$row = db_getRow( "SELECT journo_id,approved FROM journo_bio WHERE id=?", $bio_id );
+		if( $row['approved'] != $val ) {
+			db_do( "UPDATE journo_bio SET approved=? WHERE id=?",
+				$val, $bio_id );
+			db_do( "DELETE FROM htmlcache WHERE name=?",
+				'j' . $row['journo_id'] );
+			$cnt += 1;
+		}
+
+
 	}
 	db_commit();
 
-	printf( "<p><strong>%s %d bios</strong></p>\n", $val=='t'?'approved':'unapproved', count($bio_ids) );
+	printf( "<p><strong>%s %d bios</strong></p>\n", $val=='t'?'approved':'unapproved', $cnt );
 }
 
