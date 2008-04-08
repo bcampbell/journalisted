@@ -565,7 +565,7 @@ function emit_wikipedia_bio( $journo )
 
 function emit_journo_mailto( $journo )
 {
-	$row = db_getRow("SELECT email, srcurl FROM journo_email WHERE journo_ref=?", $journo['ref']);
+	$row = db_getRow("SELECT email, srcurl FROM journo_email WHERE journo_id=?", $journo['id']);
 	if ($row)
 	{
     	$shorturl = $row['srcurl'];
