@@ -150,7 +150,7 @@ def UpdateJournos(rows):
 if __name__=='__main__':
     args = sys.argv[1:]
     usage = ('Scrapes Wikipedia, populates the journo_bio table.\n'
-             'usage: update-weblink [-q] [journo-ref]')
+             'usage: update-bio [-q] [journo-ref]')
     if '--quiet' in args or '-q' in args:
         QUIET = True
         if '-q' in args: args.remove('-q')
