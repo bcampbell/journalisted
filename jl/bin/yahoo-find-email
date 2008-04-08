@@ -88,7 +88,8 @@ def guess_email(journo_ref):
     rows = c.fetchall()
     if len(rows)==0:
         sys.exit("error: %s: No such journalist" % journo_ref)
-    assert len(rows)==1
+    if len(rows)!=1:
+        sys.exit("error: %s: Multiple rows with this ref!" % journo_ref)
     journo_id = rows[0][0]
     c.execute("SELECT permalink FROM article "
               "WHERE id IN"
@@ -132,8 +133,8 @@ def run(journos):
 
 if __name__=='__main__':
     args = sys.argv[1:]
-    usage = ('Scrapes Wikipedia, populates the journo_bio table.\n'
-             'usage: update-weblink [journo-ref]')
+    usage = (__doc__.strip() + '\n'
+             'usage: yahoo-find-email [journo-ref]')
     if '--help' in args or '-h' in args:
         sys.exit(usage)
     if len(args)==0:
