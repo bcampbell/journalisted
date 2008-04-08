@@ -549,11 +549,11 @@ function emit_writtenfor( $journo )
 function emit_wikipedia_bio( $journo )
 {
 	$row = db_getRow("SELECT bio, url FROM journo_bio, journo, journo_weblink " .
-	                 "WHERE journo_ref=? " .
-	                 "AND approved " .
-	                 "AND journo.ref=journo_ref " .
-	                 "AND journo_weblink.journo_id=journo.id",
-	                 $journo['ref']);
+	                 "WHERE journo_bio.journo_id=? " .
+	                 "  AND journo_bio.approved " .
+	                 "  AND journo.id=journo_bio.journo_id " .
+	                 "  AND journo_weblink.journo_id=journo_bio.journo_id",
+	                 $journo['id']);
 	if ($row)
 	{
     	print "<div class=\"bio-para\">\n";

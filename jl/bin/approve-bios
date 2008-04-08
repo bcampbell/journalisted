@@ -23,34 +23,36 @@ def run(journos, active_only=False):
         active_clause = " AND journo.status='a'"
     if journos:
         holes = ','.join(['%s' for j in journos])
-        cur.execute('SELECT journo_ref FROM journo_bio, journo '
-                    'WHERE journo_ref IN (%s) AND journo.ref=journo_ref %s'
+        cur.execute('SELECT id, ref FROM journo WHERE ref IN (%s) %s'
                     % (holes, active_clause),
                     journos)
-        refs = [ref for ref, in cur.fetchall()]
+        rows = cur.fetchall()
+        ids = [id for id, ref in rows]
+        refs = [ref for id, ref in rows]
         for journo in journos:
             if journo not in refs:
                 if active_only:
                     print 'warning: no such active journalist "%s"' % journo
                 else:
                     print 'warning: no such journalist "%s"' % journo
-        cur.execute('SELECT journo_bio.id, journo_ref, bio FROM journo_bio, journo '
-                    'WHERE journo_ref IN (%s) AND journo.ref=journo_ref %s'
-                    % (holes, active_clause),
+        cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
+                    'WHERE journo_id IN (%s) AND journo.id=journo_id %s'
+                    % (ids, active_clause),
                     journos)
     else:
-        cur.execute('SELECT journo_bio.id, journo_ref, bio FROM journo_bio, journo '
-                    'WHERE NOT approved AND journo.ref=journo_ref %s'
+        cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
+                    'WHERE NOT approved AND journo.id=journo_id %s'
                     % active_clause)
     rows = cur.fetchall()
-    for id, journo_ref, bio in rows:
-        print journo_ref
+    for bio_id, journo_ref, bio in rows:
+        print 'Bio %d: %s:' % (bio_id, journo_ref)
         print '\n    %s\n' % textwrap.fill(bio).replace('\n', '\n    ')
         got = ''
-        while got not in ('y', 'Y', 'n', 'N'):
-            got = raw_input('Approve? [y/n] ')
-        if got in ('y', 'Y'):
-            cur.execute('UPDATE journo_bio SET approved=true WHERE id=%s', [id])
+        while got not in ('y', 'n'):
+            got = raw_input('Approve? [y/n] ').lower()
+        if got=='y':
+            cur.execute('UPDATE journo_bio SET approved=true WHERE id=%s',
+                        [bio_id])
             cur.execute('COMMIT')  # needed to avoid rollback on ctrl-c
 
 if __name__=='__main__':

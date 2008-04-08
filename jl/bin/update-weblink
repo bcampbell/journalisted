@@ -35,7 +35,7 @@ def end_cursor(cur, ok):
     cur.execute(command)
     cur.close()
 
-def store_context(context, journo_ref, cursor):
+def store_context(context, journo_id, cursor):
     '''
     JSON-encodes context and stores it in journo_bio table.
     JSON has no datetime support, so datetimes in context get stringized.
@@ -45,18 +45,22 @@ def store_context(context, journo_ref, cursor):
         if isinstance(v, datetime):
             context[k] = v.isoformat()[:19]
     context_json = simplejson.dumps(context).encode('utf-8')
-    cursor.execute("SELECT journo_ref FROM journo_bio "
-                   "WHERE journo_ref=%s LIMIT 2", [journo_ref])
+    cursor.execute("SELECT id FROM journo_bio "
+                   "WHERE journo_id=%s LIMIT 2", [journo_id])
     rows = cursor.fetchall()
     assert len(rows)<2, "Multiple bios found, I don't know which to update"
+    updated = False
     if rows:
         cursor.execute("UPDATE journo_bio SET context=%s, bio=%s, approved=false "
-                       "WHERE journo_ref=%s", [context_json, bio, journo_ref])
+                       "WHERE journo_id=%s ",
+                       [context_json, bio, journo_id])
+        updated = True
         cursor.fetchall()
     else:
-        cursor.execute("INSERT INTO journo_bio (journo_ref, context, bio, approved) "
-                       "VALUES (%s, %s, %s, false)", [journo_ref, context_json, bio])
+        cursor.execute("INSERT INTO journo_bio (journo_id, context, bio, approved) "
+                       "VALUES (%s, %s, %s, false)", [journo_id, context_json, bio])
         cursor.fetchall()
+    return bio, updated
 
 def scrape(journo_id, journo_ref, prettyname, url):
     if not QUIET: print 'Trying:', url, '...'
@@ -73,11 +77,12 @@ def scrape(journo_id, journo_ref, prettyname, url):
         try:
             c.execute("SELECT id FROM journo_weblink WHERE journo_id=%s", [journo_id])
             rows = c.fetchall()
-            bio = store_context(scraped, journo_ref, c)
+            bio, updated = store_context(scraped, journo_id, c)
             source = 'journo_bio'
             if not QUIET:
-                print 'Stored as %s:%s' % (source, journo_ref)
-                print '\n    %s\n' % textwrap.fill(scraped['bio'].encode('utf-8')).replace('\n', '\n    ')
+                action = ['Stored in', 'Updated'][updated]
+                print '%s %s for journo %d (%s)' % (action, source, journo_id, journo_ref)
+                print '\n    %s\n' % textwrap.fill(bio).replace('\n', '\n    ')
             if rows:
                 assert len(rows)==1, 'Multiple weblinks found for journo %d!' % journo_id
                 query = (
