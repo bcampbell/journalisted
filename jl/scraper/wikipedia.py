@@ -116,6 +116,8 @@ def Extract(html, context):
         img_re = re.compile(r'<img .*?>', re.DOTALL)
         try:
             image = '<p>%s</p>' % img_re.findall(infobox)[0]
+            if 'replace' in image.lower():
+                image = ''
         except IndexError:
             image = ''
     
