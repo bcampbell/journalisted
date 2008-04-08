@@ -85,14 +85,19 @@ body {
   margin:0;
 }
 
+/*
 .boxnarrow ul li a {
   color:#000000;
   text-decoration:none;
 }
+*/
 
+/*
 .boxnarrow ul li a:hover {
+  color:#000000;
   text-decoration:underline;
 }
+*/
 
 #footer {
   color:#666565;

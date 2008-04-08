@@ -41,6 +41,8 @@ function emit_front_page()
 {
 	$orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
+	$contactemail = OPTION_TEAM_EMAIL;
+
 ?>
 <div id="contenthead">
 <img src="/images/paper.png" alt="" />
@@ -74,7 +76,9 @@ function emit_front_page()
 </form>
 
 
-<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Please let us know when you find one so we can correct it</p>
+<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Please
+<?=SafeMailto( $contactemail, 'let us know' );?>
+ when you find one so we can correct it</p>
 
 </div>
 
@@ -228,7 +232,7 @@ function emit_recent_journos_box()
 SELECT j.prettyname,j.ref
 	FROM ( (article a INNER JOIN journo_attr attr ON attr.article_id=a.id)
 		INNER JOIN journo j ON attr.journo_id=j.id )
-	WHERE a.pubdate > NOW()-interval '1 day'
+	WHERE a.pubdate > NOW()-interval '1 day' AND a.pubdate < NOW()+interval '2 hours'
 	ORDER BY a.pubdate desc
 	LIMIT 20;
 EOT;
