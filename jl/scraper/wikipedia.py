@@ -292,13 +292,14 @@ def Extract(html, context):
     # Replace ", ." with ".". Arises from our removing cross-references.
     text = re.sub(r',\s*\.', '.', text)
     
-    text = image + text
-    
-    context['content'] = text
+    context['content'] = image + text
 
-    bio = BeautifulSoup(text).p.renderContents(None)
+    if image:
+        bio = unicode(BeautifulSoup(text).p)  # include <p> tag
+    else:
+        bio = BeautifulSoup(text).p.renderContents(None)
     bio = re.sub('<b>(.*?)</b>', r'\1', bio)
-    context['bio'] = bio
+    context['bio'] = image + bio
     return context
 
 
