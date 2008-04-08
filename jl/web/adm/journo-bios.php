@@ -29,9 +29,9 @@ to perform at the bottom of the page.</p>
 
 if ( $scrape )  // unsafe, but this is the admin interface
 {
-    print "<b>Re-scraping $scrape... ";
+    print "<b><pre>Re-scraping $scrape... ";
 	system("python2.4 ../bin/update-weblink $scrape");
-    print 'done.</b><br />';
+    print 'done.</pre></b><br />';
 }
 
 switch( $action )
