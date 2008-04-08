@@ -7,6 +7,8 @@
 ./digg-tool
 ./reddit-tool
 ./newsvine-tool
+./fark-tool
+./del.icio.us-tool
 
 # technorati is the slow one...
 ./technorati-tool

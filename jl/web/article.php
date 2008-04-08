@@ -149,7 +149,7 @@ function emit_block_commentlinks( $article_id )
 
 ?>
 <div class="boxwide">
-<h2>What comments are people making about this article?</h2>
+<h2>Where are people talking about this article?</h2>
 <div class="boxwide-content">
 <?php
 
@@ -168,13 +168,16 @@ function emit_block_commentlinks( $article_id )
 				$profile = $profiles['DEFAULT'];
 			}
 
-			$comments = sprintf( "<a href=\"%s\">%d comments</a>", $row['comment_url'], $row['num_comments'] );
-
-			$score = '';
+			$bits = array();
+			if( !is_null( $row['num_comments'] ) )
+				$bits[] = sprintf( "%d comments", $row['num_comments'] );
 			if( $row['score'] )
-				$score = sprintf( ", %d %s", $row['score'], $profile['scoreterm'] );
+				$bits[] = sprintf( "%d %s", $row['score'], $profile['scoreterm'] );
 
-			printf( "<li>%s (%s%s)</li>\n", $source, $comments, $score );
+			printf( "<li>%s (<a href=\"%s\">%s</a>)</li>\n",
+				$source,
+				$row['comment_url'],
+				implode( ', ', $bits) );
 		}
 		print "</ul>\n";
 	}
@@ -185,7 +188,9 @@ function emit_block_commentlinks( $article_id )
 
 ?>
 <p class="disclaimer">Based on data from
+<a href="http://del.icio.us">del.icio.us</a>,
 <a href="http://digg.com">digg</a>,
+<a href="http://fark.com">fark</a>,
 <a href="http://newsvine.com">newsvine</a> and
 <a href="http://reddit.com">reddit</a>
 </p>
