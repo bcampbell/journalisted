@@ -572,8 +572,9 @@ function emit_journo_mailto( $journo )
     	$matches = '';
     	preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
     	$shorturl = $matches[0];
+    	$email = str_replace('@', '&#x0040;', $row['email']);
     	print ("<p><span class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
-    	       SafeMailTo( $row['email'], $row['email'] ) . "</span> " .
+    	       "<a href=\"mailto:$email\">$email</a></span> " .
     	       "<span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
     	       "\">" . $shorturl . "</a>)</span></span></p>");
 	}
