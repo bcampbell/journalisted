@@ -61,7 +61,7 @@ rows = cur.fetchall()
 lookup = dict(rows)
 cur.execute('BEGIN')
 for journo_ref, email, url in db_rows:
-    cur.execute("SELECT id FROM journo WHERE ref=journo_ref LIMIT 2")
+    cur.execute("SELECT id FROM journo WHERE ref=%s LIMIT 2", [journo_ref])
     rows = cur.fetchall()
     assert len(rows)==1, "%s: %d matches, expected 1" % (journo_ref, len(rows))
     journo_id = rows[0][0]
