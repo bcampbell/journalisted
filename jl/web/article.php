@@ -141,10 +141,12 @@ function emit_block_commentlinks( $article_id )
 
 	/* profile for various sites we source from - they all use their own terminology */
 	$profiles = array(
-		'digg' =>     array( 'scoreterm'=>'diggs' ),
-		'reddit' =>   array( 'scoreterm'=>'points' ),
+		'digg' => array( 'scoreterm'=>'diggs' ),
+		'reddit' => array( 'scoreterm'=>'points' ),
 		'newsvine' => array( 'scoreterm'=>'votes' ),
-		'DEFAULT' =>  array( 'scoreterm'=>'points' ),
+		'fark' => array( 'scoreterm'=>'votes' ),
+		'del.icio.us' => array( 'scoreterm'=>'saves' ),
+		'DEFAULT' => array( 'scoreterm'=>'points' ),
 	);
 
 ?>
