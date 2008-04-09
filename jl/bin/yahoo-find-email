@@ -19,6 +19,8 @@ from BeautifulSoup import BeautifulStoneSoup
 YAHOO_APP_ID = 'FOciVcPV34HtoyxugwPtiV2gHPkgm9Z_y9.7M1KMARQLENAZO_AEr7fecK8q_RAxygZ.UPnAgA--'
     # This is a Journalisted app ID, but 'YahooDemo' works too!
 
+QUIET = False
+
 
 def search_yahoo(email):
     '''
@@ -101,7 +103,7 @@ def guess_email(journo_ref):
     for url in article_urls:
         match = re.match('.*?\.(.*?)/', url)
         if not match:
-            print >>sys.stderr, "warning: failed to get domain from %r" % url
+            if not QUIET: print >>sys.stderr, "warning: failed to get domain from %r" % url
             return []
         domain = match.group(1)
         domains[domain] = 1
@@ -130,14 +132,19 @@ def run(journos):
                 print
                 sys.stdout.flush()
             else:
-                print >>sys.stderr, '%s: no matches' % email
+                if not QUIET: print >>sys.stderr, '%s: no matches' % email
 
 if __name__=='__main__':
     args = sys.argv[1:]
     usage = (__doc__.strip() + '\n'
-             'usage: yahoo-find-email [journo-ref]')
+             'Use -q or --quiet to suppress warnings on stderr.\n\n'
+             'usage: yahoo-find-email [-q] [journo-ref]')
     if '--help' in args or '-h' in args:
         sys.exit(usage)
+    if '--quiet' in args or '-q' in args:
+        QUIET = True
+        if '--quiet' in args: args.remove('--quiet')
+        if '-q' in args: args.remove('-q')
     if len(args)==0:
         run(journos_needing_email())
     elif len(args)==1:
