@@ -118,6 +118,9 @@ srcidpat_ece = re.compile( '/(article[0-9]+\.ece)$' )
 def CalcSrcID( url ):
 	""" work out a unique srcid for this url """
 
+	if not url.startswith('http') and ('-d' in sys.argv or '--dryrun' in sys.argv):
+		return 'DRYRUN:times.py:' + url
+	
 	o = urlparse.urlparse( url )
 
 	if o[1].endswith( 'typepad.com' ):
