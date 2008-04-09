@@ -106,9 +106,10 @@ def FindJournosNeedingWeblink():
     c = new_cursor('FindJournosNeedingWeblink')
     try:
         c.execute("SELECT id, ref, prettyname FROM journo "
-                  "ORDER BY journo.status!='a',"  # active first, and prefer wikipedia-less
-                  "         journo.id IN (SELECT journo_id FROM journo_weblink),"
-                  "         prettyname")
+                  "WHERE id NOT IN ("  # no live bios, it would hide them
+                  "    SELECT journo_id FROM journo_bio WHERE approved) "
+                  "ORDER BY status!='a', "                     # active first
+                  "         lastname, firstname, prettyname")  # in name order
         rows = c.fetchall()
     except:
         end_cursor(c, False)
