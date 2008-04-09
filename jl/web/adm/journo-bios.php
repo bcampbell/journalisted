@@ -29,7 +29,7 @@ admPageHeader();
 <h2>Journo bios</h2>
 
 <p>Select bios with the checkboxes, then select the action you want
-to perform at the bottom of the page.</p>
+to perform at the top or bottom of the page.</p>
 <?php
 
 if ( $scrape )  // unsafe, but this is the admin interface
