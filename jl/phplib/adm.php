@@ -26,7 +26,8 @@ function admPageHeader()
 <a href="journo">Journos</a> |
 <a href="article">Articles</a> |
 <a href="scrape">Scrape</a> |
-<a href="journo-bios">Journo-Bios</a>
+<a href="journo-bios">Journo-Bios</a> |
+<a href="journo-email">Journo-Email</a>
 <hr>
 <?php
 

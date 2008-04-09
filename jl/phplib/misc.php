@@ -50,8 +50,8 @@ function SafeMailto( $addr, $text='' )
 	$addr = addslashes( $addr );
 	$parts = array_reverse( preg_split( '/[.@]/', $addr ) );
 	
-	$text = str_replace('@', '&#x0040;', $text);
-	$out = "<script>gen_mailto( '$text', '" . implode( "','", $parts ). "');</script><noscript>$text</noscript>";
+	$safetext = str_replace('@', '&#x0040;', $text);
+	$out = "<script>gen_mailto( '$text', '" . implode( "','", $parts ). "');</script><noscript>$safetext</noscript>";
 
 	return $out;
 }
