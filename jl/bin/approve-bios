@@ -36,12 +36,14 @@ def run(journos, active_only=False):
                 else:
                     print 'warning: no such journalist "%s"' % journo
         cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
-                    'WHERE journo_id IN (%s) AND journo.id=journo_id %s'
+                    'WHERE journo_id IN (%s) AND journo.id=journo_id %s '
+                    'ORDER BY lastname, firstname, prettyname'
                     % (holes, active_clause),
                     ids)
     else:
         cur.execute('SELECT journo_bio.id, journo.ref, bio FROM journo_bio, journo '
-                    'WHERE NOT approved AND journo.id=journo_id %s'
+                    'WHERE NOT approved AND journo.id=journo_id %s '
+                    'ORDER BY lastname, firstname, prettyname'
                     % active_clause)
     rows = cur.fetchall()
     for bio_id, journo_ref, bio in rows:
