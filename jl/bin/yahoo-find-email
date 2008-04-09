@@ -10,6 +10,7 @@ import sys
 import time
 import re
 import urllib, urllib2
+from urlparse import urlparse
 sys.path.insert(0, '../pylib')
 sys.path.insert(0, '../pylib/JL')
 import DB
@@ -24,31 +25,47 @@ QUIET = False
 
 def search_yahoo(email):
     '''
-    Searches Yahoo for that email, looks at top ten hits,
-    returns (corrected_email, url) or None.
+    Searches Yahoo for that email address (at the related site),
+    looks at top ten hits, and returns (corrected_email, url) or None.
     '''
     YAHOO_URL = 'http://search.yahooapis.com/WebSearchService/V1/webSearch'
     surname = email.split('@')[0].split('.')[-1]
     domain = email.split('@')[1]
+    if 'dailymail' in domain or 'mailonsunday' in domain:
+        # use initials for first names
+        before, after = email.split('@', 1)
+        names = before.split('.')
+        for i, name in enumerate(names):
+            if i!=len(names)-1:
+                names[i] = name[0]
+        email = '.'.join(names) + '@' + after
+    if domain=='thetimes.co.uk':
+        site = 'timesonline.co.uk'
+    else:
+        site = domain
     email_re = (
         r'(?!comment|letters|userhelp|tech|editor|reader|arts\.diary|diary|friday.review)' +
-        r'(?:(?<=^)|(?<=[^a-zA-Z0-9\-\_\.]))[a-zA-Z0-9\-\_\.]+@%s(?=[^a-zA-Z0-9\-\_\.]|$)'
+        r'(?:(?<=^)|(?<=[^a-zA-Z0-9\-\_\.]))[a-zA-Z0-9\-\_\.]+@%s(?=[^a-zA-Z0-9\-\_]|$)'
         % re.escape(domain))
-    surname_email_re = email_re.replace('@', re.escape(surname)+'@')
+    initial_re = r'(?:(?:^|(?<=[^a-zA-Z0-9\-\_\.]))[a-z]\.\s*)?'
+    surname_email_re = initial_re + re.escape(surname) + '@' + email_re.split('@',1)[1]
     email_re = re.compile(email_re)
     surname_email_re = re.compile(surname_email_re)
+    query = '"%s" site:%s' % (email, site)
     search_url = YAHOO_URL + "?" + urllib.urlencode({
         'results': 20,
         'appid': YAHOO_APP_ID,
-        'query': '"%s" site:%s' % (email, domain)
+        'query': query
     })
+    if not QUIET:
+        print >>sys.stderr, "Yahoo search: '%s' ..." % unicode(query).encode('utf-8')
     req = urllib2.Request(search_url, headers={'User-Agent': 'JournalistedBot'})
     xml = urllib2.urlopen(req).read()
     soup = BeautifulStoneSoup(xml)
     for result in soup.resultset('result'):
         match = surname_email_re.search(result.summary.string or '')
         if match:
-            return (match.group(), result.url.string)
+            return (re.sub(r'\s*', '', match.group()), result.url.string)
     for result in soup.resultset('result'):
         match = email_re.search(result.summary.string or '')
         if match:
@@ -101,11 +118,13 @@ def guess_email(journo_ref):
     article_urls = [row[0] for row in c.fetchall()]
     domains = {}
     for url in article_urls:
-        match = re.match('.*?\.(.*?)/', url)
-        if not match:
-            if not QUIET: print >>sys.stderr, "warning: failed to get domain from %r" % url
-            return []
-        domain = match.group(1)
+        domain = urlparse(url)[1]
+        if domain.endswith('.uk'):
+            domain = '.'.join(domain.split('.')[-3:])
+        else:
+            domain = '.'.join(domain.split('.')[-2:])
+        if domain=='timesonline.co.uk':
+            domain = 'thetimes.co.uk'
         domains[domain] = 1
     domains = domains.keys()
     prefix = journo_ref.replace('-', '.')
