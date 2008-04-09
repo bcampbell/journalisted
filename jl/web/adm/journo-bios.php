@@ -16,8 +16,12 @@ require_once '../phplib/adm.php';
 require_once "HTML/QuickForm.php";
 
 $action = get_http_var( 'action' );
+if (get_http_var('submit2'))
+    $action = get_http_var( 'action2' );
+
+$filter = get_http_var( 'filter', 'unapproved' );
 $scrape = get_http_var( 'scrape' );
-$filter = get_http_var( 'filter','unapproved' );
+$bio_ids = get_http_var( 'bio_id' );
 
 admPageHeader();
 
@@ -39,20 +43,15 @@ EmitFilterForm( $filter );
 switch( $action )
 {
 	case "approve":
-		$bio_ids = get_http_var( "bio_id" );
 		SetBios( $bio_ids, 't' );
-		EmitBioList($filter);
-		break;
-	case "unapprove":
-		$bio_ids = get_http_var( "bio_id" );
-		SetBios( $bio_ids, 'f' );
-		EmitBioList($filter);
 		break;
 
-	default:
-		EmitBioList($filter);
+	case "unapprove":
+		SetBios( $bio_ids, 'f' );
 		break;
 }
+
+EmitBioList($filter);
 
 admPageFooter();
 
@@ -87,7 +86,7 @@ function EmitBioList( $filter )
 		FROM (journo_bio b INNER JOIN journo j ON j.id=b.journo_id
 		                   INNER JOIN journo_weblink w ON w.journo_id=b.journo_id)
 	$whereclause
-	ORDER BY j.id
+	ORDER BY j.lastname, j.firstname, j.prettyname
 EOT;
 
 
@@ -96,6 +95,17 @@ EOT;
 	printf( "<p>%d bios:</p>\n", db_num_rows($r) );
 ?>
 <form method="post" action="/adm/journo-bios">
+<?=form_element_hidden( 'filter', $filter ); ?>
+
+<!-- repeated below -->
+    Action (with selected bios):
+    <select name="action">
+     <option value="">None</option>
+     <option value="approve">Approve</option>
+     <option value="unapprove">Unapprove</option>
+    </select>
+    <input type="submit" name="submit" value="Do it" />
+
 <table>
 <thead>
  <tr>
@@ -131,15 +141,15 @@ EOT;
 ?>
 </tbody>
 </table>
-Action (with selected bios):
-<select name="action">
- <option value="">None</option>
- <option value="approve">Approve</option>
- <option value="unapprove">Unapprove</option>
-</select>
-<br />
-<?=form_element_hidden( 'filter', $filter ); ?>
-<input type="submit" name="submit" value="Do it" />
+
+<!-- repeated above -->
+    Action (with selected bios):
+    <select name="action2">
+     <option value="">None</option>
+     <option value="approve">Approve</option>
+     <option value="unapprove">Unapprove</option>
+    </select>
+    <input type="submit" name="submit2" value="Do it" />
 
 </form>
 <?php
