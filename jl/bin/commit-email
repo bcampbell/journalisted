@@ -13,9 +13,14 @@ if __name__=='__main__':
     args = sys.argv[1:]
     if len(args) != 1 or args[0].startswith('-'):
         sys.exit('usage: commit-email FILE\n'
-                 'where FILE is output from find-email, edited to remove incorrect addresses')
+                 'where FILE is output from find-email, edited to remove incorrect addresses.\n'
+                 'If FILE is -, reads from standard input.' )
 
-lines = file(args[0]).readlines()
+if args[0]=='-':
+    lines = sys.stdin.readlines()
+else:
+    lines = file(args[0]).readlines()
+
 email_lines, urls = [], {}
 for i, line in enumerate(lines):
     line = line.strip()
