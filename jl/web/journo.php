@@ -196,7 +196,7 @@ function emit_blocks_articles( $journo, $allarticles )
 <div class="boxwide previous">
 <h3>Previous articles</h3>
 <div class="boxwide-content">
-<ul>
+<ul class="previous-articles">
 <?php
 	$count=0;
 	while( 1 )
