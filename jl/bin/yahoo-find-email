@@ -142,16 +142,21 @@ def run(journos):
         guesses = guess_email(journo_ref)
         for email in guesses:
             time.sleep(1)
-            got = search_yahoo(email)
-            if got:
-                corrected_email, url = got
-                found_urls += 1
-                print '%s: %s[%d]' % (journo_ref, corrected_email, found_urls)
-                print '[%d] %s' % (found_urls, url)
-                print
-                sys.stdout.flush()
-            else:
-                if not QUIET: print >>sys.stderr, '%s: no matches' % email
+            try:
+                got = search_yahoo(email)
+                if got:
+                    corrected_email, url = got
+                    found_urls += 1
+                    print '%s: %s[%d]' % (journo_ref, corrected_email, found_urls)
+                    print '[%d] %s' % (found_urls, url)
+                    print
+                    sys.stdout.flush()
+                else:
+                    if not QUIET: print >>sys.stderr, '%s: no matches' % email
+            except KeyboardInterrupt: raise
+            except SystemExit: raise
+            except:
+                if not QUIET: print >>sys.stderr, sys.exc_info()
 
 if __name__=='__main__':
     args = sys.argv[1:]
