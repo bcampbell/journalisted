@@ -34,12 +34,8 @@ def make_email_re(dotted_name, domain):
     forenames, surname = names[:-1], names[-1]
     all = ''
     for forename in forenames:
-        #initial, rest = forename[0], forename[1:]
-        #forename_re = r'(?:%s(?:%s)?\.)?' % (initial, rest)
-        
         shortforms = [re.escape(forename[:i]) for i in range(len(forename),0,-1)]
         forename_re = r'(?:%s)\s*\.\s*' % ('|'.join(shortforms))
-        
         all = '(?:%s(?:%s)?)' % (all, forename_re)
     
     word_start_re = r'(?:^|(?<=[^a-zA-Z0-9\-\_\.]))'
