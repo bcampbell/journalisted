@@ -101,6 +101,14 @@ def Extract( html, context ):
 	leftdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsideleftcolumn'} );
 	art['byline'] = ukmedia.ExtractAuthorFromParagraph( leftdiv.h2.a.renderContents(None) )
 
+	pattern = (ur'<h2><a href="http://commentisfree\.guardian\.co\.uk/[a-z_]+/profile\.html">'
+	           ur'\s*([A-Za-z \-]+)\s*</a></h2>')
+	if not art['byline']:
+		try:
+			art['byline'] = unicode(re.compile(pattern, re.DOTALL).findall(html)[0], 'utf-8')
+		except IndexError:
+			pass
+
 	# right column has most other stuff (including main content)
 	rightdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsiderightcolumn'} )
 	baselinediv = rightdiv.find( 'div', {'id':'twocolumnleftcolumntopbaselinetext' } )
