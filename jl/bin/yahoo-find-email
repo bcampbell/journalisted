@@ -23,14 +23,54 @@ YAHOO_APP_ID = 'FOciVcPV34HtoyxugwPtiV2gHPkgm9Z_y9.7M1KMARQLENAZO_AEr7fecK8q_RAx
 QUIET = False
 
 
+def make_email_re(dotted_name, domain):
+    '''
+    Returns an uncompiled regexp for matching variants of an email address.
+    
+    For instance, 'frederick.xavier.bloggs' produces a regexp that also
+    matches 'f.bloggs' and 'frederick.x.bloggs' (but not 'fred.bloggs' yet).
+    '''
+    names = dotted_name.split('.')
+    forenames, surname = names[:-1], names[-1]
+    all = ''
+    for forename in forenames:
+        #initial, rest = forename[0], forename[1:]
+        #forename_re = r'(?:%s(?:%s)?\.)?' % (initial, rest)
+        
+        shortforms = [re.escape(forename[:i]) for i in range(len(forename),0,-1)]
+        forename_re = r'(?:%s)\s*\.\s*' % ('|'.join(shortforms))
+        
+        all = '(?:%s(?:%s)?)' % (all, forename_re)
+    
+    word_start_re = r'(?:^|(?<=[^a-zA-Z0-9\-\_\.]))'
+    word_end_re = r'(?=[^a-zA-Z0-9\-\_]|$)'
+    
+    name_re = all + re.escape(surname)
+    fallback_re = r'(?:[a-zA-Z0-9\-\_\.]+)'
+    domain_re = r'\s*@\s*' + re.escape(domain).replace(r'\.', r'\s*\.\s*')
+    
+    return word_start_re + '(?:%s|%s)' % (name_re, fallback_re) + domain_re + word_end_re
+
+
+# Test code:
+R = re.compile(make_email_re('frederick.xavier.bloggs', 'foo.com'))
+assert R.findall('blah frederick. xavier. bloggs @ foo . com') == ['frederick. xavier. bloggs @ foo . com']
+assert R.findall('blah frederick. xav. bloggs @ foo.com') == ['frederick. xav. bloggs @ foo.com']
+assert R.findall('blah f. xav. bloggs@foo.com') == ['f. xav. bloggs@foo.com']
+assert R.findall('blah f. bloggs@foo.com') == ['f. bloggs@foo.com']
+assert R.findall('blah if. bloggs@foo.com') == ['bloggs@foo.com']
+assert R.findall('blah fred . bloggs@foo.com') == ['fred . bloggs@foo.com']
+assert R.findall('blah fred . bloggsd @ foo . com') == ['bloggsd @ foo . com']  # fallback
+assert R.findall('blah fred . bloggsd @ foo . comx') == []  # wrong domain, not even fallback
+del R
+
 def search_yahoo(email):
     '''
     Searches Yahoo for that email address (at the related site),
     looks at top ten hits, and returns (corrected_email, url) or None.
     '''
     YAHOO_URL = 'http://search.yahooapis.com/WebSearchService/V1/webSearch'
-    surname = email.split('@')[0].split('.')[-1]
-    domain = email.split('@')[1]
+    dotted_name, domain = email.split('@')
     if 'dailymail' in domain or 'mailonsunday' in domain:
         # use initials for first names
         before, after = email.split('@', 1)
@@ -43,14 +83,10 @@ def search_yahoo(email):
         site = 'timesonline.co.uk'
     else:
         site = domain
-    email_re = (
-        r'(?!comment|letters|userhelp|tech|editor|reader|arts\.diary|diary|friday.review)' +
-        r'(?:(?<=^)|(?<=[^a-zA-Z0-9\-\_\.]))[a-zA-Z0-9\-\_\.]+@%s(?=[^a-zA-Z0-9\-\_]|$)'
-        % re.escape(domain))
-    initial_re = r'(?:(?:^|(?<=[^a-zA-Z0-9\-\_\.]))[a-z]\.\s*)?'
-    surname_email_re = initial_re + re.escape(surname) + '@' + email_re.split('@',1)[1]
-    email_re = re.compile(email_re)
-    surname_email_re = re.compile(surname_email_re)
+    mismatch_re = (r'(?!comment|letters|userhelp|tech|editor|reader|'
+                      r'arts\.diary|diary|music|friday.review)')
+    email_re = mismatch_re + make_email_re(dotted_name, domain)
+    email_re = re.compile(email_re, flags=re.DOTALL)
     query = '"%s" site:%s' % (email, site)
     search_url = YAHOO_URL + "?" + urllib.urlencode({
         'results': 20,
@@ -63,13 +99,9 @@ def search_yahoo(email):
     xml = urllib2.urlopen(req).read()
     soup = BeautifulStoneSoup(xml)
     for result in soup.resultset('result'):
-        match = surname_email_re.search(result.summary.string or '')
-        if match:
-            return (re.sub(r'\s*', '', match.group()), result.url.string)
-    for result in soup.resultset('result'):
         match = email_re.search(result.summary.string or '')
         if match:
-            return (match.group(), result.url.string)
+            return (re.sub(r'\s*', '', match.group()), result.url.string)
 
 _conn = None
 
