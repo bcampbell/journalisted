@@ -27,8 +27,9 @@ def make_email_re(dotted_name, domain):
     '''
     Returns an uncompiled regexp for matching variants of an email address.
     
-    For instance, 'frederick.xavier.bloggs' produces a regexp that also
-    matches 'f.bloggs' and 'frederick.x.bloggs' (but not 'fred.bloggs' yet).
+    For instance, 'frederick.xavier.bloggs', 'foo.com' produces a regexp that also
+    matches 'f.bloggs@foo.com', 'frederick.x.bloggs@foo.com' and 'fred.bloggs@foo.com'.
+    It allows whitespace around dots, which must be removed from matches.
     '''
     names = dotted_name.split('.')
     forenames, surname = names[:-1], names[-1]
