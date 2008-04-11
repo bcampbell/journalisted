@@ -23,6 +23,16 @@ YAHOO_APP_ID = 'FOciVcPV34HtoyxugwPtiV2gHPkgm9Z_y9.7M1KMARQLENAZO_AEr7fecK8q_RAx
 QUIET = False
 
 
+WORD_START_RE = r'(?:^|(?<=[^a-zA-Z0-9\-\_\.]))'
+WORD_END_RE = r'(?=[^a-zA-Z0-9\-\_]|$)'
+FALLBACK_RE = r'(?:[a-zA-Z0-9\-\_\.]+)'
+
+def make_domain_re(domain):
+    return r'\s*@\s*' + re.escape(domain).replace(r'\.', r'\s*\.\s*')
+
+def make_fallback_re(domain):
+    return WORD_START_RE + FALLBACK_RE + make_domain_re(domain) + WORD_END_RE
+
 def make_email_re(dotted_name, domain):
     '''
     Returns an uncompiled regexp for matching variants of an email address.
@@ -39,14 +49,8 @@ def make_email_re(dotted_name, domain):
         forename_re = r'(?:%s)\s*\.\s*' % ('|'.join(shortforms))
         all = '(?:%s(?:%s)?)' % (all, forename_re)
     
-    word_start_re = r'(?:^|(?<=[^a-zA-Z0-9\-\_\.]))'
-    word_end_re = r'(?=[^a-zA-Z0-9\-\_]|$)'
-    
     name_re = all + re.escape(surname)
-    fallback_re = r'(?:[a-zA-Z0-9\-\_\.]+)'
-    domain_re = r'\s*@\s*' + re.escape(domain).replace(r'\.', r'\s*\.\s*')
-    
-    return word_start_re + '(?:%s|%s)' % (name_re, fallback_re) + domain_re + word_end_re
+    return WORD_START_RE + name_re + make_domain_re(domain) + WORD_END_RE
 
 
 # Test code:
@@ -57,9 +61,11 @@ assert R.findall('blah f. xav. bloggs@foo.com') == ['f. xav. bloggs@foo.com']
 assert R.findall('blah f. bloggs@foo.com') == ['f. bloggs@foo.com']
 assert R.findall('blah if. bloggs@foo.com') == ['bloggs@foo.com']
 assert R.findall('blah fred . bloggs@foo.com') == ['fred . bloggs@foo.com']
-assert R.findall('blah fred . bloggsd @ foo . com') == ['bloggsd @ foo . com']  # fallback
+F = re.compile(make_fallback_re('foo.com'))
+assert F.findall('blah fred . bloggsd @ foo . com') == ['bloggsd @ foo . com']  # fallback
 assert R.findall('blah fred . bloggsd @ foo . comx') == []  # wrong domain, not even fallback
-del R
+assert F.findall('blah fred . bloggsd @ foo . comx') == []  # wrong domain, not even fallback
+del R, F
 
 def search_yahoo(email):
     '''
@@ -84,6 +90,10 @@ def search_yahoo(email):
                       r'arts\.diary|diary|music|friday.review)')
     email_re = mismatch_re + make_email_re(dotted_name, domain)
     email_re = re.compile(email_re, flags=re.DOTALL)
+
+    fallback_re = make_fallback_re(domain)
+    fallback_re = re.compile(fallback_re, flags=re.DOTALL)
+
     query = '"%s" site:%s' % (email, site)
     search_url = YAHOO_URL + "?" + urllib.urlencode({
         'results': 20,
@@ -97,6 +107,10 @@ def search_yahoo(email):
     soup = BeautifulStoneSoup(xml)
     for result in soup.resultset('result'):
         match = email_re.search(result.summary.string or '')
+        if match:
+            return (re.sub(r'\s*', '', match.group()), result.url.string)
+    for result in soup.resultset('result'):
+        match = fallback_re.search(result.summary.string or '')
         if match:
             return (re.sub(r'\s*', '', match.group()), result.url.string)
 
