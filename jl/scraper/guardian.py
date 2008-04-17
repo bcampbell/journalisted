@@ -31,7 +31,8 @@ import time
 import sys
 import urlparse
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup
 from JL import DB,ScraperUtils,ukmedia
 

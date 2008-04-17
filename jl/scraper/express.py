@@ -13,7 +13,8 @@ from datetime import datetime
 import sys
 import urlparse
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 

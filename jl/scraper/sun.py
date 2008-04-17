@@ -32,7 +32,8 @@ import traceback
 from datetime import date,datetime
 import urlparse
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup
 from JL import ukmedia,ScraperUtils
 

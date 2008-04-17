@@ -5,7 +5,8 @@ import re
 from datetime import datetime
 import sys
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulStoneSoup
 from JL import ukmedia, ArticleDB
 

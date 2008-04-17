@@ -17,7 +17,8 @@ import sys
 import urlparse
 import urllib2
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 from SpiderPig import SpiderPig

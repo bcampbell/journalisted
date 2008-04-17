@@ -26,7 +26,8 @@ import urllib2
 import cookielib
 import urlparse
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 

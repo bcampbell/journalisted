@@ -23,7 +23,8 @@ import sys
 import os
 import urlparse
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 

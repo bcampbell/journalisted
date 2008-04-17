@@ -11,7 +11,8 @@ from optparse import OptionParser
 from datetime import datetime
 
 
-sys.path.append( "../pylib" )
+import site
+site.addsitedir( "../pylib" )
 from BeautifulSoup import BeautifulSoup
 from JL import ukmedia,ArticleDB
 

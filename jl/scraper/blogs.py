@@ -18,7 +18,8 @@ import os
 
 #print sys.argv
 
-sys.path.append("../pylib")
+import site
+site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup, Comment
 from JL import ArticleDB,ukmedia
 

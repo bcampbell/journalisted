@@ -25,7 +25,8 @@ import sys
 import re
 import urllib2
 
-sys.path.append('../pylib')
+import site
+site.addsitedir('../pylib')
 from BeautifulSoup import BeautifulSoup, NavigableString, Tag
 from JL import DB, ukmedia, ScraperUtils
 from datetime import datetime

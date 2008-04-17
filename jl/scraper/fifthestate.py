@@ -12,7 +12,8 @@ Scrapes the bios of authors at 5thEstate.co.uk.
 import sys
 import urllib2
 
-sys.path.append('../pylib')
+import site
+site.addsitedir('../pylib')
 from JL import DB, ukmedia, ScraperUtils
 from BeautifulSoup import BeautifulSoup
 from datetime import datetime
