@@ -232,6 +232,11 @@ body, #menu, #head {
   border: thin solid red;
 }
 
+/* div for showing notes/information (eg results of form submits) */
+#forminfo {
+  border: thin solid blue;
+}
+
 /* login form */
 .login {
   background-color:#E3E3E3;
