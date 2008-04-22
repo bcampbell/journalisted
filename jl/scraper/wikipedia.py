@@ -209,7 +209,8 @@ def Extract(html, context):
         Remove non-special headings that don't start with a paragraph.
         Remove lists from non-special headings.
         '''
-        SPECIAL = ['Books', 'Works', 'Bibliography', 'External links']
+        SPECIAL = ['Books', 'Works', 'Bibliography', 'External links',
+                   'Further reading']
         tags = [tag for tag in tags if tag is not None and
                     tag.name!='p' or tag.renderContents(None).strip()]
         special = False
