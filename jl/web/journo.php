@@ -398,7 +398,7 @@ function emit_block_links( $journo )
 	$journo_id = $journo['id'];
 	$q = db_query( "SELECT url, description " .
 		"FROM journo_weblink " .
-		"WHERE journo_id=?",
+		"WHERE journo_id=? AND journo_weblink.type!='cif:blog:feed'",
 		$journo_id );
 
 	$row = db_fetch_array($q);
