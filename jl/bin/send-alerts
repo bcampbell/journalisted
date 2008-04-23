@@ -43,7 +43,7 @@ function Usage()
 {
 ?>
 
-Journa-list alert sending script.
+Journalisted alert sending script.
 
 Usage: send-alerts [--verbose]
 
@@ -69,9 +69,9 @@ function DoIt()
 		$to = $person->email();
 		if( $verbose )
 			print "{$to}\n";
-		$from_name = "Journa-list";
-		$from_email = "team@" . OPTION_WEB_DOMAIN;
-		$subject = "Email alert from Journa-list";
+		$from_name = "Journalisted";
+		$from_email = OPTION_TEAM_EMAIL;
+		$subject = "Your daily Journalisted";
 		$msg = DoPerson( $person_id, 'html' );
 
 		if( $msg && !$dryrun )
@@ -102,7 +102,7 @@ function DoPerson( $person_id, $fmt )
 		"<html>\n" .
 		"<head><title>Email alert from Journa-list</title></head>\n" .
 		"<body>\n" .
-		"<p>Your Journa-list email alerts have triggered!</p>\n";
+		"<p>Articles published by your journalists in the last 24 hours (in one of these <a href=\"about#whichoutlets\">18 outlets</a>):</p>\n";
 	}
 
 	/* For each alert... */

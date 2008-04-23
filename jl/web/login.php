@@ -71,9 +71,9 @@ if ($q_name==_('<Enter your name>')) {
 /* General purpose login, asks for email also. */
 if (get_http_var("now")) {
     $P = person_signon(array(
-                    'reason_web' => _("To use My Journa-list, we need your email address."),
-                    'reason_email' => _("Then you will be logged into My Journa-list, and can set or change your password."),
-                    'reason_email_subject' => _('Log into My Journa-list')
+                    'reason_web' => _("To use My Journalisted, we need your email address."),
+                    'reason_email' => _("Then you will be logged into My Journalisted, and can set or change your password."),
+                    'reason_email_subject' => _('Log into My Journalisted')
 
                 ));
 
@@ -207,7 +207,7 @@ function login_page() {
 			"\n";
 
 		$subject = $values['reason_email_subject'];
-		$from_name = "journa-list";
+		$from_name = "Journalisted";
 		$from_email = OPTION_TEAM_EMAIL;
 		jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
 
@@ -262,13 +262,13 @@ function login_form($errors = array()) {
      * password" prompt in, e.g., Mozilla. */
 
 
-	/* show My-Journa-list blurb here, as that's the only thing
+	/* show My-Journalisted blurb here, as that's the only thing
      * login is currently required for */
 ?>
 
 <div class="block">
 
-<h2>My Journa-list</h2>
+<h2>My Journalisted</h2>
 
 <p>Build your own newsroom of favourite journalists.</p>
 
@@ -280,7 +280,7 @@ those of the other journalists you've picked.</p>
 <p>Perhaps you want to keep up-to-date with the latest scientific
 developments? If so, you could add Richard Black, Alok Jha, Mark Henderson,
 Pallab Ghosh, Jeremy Laurance, Fiona Macrae and Roger Highfield to your
-My Journa-list newsroom.</p>
+My Journalisted newsroom.</p>
 
 <p>Or maybe economic commentary is your thing? You could combine James
 Harding with Larry Elliott, Liam Halligan, Anatole Kaletsky, Sean O'Grady
@@ -316,14 +316,14 @@ and Edmund Conway?</p>
 
 <? } ?>
 
-<p><strong><?=_('Have you used My Journa-list before?') ?></strong></p> 
+<p><strong><?=_('Have you used My Journalisted before?') ?></strong></p> 
 <div id="loginradio">
 
-<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used My Journa-list before")) ?></label>
+<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used My Journalisted before")) ?></label>
 <br>
 <small><?=_("(we'll send an email, click the link in it to confirm your email is working)") ?></small>
 
-<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a My Journa-list <strong>password</strong>') ?>:</label>
+<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a My Journalisted <strong>password</strong>') ?>:</label>
 <input type="password" name="password" id="password" value="" <? if (array_key_exists('badpass', $errors)) print ' class="error"' ?> onchange="check_login_password_radio()">
 <br>
 <label for="rememberme"><?=_('Remember me') ?></label>

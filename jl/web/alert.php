@@ -24,9 +24,9 @@ if( get_http_var( 'Add' ) )
 
 	// adding an alert...
 	$r = array(
-		'reason_web' => "To add {$jname} to your My Journa-list newsroom, we need your email address.",
+		'reason_web' => "To add {$jname} to your My Journalisted newsroom, we need your email address.",
 		'reason_email' => "You'll then be emailed when {$jname} writes anything",
-		'reason_email_subject' => "Set up a My Journa-list email alert"
+		'reason_email_subject' => "Set up a My Journalisted email alert"
 		);
 }
 else if( get_http_var( 'Remove' ) )
@@ -38,16 +38,16 @@ else if( get_http_var( 'Remove' ) )
 	$r = array(
 		'reason_web' => "Before removing {$jname} from your list, we need to confirm your email address.",
 		'reason_email' => "Your email alert will then be removed",
-		'reason_email_subject' => "Remove a My Journa-list email alert"
+		'reason_email_subject' => "Remove a My Journalisted email alert"
 		);
 }
 else
 {
 	// default - just viewing existing alerts (or updating password)
 	$r = array(
-		'reason_web' => "To start using My Journa-list, we need your email address.",
-		'reason_email' => "Then you will be able to use My Journa-list.",
-		'reason_email_subject' => 'My Journa-list: email confirmation'
+		'reason_web' => "To start using My Journalisted, we need your email address.",
+		'reason_email' => "Then you will be able to use My Journalisted.",
+		'reason_email_subject' => 'My Journalisted: email confirmation'
 		);
 }
 
@@ -59,13 +59,13 @@ $P = person_signon($r);
 
 
 /* OK, if we get here, we've got a logged-in user and can start our output! */ 
-page_header( "My Journa-list", array( 'menupage'=>'my') );
+page_header( "My Journalisted", array( 'menupage'=>'my') );
 
 print"<div id=\"maincolumn\">\n";
 
 ?>
 <div class="boxwide">
-<h2>My Journa-list</h2>
+<h2>My Journalisted</h2>
 <p>
 Create your own newspaper! Sort of.
 </p>
@@ -235,7 +235,7 @@ function alert_emit_list( $person_id )
 ?>
 <p>
 You have no journalists on your list.<br>
-To add some, use the "My Journa-list" box on a journalists page, or use
+To add some, use the "My Journalisted" box on a journalists page, or use
 the search box below...
 </p>
 <?

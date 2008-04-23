@@ -18,11 +18,11 @@ function admPageHeader()
 ?>
 <html>
 <head>
-<title>journa-list admin</title>
+<title>Journalisted admin</title>
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
 </head>
 <body>
-<h1>journa-list admin</h1>
+<h1>Journalisted admin</h1>
 <a href="journo">Journos</a> |
 <a href="article">Articles</a> |
 <a href="scrape">Scrape</a> |

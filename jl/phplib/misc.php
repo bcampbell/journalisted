@@ -2,7 +2,7 @@
 /* vim:set expandtab tabstop=4 shiftwidth=4 autoindent smartindent: */
 
 /*
- * Misc helper functions for journa-list
+ * Misc helper functions for journalisted
  */
 
 

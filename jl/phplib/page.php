@@ -82,7 +82,7 @@ function page_header( $title, $params=array() )
 				<a href="/tags">Subject Index</a>
 			</li>
 			<li class="my<?php echo $mnpage=='my' ? ' active' :''; ?>">
-				<a href="/alert">My Journa-list</a>
+				<a href="/alert">My Journalisted</a>
 			</li>
 			<li class="about<?php echo $mnpage=='about' ? ' active' :''; ?>">
 				<a href="/about">About</a>

@@ -254,7 +254,7 @@ function emit_my_journos_box( &$P )
 {
 ?>
  <div class="boxnarrow myjournos">
-  <h2>My Journa-lists</h2>
+  <h2>My Journalisted</h2>
   <div class="boxnarrow-content">
 <?php
 
