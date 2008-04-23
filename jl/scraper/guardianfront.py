@@ -72,8 +72,9 @@ def AddBlogLinks(art_id, art):
                     return []
             def close(): pass
         types = [
-            ('cif:blog:html', blogurl, 'CIF articles by journo'),
-            ('cif:blog:feed', feedurl, 'CIF articles by journo (rss/atom)'),
+            # Internal type, URL, description-shown-to-user
+            ('cif:blog:html', blogurl, '"Comment is free" blog'),
+            ('cif:blog:feed', feedurl, '"Comment is free" blog feed'),
         ]
         rows = execute("SELECT journo_id FROM journo_attr WHERE article_id=%s",
                        [art_id])
