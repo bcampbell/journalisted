@@ -92,12 +92,37 @@ function emit_page_findarticles( $findtext,$ref=null )
 }
 
 
+/* Mark up the byline of an article with links to the journo pages.
+ * TODO: should use journo_alias table instead of journo.prettyname
+ */ 
+function markup_byline( $byline, $article_id )
+{
+	$sql = <<<EOT
+SELECT j.prettyname, j.ref
+	FROM ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id )
+	WHERE attr.article_id=?	AND j.status='a';
+EOT;
+
+	$journos = db_getAll( $sql, $article_id );
+
+	foreach( $journos as $j )
+	{
+		$pat = sprintf("/%s/i", $j['prettyname'] );
+		$replacement = sprintf( "<a href=\"/%s\">\\0</a>", $j['ref'] );
+
+		$byline = preg_replace( $pat, $replacement, $byline );
+
+	}
+
+	return $byline;
+}
+
 
 function emit_block_articleinfo( $art )
 {
 	$article_id = $art['id'];
 	$title = $art['title'];
-	$byline = $art['byline'];
+	$byline = markup_byline( $art['byline'], $art['id'] );
 	$orgs = get_org_names();
 	$org = $orgs[ $art['srcorg'] ];
 	
