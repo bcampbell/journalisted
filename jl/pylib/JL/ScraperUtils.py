@@ -16,6 +16,7 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
 	findarticles_fn: return a list of article contexts for a full scrape
 	contextfromurl_fn: create an article context from a bare url
 	extract_fn: function to process an HTML page and return an article
+	post_fn(id, context): function to call after inserting an article into the database
 	prepare_parser_fn(parser): function that adds any additional options to parser
 	after_parsing_fn(options, args): function that returns adjusted (options, args).
 	"""
@@ -43,7 +44,12 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
 	else:
 		store = ArticleDB.ArticleDB()
 
+	# Hack: publish the store so that we can use its DB connection
+	global article_store
+	article_store = store
+	
 	ukmedia.ProcessArticles( found, store, extract_fn, post_fn, maxerrors )
 
 	return 0
 
+article_store = None
