@@ -213,6 +213,7 @@ def SanitiseHTML_handleclose(m):
 
 def SanitiseHTML( html ):
 	"""Strip out all non-essential tags and attrs"""
+	html = html.replace('>>', '>')
 	html = tagopenpat.sub( SanitiseHTML_handleopen, html )
 	html = tagclosepat.sub( SanitiseHTML_handleclose, html )
 	html = emptyparapat.sub( u'', html )
