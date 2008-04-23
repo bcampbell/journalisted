@@ -55,6 +55,7 @@ def AddBlogLinks(art_id, art):
             def execute(sql, *args):
                 cur[0].close()
                 cur[0] = ScraperUtils.article_store.conn.cursor()
+                cur[0].execute('BEGIN')
                 cur[0].execute(sql, *args)
                 if sql.upper().startswith('SELECT'):
                     return cur[0].fetchall()
@@ -86,7 +87,6 @@ def AddBlogLinks(art_id, art):
                 assert 0 <= len(rows) <= 1
                 if not rows:
                     source = art['srcurl']
-                    execute("""BEGIN""")
                     execute("""INSERT INTO journo_weblink(
                                         journo_id, url, description, source, type
                                    ) VALUES (%s, %s, %s, %s, %s)""",
