@@ -164,6 +164,7 @@ def MergeJourno(conn, fromRef, intoRef):
 			c.execute( "UPDATE journo_alias    SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
 			c.execute( "UPDATE journo_jobtitle SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
 			c.execute( "UPDATE journo_weblink  SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
+			c.execute( "UPDATE journo_bio      SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
 			c.execute( "DELETE FROM journo WHERE id=%d" % fromId )
 
 	c.close()
