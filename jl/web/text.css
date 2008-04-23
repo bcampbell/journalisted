@@ -13,7 +13,8 @@ body {
 
 #head h2 {
   font-size:17px;
-  font-family:"Times New Roman";
+/*  font-family:"Times New Roman"; */
+  font-family: Arial, Sans-Serif;
 }
 
 #head p {
@@ -21,7 +22,7 @@ body {
 }
 
 #menu a {
-  font-family:Arial, Sans-Serif;
+  font-family: Arial, Sans-Serif;
   font-size:13px;
   font-weight:bold;
   text-decoration:none;
@@ -49,7 +50,8 @@ body {
 }
 
 #content .frontform label {
-  font-family:"Times New Roman", Times, Serif;
+/*  font-family:"Times New Roman", Times, Serif; */
+  font-family: Arial, Sans-Serif;
   font-size:18px;
 }
 
@@ -68,7 +70,8 @@ body {
   padding:0 0 0 5px;
   font-size:18px; 
   color:white;
-  font-family:"Times New Roman";
+/*  font-family:"Times New Roman"; */
+  font-family: Arial, Sans-Serif;
 }
 
 .boxnarrow .boxnarrow-content {

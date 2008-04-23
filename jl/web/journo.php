@@ -452,7 +452,7 @@ function emit_block_alerts( $journo )
 
 ?>
 <div class="boxnarrow alert">
-<h3>My Journa-list</h3>
+<h3>My Journalisted</h3>
 <div class="boxnarrow-content">
 <a href="/alert?Add=1&amp;j=<?=$journo['ref'] ?>">Email me</a> when <?=$journo['prettyname'] ?> writes an article
 </div>
