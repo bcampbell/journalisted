@@ -56,7 +56,8 @@ def AddBlogLinks(art_id, art):
                 cur[0].close()
                 cur[0] = ScraperUtils.article_store.conn.cursor()
                 cur[0].execute(sql, *args)
-                return cur[0].fetchall()
+                if sql.upper().startswith('SELECT'):
+                    return cur[0].fetchall()
             def close():
                 cur[0].close()
         else:
