@@ -84,7 +84,11 @@ def Output( profiles, fout ):
 # which change the 'guardian-format' appropriately.
 #
 def Extract( html, context ):
-	""" extract a single comment-is-free article """
+	'''
+	Extract a single comment-is-free article.
+	
+	Some failures fall back to Extract2.
+	'''
 	art = context
 	soup = BeautifulSoup( html )
 
@@ -134,6 +138,8 @@ def Extract( html, context ):
 def Extract2(soup, context):
 	'''
 	A scraper for a rather simplistic format, probably blogging software. (Vignette?)
+
+	Some failures fall back to Extract3.
 	'''
 	###
 	# This duplicates guardian.py's OldExtract for a lot of articles.
@@ -181,16 +187,29 @@ def Extract2(soup, context):
 	if not byline:
 		byline = ukmedia.ExtractAuthorFromParagraph(descline)
 	
-	# But the javascript-generated sidebar may provide a more accurate byline
+	# But the javascript-generated sidebar may provide a more accurate byline,
+	# and provides the all-important "blog" URL, where "blog"="articles by this author"
+	# in this rather odd field.
+	cifblog_url, cifblog_feed = None, None
 	for script_tag in soup.findAll('script'):
 		src = dict(script_tag.attrs).get('src', '')
 		if re.match(r'http://.*?/\d+_twocolumnleftcolumninsideleftcolumn.js$', src):
 			js = urllib2.urlopen(src).read()
 			if not isinstance(js, unicode):
 				js = unicode(js, 'utf-8')
+			
+			m = re.search(ur'articleslistitemshowalllink.setAttribute\("href", "(.*?)"\);', js, re.UNICODE)
+			if m:
+				cifblog_url = m.group(1)
+
+			m = re.search(ur'webfeedfirstlink.setAttribute\("href", "(.*?)"\);', js, re.UNICODE)
+			if m:
+				cifblog_feed = m.group(1)
+
 			m = re.search(ur'document\.createTextNode\("All (.*?) articles"\)', js, re.UNICODE)
 			if m:
 				byline = m.group(1)
+			
 			# And while we're at it, we might as well get a unique author id:
 			m = re.search(ur'profilelinka\.setAttribute\("href", "(.*?)"\)', js, re.UNICODE)
 			if m:
@@ -204,6 +223,10 @@ def Extract2(soup, context):
 	art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
 	art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
 	art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
+	if cifblog_url:
+		art['cifblog-url'] = cifblog_url
+	if cifblog_feed:
+		art['cifblog-feed'] = cifblog_feed  #RSS/Atom equivalent of cifblog-url
 	return art
 
 def Extract3(soup, context):
