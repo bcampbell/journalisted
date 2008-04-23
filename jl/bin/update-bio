@@ -87,13 +87,15 @@ def scrape(journo_id, journo_ref, prettyname, url):
                 assert len(rows)==1, 'Multiple weblinks found for journo %d!' % journo_id
                 query = (
                     "UPDATE journo_weblink "
-                    "SET url=%s, description=%s, source=%s "
+                    "SET url=%s, description=%s, source=%s, "
+                        "type='wikipedia:journo' "
                     "WHERE journo_id=%s")
                 args = [url, desc, source, journo_id]
             else:
                 query = (
-                    "INSERT INTO journo_weblink (journo_id, url, description, source) "
-                    "VALUES (%s, %s, %s, %s)")
+                    "INSERT INTO journo_weblink ("
+                        "journo_id, url, description, source, type"
+                    ") VALUES (%s, %s, %s, %s, 'wikipedia:journo')")
                 args = [journo_id, url, desc, source]
             c.execute(query, args)
             end_cursor(c, True)
