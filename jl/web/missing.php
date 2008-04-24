@@ -143,7 +143,7 @@ function EmitMissingArticleForm( $journo, $url='', $errs=array() )
 <?php echo $errhtml; ?>
 <input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
 
-<label for="url">If you know of an article we've missed, please enter it's URL here:<br />
+<label for="url">If you know of an article we've missed, please enter its URL here:<br />
 <small>(eg "<?php echo $exampleurl; ?>")</small></label>
 <br />
 <input type="text" name="url" id="url" size="80" value="<?php echo $url; ?>" />
