@@ -89,6 +89,7 @@ def Extract( html, context ):
 	
 	Some failures fall back to Extract2.
 	'''
+	# e.g. http://commentisfree.guardian.co.uk/claire_armitstead/2007/08/examining_your_conscience.html
 	art = context
 	soup = BeautifulSoup( html )
 
@@ -106,6 +107,14 @@ def Extract( html, context ):
 	leftdiv = soup.find( 'div', {'id':'twocolumnleftcolumninsideleftcolumn'} );
 	art['byline'] = ukmedia.ExtractAuthorFromParagraph( leftdiv.h2.a.renderContents(None) )
 
+	# Extract feed URLs (equivalent of the javascript part of Extract2).
+	art['author_id'] = leftdiv.h2.a['href']  # journo profile url, TODO: use
+	art['cifblog-url'] = [
+		a['href'] for a in leftdiv.h3.findNextSibling('ul').findAll('a')
+		          if a.string=='Show all'
+	][0]
+	art['cifblog-feed'] = leftdiv('div', {'class': 'webfeed'})[0].a['href']
+	
 	pattern = (ur'<h2><a href="http://commentisfree\.guardian\.co\.uk/[a-z_]+/profile\.html">'
 	           ur'\s*([A-Za-z \-]+)\s*</a></h2>')
 	if not art['byline']:
