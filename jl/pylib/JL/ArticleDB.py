@@ -212,12 +212,8 @@ def ProcessByline( conn, article_id, byline, srcorgid ):
 
 	# reminder: a byline can contain multiple journos
 	for d in details:
-		# is journo already in DB?
-		journo_id = Journo.FindJourno( conn, d['name'], srcorgid )
-		if not journo_id:
-			journo_id = Journo.CreateNewJourno( conn, d['name'] )
-			ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, d['name']) )
-
+		journo_id = StoreJourno(conn, d['name'], srcorgid)
+		
 		# credit journo with writing this article
 		Journo.AttributeArticle( conn, journo_id, article_id )
 
@@ -228,5 +224,12 @@ def ProcessByline( conn, article_id, byline, srcorgid ):
 
 	return attributed
 
-
-
+def StoreJourno(conn, name, srcorgid):
+	'''
+	Stores the named journo if not already present.
+	'''
+	journo_id = Journo.FindJourno( conn, name, srcorgid )
+	if not journo_id:
+		journo_id = Journo.CreateNewJourno( conn, name )
+		ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, name) )
+	return journo_id
