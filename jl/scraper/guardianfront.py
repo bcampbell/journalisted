@@ -50,6 +50,8 @@ def AddBlogLinks(art_id, art):
     DupeCheckFunc(art_id, art)
     if 'cifblog-url' in art and art['cifblog-url']:
         blogurl, feedurl = art['cifblog-url'], art['cifblog-feed']
+        if blogurl.endswith('/index.html'):
+            blogurl = blogurl[:-len('index.html')]
         if hasattr(ScraperUtils.article_store, 'conn'):
             cur = [ScraperUtils.article_store.conn.cursor()]
             def execute(sql, *args):
