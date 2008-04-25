@@ -160,23 +160,32 @@ def Extract( html, context ):
 				byline = u' '.join( byline.split() )
 	art['byline'] = byline
 
-	paginationstart = soup.find( text=re.compile('^\s*Pagination\s*$') )
-	paginationend = soup.find( text=re.compile('^\s*End of pagination\s*$') )
 
-	if not paginationstart:
-		raise Exception, "couldn't find start of main text!"
-	if not paginationend:
-		raise Exception, "couldn't find end of main text!"
+	# Extract the article text and build it into it's own soup
+	rawcontent_pat = re.compile( u"<!-- Pagination -->(.*)<!-- End of pagination -->", re.UNICODE|re.DOTALL )
 
+	m = rawcontent_pat.search( html )
+	contentsoup = BeautifulSoup.BeautifulSoup( m.group(1), fromEncoding = soup.originalEncoding )
 
 
-	contentsoup = BeautifulSoup.BeautifulSoup()
-	p = paginationstart.nextSibling
-	while p != paginationend:
-		next = p.nextSibling
-		if not isinstance( p, BeautifulSoup.Comment ):
-			contentsoup.insert( len(contentsoup.contents), p )
-		p = next
+#	paginationstart = soup.find( text=re.compile('^\s*Pagination\s*$') )
+#	paginationend = soup.find( text=re.compile('^\s*End of pagination\s*$') )
+
+#	if not paginationstart:
+#		raise Exception, "couldn't find start of main text!"
+#	if not paginationend:
+#		raise Exception, "couldn't find end of main text!"
+
+
+
+#	contentsoup = BeautifulSoup.BeautifulSoup()
+#	p = paginationstart.nextSibling
+#	while p != paginationend:
+#		print p.name
+#		next = p.nextSibling
+#		if not isinstance( p, BeautifulSoup.Comment ):
+#			contentsoup.insert( len(contentsoup.contents), p )
+#		p = next
 
 
 	for cruft in contentsoup.findAll( 'div', {'class':'float-left related-attachements-container' } ):
@@ -199,13 +208,20 @@ def Extract( html, context ):
 	desc = ukmedia.RemoveTags( desc )
 	art['description' ] = desc
 
+
+#NEW VERSION
+	# the pubdate is in a comment, eg:
+	# <!-- Article Published Date : Apr 23, 2008 12:00 AM -->
+	pubdate_pat = re.compile( "<!-- Article Published Date\\s*:\\s*(.*)\\s*-->" )
+	m = pubdate_pat.search( html )
+	art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
+
+#OLD VERSION
 	# There is some javascript with a likely-looking pubdate:
 	# var tempDate="02-Jan-2006 00:00";
-
-	datepat = re.compile( u"\s*var tempDate=\"(.*?)\";", re.UNICODE )
-
-	m = datepat.search(html)
-	art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
+#	datepat = re.compile( u"\s*var tempDate=\"(.*?)\";", re.UNICODE )
+#	m = datepat.search(html)
+#	art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
 
 	return art
 
