@@ -187,7 +187,7 @@ def FindLinks( site, maxqueries ):
 				traceback.print_exc()
 				errcnt += 1
 				if errcnt>=3:
-					print >>sys.__stderr__, "QUITTING - run out of retries"
+					print >>sys.stderr, "QUITTING - run out of retries"
 					raise
 
 		cnt=cnt+1
@@ -232,7 +232,7 @@ def LoadBlogLinkIntoDB( conn, l, stats ):
 		stats.missing += 1
 		return
 	if len(articles)>1:
-		print >>sys.__stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
+		print >>sys.stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
 	article_id = articles[0]['id']
 
 
