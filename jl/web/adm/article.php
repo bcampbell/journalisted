@@ -7,6 +7,7 @@ chdir( dirname(dirname(__FILE__)) );
 
 require_once '../conf/general';
 require_once '../phplib/misc.php';
+require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
@@ -285,14 +286,14 @@ function RemoveJourno( $art, $journo_id )
 
 	db_query( "DELETE FROM journo_attr WHERE article_id=? AND journo_id=?",
 		$article_id, $journo_id );
-
-	/* make sure the journos page gets updated on next view */
-	$cachename = sprintf( "j%s", $journo_id );
-	db_query( "DELETE FROM htmlcache WHERE name=?", $cachename );
-
-	/* TODO: LOG IT! */
 	db_commit();
 	print( "<strong>REMOVED JOURNO</strong>" );
+	/* TODO: LOG IT! */
+
+	/* make sure the journos page gets updated on next view */
+	$cacheid = sprintf( "j%s", $journo_id );
+	cache_clear( $cacheid );
+
 }
 
 

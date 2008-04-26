@@ -5,6 +5,7 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/cache.php';
 require_once '../phplib/gatso.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
