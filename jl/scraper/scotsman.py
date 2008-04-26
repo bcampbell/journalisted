@@ -20,7 +20,7 @@ import urlparse
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup,Comment
 from JL import ukmedia, ScraperUtils
 
 
@@ -395,6 +395,25 @@ def Extract( html, context ):
 	headline = ukmedia.FromHTML( headline )
 	art['title'] = headline
 
+
+	# pull out date
+	# there is a Published Date, without timestamp:
+	# eg "<div> <strong> Published Date: </strong> 12 February 2008 </div>"
+	# If it's not there (eg for NIB articles?) we'll use the Last Updated instead:
+	datemarker = soup.find( text=re.compile('Published Date:') )
+	if datemarker:
+		datediv = datemarker.findParent('div')
+		datediv.strong.extract()
+		datetxt = datediv.renderContents( None ).strip()
+	else:
+		datemarker = soup.find( 'ul', {'class': 'viewarticle_info'} ).find( text=re.compile('Last Updated:') )
+		datediv = datemarker.findParent('li')
+		datediv.strong.extract()
+		datetxt = datediv.renderContents( None ).strip()
+
+	art['pubdate'] = ukmedia.ParseDateTime( datetxt )
+
+
 	# Check that source is what we think it should be
 	sourcechecks = { u'scotsman': u'The Scotsman', u'scotlandonsunday': u'Scotland On Sunday' }
 	expectedsource = sourcechecks[ art['srcorgname'] ]
@@ -439,22 +458,16 @@ def Extract( html, context ):
 		cruft.extract()
 	for cruft in bodydiv.findAll( 'div', {'id':'ds-mpu'}):
 		cruft.extract()
+	for cruft in bodydiv.findAll(text=lambda text:isinstance(text, Comment)):
+		cruft.extract()
+
+
 
 	content = firstparadiv.renderContents(None)
 	content = content + bodydiv.renderContents(None)
 	content = content.replace( "<br />", "<br />\n" )
 	art['content'] = content
 
-
-	metadiv = soup.find( 'div', {'class':'metadata'} )
-
-	# pull out date
-	# eg "<li> <strong> Published Date: </strong> 12 February 2008 </li>"
-	datemarker = metadiv.find( text=re.compile('Published Date:') )
-	li = datemarker.findParent('li')
-	li.strong.extract()
-	datetxt = li.renderContents( None ).strip()
-	art['pubdate'] = ukmedia.ParseDateTime( datetxt )
 
 	return art
 
