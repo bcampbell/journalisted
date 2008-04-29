@@ -6,21 +6,25 @@
 import re
 from datetime import datetime
 import sys
+import os
 import simplejson
 
 sys.path.append( "../pylib" )
 from BeautifulSoup import BeautifulSoup, SoupStrainer
-from JL import ukmedia, ArticleDB, FindJournoException
+from JL import ukmedia, ArticleDB
+from JL.Journo import FindJournoException
 
 
-#CONTRIBUTORS_URL = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
-CONTRIBUTORS_URL = 'file:contributors_a-z.html'  # debug
+CONTRIBUTORS_URL = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
 
 
 def run():
     """Parse the CIF contributors a-z page, update journo_bio and journo_weblink."""
 
-    html = ukmedia.FetchURL(CONTRIBUTORS_URL)
+    if os.path.isfile('file:contributors_a-z.html'):
+        html = 'file:contributors_a-z.html'
+    else:
+        html = ukmedia.FetchURL(CONTRIBUTORS_URL)
     soup = BeautifulSoup(html)
 
     db = ArticleDB.ArticleDB()
