@@ -5,8 +5,8 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
-require_once '../phplib/cache.php';
 require_once '../phplib/gatso.php';
+require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -399,7 +399,9 @@ function emit_block_links( $journo )
 	$journo_id = $journo['id'];
 	$q = db_query( "SELECT url, description " .
 		"FROM journo_weblink " .
-		"WHERE journo_id=? AND journo_weblink.type!='cif:blog:feed'",
+		"WHERE journo_id=? " .
+		"AND journo_weblink.type!='cif:blog:feed' " .
+		"AND approved",
 		$journo_id );
 
 	$row = db_fetch_array($q);
@@ -499,7 +501,7 @@ function emit_block_overview( $journo )
 	printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 	print "<div class=\"boxwide-content\">\n";
 
-	emit_wikipedia_bio( $journo );
+	emit_journo_bios( $journo );
 	emit_writtenfor( $journo );
 	emit_journo_mailto( $journo );
 
@@ -547,19 +549,26 @@ function emit_writtenfor( $journo )
 }
 
 
-function emit_wikipedia_bio( $journo )
+function emit_journo_bios( $journo )
 {
-	$row = db_getRow("SELECT bio, url FROM journo_bio, journo, journo_weblink " .
-	                 "WHERE journo_bio.journo_id=? " .
-	                 "  AND journo_bio.approved " .
-	                 "  AND journo.id=journo_bio.journo_id " .
-	                 "  AND journo_weblink.journo_id=journo_bio.journo_id",
+	$row = db_getRow("SELECT bio, srcurl, type FROM journo_bio " .
+	                 "WHERE journo_id=? AND approved",
 	                 $journo['id']);
 	if ($row)
 	{
+    	$biotype = $row['type'];
+    	$srcurl = $row['srcurl'];
+    	
+    	if ($biotype=='wikipedia:journo')
+    		$biourltext = 'Wikipedia';
+    	else if ($biotype=='cif:contributors-az')
+    		$biourltext = 'Comment is free';
+    	else
+    		$biourltext = $row['srcurl'];
+    	
     	print "<div class=\"bio-para\">\n";
     	print $row['bio'];
-    	print " <div class=\"disclaimer\">(source: <a href=\"" . $row['url'] . "\">Wikipedia</a>)</div></div>\n";
+    	print " <div class=\"disclaimer\">(source: <a href=\"$srcurl\">$biourltext</a>)</div></div>\n";
 	}
 }
 

@@ -39,6 +39,22 @@ switch( $action )
 		RemoveWeblink( $journo_id, get_http_var('link_id') );
 		EmitJourno( $journo_id );
 		break;
+	case "approve_link":
+		ApproveWeblink( $journo_id, get_http_var('link_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "disapprove_link":
+		DisapproveWeblink( $journo_id, get_http_var('link_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "approve_bio":
+		ApproveBio( $journo_id, get_http_var('bio_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "disapprove_bio":
+		DisapproveBio( $journo_id, get_http_var('bio_id') );
+		EmitJourno( $journo_id );
+		break;
 	case "add_link":
 		AddWeblink( $journo_id, get_http_var('url'), get_http_var('desc') );
 		EmitJourno( $journo_id );
@@ -166,6 +182,7 @@ function EmitJourno( $journo_id )
 	printf("<strong>created:</strong> %s<br />\n", $j['created'] );
 
 	EmitWebLinks( $journo_id );
+	EmitBios( $journo_id );
 }
 
 function ChangeJournoStatus( $journo_id, $status )
@@ -183,7 +200,7 @@ function ChangeJournoStatus( $journo_id, $status )
 function EmitWebLinks( $journo_id )
 {
 	print "<h3>Web links</h3>\n";
-	$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $journo_id );
+	$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? AND type!='cif:blog:feed'", $journo_id );
 
 	if( $links )
 	{
@@ -192,11 +209,33 @@ function EmitWebLinks( $journo_id )
 <?php
 		foreach( $links as $l )
 		{
-			$anchor = sprintf( "<a href=\"%s\">%s</a>",$l['url'],$l['url'] );
-			$removelink = sprintf( "<a href=\"?action=remove_link&journo_id=%s&link_id=%s\">remove</a>",
-				$journo_id, $l['id'] );
+			$id = $l['id'];
+			$url = $l['url'];
+			$desc = $l['description'];
+			$approved = ($l['approved']=='t');
+			
+			$anchor = "<a href=\"$url\">$url</a>";
+			$removelink = (
+				"<a href=\"?action=remove_link&journo_id=$journo_id&link_id=$id\">remove</a>");
+			
+			if ( $approved )
+			{
+				$divclass = 'bio_approved';
+				$approvelink = sprintf(
+					"<a href=\"?action=disapprove_link&journo_id=%s&link_id=%s\">disapprove</a>",
+					$journo_id, $id );
+			}
+			else
+			{
+				$divclass = 'bio_unapproved';
+				$approvelink = sprintf(
+					"<a href=\"?action=approve_link&journo_id=%s&link_id=%s\">approve</a>",
+					$journo_id, $id );
+			}
+			
 			print " <li>\n";
-			printf(  " %s - '%s' <small>[%s]</small>", $anchor, $l['description'], $removelink );
+			print (" <div class=\"$divclass\">[$id] $anchor - '$desc' " .
+			       "<small>[$removelink] [$approvelink]</small></div>");
 			print " </li>\n";
 		}
 ?>
@@ -224,6 +263,68 @@ print form_element_hidden( 'journo_id', $journo_id );
 }
 
 
+function EmitBios( $journo_id )
+{
+	print "<h3>Bios</h3>\n";
+	$rows = db_getAll( "SELECT * FROM journo_bio WHERE journo_id=?", $journo_id );
+
+	if( $rows )
+	{
+?>
+	<ul>
+<?php
+		foreach( $rows as $row )
+		{
+			$id  = $row['id'];
+			$srcurl = $row['srcurl'];
+			$bio = $row['bio'];
+			$bio_type = $row['type'];
+			$approved = ($row['approved']=='t');
+			
+			if ( $approved )
+			{
+				$divclass = 'bio_approved';
+				$approvebio = sprintf(
+					"<a href=\"?action=disapprove_bio&journo_id=%s&bio_id=%s\">disapprove</a>",
+					$journo_id, $id );
+			}
+			else
+			{
+				$divclass = 'bio_unapproved';
+				$approvebio = sprintf(
+					"<a href=\"?action=approve_bio&journo_id=%s&bio_id=%s\">approve</a>",
+					$journo_id, $id );
+			}
+			
+			if ( $bio_type == 'wikipedia:journo' )
+				$source = 'Wikipedia';
+			else if ( $bio_type == 'cif:contributors-az' )
+				$source = 'commentisfree';
+			else
+				$source = $bio_type;
+			
+			$source = "<a href=\"$srcurl\">$source</a>";
+			
+			print " <li>\n";
+			print(" <div class=\"$divclass\">[$id] $bio <small>(source: $source)</small><br />" .
+			      "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" .
+			      "<small>[$approvebio]</small></div>");
+			print " </li>\n";
+		}
+?>
+	</ul>
+<?php
+
+	}
+	else
+	{
+		print( "<p>-- no bios --</p>\n" );
+	}
+
+	// TODO: Add bios.
+}
+
+
 /* Form to confirm that weblink _should_ be removed from this journo */
 function ConfirmRemoveWeblink( $journo_id, $link_id )
 {
@@ -247,8 +348,45 @@ from <?=$journo['prettyname'];?>?<br />
 
 function RemoveWeblink( $journo_id, $link_id )
 {
-	$l = db_query( "DELETE FROM journo_weblink WHERE id=?", $link_id );
+	db_query( "DELETE FROM journo_weblink WHERE id=?", $link_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
 	printf( "<strong>Removed Weblink</strong>\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function ApproveWeblink( $journo_id, $link_id )
+{
+	db_query( "UPDATE journo_weblink SET approved=true WHERE id=?", $link_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	printf( "<strong>Approved Weblink $link_id</strong>\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function DisapproveWeblink( $journo_id, $link_id )
+{
+	db_query( "UPDATE journo_weblink SET approved=false WHERE id=?", $link_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	printf( "<strong>Disapproved Weblink $link_id</strong>\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function ApproveBio( $journo_id, $bio_id )
+{
+	db_query( "UPDATE journo_bio SET approved=true WHERE id=?", $bio_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	printf( "<strong>Approved Bio $bio_id</strong>\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function DisapproveBio( $journo_id, $bio_id )
+{
+	db_query( "UPDATE journo_bio SET approved=false WHERE id=?", $bio_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	printf( "<strong>Disapproved Bio $bio_id</strong>\n" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
@@ -258,6 +396,7 @@ function AddWeblink( $journo_id, $url, $desc )
 {
 	db_query( "INSERT INTO journo_weblink (journo_id,url,description) VALUES (?,?,?)",
 		$journo_id, $url, $desc );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 	printf( "<strong>Added Weblink</strong>\n" );

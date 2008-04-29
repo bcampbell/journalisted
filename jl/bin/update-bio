@@ -57,8 +57,8 @@ def store_context(context, journo_id, cursor):
         updated = True
         cursor.fetchall()
     else:
-        cursor.execute("INSERT INTO journo_bio (journo_id, context, bio, approved) "
-                       "VALUES (%s, %s, %s, false)", [journo_id, context_json, bio])
+        cursor.execute("INSERT INTO journo_bio (journo_id, context, bio, approved, type) "
+                       "VALUES (%s, %s, %s, false, 'wikipedia:journo')", [journo_id, context_json, bio])
         cursor.fetchall()
     return bio, updated
 

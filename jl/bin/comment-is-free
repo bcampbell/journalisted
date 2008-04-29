@@ -4,66 +4,103 @@
 #
 
 import re
-import urllib2
+from datetime import datetime
 import sys
+import simplejson
 
 sys.path.append( "../pylib" )
 from BeautifulSoup import BeautifulSoup, SoupStrainer
-from JL import ukmedia
+from JL import ukmedia, ArticleDB, FindJournoException
 
 
-contributors_url = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
+#CONTRIBUTORS_URL = 'http://commentisfree.guardian.co.uk/contributors_a-z.html'
+CONTRIBUTORS_URL = 'file:contributors_a-z.html'  # debug
 
 
-def ParseContributors( html ):
-	"""parse the CIF contributors a-z page, returns a list of profile pages found"""
+def run():
+    """Parse the CIF contributors a-z page, update journo_bio and journo_weblink."""
 
-	soup = BeautifulSoup( html )
+    html = ukmedia.FetchURL(CONTRIBUTORS_URL)
+    soup = BeautifulSoup(html)
 
-	def soup_findAll(tag, attrs):  # iterative soup.findAll to speed debugging
-		strainer = SoupStrainer(tag, attrs)
-		for x in soup.recursiveChildGenerator():
-			found = strainer.search(x)
-			if found: yield found
+    db = ArticleDB.ArticleDB()
+    cursor = db.conn.cursor()
+    cursor.execute("SELECT id FROM organisation WHERE shortname='guardian'")
+    guardian_srcorgid = cursor.fetchone()[0]
+    cursor.close()
+    
+    # FIXME: remove limit=10 after testing:
+    authordivs = soup.findAll('div', {'class':'authorazentry'}, limit=10)
 
-	profiles = []
-	for authordiv in soup_findAll('div', {'class':'authorazentry'}):
-		name = authordiv.h1.a.string
-		name = ukmedia.DescapeHTML( name )
-		a = authordiv.find( text="Profile" ).parent;
-		profile_url = a['href']
-		feed_url = profile_url.replace('/profile.html', '/index.xml')
-		biodiv = authordiv.find('div', {'class': 'authorbio'})
-		bio = biodiv.p.renderContents(None)
-#		print name, profile_url, feed_url, bio
+    # Ensure journos exist
+    for authordiv in authordivs:
+        name = ukmedia.DescapeHTML(authordiv.h1.a.string)
+        journo_id = ArticleDB.StoreJourno(db.conn, name, guardian_srcorgid)
 
-		profiles.append({'name': name, 'profile_url': profile_url,
-		                 'feed_url': feed_url, 'bio': bio})
+    cursor = db.conn.cursor()
+    cursor.execute('BEGIN')
 
-	return profiles
+    exceptions = 0
+    MAX_EXCEPTIONS = 100
+    for authordiv in authordivs:
+        biodiv = authordiv.find('div', {'class': 'authorbio'})
+        
+        name = ukmedia.DescapeHTML(authordiv.h1.a.string)
+        profile_url = authordiv.find( text="Profile" ).parent['href']
+        bio = biodiv.p.renderContents(None)
+        
+        try:
+            journo_id = ArticleDB.StoreJourno(db.conn, name, guardian_srcorgid)
+            save_journo_info(cursor, name, journo_id, profile_url, bio)
+        except FindJournoException, e:
+            ukmedia.DBUG2(u"Failed to get journo_id for %s:\n    %s\n" % (name, e))
+            exceptions += 1
+            if exceptions > MAX_EXCEPTIONS:
+                raise  # rollback
 
+    cursor.execute('COMMIT')
+    cursor.close()
 
-def Output( profiles, fout ):
-	encoding = 'utf-8'
-	fout.write( "<?xml version=\"1.0\" encoding=\"%s\"?>\n" %(encoding) )
-	fout.write( " <journodata>" )
-	for p in profiles:
-		fout.write( "  <journo>\n" )
-		fout.write( "   <name>%s</name>\n" %( p['name'].encode(encoding) ) )
-		fout.write( "   <bio>%s</bio>\n" %( p['bio'].encode(encoding) ) )
-		fout.write( "   <weblink url=\"%s\">%s</weblink>\n" % ( p['profile_url'], 'Profile page on Comment Is Free' ) )
-		fout.write( "   <feed url=\"%s\">%s</feed>\n" % ( p['feed_url'], 'RSS feed of articles on Comment Is Free' ) )
-		fout.write( "  </journo>\n" )
-	fout.write( " </journodata>\n" )
-	fout.write( "</xml>\n" );
+def save_journo_info(cursor, name, journo_id, profile_url, bio):
+    assert journo_id is not None
+    blog_url = profile_url.replace('/profile.html', '/')
+    # Not storing: feed_url = profile_url.replace('/profile.html', '/index.xml')
 
+    context = {'journo_name': name,
+               'added': datetime.now().isoformat()[:19],
+               'scraper': '/bin/comment-is-free'}
+    context = simplejson.dumps(context)
+    
+    # Insert bio with srcurl=profile_url into journo_bio table:
+    cursor.execute("SELECT id FROM journo_bio WHERE type='cif:contributors-az' "
+                   "AND journo_id=%d" % journo_id)
+    if cursor.fetchall():
+        ukmedia.DBUG2('  not updating bio for %s\n' % name)
+    else:
+        ukmedia.DBUG2('  NEW bio for %s\n' % name)
+        cursor.execute(
+            "INSERT INTO journo_bio"
+                "(context, bio, journo_id, srcurl, type, approved) "
+            "VALUES (%s, %s, %s, %s, 'cif:contributors-az', false)",
+            [context, bio, journo_id, profile_url])
+
+    # Insert link for blog_url into journo_weblink
+    cursor.execute("SELECT id FROM journo_weblink WHERE type='cif:blog:html' "
+                   "AND journo_id=%d" % journo_id)
+    if cursor.fetchall():
+        ukmedia.DBUG2('  not updating weblink for %s\n' % name)
+    else:
+        ukmedia.DBUG2('  NEW weblink: %s: %s\n' % (name, blog_url))
+        cursor.execute(
+            "INSERT INTO journo_weblink"
+                "(journo_id, url, source, description, type, approved)"
+            "VALUES (%s, %s, %s, %s, 'cif:blog:html', false)",
+            [journo_id, blog_url, CONTRIBUTORS_URL, '"Comment is free" blog'])
+    ukmedia.DBUG2('\n')
 
 if __name__=='__main__':
-	if '--help' in sys.argv or '-h' in sys.argv:
-		sys.exit('usage: comment-is-free\n'
-		         'Outputs an XML file containing the feed for each journalist.')
-	f = urllib2.urlopen( contributors_url )
-	html = f.read()
-	f.close()
-	profiles = ParseContributors(html)
-	Output( profiles, sys.stdout )
+    if '--help' in sys.argv or '-h' in sys.argv:
+        sys.exit('usage: comment-is-free\n'
+                 'Reads the contributors A-Z page, updates database.')
+    run()
+
