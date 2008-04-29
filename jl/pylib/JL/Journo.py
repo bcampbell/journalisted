@@ -7,6 +7,17 @@ import difflib
 
 from datetime import datetime
 
+
+class FindJournoException(Exception):
+	'''Base for exceptions raised by FindJourno logic.'''
+
+class MultipleJournosException(FindJournoException):
+	'''Couldn't find a unique journo with the given attributes.'''
+
+class NoOrgJournoException(FindJournoException):
+	'''No journo found with articles for this organisation.'''
+
+
 DEBUG_NO_COMMITS = False
 
 # table to convert various latin accented chars into rough ascii
@@ -363,7 +374,7 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 		# multiple matches - try using the organisations they've written for
 		# to pick one.
 		if hint_srcorgid == None:
-			raise Exception, "Multiple journos found called '%s'" % (rawname)
+			raise MultipleJournosException, "Multiple journos found called '%s'" % (rawname)
 
 		# which journos have articles in this srcorg?
 		c = conn.cursor()
@@ -374,9 +385,9 @@ def FindJourno( conn, rawname, hint_srcorgid = None ):
 		# want to make sure that only one of our possible journos has written for this org
 		cnt = len(matching)
 		if cnt == 0:
-			raise Exception, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,hint_srcorgid)
+			raise NoOrgJournoException, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,hint_srcorgid)
 		if cnt != 1:
-			raise Exception, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,hint_srcorgid)
+			raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,hint_srcorgid)
 
 		journo_id = int( matching[0]['journo_id'] )
 		c.close()
