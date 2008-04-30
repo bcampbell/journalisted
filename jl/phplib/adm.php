@@ -28,6 +28,7 @@ function admPageHeader()
 <a href="scrape">Scrape</a> |
 <a href="journo-bios">Journo-Bios</a> |
 <a href="journo-email">Journo-Email</a>
+<a href="journo-split">Split Journos</a>
 <hr>
 <?php
 

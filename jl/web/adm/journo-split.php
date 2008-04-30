@@ -7,13 +7,11 @@ require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
 require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
+require_once '../phplib/adm.php';
 
+admPageHeader();
 ?>
-<html>
-<head></head>
-<body>
-<h1>Split Journo</h1>
-
+<h2>Split Journo</h2>
 <?php
 
 
@@ -25,11 +23,7 @@ elseif( $params['action'] == 'confirm' )
 else
 	EmitForm( $params );
 
-?>
-</body>
-</html>
-
-<?php
+admPageFooter();
 
 
 
