@@ -33,19 +33,13 @@ def run():
     guardian_srcorgid = cursor.fetchone()[0]
     cursor.close()
     
-    # FIXME: remove limit=10 after testing:
-    authordivs = soup.findAll('div', {'class':'authorazentry'}, limit=10)
-
-    # Ensure journos exist
-    for authordiv in authordivs:
-        name = ukmedia.DescapeHTML(authordiv.h1.a.string)
-        journo_id = ArticleDB.StoreJourno(db.conn, name, guardian_srcorgid)
+    authordivs = soup.findAll('div', {'class':'authorazentry'})
 
     cursor = db.conn.cursor()
     cursor.execute('BEGIN')
 
-    exceptions = 0
-    MAX_EXCEPTIONS = 100
+    saved, saved_bios, saved_weblinks, exceptions = 0, 0, 0, 0
+    MAX_EXCEPTIONS = 10
     for authordiv in authordivs:
         biodiv = authordiv.find('div', {'class': 'authorbio'})
         
@@ -55,7 +49,11 @@ def run():
         
         try:
             journo_id = ArticleDB.StoreJourno(db.conn, name, guardian_srcorgid)
-            save_journo_info(cursor, name, journo_id, profile_url, bio)
+            saved_bio, saved_weblink = \
+               save_journo_info(cursor, name, journo_id, profile_url, bio)
+            saved += 1
+            saved_bios += int(saved_bio)
+            saved_weblink += int(saved_weblink)
         except FindJournoException, e:
             ukmedia.DBUG2(u"Failed to get journo_id for %s:\n    %s\n" % (name, e))
             exceptions += 1
@@ -64,9 +62,13 @@ def run():
 
     cursor.execute('COMMIT')
     cursor.close()
+    ukmedia.DBUG2(
+        'Done. %d journos handled (%d bios, %d weblinks), %d exceptions.\n'
+                  % (saved, saved_bios, saved_weblinks, exceptions))
 
 def save_journo_info(cursor, name, journo_id, profile_url, bio):
     assert journo_id is not None
+    saved_bio, saved_weblink = False, False
     blog_url = profile_url.replace('/profile.html', '/')
     # Not storing: feed_url = profile_url.replace('/profile.html', '/index.xml')
 
@@ -86,7 +88,8 @@ def save_journo_info(cursor, name, journo_id, profile_url, bio):
             "INSERT INTO journo_bio"
                 "(context, bio, journo_id, srcurl, type, approved) "
             "VALUES (%s, %s, %s, %s, 'cif:contributors-az', false)",
-            [context, bio, journo_id, profile_url])
+            [context, bio.encode('utf-8'), journo_id, profile_url.encode('utf-8')])
+        saved_bio = True
 
     # Insert link for blog_url into journo_weblink
     cursor.execute("SELECT id FROM journo_weblink WHERE type='cif:blog:html' "
@@ -100,7 +103,9 @@ def save_journo_info(cursor, name, journo_id, profile_url, bio):
                 "(journo_id, url, source, description, type, approved)"
             "VALUES (%s, %s, %s, %s, 'cif:blog:html', false)",
             [journo_id, blog_url, CONTRIBUTORS_URL, '"Comment is free" blog'])
+        saved_weblink = True
     ukmedia.DBUG2('\n')
+    return saved_bio, saved_weblink
 
 if __name__=='__main__':
     if '--help' in sys.argv or '-h' in sys.argv:
