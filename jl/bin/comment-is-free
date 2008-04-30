@@ -53,7 +53,7 @@ def run():
                save_journo_info(cursor, name, journo_id, profile_url, bio)
             saved += 1
             saved_bios += int(saved_bio)
-            saved_weblink += int(saved_weblink)
+            saved_weblinks += int(saved_weblink)
         except FindJournoException, e:
             ukmedia.DBUG2(u"Failed to get journo_id for %s:\n    %s\n" % (name, e))
             exceptions += 1
