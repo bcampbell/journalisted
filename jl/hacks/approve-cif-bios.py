@@ -25,15 +25,16 @@ print 'Not approving these due to approved wikipedia bio:', showset(fixthese.int
 fixthese -= fixproof
 print 'Approving', showset(fixthese)
 
-if raw_input('Enter "yes" to start... ')=='yes':
+if fixthese and raw_input('Enter "yes" to start... ')=='yes':
     c.execute('BEGIN')
-    c.execute('UPDATE journo_bio SET approved=true WHERE id IN (%s)' %
+    c.execute("UPDATE journo_bio SET approved=true WHERE journo_id IN (%s) "
+              "AND type='cif:contributors-az'" %
               ','.join(str(x) for x in fixthese))
     c.execute('COMMIT')
-    c.execute('SELECT id FROM journo_bio WHERE approved=true AND id IN (%s)' %
+    c.execute("SELECT journo_id FROM journo_bio WHERE approved=true "
+              "AND journo_id IN (%s) AND type='cif:contributors-az'" %
               ','.join(str(x) for x in fixthese))
     fixed = set([row[0] for row in c.fetchall()])
     assert set(fixthese)==fixed, showset(fixed)
-    c.execute('COMMIT')
 else:
     print 'Not updating database.'
