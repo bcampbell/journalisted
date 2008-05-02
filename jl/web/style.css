@@ -121,7 +121,7 @@ body, #menu, #head {
 
 #menu ul {
   float:right;
-  padding:0;
+  padding:0px 10px;
   margin:0;
 }
 
@@ -144,11 +144,12 @@ body, #menu, #head {
 }
 
 #content {
-  padding:10px 5px;
+  padding:10px 20px;
   clear:both;
-  width:770px;
+  width:740px;
   /*overflow:auto;*/
   border-bottom:1px solid #ECECEC;
+  line-height: 140%;
 }
 
 #content #contenthead {
