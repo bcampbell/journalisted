@@ -45,6 +45,25 @@ sectionnames = ('News',
 siteroot = "http://timesonline.co.uk"
 
 
+def CleanHtml(html):
+    '''
+    Replaces incorrect Windows-1252 entities with the correct HTML entity.
+    They were probably inserted by Microsoft Word.
+    '''
+    # e.g. http://www.timesonline.co.uk/tol/comment/columnists/david_aaronovitch/article587744.ece
+    #
+    # Referring to <http://en.wikipedia.org/wiki/Windows-1252>.
+    #
+    def repl(m):
+        s = m.group(1) or m.group(2)
+        if s.startswith('x'): n = int(s[1:], 16)
+        else: n = int(s)
+        if 128 <= n <= 159:  # windows-1252 chars not found in iso 8859-1
+            return '&#%d;' % ord(chr(n).decode('windows-1252'))
+        return m.group()
+    return re.sub(r'(?i)&#(1\d\d);|&#(x0*[0-9a-f]{2});', repl, html)
+
+
 def FindArticles():
 
 	ukmedia.DBUG2( "*** times ***: looking for articles...\n" )
@@ -141,6 +160,7 @@ def CalcSrcID( url ):
 def Extract( html, context ):
 
 	art = context
+	html = CleanHtml(html)
 	soup = BeautifulSoup.BeautifulSoup( html )
 
 	h1 = soup.find( 'h1', {'class':'heading'} )
