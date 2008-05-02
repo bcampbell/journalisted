@@ -58,9 +58,118 @@ function EmptyPhonebook()
 	return $b;
 }
 
-
-
 function AlphabeticalList()
+{
+	$order = get_http_var( 'order', 'lastname' );
+	$letter = strtolower( get_http_var( 'letter', 'a' ) );
+
+	if( $order == 'firstname' )
+		$orderfield = 'firstname';
+	else
+	{	
+		$order = 'lastname';
+		$orderfield = 'lastname';
+	}
+
+	print "<h2>All Journalists</h2>\n";
+	print "<p>Ordered by ";
+	if( $orderfield=='firstname' )
+		print "first name (<a href=\"list?order=lastname&letter={$letter}\">order by last name</a>)";
+	else
+		print "last name (<a href=\"list?order=firstname&letter={$letter}\">order by first name</a>)";
+	print "</p>\n";
+
+    $sql = <<<EOT
+SELECT ref,prettyname,oneliner,{$orderfield}
+    FROM journo
+    WHERE status='a' AND substring( {$orderfield} from 1 for 1 )=?
+    ORDER BY {$orderfield}
+EOT;
+	$q = db_query( $sql, $letter );
+
+
+    print "<p>\n";
+
+    for( $i=ord('a'); $i<=ord('z'); ++$i )
+    {
+        $c = chr($i);
+        if( $c == $letter )
+        {
+            printf("<strong>%s</strong>\n", strtoupper($c) );
+        }
+        else
+        {
+            $link = sprintf( "/list?order=%s&letter=%s", $order, $c );
+            printf("<a href=\"%s\">%s</a>\n", $link, strtoupper($c) );
+        }
+    }
+    print "</p>\n";
+
+    print "<ul>\n";
+	while( $j = db_fetch_array($q) )
+	{
+		print "<li>";
+		print FancyJournoLink( $j );
+		print "</li>\n";
+        
+	}
+    print "</ul>\n";
+}
+
+/* test version - N per page */
+function TEST_AlphabeticalList()
+{
+	$order = get_http_var( 'o', 'l' );
+	$page = get_http_var( 'page', '1' );
+	$perpage = get_http_var( 'page', '100' );
+
+	if( $order == 'f' )
+		$orderfield = 'firstname';
+	else
+	{	
+		$order = 'l';
+		$orderfield = 'lastname';
+	}
+
+	print "<h2>All Journalists</h2>\n";
+	print "<p>Ordered by ";
+	if( $orderfield=='firstname' )
+		print "first name (<a href=\"list\">order by last name</a>)";
+	else
+		print "last name (<a href=\"list?o=f\">order by first name</a>)";
+	print "</p>\n";
+
+    /* need to figure out how many pages we need... */
+    $total = db_getOne( "SELECT COUNT(*) FROM journo WHERE status='a'" );
+
+    $sql = <<<EOT
+SELECT ref,prettyname,oneliner,{$orderfield}
+    FROM journo
+    WHERE status='a'
+    ORDER BY {$orderfield}
+    LIMIT ?
+    OFFSET ?
+EOT;
+	$q = db_query( $sql, $perpage, ($page-1)*$perpage );
+
+    printf( "<p>tot %d</p>\n", $total );
+    printf( "<p>Page %d of %d</p>\n", $page, ($total+($perpage-1))/$perpage );
+
+    print "<ul>\n";
+	while( $j = db_fetch_array($q) )
+	{
+		print "<li>";
+		print FancyJournoLink( $j );
+		if( array_key_exists( 'extra', $j ) )
+			print( ' ' . $j['extra'] );
+		print "</li>\n";
+        
+	}
+    print "</ul>\n";
+}
+
+/* All on one page, with letter titles at start of each alphabetical section */
+function OLD_AlphabeticalList()
 {
 	$order = get_http_var( 'o', 'l' );
 	if( $order == 'f' )
