@@ -79,7 +79,7 @@ function AlphabeticalList()
 		print "last name (<a href=\"list?o=f\">order by first name</a>)";
 	print "</p>\n";
 
-	$q = db_query( "SELECT ref,prettyname,{$orderfield} FROM journo WHERE status='a' ORDER BY {$orderfield}" );
+	$q = db_query( "SELECT ref,prettyname,oneliner,{$orderfield} FROM journo WHERE status='a' ORDER BY {$orderfield}" );
 
 	/* slurp in all the returned journos, and index them by letter */
 	$phonebook = EmptyPhonebook();
@@ -114,15 +114,27 @@ function OutputPhonebook( &$phonebook )
 		print "<ul>\n";
 		foreach( $group as $j )
 		{
-			$url = $j['ref'];
 			print "<li>";
-			printf( '<a href="%s">%s</a>', $url, $j['prettyname'] );
+			print FancyJournoLink( $j );
 			if( array_key_exists( 'extra', $j ) )
 				print( ' ' . $j['extra'] );
 			print "</li>\n";
 		}
 		print "</ul>\n";
 	}
+}
+
+
+
+function FancyJournoLink( $j )
+{
+    $name = $j['prettyname'];
+    $url = '/' . $j['ref'];
+    $desc = '';
+    if( $j['oneliner'] )
+        $desc = " (<em>" . $j['oneliner'] . "</em>)";
+
+    return "<a href=\"$url\">$name</a><span class=\"journodesc\">$desc</span>";
 }
 
 
@@ -138,18 +150,15 @@ Find a journalist by name:
 <?php
 	
 	$pat = strtolower( "%{$name}%" );
-	$q = db_query( "SELECT ref,prettyname FROM journo WHERE LOWER(prettyname) LIKE( ? ) AND status='a'", $pat );
+	$q = db_query( "SELECT ref,prettyname,oneliner FROM journo WHERE LOWER(prettyname) LIKE( ? ) AND status='a'", $pat );
 
-	$cnt = 0;
+	printf( "<p>Found %d matches</p>", db_num_rows($q) );
 	print "<ul>\n";
 	while( $j = db_fetch_array($q) )
 	{
-		$cnt++;
-		$url = $j['ref'];
-		print "<li><a href=\"{$url}\">{$j['prettyname']}</a></li>\n";
+		printf( "<li>%s</li>\n", FancyJournoLink( $j ) );
 	}
 	print "</ul>\n";
-	print "<p>{$cnt} Matches</p>";
 }
 
 
@@ -164,25 +173,22 @@ function FindByOutlet( $outlet )
 	printf( "<h2>Journalists who have written for %s</h2>",
    		$org['prettyname'] );
 
-	$sql = "SELECT j.ref, j.prettyname, j.lastname, count(a.id) " .
+	$sql = "SELECT j.ref, j.prettyname, j.oneliner, j.lastname, count(a.id) " .
 		"FROM (( article a INNER JOIN journo_attr ja ON (a.status='a' AND a.id=ja.article_id) ) " .
 			"INNER JOIN journo j ON (j.status='a' AND j.id=ja.journo_id) ) " .
 		"WHERE a.srcorg=?  " .
-		"GROUP BY j.ref,j.prettyname,j.lastname " .
+		"GROUP BY j.ref,j.prettyname,j.oneliner,j.lastname " .
 		"ORDER BY count DESC";
 
 	$q = db_query( $sql, $org['id'] );
 
-	$cnt = 0;
+	printf( "<p>Found %d matches</p>", db_num_rows($q) );
 	print "<ul>\n";
 	while( $j = db_fetch_array($q) )
 	{
-		$cnt++;
-		$url = $j['ref'];
-		print "<li><a href=\"{$url}\">{$j['prettyname']}</a> ({$j['count']} articles)</li>\n";
+		printf( "<li>%s (%d articles)</li>\n", FancyJournoLink( $j ), $j['count'] );
 	}
 	print "</ul>\n";
-	print "<p>{$cnt} Matches</p>";
 }
 
 
@@ -193,7 +199,7 @@ function FindByText( $searchtext )
 	$orgs = get_org_names();
 
 	$sql = <<<EOT
-SELECT j.id AS journo_id, j.ref, j.prettyname, a.id AS article_id,a.title,a.permalink,a.pubdate,a.srcorg
+SELECT j.id AS journo_id, j.ref, j.prettyname, j.oneliner, a.id AS article_id,a.title,a.permalink,a.pubdate,a.srcorg
 	FROM ((article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
 		INNER JOIN journo j ON j.id=attr.journo_id)
 	WHERE a.status='a'
@@ -208,6 +214,7 @@ EOT;
 
 	// want to group articles by journo
 	$journo_id = null;
+	printf( "<p>Found %d matching articles</p>", db_num_rows($q) );
 	print "<ul>\n";
 
 	$articlecnt = 0;
@@ -232,16 +239,15 @@ EOT;
 			//start new journo
 			$journo_id = $row['journo_id'];
 
-			$journo_url = '/' . $row['ref'];
-			printf( " <li><a href=\"%s\">%s</a>\n", $journo_url, $row['prettyname'] );
+			printf( " <li>%s\n", FancyJournoLink( $row ) );
 			print( "  <ul>\n" );	// start article sublist
 		}
 		$art_html = sprintf( "%s (%s, %s)", $row['title'], $pubdate, $org );
 
 		// article
-		print "   <li>";
-		print "<a href=\"/article?id={$row['article_id']}\">{$row['title']}</a>, {$pubdate}, <em>{$org}</em>";
-		print "<small>(<a href=\"{$row['permalink']}\">original article</a>)</small";
+		print "   <li>\n";
+		print "    <a href=\"/article?id={$row['article_id']}\">{$row['title']}</a><br />\n";
+		print "    <cite class=\"posted\"<a href=\"{$row['permalink']}\">{$pubdate}, <em>{$org}</em></a></cite>\n";
 		print "   </li>";
 	}
 
@@ -254,6 +260,6 @@ EOT;
 
 	print "</ul>\n";
 
-	printf( "<p>Found %d matching articles by %d journalists</p>", $articlecnt, $journocnt );
+//	printf( "<p>Found %d matching articles by %d journalists</p>", $articlecnt, $journocnt );
 }
 ?>

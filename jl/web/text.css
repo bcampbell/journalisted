@@ -112,6 +112,8 @@ body {
 .posted a { color:#666565; }
 .posted a:hover { color:#333232; }
 
+/* short journo description (oneliner) */
+.journodesc { font-style: normal; font-size: smaller; color:#666565; }
 
 /* .disclaimer (eg"Based on N articles in M publications...") */
 
