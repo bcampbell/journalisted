@@ -9,7 +9,7 @@
  */
 
 $short_opts = '';
-$long_opts = array('verbose', 'help');
+$long_opts = array('verbose', 'help', 'dryrun' );
 
 chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 require_once "../conf/general";
@@ -30,6 +30,7 @@ $verbose = 0;
 $dryrun = 0;
 foreach( $switches as $switch) {
 	if ($switch[0]=='--verbose') $verbose = 1;
+	if ($switch[0]=='--dryrun') $dryrun = 1;
 	if ($switch[0]=='--help') {
 		Usage();
         exit;
@@ -49,7 +50,10 @@ $end = getmicrotime();
 $content = ob_get_contents();
 ob_end_clean();
 
-cache_set( $cacheid, $content );
+if( $dryrun )
+    print $content;
+else
+    cache_set( $cacheid, $content );
 
 if( $verbose )
 	printf( "done (in %.3fs)\n", $end-$start );
@@ -68,6 +72,7 @@ Usage: build-front-page [--verbose]
 
 --help      Display this help message
 --verbose   output progress to stdout
+--dryrun    output html stdout instead of loading into htmlcache table
 <?
 }
 
