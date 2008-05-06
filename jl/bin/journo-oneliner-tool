@@ -24,9 +24,10 @@ def run():
     for j in journos:
         desc = BuildOneLiner( conn, j['id'] )
         desc = desc.encode( 'utf-8' )
-        c.execute( """BEGIN""" )
+#        c.execute( """BEGIN""" )
         c.execute( """UPDATE journo SET oneliner=%s WHERE id=%s""", desc, j['id'] )
-        c.execute( """COMMIT""" )
+#        c.execute( """COMMIT""" )
+        conn.commit()
         ukmedia.DBUG( u"%s: %s\n" % ( j['prettyname'].decode('utf-8'), desc.decode('utf-8') ) )
 
 def BuildOneLiner( conn, journo_id ):
