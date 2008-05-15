@@ -28,7 +28,7 @@ Create the new one:
   $ createdb -U mst -E latin-1 mst
 
 Allow PL/PgSQL stored procedures:
-  $ sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;"
+  $ sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;" mst
 
 To initialize database:
   $ psql -U mst mst -f jl/db/schema.sql
