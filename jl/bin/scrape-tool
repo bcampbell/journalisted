@@ -20,6 +20,9 @@ def main():
 
     url = options.url
     scraper = scrapefront.PickScraper( url )
+    if not scraper:
+        sys.exit( "ERROR: No scraper found to handle url '%s'" % (url) )
+
 
     if options.dryrun:
         store = ArticleDB.DummyArticleDB()  # testing

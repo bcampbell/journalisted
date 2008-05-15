@@ -13,7 +13,8 @@ require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 
 
-$scraperdir = OPTION_JL_FSROOT . '/scraper';
+// path to JL bin/ directory (NO trailing slash!)
+$jlbin = OPTION_JL_FSROOT . '/bin';
 
 
 admPageHeader();
@@ -21,18 +22,7 @@ admPageHeader();
 $url = get_http_var( 'url', '' );
 $action = get_http_var( 'action' );
 $preview = $action ? get_http_var( 'preview' ) : 'on';
-$scraper = get_http_var( 'scraper', 'guardian' );
 
-
-$scrapers = array( 'bbcnews' => 'bbcnews.py',
-	'dailymail' => 'dailymail.py',
-	'express' => 'express.py',
-	'guardian' => 'guardian.py',
-	'independent' => 'independent.py',
-	'mirror' => 'mirror.py',
-	'sun' => 'sun.py',
-	'telegraph' => 'telegraph.py',
-	'times' => 'times.py' );
 
 /*
 print "<pre>";
@@ -55,18 +45,6 @@ print "</pre>";
 </label>
 <br />
 
-
-<label for="scraper">Which scraper?</label><br />
-<select id="scraper" name="scraper">
-<?php
-foreach( $scrapers as $k=>$v )
-{
-	printf( "	<option value=\"%s\" %s>%s</option>\n", $k, $scraper==$k?'selected ' : '', $k );
-}
-?>
-</select>
-<br />
-
 <input type="submit" name="action" value="Go" />
 </form>
 <?php
@@ -75,7 +53,7 @@ foreach( $scrapers as $k=>$v )
 if( $action == 'Go' && $url != '')
 {
 	/* Do it! */
-	$cmd = $scraperdir . "/" . $scrapers[$scraper];
+	$cmd = $jlbin . "/scrape-tool";
 	if( $preview )
 		$cmd = $cmd . ' -d';
 	$cmd = $cmd . ' -u "' . $url . '"';
