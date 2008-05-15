@@ -1,0 +1,42 @@
+#!/usr/bin/env python2.4
+
+import sys
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import ArticleDB,ukmedia
+
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+
+def main():
+    parser = OptionParser()
+    parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+    parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+
+    (options, args) = parser.parse_args()
+
+    url = options.url
+    scraper = scrapefront.PickScraper( url )
+
+    if options.dryrun:
+        store = ArticleDB.DummyArticleDB()  # testing
+    else:
+       store = ArticleDB.ArticleDB()
+
+    articles = []
+    context = scraper.ContextFromURL( url )
+    articles.append( context )
+
+    # call any scraper init required
+    if hasattr( scraper, "Prep" ):
+        scraper.Prep()
+
+    ukmedia.ProcessArticles( articles, store, scraper.Extract,
+        showexisting=True)
+
+if __name__ == "__main__":
+    main()
+
