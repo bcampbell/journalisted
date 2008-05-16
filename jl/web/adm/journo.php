@@ -190,10 +190,12 @@ function EmitJourno( $journo_id )
 /* show a list of all the articles attributed to this journo */
 function EmitArticles( $journo_id )
 {
+	$orgs = get_org_names();
+
 	print "<h3>Articles</h3>\n";
 
 	$sql = <<<EOT
-SELECT id,title,srcurl,status,srcorg,pubdate
+SELECT id,title,permalink,status,srcorg,pubdate
 	FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
 		WHERE attr.journo_id=?
 EOT;
@@ -208,17 +210,18 @@ EOT;
 	foreach( $rows as $row )
 	{
 		$id  = $row['id'];
-		$srcurl = $row['srcurl'];
+		$permalink = $row['permalink'];
 		$title = $row['title'];
 		$status = $row['status'];
-
+		$org = $orgs[ $row['srcorg'] ];
+		$pubdate = pretty_date(strtotime($row['pubdate']));
 
 		// TODO: correct the class usage!
-		$divclass = $status ? 'bio_approved':'bio_unapproved';
+		$divclass = $status=='a' ? 'bio_approved':'bio_unapproved';
 
 		print " <li>\n";
 		print(" <div class=\"$divclass\"><a href=\"/adm/article?article_id=$id\">$title</a>" );
-		print("  <small>[<a href=\"$srcurl\">original article</a>]</small></div>\n" );
+		print("  <small>{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
 		print " </li>\n";
 	}
 ?>
