@@ -454,6 +454,11 @@ def Extract( html, context ):
 
 	bodydiv = artdiv.find( 'div', {'id':'va-bodytext'} )
 
+	for cruft in bodydiv.findAll( 'div', {'class':'MPUTitleWrapperClass'}):
+        # kill adverts
+		cruft.extract()
+	for cruft in bodydiv.findAll( 'div', {'id':'ds-mpu'}):
+		cruft.extract()
 	for cruft in bodydiv.findAll( 'div', {'id':'va-inlinerightwrap'}):
 		cruft.extract()
 	for cruft in bodydiv.findAll( 'div', {'id':'ds-mpu'}):
