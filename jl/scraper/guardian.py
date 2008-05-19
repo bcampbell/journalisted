@@ -67,7 +67,9 @@ rssfeeds = {
 	'guardian.co.uk Business: Healthcare industry': 'http://www.guardian.co.uk/business/healthcare/rss',
 	'guardian.co.uk Business: Insurance industry': 'http://www.guardian.co.uk/business/insurance/rss',
 	'guardian.co.uk Business: Mergers and acquisitions': 'http://www.guardian.co.uk/business/mergersandacquisitions/rss',
-	'guardian.co.uk Business: Technology': 'http://www.guardian.co.uk/business/technology/rss',
+# TEMP - they're doing a full-feed experiment with Tech feeds...!
+#	'guardian.co.uk Business: Technology': 'http://www.guardian.co.uk/business/technology/rss',
+# END TEMP
 	'guardian.co.uk Business: Travel & leisure': 'http://www.guardian.co.uk/business/travelleisure/rss',
 	'guardian.co.uk Business: Utilities': 'http://www.guardian.co.uk/business/utilities/rss',
 	'guardian.co.uk Business: Market forces column': 'http://www.guardian.co.uk/business/marketforces/rss',
@@ -99,14 +101,16 @@ rssfeeds = {
 	'Guardian Unlimited Science: Bad science': 'http://www.guardian.co.uk/science/series/badscience/rss',
 
 	# TECHNOLOGY - http://www.guardian.co.uk/technology
-	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/technology/rss',
-	'Guardian Unlimited Technology: News': 'http://www.guardian.co.uk/technology/news/rss',
-	'Guardian Unlimited Technology: Comment': 'http://www.guardian.co.uk/technology/comment/rss',
-	'Guardian Unlimited Technology: Games': 'http://www.guardian.co.uk/technology/games/rss',
-	'Guardian Unlimited Technology: Gadgets': 'http://www.guardian.co.uk/technology/gadgets/rss',
-	'Guardian Unlimited Technology: Internet': 'http://www.guardian.co.uk/technology/internet/rss',
-	'Guardian Unlimited Technology: Inside IT': 'http://www.guardian.co.uk/technology/it/rss',
-	'Guardian Unlimited Technology: Telecoms': 'http://www.guardian.co.uk/technology/telecoms/rss',
+# TEMP - they're doing a full-feed experiment with Tech feeds...!
+#	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/technology/rss',
+#	'Guardian Unlimited Technology: News': 'http://www.guardian.co.uk/technology/news/rss',
+#	'Guardian Unlimited Technology: Comment': 'http://www.guardian.co.uk/technology/comment/rss',
+#	'Guardian Unlimited Technology: Games': 'http://www.guardian.co.uk/technology/games/rss',
+#	'Guardian Unlimited Technology: Gadgets': 'http://www.guardian.co.uk/technology/gadgets/rss',
+#	'Guardian Unlimited Technology: Internet': 'http://www.guardian.co.uk/technology/internet/rss',
+#	'Guardian Unlimited Technology: Inside IT': 'http://www.guardian.co.uk/technology/it/rss',
+#	'Guardian Unlimited Technology: Telecoms': 'http://www.guardian.co.uk/technology/telecoms/rss',
+# END TEMP
 	#'Ask Jack': 'http://blogs.guardian.co.uk/askjack/atom.xml',
 
 	#TRAVEL - http://www.guardian.co.uk/travel
@@ -144,7 +148,9 @@ rssfeeds = {
 	'Guardian Unlimited Science': 'http://www.guardian.co.uk/rssfeed/0,,18,00.xml',
 	'Guardian Unlimited Shopping': 'http://www.guardian.co.uk/rssfeed/0,,22,00.xml',
 	'Guardian Unlimited Sport': 'http://www.guardian.co.uk/rssfeed/0,,7,00.xml',
-	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
+# TEMP - they're doing a full-feed experiment with Tech feeds...!
+#	'Guardian Unlimited Technology': 'http://www.guardian.co.uk/rssfeed/0,,20,00.xml',
+# END TEMP
 	'Guardian Unlimited The Guide': 'http://www.guardian.co.uk/rssfeed/0,,21,00.xml',
 	# OLD media guardian rss
 	'Media Guardian': 'http://www.guardian.co.uk/rssfeed/0,,4,00.xml',
