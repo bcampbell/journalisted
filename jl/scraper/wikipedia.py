@@ -109,6 +109,7 @@ def Extract(html, context):
     context['pubdate'] = ukmedia.ParseDateTime(m.group(1))
 
     # Extract infobox. Unfortunately BeautifulSoup isn't up to it.
+    image = ''
     infobox = None
     m = re.compile('<table class="[^"]*infobox[^"]*?".*?>.*?</table>', re.DOTALL).search(html)
     if m:

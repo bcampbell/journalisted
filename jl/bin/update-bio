@@ -45,21 +45,22 @@ def store_context(context, journo_id, cursor):
         if isinstance(v, datetime):
             context[k] = v.isoformat()[:19]
     context_json = simplejson.dumps(context).encode('utf-8')
+    srcurl = context['srcurl']
+
     cursor.execute("SELECT id FROM journo_bio "
                    "WHERE journo_id=%s LIMIT 2", [journo_id])
     rows = cursor.fetchall()
     assert len(rows)<2, "Multiple bios found, I don't know which to update"
     updated = False
     if rows:
-        cursor.execute("UPDATE journo_bio SET context=%s, bio=%s, approved=false "
-                       "WHERE journo_id=%s ",
-                       [context_json, bio, journo_id])
+        bio_id = rows[0]['id'];
+        cursor.execute("UPDATE journo_bio SET context=%s, bio=%s, srcurl=%s, approved=false "
+                       "WHERE id=%s ",
+                       [context_json, bio, srcurl, bio_id])
         updated = True
-        cursor.fetchall()
     else:
-        cursor.execute("INSERT INTO journo_bio (journo_id, context, bio, approved, type) "
-                       "VALUES (%s, %s, %s, false, 'wikipedia:journo')", [journo_id, context_json, bio])
-        cursor.fetchall()
+        cursor.execute("INSERT INTO journo_bio (journo_id, context, bio, approved, type, srcurl) "
+                       "VALUES (%s, %s, %s, false, 'wikipedia:journo', %s)", [journo_id, context_json, bio, srcurl ])
     return bio, updated
 
 def scrape(journo_id, journo_ref, prettyname, url):
