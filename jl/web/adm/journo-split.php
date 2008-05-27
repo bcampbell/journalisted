@@ -293,7 +293,10 @@ function SplitJourno( $params )
 
 	// move articles
 	$orglist = implode( ',', $params['split_orgids'] );
-	$sql = <<<EOD
+
+    if( $orglist )
+    {
+    	$sql = <<<EOD
 UPDATE journo_attr SET journo_id=?
 	WHERE journo_id=? AND article_id IN
 		(
@@ -303,13 +306,13 @@ UPDATE journo_attr SET journo_id=?
 		)
 EOD;
 
-	db_do( $sql, $toj['id'], $fromj['id'], $fromj['id'] );
+    	db_do( $sql, $toj['id'], $fromj['id'], $fromj['id'] );
 
-	// update jobtitles (could create dupes, but hey)
-	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=? AND org_id in ({$orglist})", $toj['id'], $fromj['id'] );
+    	// update jobtitles (could create dupes, but hey)
+    	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=? AND org_id in ({$orglist})", $toj['id'], $fromj['id'] );
 
-	// TODO: other data to move??? links? email?
-
+    	// TODO: other data to move??? links? email?
+    }
 
 	// Clear the htmlcache for the to and from journos
 	cache_clear( 'j'.$fromj['id'] );
@@ -319,8 +322,11 @@ EOD;
 
 	print "<p>It worked!</p>\n";
 
-	printf( "from: <a href=\"/%s\">%s (id %d)</a><br />\n", $fromj['ref'],$fromj['ref'], $fromj['id'] );
-	printf( "to: <a href=\"/%s\">%s (id %d)</a><br />\n", $toj['ref'],$toj['ref'], $toj['id'] );
+	printf( "from: <a href=\"/%s\">%s (id %d)</a>\n", $fromj['ref'],$fromj['ref'], $fromj['id'] );
+    printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $fromj['id'] );
+
+	printf( "to: <a href=\"/%s\">%s (id %d)</a>\n", $toj['ref'],$toj['ref'], $toj['id'] );
+    printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $toj['id'] );
 
 }
 

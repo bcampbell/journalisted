@@ -18,7 +18,12 @@ $statusnames = array('i'=>'i - Inactive', 'a'=>'a - Active', 'h'=>'h - Hidden' )
 $journo_id = get_http_var( 'journo_id' );
 $action = get_http_var( 'action' );
 
-admPageHeader();
+$journo_name = 'Journos';
+if( $journo_id )
+    $journo_name = db_getOne( "SELECT prettyname FROM journo WHERE id=?",$journo_id);
+
+
+admPageHeader( $journo_name );
 
 switch( $action )
 {

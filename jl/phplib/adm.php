@@ -11,14 +11,14 @@ err_set_handler_display('admin_display_error');
 
 
 
-function admPageHeader()
+function admPageHeader( $title = '' )
 {
 	header( 'Content-Type: text/html; charset=utf-8' );
 
 ?>
 <html>
 <head>
-<title>Journalisted admin</title>
+<title>JL admin<?php if( $title ) { print " - $title"; }; ?></title>
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
 </head>
 <body>
@@ -27,7 +27,7 @@ function admPageHeader()
 <a href="article">Articles</a> |
 <a href="scrape">Scrape</a> |
 <a href="journo-bios">Journo-Bios</a> |
-<a href="journo-email">Journo-Email</a>
+<a href="journo-email">Journo-Email</a> |
 <a href="journo-split">Split Journos</a>
 <hr>
 <?php
