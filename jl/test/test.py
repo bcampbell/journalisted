@@ -38,21 +38,86 @@ from JL import Byline
 tagpat = re.compile( r"([a-z])\[(.*?)\]" );
 
 
-def ParseLine( line ):
-    results = { 'n': [], 'l':[], 't':[], 'a':[], 'e':[] }
+def ParseTaggedByline( taggedbyline ):
+    results = []
 
-    for m in tagpat.finditer( line ):
-        results[ m.group(1) ].append( m.group(2) )
+#    results = { 'n': [], 'l':[], 't':[], 'a':[], 'e':[] }
 
-    return ( tagpat.sub( r"\2", line ), results )
+    person = None
+    for m in tagpat.finditer( taggedbyline ):
+        type = m.group(1)
+        v = m.group(2)
 
+        if( type == 'n' ):
+            # finish old person...
+            if person:
+                results.append( person )
+            # ...start new person
+            person = { 'name': v }
+        elif type == 'l' and person:
+            person['loc'] = v
+        elif type == 't' and person:
+            person['title'] = v
+        elif type == 'a' and person:
+            person['agency'] = v
+        elif type == 's' and person:
+            person['subject'] = v
+        elif type == 'e' and person:
+            person['email'] = v
+        #        else: warn about unknown tag?
+
+    # store unclosed person
+    if person:
+        results.append( person )
+
+    rawbyline = tagpat.sub( r"\2", taggedbyline )
+    return ( rawbyline, results )
+
+
+def FindName( name, results ):
+    for j in results:
+        if j['name'] == name:
+            return j
+    return None
+
+
+def TestFunc( byline ):
+    fixuppat = re.compile( ur"([a-z]{3,})([A-Z])", re.UNICODE )
+    byline = fixuppat.sub( r"\1 \2", byline )
+
+
+    extractpat = re.compile( ur".*(by|from|writes|reports|discovers|[:])\s+(.*)\s*$", re.UNICODE | re.IGNORECASE )
+
+    foo = extractpat.sub( r"\2", byline )
+    print "FOO: " ,foo
+    return Byline.CrackByline( foo )
+
+
+def RateResults( found, expected ):
+    right=0
+    wrong=0
+    missed=0
+
+    for f in found:
+        if FindName( f['name'], expected ):
+            right = right + 1
+        else:
+            # uh-oh... this is bad...
+            # a wrong name is worse than missed one.
+            wrong = wrong + 1
+
+    for e in expected:
+        if not FindName( e['name'], found ):
+            missed = missed + 1
+
+    return ( right, wrong, missed )
 
 
 
 def Run():
-    namecnt = 0
-    correct = 0
-
+    totalright = 0
+    totalwrong = 0
+    totalmissed = 0
     for l in sys.stdin:
         l = unicode( l, 'utf-8' )
         l = l.strip()
@@ -61,24 +126,27 @@ def Run():
         if l.startswith( u'#' ):
             continue
 
-        (raw,results) = ParseLine(l)
+        (raw,expected) = ParseTaggedByline(l)
 
-        namecnt = namecnt + len( results['n'] )
+        # call the fn we're testing with the raw byline
+        found = TestFunc( raw )
 
-        t = Byline.CrackByline( raw )
-        if t:
-            for person in t:
-                if person['name'] in results['n']:
-                    correct = correct + 1
+        if found == None:
+            found = []
 
-        print "--------------"
-        print raw
-        print "  actual: ", results
-        print "  CrackByline: ", t
-        print
-        print
+        (right,wrong,missed) = RateResults( found, expected )
 
-    print "got %d of %d names correct" % ( correct,namecnt )
+        if( right != len(expected) ):
+            print "--------------"
+            print l.encode( 'utf-8' )
+            print found
+            print "%d right, %d wrong, %d missed" % (right,wrong,missed)
+
+        totalright = totalright + right
+        totalwrong = totalwrong + wrong
+        totalmissed = totalmissed + missed
+
+    print "OVERALL: %d right, %d wrong, %d missed" % (totalright,totalwrong,totalmissed)
 
 
 
