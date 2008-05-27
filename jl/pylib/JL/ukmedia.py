@@ -329,8 +329,8 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
         DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
         if USE_CACHE:
-            FetchURL(feedurl, defaulttimeout, "rssCache\\"+srcorgname)
-            r = feedparser.parse( "rssCache\\"+srcorgname+"\\"+GetCacheFilename(feedurl) )
+            FetchURL(feedurl, defaulttimeout, os.path.join( "rssCache", srcorgname ) )
+            r = feedparser.parse( os.path.join( "rssCache", srcorgname, GetCacheFilename(feedurl) ) )
         else:
             r = feedparser.parse( feedurl )
         
@@ -410,7 +410,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
                     DBUG( u"already got '%s' - [a%s]\n" % (context['srcurl'], article_id ) )
                 continue;   # skip it - we've already got it
 
-            html = FetchURL( context['srcurl'], defaulttimeout, "cache\\"+context['srcorgname'] )
+            html = FetchURL( context['srcurl'], defaulttimeout, os.path.join( "cache", context['srcorgname'] ) )
             
             # some extra, last minute context :-)
             context[ 'lastscraped' ] = datetime.now()
@@ -581,16 +581,14 @@ def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
     socket.setdefaulttimeout( timeout )
     # some URLs are down as https erroneously, fix this:
     url = re.sub(u'\\bhttps\\b',u'http',url)
-    #DEBUG  print "FetchURL: ",url
 
     attempt = 0
     while 1:
         try:
             if USE_CACHE:
                 if not os.path.exists(cacheDirName):
-                    os.mkdir(cacheDirName)
-                cachedFilename = cacheDirName+'\\'+GetCacheFilename(url)
-        #   print cachedFilename
+                    os.makedirs(cacheDirName)
+                cachedFilename = os.path.join( cacheDirName, GetCacheFilename(url) )
             if USE_CACHE and os.path.exists(cachedFilename):
                 # read from cache instead of from the internet:
                 f = open(cachedFilename,'r')
