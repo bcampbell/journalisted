@@ -9,6 +9,9 @@ need.
 
 All these notes assume your database is called 'mst' and there is a database
 user also called 'mst'.
+To create mst user:
+  $ sudo -u postgres createuser --no-superuser --no-createrole --createdb mst
+
 
 Text is utf-8 encoded and stored in a latin-1 DB. So the DB _thinks_ it's
 got latin-1 text, but the backend and website know that that text is really
@@ -38,3 +41,13 @@ Load backup:
   $ bzcat [backupfile] | psql -U mst mst
 or if you have a password set on the mst user:
   $ bzcat [backupfile] > /tmp/blah  &&  psql -U mst mst -f /tmp/blah  &&  rm /tmp/blah
+
+
+Postgres 8.3 notes
+------------------
+
+- can no longer create DBs which have encoding other than what the cluster uses.
+- can turn this off by settings locale to POSIX (or C):
+sudo pg_createcluster --locale POSIX 8.3 main
+
+
