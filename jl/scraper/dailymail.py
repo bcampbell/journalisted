@@ -18,301 +18,277 @@ import urlparse
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup,NavigableString,Tag
 from JL import ukmedia,ScraperUtils
 
 
-rssfeeds = {
-	'Homepage': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1766',
-	'Mail on Sunday': 'http://feeds.feedburner.com/dailymail/MailonSundayHomepage',
-	'News': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1770',
-	'News headlines': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1770&in_chn_id=1674&in_headlines=Y',
-	'World news': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1811',
-	# Comment has editorials, but no columnists...
-	'Comment': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1787',
-	'Sport': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1771',
-	'Football': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1779',
-	'Rugby union': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1780',
-	'Cricket': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1849',
-	'Other sport': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1781',
-	'TV & showbiz': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1773',
-	'Health': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1774',
-	'Diet & fitness': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1798',
-	'Women & family': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1799',
-	'Femail': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1879',
-	'In the stands': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1867',
-	# promos have missing dates... (maybe other stuff missing too)...
-#	'Promotions': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1777',
-	'Live Night & Day': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1889',
-	'Health notes': 'http://www.dailymail.co.uk/pages/xml/index.html?in_page_id=1909',
-	'Baz Bamigboye': 'http://feeds.feedburner.com/dailymail/BazBamigboye',
-	'Jaci Stephen': 'http://feeds.feedburner.com/dailymail/JaciStephen',
-	'Reviews': 'http://feeds.feedburner.com/dailymail/TVShowbizReviews',
-	'Rugby league': 'http://feeds.feedburner.com/dailymail/MailOnlineRugbyLeague',
-	'Motorsport': 'http://feeds.feedburner.com/dailymail/Motorsport',
-	'Golf': 'http://feeds.feedburner.com/dailymail/MailOnlineGolf',
-	'American sports': 'http://feeds.feedburner.com/dailymail/AmericanSports',
-	'Schools football': 'http://feeds.feedburner.com/dailymail/SchoolsFootball',
-	'Science and technology': 'http://feeds.feedburner.com/dailymail/ScienceandTech',
-	'Horse racing': 'http://feeds.feedburner.com/dailymail/HorseRacing',
-	'Tennis': 'http://feeds.feedburner.com/dailymail/tennis',
-	'Big Brother': 'http://feeds.feedburner.com/dailymail/BigBrother',
-	'Cricket World Cup': 'http://feeds.feedburner.com/TheMailOnline/Cricketworldcup',
-	'Arsenal': 'http://feeds.feedburner.com/dailymail/arsenal',
-	'Aston Villa': 'http://feeds.feedburner.com/dailymail/astonvilla',
-	'Birmingham': 'http://feeds.feedburner.com/dailymail/birmingham',
-	'Blackburn': 'http://feeds.feedburner.com/dailymail/blackburn',
-	'Bolton': 'http://feeds.feedburner.com/dailymail/bolton',
-	'Chelsea': 'http://feeds.feedburner.com/dailymail/chelsea',
-	'Derby': 'http://feeds.feedburner.com/dailymail/derby',
-	'Everton': 'http://feeds.feedburner.com/dailymail/everton',
-	'Fulham': 'http://feeds.feedburner.com/dailymail/fulham',
-	'Liverpool': 'http://feeds.feedburner.com/dailymail/liverpool',
-	'Manchester City': 'http://feeds.feedburner.com/dailymail/mancity',
-	'Manchester United': 'http://feeds.feedburner.com/dailymail/manutd',
-	'Middlesbrough': 'http://feeds.feedburner.com/dailymail/middlesbrough',
-	'Newcastle': 'http://feeds.feedburner.com/dailymail/newcastle',
-	'Portsmouth': 'http://feeds.feedburner.com/dailymail/portsmouth',
-	'Reading': 'http://feeds.feedburner.com/dailymail/reading',
-	'Sunderland': 'http://feeds.feedburner.com/dailymail/sunderland',
-	'Tottenham': 'http://feeds.feedburner.com/dailymail/tottenham',
-	'West Ham': 'http://feeds.feedburner.com/dailymail/westham',
-	'Wigan': 'http://feeds.feedburner.com/dailymail/wigan',
-	'Rangers': 'http://feeds.feedburner.com/dailymail/rangers',
-	'Celtic': 'http://feeds.feedburner.com/dailymail/celtic',
-}
+# page to read the list of rss feeds from
+rss_feed_page = "http://www.dailymail.co.uk/home/rssMenu.html"
+
 
 # page which lists columnists and their latest rants
-columnistmainpage = 'http://www.dailymail.co.uk/pages/live/columnists/dailymail.html'
+#columnistmainpage = 'http://www.dailymail.co.uk/pages/live/columnists/dailymail.html'
 
 
 def FindColumnistArticles():
-	"""Dailymail doesn't seem to have an RSS feed for it's columnists,
-	so we'll just grep for links on the columnist page.
-	TODO: could follow archive links for more articles..."""
+    """Dailymail doesn't seem to have an RSS feed for it's columnists,
+    so we'll just grep for links on the columnist page.
+    TODO: could follow archive links for more articles..."""
 
-	ukmedia.DBUG2("Searching Columnist page for articles\n")
-	foundarticles = []
-	html = ukmedia.FetchURL( columnistmainpage )
-	soup = BeautifulSoup( html )
+    ukmedia.DBUG2("Searching Columnist page for articles\n")
+    foundarticles = []
+    html = ukmedia.FetchURL( columnistmainpage )
+    soup = BeautifulSoup( html )
 
-	srcorgname = u'dailymail'
-	lastseen = datetime.now()
+    srcorgname = u'dailymail'
+    lastseen = datetime.now()
 
-	for h in soup.findAll( 'h3' ):
-		url = TidyURL( 'http://www.dailymail.co.uk' + h.a['href'] )
+    for h in soup.findAll( 'h3' ):
+        url = TidyURL( 'http://www.dailymail.co.uk' + h.a['href'] )
 
-		context = {
-			'srcid': CalcSrcID( url ),
-			'srcurl': url,
-			'permalink': url,
-			'srcorgname' : srcorgname,
-			'lastseen': lastseen,
-			}
-		foundarticles.append( context )
+        context = {
+            'srcid': CalcSrcID( url ),
+            'srcurl': url,
+            'permalink': url,
+            'srcorgname' : srcorgname,
+            'lastseen': lastseen,
+            }
+        foundarticles.append( context )
 
-	ukmedia.DBUG2("found %d columnist articles\n" % (len(foundarticles)) )
-	return foundarticles
-
-# get datetime from dailymail <span class='artDate'> format:
-# "Last updated at 13:23pm on 29th August 2006"
-def CrackDate( d ):
-	m = re.match( 'Last updated at ([0-9]+):([0-9]+)([ap]m) on ([0-9]+)\w\w (\w+) ([0-9]+)', d )
-	hours = int( m.group(1) )	# already 24hr time
-	minutes = int( m.group(2) )
-	ampm = m.group(3)
-	day = int( m.group(4) )
-	month = ukmedia.MonthNumber( m.group(5) )
-	year = int( m.group(6) )
-
-	d = datetime( year, month, day, hours, minutes )
-	return d
+    ukmedia.DBUG2("found %d columnist articles\n" % (len(foundarticles)) )
+    return foundarticles
 
 
-def KillCruft( soup, name, attrs ):
-	for cruft in soup.findAll( name, attrs ):
-		cruft.extract()
 
 
-# extract a single article from a page
+def FindRSSFeeds( rssurl ):
+    # TODO: can handle "Live mag" and "You mag" with a little more work
+    blacklist = ( 'Pictures', 'Coffee Break', 'Live mag', 'You mag' )
+
+    feeds = {}
+
+    html = ukmedia.FetchURL( rssurl )
+
+    soup = BeautifulSoup( html )
+    t = soup.find( 'table', {'class':'rss-feeds-table'} )
+    for a in t.findAll( 'a', {'href':re.compile('.rss$') } ):
+        n = a.string
+        if not n in blacklist:
+            url = 'http://www.dailymail.co.uk' + a['href']
+            feeds[ n ] = url
+
+    return feeds
+
+
+
+
 def Extract( html, context ):
+    """ Extract dailymail article """
 
-	# check for dailymail error message
-	if re.search( u"Article:\\d+ Not Found", html ):
-		ukmedia.DBUG2( "IGNORE Missing article (%s)\n" % (context['srcurl']) );
-		return None
+    art = context
 
+    soup = BeautifulSoup( html )
+    # quite possible that they still _really_ use windows-1252 despite
+    # claiming iso-8859-1...
+    # soup = BeautifulSoup( html, fromEncoding='windows-1252' )
 
-	art = context
+    maindiv = soup.find( 'div', {'class': re.compile(ur'\bartItem\b') } )
 
-	# do a pre-emptive strike and zap _everything_ after the main
-	# article text
-
-	cruftkillpat1 = re.compile( "\\s*<div id=\"social_links_sub\">.*", re.DOTALL )
-	cruftkillpat2 = re.compile( "\\s*<a name=\"StartComments\" id=\"StartComments\" ></a>.*", re.DOTALL )
-
-	html = cruftkillpat1.sub( '', html )
-	html = cruftkillpat2.sub( '', html )
-
-	# dailymail _claims_ to use "iso-8859-1" encoding, but really it
-	# uses "windows-1252". Sigh.
-	soup = BeautifulSoup( html, fromEncoding='windows-1252' )
-
-	# get Description
-	foo = soup.find( 'meta', {'name':'description'} )
-	art['description'] = ReformatLines( foo[ 'content' ] )
-	art['description'] = ukmedia.FromHTML( art['description'] )
-
-	articlediv = soup.find( 'div', id='ArtContent' )
-
-	# get headline
-	headline = articlediv.find( 'h1' )
-	art[ 'title' ] = headline.renderContents( None )
-	art[ 'title' ] = ukmedia.FromHTML( art['title'] )
-
-	# get date posted
-	# two formats used:
-	# ""Last updated at 13:23pm on 29th August 2006" (main paper?)
-	# "20:12pm 23rd November 2007" (columnists?)
-	datespan = articlediv.find( 'span', {'class':'artDate' } )
-
-	if datespan:
-		datestr = datespan.string
-		if datestr.find("Last updated") != -1:
-			art['pubdate'] = CrackDate( datestr )	# old format
-		else:
-			art['pubdate'] = ukmedia.ParseDateTime( datestr )	# new format
-	else:
-		# Soap watch column has no date
-		if art['title'] == u'SOAP WATCH':
-			art['pubdate'] = datetime.now()
-		else:
-			raise Exception, ("Missing date")
+    # kill printPage div and everything after it
+    # (ie everything after article text)
+    printdiv = maindiv.find( 'div', {'class': 'printPage'} )
+    for cruft in printdiv.findAllNext():
+        cruft.extract()
+    printdiv.extract()
 
 
-	# is there a byline?
-	bylinespan = articlediv.find( 'span', {'class':'artByline' } )
-	if bylinespan:
-		byline = bylinespan.renderContents( None )
-		byline = ukmedia.DescapeHTML( byline )
-		byline = re.sub( u"\s*-\s*<a.*?>.*?</a>\s*", u'', byline )
-	else:
-		# Columnist pages have columnist name in colT div
-		colt = articlediv.find( 'div', {'class':'colT'} )
-		if colt:
-			colt.span.extract()	# cruft
-			byline = colt.renderContents( None )
-			colt.extract()
-		else:
-			byline = u''
+    titletxt = u''
+    # headline can be split across multiple h1s... (but only want ones
+    # near the top)
+    for e in maindiv.findAll( 'h1' ):
+        if e not in maindiv.contents[0:5]:
+            continue
+        titletxt = titletxt + u' ' + e.renderContents(None)
+        e.extract()
+    art['title'] =  ukmedia.FromHTML( titletxt )
 
-	art['byline'] = byline
+    # description/abstract in <h[23]>s near the top
+    desctxt = u''
+    for e in maindiv.findAll( re.compile( 'h[23]') ):
+        if e not in maindiv.contents[0:5]:
+            continue
+        desctxt = desctxt + e.renderContents(None)
+        e.extract()
+    desctxt = ukmedia.FromHTML( desctxt )
 
-	# Text extraction time...
+    # pull out previewLinks - links to comments
+    previewlinks = maindiv.find( 'ul', {'class': 'previewLinks' } )
+    if previewlinks:
+        previewlinks.extract();
 
-	# remove title, date, byline
-	headline.extract()
-	if datespan:
-		datespan.extract()
-	if  bylinespan:
-		bylinespan.extract()
+    # next part is byline and pubdate
+    # we assume pubdate always there and last thing...
+    bylinetxt = u''
+    e = maindiv.contents[0]
+    while 1:
+        s = u''
+        if isinstance( e, NavigableString ):
+#            print "&str& '%s'" % ( e )
+            s = unicode(e)
+        else:
+            s = e.renderContents( None )
+#            print "&tag&: '%s'" %(e.name)
+        n = e.nextSibling
+        e.extract()
+        e = n
+        bylinetxt = bylinetxt + s
+        if u'Last updated at' in s:
+            break;
 
-	# remove cruft
+    bylinetxt = ukmedia.FromHTML( bylinetxt )
 
-	KillCruft( articlediv, 'a', {'id': 'endAds'} )
-	KillCruft( articlediv, 'a', {'id': 'statecontent'} )
+    # split out the date part...
+    # eg "Last updated at 2:42 PM on 22nd May 2008"
+    pat = re.compile( ur"(.*?)\s*Last updated at (.* (?:on )?.* \d{4})", re.IGNORECASE|re.DOTALL )
+    m = pat.match( bylinetxt )
 
-	# comments link
-	KillCruft( articlediv, 'a', {'href': re.compile(".*StartComments$") } )
-
-	# zap blocks (top stories, email newsletter etc...)
-	KillCruft( articlediv, 'div', { 'class':'right', 'id':'LookHere' } )
-
-	# zap extra links embedded in the article
-	for cruft in articlediv.findAll( 'span', { 'class':'ereaderFilter' } ):
-		cruft.extract()
-
-	# image blocks...
-	for cruft in articlediv.findAll( 'strong', ):
-		if unicode( cruft ).find( u"Scroll down for more" ) != -1:
-			cruft.extract()
-	KillCruft( articlediv, 'div', { 'id': re.compile('.*ArtContentImgBody.*' ) } )
-
-	# "Read More..." blocks...
-	KillCruft( articlediv, 'div', { 'class': re.compile( '.*ArtInlineReadLinks.*' ) } )
-
-	# whatever is left is our text!
-	content = articlediv.renderContents( None )
-	art['content'] = ReformatLines( ukmedia.SanitiseHTML( content ) )
-	return art
-
+    art['byline'] = m.group(1)
+    art['byline'] = u' '.join( art['byline'].split() )
+    pubdatetxt = m.group(2)
+    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
 
 
+    if( art['byline'] ) == u'':
+        # columnists have no bylines, but might have a "More From ..." bit in <div class="columnist-archive"
+        columnistdiv = maindiv.find( 'div', {'class':'columnist-archive'} )
+        if columnistdiv:
+            h3 = columnistdiv.h3
+            morefrompat = re.compile( ur'More from\s+(.*?)\s*[.]{3}', re.IGNORECASE )
+            m = morefrompat.search( h3.renderContents(None) )
+            art['byline'] = ukmedia.FromHTML( m.group(1) )
 
-urltrimpat=re.compile( "(.*?[?]in_article_id=[0-9]+).*$" )
 
-def TidyURL( url ):
-	# trim off cruft
-	return urltrimpat.sub( "\\1", url )
+    # now extract article text
 
-def ReformatLines(content):
-	''' Replaces whitespace within paragraphs with single spaces. '''
-	paras = []
-	for para in content.split('<p'):
-		paras.append(re.sub(r'\s+', ' ', para))
-	content = '\n\n<p'.join(paras)
-	return content
+    # cruft removal
+    for cruft in maindiv.findAll( 'img' ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'p', {'class':'imageCaption'} ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'p', {'class':'scrollText'} ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'span', {'class':re.compile('^clickTo.*$') } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':'clear'} ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':re.compile('^related.*$') } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':re.compile('^thinFloat') } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':'columnist-archive' } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':'floatRHS' } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'a', {'class':re.compile('^lightbox') } ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':re.compile('ArtInlineReadLinks') } ):
+        cruft.extract()
+
+    contenttxt = maindiv.prettify(None)
+    contenttxt = contenttxt.replace( u'<o:p>', u'' )
+    contenttxt = contenttxt.replace( u'</o:p>', u'' )
+    contenttxt = ukmedia.SanitiseHTML( contenttxt )
+    art['content'] = contenttxt
+
+    if desctxt == u'':
+        desctxt = ukmedia.FirstPara( contenttxt )
+
+    desctxt = u' '.join( desctxt.split() )
+    art['description'] = desctxt
+
+    return art
+
+
+
+
+
+
 
 def ScrubFunc( context, entry ):
-	"""mungefunc for ukmedia.FindArticlesFromRSS()"""
+    """mungefunc for ukmedia.FindArticlesFromRSS()"""
 
-	# most dailymail RSS feeds go through feedburner, but luckily the original url is still there...
-	url = context[ 'srcurl' ]
-	if url.find('feedburner') != -1:
-		url = entry.feedburner_origlink
-
-	url = TidyURL( url )
-
-	context['srcurl'] = url
-	context['permalink'] = url
-	context['srcid'] = CalcSrcID( url )
-	return context
+    # most dailymail RSS feeds go through feedburner, but luckily the original url is still there...
+    url = context[ 'srcurl' ]
+    url = TidyURL(url)
+    if url.find('feedburner') != -1:
+        url = entry.feedburner_origlink
 
 
-idpat = re.compile( "\\bin_article_id=(\d+)" )
+    context['srcurl'] = url
+    context['permalink'] = url
+    context['srcid'] = CalcSrcID( url )
+    return context
+
+
+tidypat = re.compile( "^(.*?[.]html)(?:[?].*)?$" )
+
+def TidyURL( url ):
+    return tidypat.sub( r'\1', url )
+
+# old style URLs:
+# http://www.dailymail.co.uk/pages/live/articles/news/news.html?in_article_id=564447
+# new style (from late may 2008):
+# http://www.dailymail.co.uk/news/article-564447/Tories-ready-govern-moments-notice-insists-bullish-Cameron.html
+#
+# notes:
+# - article id is same (hooray!)
+# - old urls are redirected to new ones
+# - text after article id ignored (redirected to canonical url)
+#    Canonical url form appears to be:
+#    http://www.dailymail.co.uk/news/article-564447/index.html
+idpats = [
+    re.compile( r"\bin_article_id=(\d+)" ),
+    re.compile( r"/article-(\d+)/.*[.]html" )
+    ]
 
 def CalcSrcID( url ):
-	""" Generate a unique srcid from a url """
-	o = urlparse.urlparse( url )
-	# blogs are handled by blogs.py
-	if o[1] not in ( 'www.dailymail.co.uk', 'www.mailonsunday.co.uk' ):
-		return None
+    """ Generate a unique srcid from a url """
 
-	m = idpat.search( url )
-	if not m:
-		return None
 
-	return 'dailymail_' + m.group(1)
+    o = urlparse.urlparse( url )
+    # blogs are handled by blogs.py
+    if o[1] not in ( 'www.dailymail.co.uk', 'www.mailonsunday.co.uk' ):
+        return None
+
+    for pat in idpats:
+        m = pat.search( url )
+        if m:
+            return 'dailymail_' + m.group(1)
+    return None
+
 
 def ContextFromURL( url ):
-	"""Set up for scraping a single article from a bare url"""
-	url = TidyURL( url )
-	context = {
-		'srcurl': url,
-		'permalink': url,
-		'srcid': CalcSrcID( url ),
-		'srcorgname': u'dailymail', 
-		'lastseen': datetime.now(),
-	}
-	return context
+    """Set up for scraping a single article from a bare url"""
+    url = TidyURL(url)
+    context = {
+        'srcurl': url,
+        'permalink': url,
+        'srcid': CalcSrcID( url ),
+        'srcorgname': u'dailymail', 
+        'lastseen': datetime.now(),
+    }
+    return context
 
 
 def FindArticles():
-	"""Look for recent articles"""
-	found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
-	# extra articles not from RSS feeds...
-	found = found + FindColumnistArticles()
-	return found
+    """Look for recent articles"""
+
+    rssfeeds = FindRSSFeeds( rss_feed_page )
+
+    found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
+    # extra articles not from RSS feeds...
+#    found = found + FindColumnistArticles()
+    return found
 
 
 if __name__ == "__main__":
