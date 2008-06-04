@@ -286,6 +286,15 @@ def Extract( html, context ):
 
     # just use regexes to extract the article text
     storybody = soup.find( "td", {'class':'storybody'} )
+    if not storybody:
+        # uh-oh... is it a video page?
+        av = soup.find( 'div', {'class':'wideav'} )
+        if av:
+            ukmedia.DBUG2( "IGNORE video-only page ( %s )\n" %( art['srcurl'] ) )
+            return None
+
+
+
     txt = storybody.renderContents(None)
     m = re.search( u'<!--\s*S BO\s*-->(.*)<!--\s*E BO\s*-->', txt, re.UNICODE|re.DOTALL )
     txt = m.group(1)
