@@ -40,7 +40,7 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
 		found = found + findarticles_fn()
 
 	if options.dryrun:
-		store = ArticleDB.DummyArticleDB()	# testing
+		store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )	# testing
 	else:
 		store = ArticleDB.ArticleDB()
 

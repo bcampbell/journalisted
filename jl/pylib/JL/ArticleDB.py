@@ -7,6 +7,7 @@ import Journo
 import Byline
 import ukmedia
 import Tags
+import Misc
 
 class Error(Exception):
     pass
@@ -35,23 +36,23 @@ class ArticleDB:
     text, title, content, description, byline should all be unicode
     """
 
-    def __init__(self):
+    def __init__(self, dryrun=False, reallyverbose=False ):
         self.conn = DB.Connect()
+        self.dryrun = dryrun
+        self.reallyverbose = reallyverbose
 
-        c = self.conn.cursor()
-        c.execute( "SELECT id,shortname FROM organisation" )
-        self.orgmap = {}
-        while 1:
-            row=c.fetchone()
-            if not row:
-                break
-            self.orgmap[ row[1] ] = row[0]
+        if dryrun:
+            ukmedia.DBUG( u"**** (DRY RUN) ****\n" )
+
 
     def Add( self, art ):
         """Store an article in the DB
 
         returns id of newly-added article
         """
+
+        if self.reallyverbose:
+            ukmedia.PrettyDump( art )
 
         CheckArticle( art )
 
@@ -66,7 +67,7 @@ class ArticleDB:
         content = art['content'].encode( 'utf-8' )
         srcurl = art['srcurl']
         permalink = art['permalink']
-        srcorg = self.orgmap[ art[ 'srcorgname' ] ]
+        srcorg = Misc.GetOrgID( self.conn, art[ 'srcorgname' ] )
         srcid = art['srcid']
 
 
@@ -87,12 +88,21 @@ class ArticleDB:
 
 
         # parse byline to assign/create journos
-        ProcessByline( self.conn, id, art['byline'], srcorg )
-        self.conn.commit()
+        journos = ProcessByline( self.conn, id, art )
 
-        ukmedia.DBUG2( u"%s: [a%s '%s'] (%s)\n" % (art['srcorgname'], id, art['title'], art['byline']) );
+        if self.dryrun:
+            self.conn.rollback()
+        else:
+            self.conn.commit()
 
-        # TODO: rollback on error!
+
+        ukmedia.DBUG2( u"%s: [a%s '%s'] ('%s' %s)\n" % (
+            art['srcorgname'],
+            id,
+            art['title'],
+            art['byline'],
+            ','.join( [ '[j%s]'%(j) for j in journos ] )
+            ))
         return id
 
 
@@ -110,28 +120,6 @@ class ArticleDB:
         return article_id
 
 
-
-class DummyArticleDB:
-    """stub for testing"""
-
-    def __init__(self):
-        self.id = 1
-
-
-    def Add( self, art ):
-        CheckArticle( art )
-
-        # just display article in a readable(ish) form
-        ukmedia.PrettyDump( art )
-
-        artid = self.id
-
-        self.id = artid + 1
-        ukmedia.DBUG2( u"%s: '%s' (%s)\n" % (art['srcorgname'], art['title'], art['byline']) );
-        return artid
-
-    def ArticleExists( self, srcid ):
-        return 0
 
 
 
@@ -204,17 +192,20 @@ def FixLinkURLs(html):
     return re.sub(r'''href\s*=\s*(?:['"](.*?)['"]|(\S*?)(?=\>))''', fixup, html)
 
 
-def ProcessByline( conn, article_id, byline, srcorgid ):
+def ProcessByline( conn, article_id, art ):
     """ Parse byline and assign to journos (creates journos along the way) """
+    byline = art['byline']
     details = Byline.CrackByline( byline )
     if details is None:
-        return None
+        return []
+
+    srcorgid = Misc.GetOrgID( conn, art['srcorgname'] )
 
     attributed = []
 
     # reminder: a byline can contain multiple journos
     for d in details:
-        journo_id = StoreJourno(conn, d['name'], srcorgid)
+        journo_id = StoreJourno(conn, d['name'], art )
         
         # credit journo with writing this article
         Journo.AttributeArticle( conn, journo_id, article_id )
@@ -226,12 +217,17 @@ def ProcessByline( conn, article_id, byline, srcorgid ):
 
     return attributed
 
-def StoreJourno(conn, name, srcorgid):
+
+def StoreJourno(conn, name, hints ):
+    ''' Finds or creates a journo, returning their id.
+
+    hints - extra data for looking up journo. Must include at least 'srcorgname'.
+    Can be a whole article, if available.
     '''
-    Stores the named journo if not already present.
-    '''
-    journo_id = Journo.FindJourno( conn, name, srcorgid )
+
+    journo_id = Journo.FindJourno( conn, name, hints )
     if not journo_id:
         journo_id = Journo.CreateNewJourno( conn, name )
         ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, name) )
     return journo_id
+
