@@ -255,8 +255,8 @@ def Extract_article( html, context ):
 
     headerdiv = soup.find( 'div', {'class':'ft-story-header'} )
     
-    h2 = headerdiv.h2
-    headline = h2.renderContents( None )
+    h = headerdiv.find( ['h2','h3' ] )
+    headline = h.renderContents( None )
     headline = ukmedia.FromHTML( headline )
 
     art['title'] = headline
@@ -274,7 +274,8 @@ def Extract_article( html, context ):
             return None
 
     # "Published: February 10 2008 22:05 | Last updated: February 10 2008 22:05"
-    datepat = re.compile( u"Published:\\s+(.*?)\\s*[|]", re.UNICODE )
+    # "Published: Mar 07, 2008"
+    datepat = re.compile( ur"Published:\s+(.*)\s*[|]?", re.UNICODE )
 
     byline = u''
     pubdate = None
