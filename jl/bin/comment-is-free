@@ -1,7 +1,6 @@
 #!/usr/bin/env python2.4
-#
-# Tool to scrape journo info from the guardian commentisfree site.
-#
+""" Tool to scrape journo info from the guardian commentisfree site. """
+
 
 import re
 from datetime import datetime
@@ -48,7 +47,8 @@ def run():
         bio = biodiv.p.renderContents(None)
         
         try:
-            journo_id = ArticleDB.StoreJourno(db.conn, name, guardian_srcorgid)
+            hints = { 'srcorgname': 'guardian' }
+            journo_id = ArticleDB.StoreJourno(db.conn, name, hints)
             saved_bio, saved_weblink = \
                save_journo_info(cursor, name, journo_id, profile_url, bio)
             saved += 1
