@@ -14,7 +14,7 @@ from datetime import datetime
 import site
 site.addsitedir( "../pylib" )
 from BeautifulSoup import BeautifulSoup
-from JL import ukmedia,ArticleDB
+from JL import ukmedia,ArticleDB,ScraperUtils
 
 # overall rss feed has last 15 articles:
 # http://commentisfree.guardian.co.uk/index.xml
@@ -320,9 +320,9 @@ def main():
 #   return
 
     rssfeeds = { 'overall': 'http://commentisfree.guardian.co.uk/index.xml' }
-    found = ukmedia.FindArticlesFromRSS( rssfeeds, u'guardian', None )
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'guardian', None )
     store = ArticleDB.ArticleDB()
-    ukmedia.ProcessArticles( found, store, Extract )
+    ScraperUtils.ProcessArticles( found, store, Extract )
 
 # TODO: modes of operation, selected by commandline options
 #

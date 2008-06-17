@@ -110,8 +110,8 @@ Action (with selected articles):
 <thead>
  <tr>
   <th>First attempt</th>
-  <th>URL</th>
   <th>Attempts</th>
+  <th>srcid/URL</th>
   <th>Action</th>
   <th>Select</th>
  </tr>
@@ -139,6 +139,7 @@ Action (with selected articles):
         $link = sprintf( "<a href=\"%s\">%s</a>",
             $srcurl,
             $title ? $title:$srcurl );
+        $link = "{$srcid}<br/><small>{$link}</small>";
 
         $detailsurl = "/adm/scrape-errors?srcid={$srcid}&action=detail";
         $detailslink = sprintf( "<small>[<a href=\"%s\">details</a>]</small>\n",
@@ -149,8 +150,8 @@ Action (with selected articles):
 
 		print(" <tr class=\"$trclass\">\n" .
 		      "  <td>{$firstattempt}</td>" .
-		        "<td>{$link}</td>" .
 		        "<td>{$attempts} {$detailslink}</td>" .
+		        "<td>{$link}</td>" .
 		        "<td>{$action}</td>" .
 		        "<td>{$checkbox}</td>\n" .
 		      " </tr>\n");
@@ -196,7 +197,9 @@ function EmitDetails( $srcid )
     $fields = array( 'srcid', 'title','srcurl','attempts','action', 'firstattempt','lastattempt','report' );
     foreach( $fields as $f )
     {
-        print( "<tr><th>{$f}</th><td><pre>{$row[$f]}</pre></td></tr>\n" );
+        printf( "<tr><th>%s</th><td><pre>%s</pre></td></tr>\n",
+            $f,
+            admMarkupPlainText( $row[$f] ) );
     }
     print "</table>\n";
 }

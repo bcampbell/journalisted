@@ -355,7 +355,7 @@ def ScrubFunc( context, entry ):
 def FindArticles():
     """ get a set of articles to scrape from the bbc rss feeds """
     # TODO: filter out "Your Stories" page
-    return ukmedia.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
+    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
 
 
 def ContextFromURL( url ):

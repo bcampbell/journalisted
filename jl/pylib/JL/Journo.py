@@ -408,9 +408,9 @@ def FindJourno( conn, rawname, hint_context = None ):
     # want to make sure that only one of our possible journos has written for this org
     cnt = len(matching)
     if cnt == 0:
-        raise NoOrgJournoException, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,hint_srcorgid)
+        raise NoOrgJournoException, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,srcorgid)
     if cnt != 1:
-        raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,hint_srcorgid)
+        raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,srcorgid)
 
     journo_id = int( matching[0]['journo_id'] )
     c.close()

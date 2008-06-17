@@ -215,7 +215,7 @@ def Extract( html, context ):
 
 
 def ScrubFunc( context, entry ):
-    """mungefunc for ukmedia.FindArticlesFromRSS()"""
+    """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
 
     # most dailymail RSS feeds go through feedburner, but luckily the original url is still there...
     url = context[ 'srcurl' ]
@@ -285,7 +285,7 @@ def FindArticles():
 
     rssfeeds = FindRSSFeeds( rss_feed_page )
 
-    found = ukmedia.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
     # extra articles not from RSS feeds...
 #    found = found + FindColumnistArticles()
     return found

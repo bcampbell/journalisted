@@ -4,7 +4,7 @@ import sys
 from optparse import OptionParser
 
 sys.path.append( "../pylib" )
-from JL import ArticleDB,ukmedia
+from JL import ArticleDB,ukmedia,ScraperUtils
 
 sys.path.append( "../scraper" )
 import scrapefront
@@ -25,19 +25,19 @@ def main():
 
 
     if options.dryrun:
-        store = ArticleDB.DummyArticleDB()  # testing
+        store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )
     else:
-       store = ArticleDB.ArticleDB()
+        store = ArticleDB.ArticleDB()
 
     articles = []
     context = scraper.ContextFromURL( url )
     articles.append( context )
 
-    # call any scraper init required
+    # call any scraper init required (eg Login)
     if hasattr( scraper, "Prep" ):
         scraper.Prep()
 
-    ukmedia.ProcessArticles( articles, store, scraper.Extract,
+    ScraperUtils.ProcessArticles( articles, store, scraper.Extract,
         showexisting=True)
 
 if __name__ == "__main__":

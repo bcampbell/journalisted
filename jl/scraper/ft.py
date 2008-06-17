@@ -439,7 +439,7 @@ def ScrubFunc( context, entry ):
 
 def FindArticles():
     """ get a set of articles to scrape from the rss feeds """
-    return ukmedia.FindArticlesFromRSS( rssfeeds, u'ft', ScrubFunc )
+    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'ft', ScrubFunc )
 
 # pattern to extract unique id from FT article urls
 # eg

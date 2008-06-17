@@ -82,13 +82,18 @@ class ArticleDB:
 
         cursor.execute( "select currval('article_id_seq')" )
         id = cursor.fetchone()[0]
-        cursor.close()
+
+        # if there was a scraper error entry for this article, delete it now
+        cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid) )
+
 
         Tags.Generate( self.conn, id, art['content'] )
 
-
         # parse byline to assign/create journos
         journos = ProcessByline( self.conn, id, art )
+
+
+
 
         if self.dryrun:
             self.conn.rollback()
