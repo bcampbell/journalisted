@@ -66,7 +66,6 @@ if( $action == 'Go' && $url != '')
 	putenv("JL_DEBUG=2");
 	$output = run( $cmd );
 	printf( "<p><pre>%s</pre></p>", admMarkupPlainText( $output ) );
-}
 	print "<hr>\n";
 }
 

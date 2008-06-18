@@ -80,7 +80,7 @@ function form_element_submit( $name, $buttonlabel )
 
 
 /* marks up links in plain text:
- * [jNNNNNN <name] - journalist admin page
+ * [jNNNNNN <name>] - journalist admin page
  * [aNNNNNN '<headline>'] - article admin page
  * http://....
  */
@@ -94,7 +94,7 @@ function admMarkupPlainText( $txt )
 	$html = preg_replace( "/\\[a([0-9]+)(\\s*'(.*?)')?\\s*\\]/", "<a href=\"/adm/article?article_id=\\1\">\\0</a>", $html );
 
     /* journos */
-	$html = preg_replace( "/\\[j([0-9]+)(\\s*(.*?))?\\s*\\]/", "<a href=\"/adm/joruno?journo_id=\\1\">\\0</a>", $html );
+	$html = preg_replace( "/\\[j([0-9]+)(\\s*(.*?))?\\s*\\]/", "<a href=\"/adm/journo?journo_id=\\1\">\\0</a>", $html );
 
     /* http:// */
     $html = preg_replace( "%http://\\S+%", "<a href=\"\\0\">\\0</a>", $html );

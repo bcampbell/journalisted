@@ -31,15 +31,19 @@ function emit_blog_buzz()
 <tr><th>BlogRefs</th><th>Headline</th></tr>
 <?php
 
-$q = db_query( "SELECT count(*) as n, a.id, a.title FROM (article a INNER JOIN article_bloglink b ON a.id=b.article_id) GROUP BY a.id,a.title ORDER BY n DESC" );
+$q = db_query( "SELECT count(*) as n, a.id, a.title, a.total_bloglinks FROM (article a INNER JOIN article_bloglink b ON a.id=b.article_id) GROUP BY a.id,a.title,a.total_bloglinks ORDER BY n DESC" );
 while( $r=db_fetch_array($q) )
 {
-	$cnt = $r['n'];
+	$cnt = (int)$r['n'];
 	$headline = $r['title'];
 	$id = $r['id'];
 	$link = sprintf( "<a href=\"/article?id=%d\">%s</a>",$id,$headline);
 
-	printf("<tr><td>%d</td><td>%s</td></tr>\n", $cnt, $link );
+	$expected = (int)$r['total_bloglinks'];
+    $warn = '';
+    if( $expected != $cnt )
+        $warn = " <strong>[expected {$expected}!]</strong>";
+	printf("<tr><td>%d%s</td><td>%s</td></tr>\n", $cnt, $warn, $link );
 
 
 }
@@ -59,18 +63,23 @@ function emit_comment_buzz()
 <tr><th>Comments</th><th>Headline</th></tr>
 <?php
 
-$q = db_query( "SELECT a.title, a.id, SUM( c.num_comments ) AS tot_comments, COUNT(*) AS num_sites FROM (article a INNER JOIN article_commentlink c ON a.id=c.article_id) GROUP BY a.title, a.id ORDER BY tot_comments DESC" );
+$q = db_query( "SELECT a.title, a.id, a.total_comments, SUM( c.num_comments ) AS tot_comments, COUNT(*) AS num_sites FROM (article a INNER JOIN article_commentlink c ON a.id=c.article_id) GROUP BY a.title, a.id, a.total_comments ORDER BY tot_comments DESC" );
 
 while( $r=db_fetch_array($q) )
 {
-	$comments = $r['tot_comments'];
+	$comments = (int)$r['tot_comments'];
 	$sites = $r['num_sites'];
+
+	$expected = (int)$r['total_comments'];
+    $warn = '';
+    if( $expected != $comments )
+        $warn = " <strong>[expected {$expected}!]</strong>";
 
 	$headline = $r['title'];
 	$id = $r['id'];
 	$link = sprintf( "<a href=\"/article?id=%d\">%s</a>",$id,$headline);
 
-	printf("<tr><td>%d (on %d sites)</td><td>%s</td></tr>\n", $comments, $sites, $link );
+	printf("<tr><td>%d%s (on %d sites)</td><td>%s</td></tr>\n", $comments, $warn, $sites, $link );
 
 }
 
