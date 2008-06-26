@@ -167,7 +167,7 @@ function BuzzFragment( &$r )
         $parts[] = ($cnt==1) ? "1 comment" : "{$cnt} comments";
 
     if( $parts )
-        return '<small>(' . implode( ',', $parts ) . ')</small>';
+        return ' <small>(' . implode( ',', $parts ) . ')</small>';
     else
         return '';
 }
@@ -212,8 +212,11 @@ function emit_blocks_articles( $journo, $allarticles )
         $desc = $r['description'];
 
         print "<p>\n";
-        print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\"<br />\n";
-        printf( "%s %s\n" , PostedFragment($r), BuzzFragment($r) );
+        print "\"<a href=\"/article?id={$r['id']}\">{$r['title']}</a>\"";
+        print BuzzFragment($r);
+        print "<br />\n";
+        print PostedFragment($r);
+        print "\n";
         print "<blockquote>{$desc}</blockquote>\n";
         print "</p>\n";
 
@@ -241,8 +244,11 @@ function emit_blocks_articles( $journo, $allarticles )
         $title = $r['title'];
         $desc = $r['description'];
         print "<li>\n";
-        print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a><br/>\n";
-        printf( "%s %s\n" , PostedFragment($r), BuzzFragment($r) );
+        print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>";
+        print BuzzFragment($r);
+        print "<br />\n";
+        print PostedFragment($r);
+        print "\n";
         print "</li>\n";
 
     }
