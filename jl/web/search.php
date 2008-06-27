@@ -23,26 +23,42 @@ define( 'XAP_JOURNOS_ID', 5 );
 
 define( 'DEFAULT_NUM_PER_PAGE', 100 );
 
-page_header( "" );
 
 $query = get_http_var( 'q', '' );
 $num_per_page = (int)get_http_var('num', DEFAULT_NUM_PER_PAGE );
 $start = (int)get_http_var('start', '0' );
+$sort_order = get_http_var( 'o', 'date' );
 
+/* was a particular journo specified? (can be an id or ref) */
+$journo = null;
+$id_or_ref = get_http_var( 'j', null );
+if( $id_or_ref )
+{
+    $sql = sprintf( "SELECT id,ref,prettyname FROM journo WHERE %s=?",
+        (int)$id_or_ref ? "id" : "ref" );
+    $journo = db_getRow( $sql, $id_or_ref );
+}
+
+page_header( "" );
 
 ?>
-
 <div id="maincolumn">
-<h2>Full text search</h2>
-
 <?php
 
-EmitQueryForm( $query, $num_per_page );
 
-if( $query )
-{
-    DoQuery( $query, $start, $num_per_page );
+
+if( $journo ) {
+    /* restricting query to a single journo */
+    $journo_link = "<a href=\"/{$journo['ref']}\">{$journo['prettyname']}</a>";
+    printf( "<h2>Find articles by %s</h2>\n", $journo_link );
+} else {
+    print "<h2>Find articles</h2>\n";
 }
+
+
+EmitQueryForm( $query, $sort_order, $num_per_page, $journo );
+if( $query )
+    DoQuery( $query, $sort_order, $start, $num_per_page, $journo );
 
 ?>
 </div>
@@ -52,9 +68,19 @@ page_footer();
 
 
 
-function EmitQueryForm( $query, $num_per_page )
-{
 
+/*------------------------------------*/
+
+function FetchJourno( $id_or_ref )
+{
+}
+
+
+
+
+function EmitQueryForm( $query, $sort_order, $num_per_page, $journo=null )
+{
+/*
 ?>
 <small>
 <p>examples:<br/>
@@ -67,11 +93,24 @@ Detailed query syntax <a href="http://www.xapian.org/docs/queryparser.html">here
 </p>
 
 </small>
+*/
 
+?>
 <form method="get">
-Search for: <input type="text" name="q" value="<?php echo htmlspecialchars($query); ?>" />
+<input type="text" name="q" value="<?php echo htmlspecialchars($query); ?>" />
+<?php
+    if( $journo ) {
+        printf( "<input type=\"hidden\" name=\"j\" value=\"%s\" />\n",
+            $journo['ref'] );
+    }
 
-<input type="submit" value="go" />
+?>
+<select name="o">
+ <option <?php echo $sort_order=='date'?'selected ':''; ?>value="date">order by date</option>
+ <option <?php echo $sort_order=='relevance'?'selected ':''; ?>value="relevance">order by relevance</option>
+</select>
+<br/>
+<input type="submit" value="Find" />
 </form>
 
 <?php
@@ -108,14 +147,16 @@ function DecodeJournoList( $jlist )
 }
 
 
-function PageURL( $query, $start, $num_per_page )
+function PageURL( $query, $sort_order, $start, $num_per_page )
 {
-    return sprintf( "/search?q=%s&start=%d&num=%d",
+    $url = sprintf( "/search?q=%s&start=%d&num=%d",
         urlencode($query), $start, $num_per_page );
+    if( $sort_order!='date' )
+        $url .= "&o={$sort_order}";
+    return $url;
 }
 
-
-function EmitPageControl( $query, $start, $num_per_page, $total )
+function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
 {
     $pagecnt = $total/$num_per_page;
     $currentpage = $start/$num_per_page;
@@ -127,6 +168,7 @@ function EmitPageControl( $query, $start, $num_per_page, $total )
     {
         printf( "<a href=\"%s\">%s</a> ",
             PageURL($query,
+                $sort_order,
                 max(0,$start-$num_per_page),
                 $num_per_page),
             "Previous" );
@@ -138,7 +180,7 @@ function EmitPageControl( $query, $start, $num_per_page, $total )
             printf("%s ", $page+1 );
         } else {
             printf( "<a href=\"%s\">%s</a> ",
-                PageURL($query, $page*$num_per_page, $num_per_page),
+                PageURL($query, $sort_order, $page*$num_per_page, $num_per_page),
                 $page+1 );
         }
     }
@@ -146,7 +188,7 @@ function EmitPageControl( $query, $start, $num_per_page, $total )
     if( $start+$num_per_page < $total )
     {
         printf( "<a href=\"%s\">%s</a> ",
-            PageURL($query, $start+$num_per_page, $num_per_page),
+            PageURL($query, $sort_order, $start+$num_per_page, $num_per_page),
             "Next" );
     }
 
@@ -158,7 +200,7 @@ function EmitPageControl( $query, $start, $num_per_page, $total )
 
 
 /* perform query, display results */
-function DoQuery( $query_string, $start, $num_per_page )
+function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=null )
 {
     global $DBPATH;
 
@@ -175,12 +217,25 @@ function DoQuery( $query_string, $start, $num_per_page )
         $qp->set_stemmer($stemmer);
         $qp->set_database($database);
         $qp->set_stemming_strategy(XapianQueryParser::STEM_SOME);
+        $qp->set_default_op( XapianQuery::OP_AND );
 
         $qp->add_prefix( 'byline', 'B' );
         $qp->add_prefix( 'title', 'T' );
+        $qp->add_prefix( 'journo', 'J' );
 
         $query = $qp->parse_query($query_string);
-    /*    print "<pre>Parsed query is: {$query->get_description()}</pre>\n"; */
+        if( $journo )
+        {
+            /* restrict search to the single journo */
+            $jfilt = new XapianQuery( "J{$journo['id']}" );
+            $query = new XapianQuery( XapianQuery::OP_AND, $jfilt, $query );
+        }
+
+/*        print "<pre>Parsed query is: {$query->get_description()}</pre>\n"; */
+
+        if( $sort_order == 'date' ) {
+            $enquire->set_sort_by_value_then_relevance( XAP_PUBDATE_ID );
+        }   /* (default is relevance) */
 
         $enquire->set_query($query);
         $matches = $enquire->get_mset($start, $num_per_page);
@@ -189,10 +244,16 @@ function DoQuery( $query_string, $start, $num_per_page )
 
 
         // Display the results.
-        printf( "<p>Showing %d-%d of around %d:</p>\n",
+        if( $total == 0 )
+        {
+            print( "<p>None found.</p>\n" );
+            return;
+        }
+        printf( "<p>Showing %d-%d of around %d articles, %s:</p>\n",
             $start+1,
             min( $start+$num_per_page, $total),
-            $total );
+            $total,
+            $sort_order=='date'?'newest first':'most relevant first' );
 
         print "<ul>\n";
         $i = $matches->begin();
@@ -235,7 +296,7 @@ function DoQuery( $query_string, $start, $num_per_page )
 
         if( $total >= $num_per_page || $start>0 )
         {
-            EmitPageControl( $query_string, $start, $num_per_page, $total );
+            EmitPageControl( $query_string, $sort_order, $start, $num_per_page, $total );
         }
     } catch (Exception $e) {
         print $e->getMessage() . "\n";
