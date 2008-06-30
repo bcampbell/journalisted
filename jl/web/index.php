@@ -47,10 +47,9 @@ $contactemail = OPTION_TEAM_EMAIL;
 </form>
 
 
-<form action="/list" method="get" class="frontform">
- <label for="find">Find articles about different subjects</label>
-
- <input type="text" value="" title="type subject here" id="search" name="search" class="text" placeholder="type subject here"/>
+<form action="/search" method="get" class="frontform">
+ <label for="q">Search articles</label>
+ <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
  <input type="submit" value="Find" />
 </form>
 

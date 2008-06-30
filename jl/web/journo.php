@@ -509,10 +509,10 @@ function emit_block_searchbox( $journo )
 <h3>Find</h3>
 <div class="boxnarrow-content">
 <p>
-<form action="article" method="get">
-<input type="hidden" name="ref" value="<?php echo $journo['ref'];?>"/>
+<form action="/search" method="get">
+<input type="hidden" name="j" value="<?php echo $journo['ref'];?>"/>
 Find articles by <?php echo $journo['prettyname'];?> containing:
-<input id="findarticles" type="text" name="find" value=""/>
+<input id="findarticles" type="text" name="q" value=""/>
 <input type="submit" value="Find" />
 </form>
 </p>

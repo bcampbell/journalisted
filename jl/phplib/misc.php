@@ -61,11 +61,20 @@ function SafeMailto( $addr, $text='' )
 // generate a link for a tag
 function tag_gen_link( $tag, $journo_ref=null, $period=null )
 {
+    /* old version, using tags page */
+/*
 	$l = '/' . ($journo_ref ? $journo_ref:'tags');
 	if( $period )
 		$l = $l . '/' . $period;
 	$l = $l . '/' . urlencode($tag);
+*/
 
+    /* new version, using xapian index */
+    $query = (strpos($tag, ' ') === FALSE ) ? $tag: '"'.$tag.'"';
+
+    $l = '/search?q=' . urlencode( $query );
+    if( $journo_ref )
+        $l .= '&j=' . $journo_ref;
 	return $l;
 }
 
