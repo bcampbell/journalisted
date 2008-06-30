@@ -1,5 +1,12 @@
 #!/usr/bin/env python2.4
 #
+# indexer
+#
+# Tool to maintain a full-text index of the journalisted database
+# using xapian.
+#
+#
+
 import sys
 import xapian
 import string
@@ -18,12 +25,13 @@ xapdbpath = mysociety.config.get('JL_XAPDB')
 
 # ids for value field we want to store along with the document
 # (so we can display them in the search results)
-ARTICLE_ID = 0
-TITLE_ID = 1
-PUBDATE_ID = 2
-SRCORG_ID = 3
-PERMALINK_ID = 4
-JOURNOS_ID = 5
+# NOTE: these values need to be kept in sync with web/search.php!
+XAP_ARTICLE_ID = 0
+XAP_TITLE_ID = 1
+XAP_PUBDATE_ID = 2
+XAP_SRCORG_ID = 3
+XAP_PERMALINK_ID = 4
+XAP_JOURNOS_ID = 5
 
 
 def IndexArticle( xapdb, art ):
@@ -37,18 +45,31 @@ def IndexArticle( xapdb, art ):
     doc = xapian.Document()
 #    doc.set_data(txt)
 
+    # add article id as a term
     article_id_term = 'Q' + str(art['id'])
     doc.add_term( article_id_term )
 
+    # TODO:
+    # add source org as a term
+    # - add name and srcorg...
+
+
+    journo_list = []
     for j in art['journos']:
-        doc.add_term( 'J' + str(j['id']) )
+        # pretty name is already encoded as utf-8
+        journo_list.append( "%s|%s" %(j['ref'],j['prettyname']) )
+        # add journo ids as terms to support search-by-journo
+        doc.add_term( 'J'+str(j['id']) )
 
     # add all the things we need to be able to display in search results...
-    doc.add_value( ARTICLE_ID, str(art['id']) )
-    doc.add_value( TITLE_ID, art['title'].encode('utf-8') )
-    doc.add_value( PUBDATE_ID, art['pubdate'].isoformat() )
-    doc.add_value( SRCORG_ID, str(art['srcorg']) )
-    doc.add_value( PERMALINK_ID, art['permalink'] )
+    doc.add_value( XAP_ARTICLE_ID, str(art['id']) )
+    doc.add_value( XAP_TITLE_ID, art['title'].encode('utf-8') )
+    doc.add_value( XAP_PUBDATE_ID, art['pubdate'].isoformat() )
+    doc.add_value( XAP_SRCORG_ID, str(art['srcorg']) )
+    doc.add_value( XAP_PERMALINK_ID, art['permalink'] )
+    # comma-separated list of attributed journo refs & names
+    # eg: "bob-smith|Bob Smith,fred-blogs-1|Fred Blogs"
+    doc.add_value( XAP_JOURNOS_ID, ','.join( journo_list ) )
 
     # index the main text of the article...
     indexer.set_document(doc)
@@ -98,12 +119,19 @@ def PerformIndexing( options ):
         conditions.append( "lastscraped < %s::date + '1 day'::interval" )
         params.append( options.to_date )
 
-
-    sql = "SELECT * FROM article WHERE " + " AND ".join( conditions )
-    print sql
-
+    print "counting..."
+    sql = "SELECT count(*) FROM article WHERE " + " AND ".join( conditions )
     c = conn.cursor()
     c.execute( sql, params );
+    expected = c.fetchone()[0]
+    print "%d articles to process." % (expected)
+
+    sql = "SELECT * FROM article WHERE " + " AND ".join( conditions )
+    print "fetching articles"
+
+    c.execute( sql, params );
+
+    print "indexing begins"
 
     xapdb.begin_transaction()
     tot=0
@@ -114,8 +142,10 @@ def PerformIndexing( options ):
         if not row:
             break
         art = {}
+        # decode all the fields that need to be in unicode
         for f in ( 'title', 'content', 'byline' ):
             art[f] = row[f].decode( 'utf-8' )
+        # plain ascii ones...
         for f in ( 'id','srcorg', 'pubdate','permalink' ):
             art[f] = row[f]
         art['journos'] = FetchJournos( conn, art['id'] )
@@ -126,13 +156,16 @@ def PerformIndexing( options ):
 
         if not skip:
             IndexArticle( xapdb, art )
+# TODO - set a flag in article table to indicate article has been indexed!!!
+#            updatecursor.execute( "UPDATE article SET needs_indexing=false" WHERE id=%s" , (art['id'] )
 
             cnt = cnt+1
             tot = tot+1
             if cnt >= 1000:
                 cnt=0
+                print "committing..."
                 xapdb.commit_transaction()
-                print "committed %d" %(tot)
+                print "=> committed %d" %(tot)
                 xapdb.begin_transaction()
         else:
             skipped = skipped+1
