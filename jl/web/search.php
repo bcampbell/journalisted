@@ -21,7 +21,7 @@ define( 'XAP_SRCORG_ID', 3 );
 define( 'XAP_PERMALINK_ID', 4 );
 define( 'XAP_JOURNOS_ID', 5 );
 
-define( 'DEFAULT_NUM_PER_PAGE', 100 );
+define( 'DEFAULT_NUM_PER_PAGE', 25 );
 
 
 $query = get_http_var( 'q', '' );
@@ -161,8 +161,9 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
     $pagecnt = $total/$num_per_page;
     $currentpage = $start/$num_per_page;
 
-    $firstpage = max( 0, $currentpage-3 );
-    $lastpage = min( $pagecnt, $currentpage+3 );
+    $n = 20;
+    $firstpage = max( 0, $currentpage-$n/2 );
+    $lastpage = min( $pagecnt, $firstpage+($n-1) );
 
     if( $start>0 && $total>0 )
     {
