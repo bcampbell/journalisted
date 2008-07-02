@@ -26,14 +26,10 @@
  */
 function cache_emit( $cacheid, $genfunc=null, $maxage=null )
 {
-	/* look for the item in the cache, and lock that row, so if we
-     * need to regenerate it, any further accesses will block
-     * until we're done. */ 
     $sql = <<<EOT
 SELECT EXTRACT(EPOCH FROM NOW()-gentime) as elapsed, content
 	FROM htmlcache
 	WHERE name=?
-	FOR UPDATE
 EOT;
 	$valid = false;
 	$content = '';
@@ -52,9 +48,21 @@ EOT;
 	}
 	else
 	{
-		/* if we got this far the cache entry is invalid (missing or expired) */
+		/* if we got this far the cache entry is missing or expired, so
+         * we want to rebuild it (if we can) */
 		if( $genfunc )
 		{
+            /* very first thing - update the gentime to prevent other requests 
+             * trying to regenerate the cache!
+             * There is still a small window between the SELECT and here where
+             * another request could sneak in, but it's probably not a big risk
+             * in practice.
+             * TODO: look again at getting the SELECT to lock the row!
+             */
+            db_do( "UPDATE htmlcache SET gentime=NOW() WHERE name=?", $cacheid );
+	        db_commit();
+
+
 			printf( "<!-- cache: '%s' regenerated -->\n", $cacheid );
 			ob_start();
 			cache_gen_annotated( $cacheid, $genfunc );
@@ -65,7 +73,7 @@ EOT;
 			db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
 			db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)",
 				$cacheid, $content );
-
+	        db_commit();
 		}
 		else
 		{
@@ -73,8 +81,6 @@ EOT;
 		}
 	}
 
-	/* release our lock/commit our changes (if any of either :-) */
-	db_commit();
 }
 
 
