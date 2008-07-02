@@ -13,34 +13,13 @@ require_once '../../phplib/utility.php';
 
 
 
-$period = get_http_var( 'period', null );
-$tag = get_http_var( 'tag', null );
-if( $tag )
-{
-	if( $period == 'today' )
-	{
-		// list journos who've used that tag today.
-		page_header( "Journalists who have mentioned \"{$tag}\" today", array( 'menupage'=>'') );
-		print "<h2>Journalists who have mentioned \"{$tag}\" today</h2>";
-		tag_emit_journo_list( $tag, null, $period );
-		page_footer();
-	}
-	else
-	{
-		// list journos who've used that tag.
-		page_header( "Journalists who have mentioned \"{$tag}\"", array( 'menupage'=>'') );
-		print "<h2>Journalists who have mentioned \"{$tag}\"</h2>";
-		tag_emit_journo_list( $tag );
-		page_footer();
-	}
-}
-else
-{
-	// no tag specified - display summary (cache for 12 hours)
-	page_header( 'Subject Index', array( 'menupage'=>'subject') );
-	cache_emit( "tags", "emit_tag_summaries", 60*60*12 );
-	page_footer();
-}
+//$period = get_http_var( 'period', null );
+//$tag = get_http_var( 'tag', null );
+
+// display summary (cache for 12 hours)
+page_header( 'Subject Index', array( 'menupage'=>'subject') );
+cache_emit( "tags", "emit_tag_summaries", 60*60*12 );
+page_footer();
 
 
 
@@ -53,8 +32,6 @@ function emit_tag_summaries()
 
 <p>The larger the word, the more it's been written about. Click on any of
 the words and you'll see which journalists have written about it.</p>
-<p>Based on the output of all bylined journalists from 12 UK national
-newspapers and BBC news online.</p>
 
 
 <div class="block">
