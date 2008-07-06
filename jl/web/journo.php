@@ -609,12 +609,32 @@ function emit_journo_bios( $journo )
 }
 
 
+
+function ExpandEmailFormat( $fmt, $journo )
+{
+//    if( $fmt == '' )
+//        return '';
+
+    $fmt = preg_replace( '/\{FIRST\}/', $journo['firstname'], $fmt );
+    $fmt = preg_replace( '/\{LAST\}/', $journo['lastname'], $fmt );
+    $fmt = preg_replace( '/\{INITIAL\}/', $journo['firstname'][0], $fmt );
+
+    $forms = preg_split( '/\s*,\s*/', $fmt );
+
+    $forms = preg_replace( '/(.+)/', '<a href="mailto:\1">\1</a>', $forms );
+
+    return implode( " or ", $forms );
+}
+
+
+
 function emit_journo_mailto( $journo )
 {
     $row = db_getRow("SELECT email, srcurl FROM journo_email WHERE journo_id=? AND approved",
                      $journo['id']);
     if ($row)
     {
+        /* we have an email address on file - show it */
         $shorturl = $row['srcurl'];
         $matches = '';
         preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
@@ -624,6 +644,33 @@ function emit_journo_mailto( $journo )
                "<a href=\"mailto:$email\">$email</a></span> " .
                "<span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
                "\">" . $shorturl . "</a>)</span></span></p>");
+    }
+    else
+    {
+        /* no email address on file. try guessing */
+
+        $org = GuessMainOrg( $journo['id'] );
+        if( $org !== null )
+        {
+            $row = db_getRow( "SELECT prettyname,phone,email_format FROM organisation WHERE id=?", $org );
+
+            $orgname = $row['prettyname'];
+            $phone = $row['phone'];
+
+            $orgfrag = "<span class=\"publication\">{$orgname}</span>";
+            if($phone)
+                $orgfrag .= " (Telephone: {$phone})";
+
+            $emailfrag = ExpandEmailFormat( $row['email_format'], $journo );
+
+            $out = "<p>";
+            $out .= "No email address known for {$journo['prettyname']}.<br/>\n";
+            $out .= "You could try contacting {$orgfrag}.";
+            if( $emailfrag )
+                $out .= "<br/>Their email address <em>might</em> be {$emailfrag}";
+            $out .= "</p>\n";
+            print $out;
+        }
     }
 }
 
@@ -755,5 +802,43 @@ function FetchJournoStats( $journo )
     return $ret;
 }
 
+
+/* Try and guess which organisation a journo might be employed by.
+ * - which org have they written for most in the last 3 months?
+ * - have they written at least 5 articles for them during that time?
+ * returns srcorg, or null if we can't decide.
+ */
+function GuessMainOrg( $journo_id )
+{
+    /* cache results for any number of journos, although we'd
+     * probably never need more than one... */
+	static $cached = array();
+	if( array_key_exists( $journo_id, $cached ) )
+		return $cached[ $journo_id ];
+
+    $sql = <<<EOT
+        SELECT count(*) as artcnt, foo.srcorg
+            FROM (
+                SELECT a.srcorg
+                    FROM article a INNER JOIN journo_attr attr
+                        ON (a.status='a' AND a.id=attr.article_id)
+                    WHERE attr.journo_id=? AND a.pubdate>NOW()-interval '3 months'
+                    ORDER BY a.pubdate DESC
+                ) AS foo
+                GROUP BY foo.srcorg
+                ORDER BY artcnt DESC LIMIT 1;
+EOT;
+
+    $row = db_getRow( $sql, $journo_id );
+
+    if( !$row )
+        return null;
+
+    /* require at least 5 articles before we're happy */
+    if( $row['artcnt'] < 5 )
+        return null;
+
+    return (int)$row['srcorg'];
+}
 
 ?>
