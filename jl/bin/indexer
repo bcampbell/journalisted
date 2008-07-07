@@ -148,13 +148,13 @@ def PerformIndexing( options ):
         # plain ascii ones...
         for f in ( 'id','srcorg', 'pubdate','permalink' ):
             art[f] = row[f]
-        art['journos'] = FetchJournos( conn, art['id'] )
 
         skip = False
         if not options.replace_existing:
             skip = xapdb.term_exists( 'Q' + str(art['id']) )
 
         if not skip:
+            art['journos'] = FetchJournos( conn, art['id'] )
             IndexArticle( xapdb, art )
 # TODO - set a flag in article table to indicate article has been indexed!!!
 #            updatecursor.execute( "UPDATE article SET needs_indexing=false" WHERE id=%s" , (art['id'] )
