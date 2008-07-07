@@ -658,16 +658,17 @@ function emit_journo_mailto( $journo )
             $phone = $row['phone'];
 
             $orgfrag = "<span class=\"publication\">{$orgname}</span>";
+            $phonefrag = '';
             if($phone)
-                $orgfrag .= " (Telephone: {$phone})";
+                $phonefrag = " (Telephone: {$phone})";
 
             $emailfrag = ExpandEmailFormat( $row['email_format'], $journo );
 
             $out = "<p>";
             $out .= "No email address known for {$journo['prettyname']}.<br/>\n";
-            $out .= "You could try contacting {$orgfrag}.";
+            $out .= "You could try contacting {$orgfrag}{$phonefrag}.";
             if( $emailfrag )
-                $out .= "<br/>Their email address <em>might</em> be {$emailfrag}";
+                $out .= "<br/>Based on the standard email format for {$orgfrag}, the email address <em>might</em> be {$emailfrag}";
             $out .= "</p>\n";
             print $out;
         }
