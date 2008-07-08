@@ -14,7 +14,7 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
 
-function frontpage_emit()
+function offline_frontpage_emit()
 {
 
 	$contactemail = OPTION_TEAM_EMAIL;

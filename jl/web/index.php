@@ -1,8 +1,14 @@
 <?php
 
+/*
+ * index.php - the front page for journalisted.com
+ *
+ * Most of this page is generated offline and cached.
+ * see ../bin/offline-page-build tool for details
+ */
+
 require_once '../conf/general';
 require_once '../phplib/page.php';
-/*require_once '../phplib/frontpage.php'; */
 require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
@@ -66,7 +72,7 @@ $contactemail = OPTION_TEAM_EMAIL;
 
 // the stats and tags boxes are generated offline and never
 // updated in response to web access because they are so slow.
-// (The generation code is in frontpage_emit() in "../phplib/frontpage.php")
+// (The generation code is offline_frontpage_emit() in "../phplib/offline_frontpage.php")
 cache_emit( 'frontpage', null, null );
 
 ?>
