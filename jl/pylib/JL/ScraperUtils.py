@@ -126,7 +126,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
                 if not context:
                     continue
                 if not context.get( 'srcid', None ):
-                    ukmedia.DBUG2( "WARNING: missing/null srcid! ('%s')" % (context['srcurl']) )
+                    ukmedia.DBUG2( "WARNING: missing/null srcid! ('%s')\n" % (context['srcurl']) )
 
 
             foundarticles.append( context )
