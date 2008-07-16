@@ -141,7 +141,7 @@ def Extract( html, context ):
     # we assume pubdate always there and last thing...
     bylinetxt = u''
     pubdatetxt = u''
-    e = maindiv.find( text=re.compile( r'^\s*By\b' ) )
+    e = maindiv.find( text=re.compile( r'^\s*By\s*$' ) )
     while e:
         s = u''
         if isinstance( e, NavigableString ):
