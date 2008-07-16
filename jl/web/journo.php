@@ -635,15 +635,20 @@ function emit_journo_mailto( $journo )
     if ($row)
     {
         /* we have an email address on file - show it */
-        $shorturl = $row['srcurl'];
-        $matches = '';
-        preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
-        $shorturl = $matches[0];
+        print "<p><span class=\"journo-email-outer\">";
         $email = str_replace('@', '&#x0040;', $row['email']);
-        print ("<p><span class=\"journo-email-outer\">Email: <span class=\"journo-email\">" .
-               "<a href=\"mailto:$email\">$email</a></span> " .
-               "<span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
-               "\">" . $shorturl . "</a>)</span></span></p>");
+        print ("Email: <span class=\"journo-email\"><a href=\"mailto:$email\">$email</a></span>" );
+        /* if we got it from a webpage (or article), say which one */
+        $shorturl = $row['srcurl'];
+        if( $shorturl )
+        {
+            $matches = '';
+            preg_match('/(?:[a-zA-Z0-9\-\_\.]+)(?=\/)/', $shorturl, $matches);
+            $shorturl = $matches[0];
+            print( " <span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
+                   "\">" . $shorturl . "</a>)</span>");
+        }
+        print( "</span></p>" );
     }
     else
     {
