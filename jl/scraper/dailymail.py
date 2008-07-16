@@ -70,12 +70,17 @@ def FindRSSFeeds( rssurl ):
     html = ukmedia.FetchURL( rssurl )
 
     soup = BeautifulSoup( html )
-    t = soup.find( 'table', {'class':'rss-feeds-table'} )
-    for a in t.findAll( 'a', {'href':re.compile('.rss$') } ):
-        n = a.string
-        if not n in blacklist:
-            url = 'http://www.dailymail.co.uk' + a['href']
-            feeds[ n ] = url
+
+    for t in soup.findAll( 'table', {'class':'feeds'} ):
+        for tr in t.findAll( 'tr' ):
+            tds = tr.findAll('td')
+            if len(tds) > 1:    # headings have less columns
+                n = tds[0].renderContents(None)
+
+                if not n in blacklist:
+                    url = 'http://www.dailymail.co.uk' + tds[1].a['href']
+                    #print "%s: %s" %(n,url)
+                    feeds[ n ] = url
 
     return feeds
 
@@ -101,72 +106,94 @@ def Extract( html, context ):
         cruft.extract()
     printdiv.extract()
 
-
-    titletxt = u''
-    # headline can be split across multiple h1s... (but only want ones
-    # near the top)
-    for e in maindiv.findAll( 'h1' ):
-        if e not in maindiv.contents[0:5]:
-            continue
-        titletxt = titletxt + u' ' + e.renderContents(None)
-        e.extract()
-    art['title'] =  ukmedia.FromHTML( titletxt )
-
-    # description/abstract in <h[23]>s near the top
     desctxt = u''
-    for e in maindiv.findAll( re.compile( 'h[23]') ):
-        if e not in maindiv.contents[0:5]:
-            continue
-        desctxt = desctxt + e.renderContents(None)
-        e.extract()
-    desctxt = ukmedia.FromHTML( desctxt )
+    titletxt = u''
 
-    # pull out previewLinks - links to comments
-    previewlinks = maindiv.find( 'ul', {'class': 'previewLinks' } )
-    if previewlinks:
-        previewlinks.extract();
+    femaildiv = maindiv.find( 'div', {'class':'feMailHeaderWide'} )
+    if femaildiv:
+        h = femaildiv.find( re.compile( 'h[12]' ) )
+        titletxt = h.renderContents(None)
+        titletxt =  ukmedia.FromHTML( titletxt )
+        # there may or may not also be an h2...
+#        desctxt = femaildiv.h2.renderContents(None)
+#        desctxt =  ukmedia.FromHTML( desctxt )
+        femaildiv.extract()
+    else:
 
-    # next part is byline and pubdate
+        e = maindiv.find( 'h1' )
+        if e:
+            titletxt = e.renderContents(None)
+            titletxt = ukmedia.FromHTML( titletxt )
+            e.extract()
+
+        if titletxt == u'':
+            # sometimes there are no 'h1' elements and the headlines are done with <font>
+            e  = maindiv.find( 'font' )
+            if e and e.has_key('size'):
+                titletxt = e.renderContents(None)
+                titletxt = ukmedia.FromHTML( titletxt )
+                e.extract()
+
+    art['title'] = titletxt
+
+
+    # looking for byline and pubdate now
     # we assume pubdate always there and last thing...
     bylinetxt = u''
-    e = maindiv.contents[0]
-    while 1:
+    pubdatetxt = u''
+    e = maindiv.find( text=re.compile( r'^\s*By\b' ) )
+    while e:
         s = u''
         if isinstance( e, NavigableString ):
-#            print "&str& '%s'" % ( e )
             s = unicode(e)
         else:
+            # any element other than <a> or <font> probably indicates
+            # end of byline
+            if e.name != 'a' and e.name !='font':
+                break
             s = e.renderContents( None )
-#            print "&tag&: '%s'" %(e.name)
-        n = e.nextSibling
-        e.extract()
-        e = n
-        bylinetxt = bylinetxt + s
+
         if u'Last updated at' in s:
             break;
 
+        n = e.nextSibling
+        e.extract()
+        e = n
+
+        bylinetxt = bylinetxt + s
+
     bylinetxt = ukmedia.FromHTML( bylinetxt )
 
-    # split out the date part...
-    # eg "Last updated at 2:42 PM on 22nd May 2008"
-    pat = re.compile( ur"(.*?)\s*Last updated at (.* (?:on )?.* \d{4})", re.IGNORECASE|re.DOTALL )
-    m = pat.match( bylinetxt )
-
-    art['byline'] = m.group(1)
-    art['byline'] = u' '.join( art['byline'].split() )
-    pubdatetxt = m.group(2)
-    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
 
 
-    if( art['byline'] ) == u'':
+
+    if bylinetxt == u'':
         # columnists have no bylines, but might have a "More From ..." bit in <div class="columnist-archive"
         columnistdiv = maindiv.find( 'div', {'class':'columnist-archive'} )
         if columnistdiv:
             h3 = columnistdiv.h3
             morefrompat = re.compile( ur'More from\s+(.*?)\s*[.]{3}', re.IGNORECASE )
             m = morefrompat.search( h3.renderContents(None) )
-            art['byline'] = ukmedia.FromHTML( m.group(1) )
+            bylinetxt = ukmedia.FromHTML( m.group(1) )
 
+    art['byline'] = u' '.join( bylinetxt.split() )
+
+    # the date part...
+    # eg "Last updated at 2:42 PM on 22nd May 2008"
+    e = maindiv.find( text=re.compile( r'^\s*Last updated at' ) )
+    if e:
+        pubdatetxt = unicode(e)
+        e.extract()
+        art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt.strip() )
+    else:
+        # no pubdate on page.... just make it up
+        art['pubdate'] = datetime.now()
+
+
+    # pull out previewLinks - links to comments
+    previewlinks = maindiv.find( 'ul', {'class': 'previewLinks' } )
+    if previewlinks:
+        previewlinks.extract();
 
     # now extract article text
 
@@ -200,9 +227,9 @@ def Extract( html, context ):
     contenttxt = ukmedia.SanitiseHTML( contenttxt )
     art['content'] = contenttxt
 
+
     if desctxt == u'':
         desctxt = ukmedia.FirstPara( contenttxt )
-
     desctxt = u' '.join( desctxt.split() )
     art['description'] = desctxt
 
@@ -292,5 +319,5 @@ def FindArticles():
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
 
