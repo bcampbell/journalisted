@@ -37,6 +37,10 @@ switch( $action )
 		ChangeJournoStatus( $journo_id, get_http_var('status') );
 		EmitJourno( $journo_id );
 		break;
+	case "add_link":
+		AddWeblink( $journo_id, get_http_var('url'), get_http_var('desc') );
+		EmitJourno( $journo_id );
+		break;
 	case "remove_link":
 		ConfirmRemoveWeblink( $journo_id, get_http_var('link_id') );
 		break;
@@ -60,10 +64,27 @@ switch( $action )
 		DisapproveBio( $journo_id, get_http_var('bio_id') );
 		EmitJourno( $journo_id );
 		break;
-	case "add_link":
-		AddWeblink( $journo_id, get_http_var('url'), get_http_var('desc') );
+
+	case "add_email":
+		AddEmail( $journo_id, get_http_var('email') );
 		EmitJourno( $journo_id );
 		break;
+	case "remove_email":
+		ConfirmRemoveEmail( $journo_id, get_http_var('email_id') );
+		break;
+	case "remove_email_confirmed":
+		RemoveEmail( $journo_id, get_http_var('email_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "approve_email":
+		ApproveEmail( $journo_id, get_http_var('email_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "disapprove_email":
+		DisapproveEmail( $journo_id, get_http_var('email_id') );
+		EmitJourno( $journo_id );
+		break;
+
 	default:
 		if( $journo_id )
 			EmitJourno( $journo_id );
@@ -78,6 +99,11 @@ switch( $action )
 admPageFooter();
 
 /********************************/
+
+function EmitActionMsg( $msg )
+{
+    print( "<div class=\"action_summary\">{$msg}</div>\n" );
+}
 
 function EmitJournoFilterForm()
 {
@@ -186,6 +212,7 @@ function EmitJourno( $journo_id )
 	printf("<strong>lastname:</strong> %s<br />\n", $j['lastname'] );
 	printf("<strong>created:</strong> %s<br />\n", $j['created'] );
 
+	EmitEmailAddresses( $journo_id );
 	EmitWebLinks( $journo_id );
 	EmitBios( $journo_id );
 	EmitArticles( $journo_id );
@@ -246,14 +273,15 @@ function ChangeJournoStatus( $journo_id, $status )
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 
-	printf( "<strong>Journo status changed to '%s'</strong>\n", $statusnames[$status] );
+	EmitActionMsg( sprintf( "Journo status changed to '%s'", $statusnames[$status] ) );
 }
 
 
 function EmitWebLinks( $journo_id )
 {
 	print "<h3>Web links</h3>\n";
-	$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? AND type!='cif:blog:feed'", $journo_id );
+	//$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? AND type!='cif:blog:feed'", $journo_id );
+	$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $journo_id );
 
 	if( $links )
 	{
@@ -399,11 +427,21 @@ from <?=$journo['prettyname'];?>?<br />
 
 }
 
+function AddWeblink( $journo_id, $url, $desc )
+{
+	db_query( "INSERT INTO journo_weblink (journo_id,url,description,approved) VALUES (?,?,?,?)",
+		$journo_id, $url, $desc, 't' );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+	EmitActionMsg( "Added Weblink ({$url})" );
+}
+
 function RemoveWeblink( $journo_id, $link_id )
 {
 	db_query( "DELETE FROM journo_weblink WHERE id=?", $link_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
-	printf( "<strong>Removed Weblink</strong>\n" );
+	EmitActionMsg( "Removed Weblink" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
@@ -412,7 +450,7 @@ function ApproveWeblink( $journo_id, $link_id )
 {
 	db_query( "UPDATE journo_weblink SET approved=true WHERE id=?", $link_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
-	printf( "<strong>Approved Weblink $link_id</strong>\n" );
+	EmitActionMsg( "Approved Weblink $link_id" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
@@ -421,7 +459,7 @@ function DisapproveWeblink( $journo_id, $link_id )
 {
 	db_query( "UPDATE journo_weblink SET approved=false WHERE id=?", $link_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
-	printf( "<strong>Disapproved Weblink $link_id</strong>\n" );
+	EmitActionMsg( "Disapproved Weblink $link_id" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
@@ -430,7 +468,7 @@ function ApproveBio( $journo_id, $bio_id )
 {
 	db_query( "UPDATE journo_bio SET approved=true WHERE id=?", $bio_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
-	printf( "<strong>Approved Bio $bio_id</strong>\n" );
+	EmitActionMsg( "Approved Bio $bio_id" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
@@ -439,19 +477,138 @@ function DisapproveBio( $journo_id, $bio_id )
 {
 	db_query( "UPDATE journo_bio SET approved=false WHERE id=?", $bio_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
-	printf( "<strong>Disapproved Bio $bio_id</strong>\n" );
+	EmitActionMsg( "Disapproved Bio $bio_id" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
 
 
-function AddWeblink( $journo_id, $url, $desc )
+
+
+function EmitEmailAddresses( $journo_id )
 {
-	db_query( "INSERT INTO journo_weblink (journo_id,url,description) VALUES (?,?,?)",
-		$journo_id, $url, $desc );
+	print "<h3>Email Addresses</h3>\n";
+	$rows = db_getAll( "SELECT * FROM journo_email WHERE journo_id=?", $journo_id );
+
+	if( $rows )
+	{
+?>
+	<ul>
+<?php
+		foreach( $rows as $r )
+		{
+			$id = $r['id'];
+			$email = $r['email'];
+			$srcurl = $r['srcurl'];
+			$srctype = $r['srctype'];
+			$approved = ($r['approved']=='t');
+
+			$removelink = (
+				"<a href=\"?action=remove_email&journo_id=$journo_id&email_id=$id\">remove</a>");
+			
+			if ( $approved )
+			{
+				$divclass = 'approved';
+				$approvelink = sprintf(
+					"<a href=\"?action=disapprove_email&journo_id=%s&email_id=%s\">disapprove</a>",
+					$journo_id, $id );
+			}
+			else
+			{
+				$divclass = 'unapproved';
+				$approvelink = sprintf(
+					"<a href=\"?action=approve_email&journo_id=%s&email_id=%s\">approve</a>",
+					$journo_id, $id );
+			}
+			
+            $desc = '';
+            if( $srcurl || $srctype )
+                $desc = "(srctype: '$srctype' srcurl: '$srcurl') ";
+
+			print " <li>\n";
+			print (" <div class=\"$divclass\">[$id] $email $desc" .
+			       "<small>[$removelink] [$approvelink]</small></div>");
+			print " </li>\n";
+		}
+?>
+	</ul>
+<?php
+
+	}
+	else
+	{
+		print( "<p>-- no email addresses --</p>\n" );
+	}
+
+?>
+<form method="post">
+email: <input type="text" name="email" size="80" />
+<?php
+print form_element_hidden( 'action', 'add_email' );
+print form_element_hidden( 'journo_id', $journo_id );
+?>
+<input type="submit" name="submit" value="Add Email Address" />
+</form>
+<?php
+
+}
+
+/* Form to confirm that email address _should_ be removed from this journo */
+function ConfirmRemoveEmail( $journo_id, $email_id )
+{
+	$l = db_getRow( "SELECT * FROM journo_email WHERE id=?", $email_id );
+	$journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
+
+?>
+<form method="post" action="/adm/journo">
+<p>Are you sure you want to remove
+<code><?=$l['email']?></code>
+from <?=$journo['prettyname'];?>?<br />
+<input type="hidden" name="email_id" value="<?=$email_id;?>" />
+<input type="hidden" name="journo_id" value="<?=$journo_id;?>" />
+<input type="hidden" name="action" value="remove_email_confirmed" />
+<input type="submit" name="submit" value="Yes!" />
+<a href="?journo_id=<?=$journo_id;?>">No, I've changed my mind</a>
+</form>
+<?php
+
+}
+
+
+function AddEmail( $journo_id, $email )
+{
+	db_query( "INSERT INTO journo_email (journo_id,email,srctype,srcurl,approved) VALUES (?,?,?,?,?)",
+		$journo_id, $email, '', '', 't' );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
-	printf( "<strong>Added Weblink</strong>\n" );
+	EmitActionMsg( "Added Email address ($email)" );
+}
+
+function RemoveEmail( $journo_id, $email_id )
+{
+	db_query( "DELETE FROM journo_email WHERE id=?", $email_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	EmitActionMsg( "Removed Email\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function ApproveEmail( $journo_id, $email_id )
+{
+	db_query( "UPDATE journo_email SET approved=true WHERE id=?", $email_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	EmitActionMsg( "Approved email (id $email_id)" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function DisapproveEmail( $journo_id, $email_id )
+{
+	db_query( "UPDATE journo_email SET approved=false WHERE id=?", $email_id );
+	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
+	EmitActionMsg( "Disapproved Email (id $email_id)" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
 }
 

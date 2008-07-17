@@ -1,10 +1,14 @@
 .bio_approved { background-color: #CCFFCC }
 .bio_unapproved { background-color: #FFCCCC }
 
+.approved { background-color: #CCFFCC }
+.unapproved { background-color: #FFCCCC }
+
 .status_green { background-color: #CCFFCC }
 .status_red { background-color: #FFCCCC }
 
 .action_summary {
     border: thin dashed blue;
-    background-color: silver }
+    background-color: silver;
+    padding: 1em; }
 
