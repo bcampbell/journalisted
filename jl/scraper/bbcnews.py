@@ -294,8 +294,11 @@ def Extract( html, context ):
             return None
 
 
+    if storybody:
+        txt = storybody.renderContents(None)
+    else:
+        txt = unicode( html, soup.originalEncoding )
 
-    txt = storybody.renderContents(None)
     m = re.search( u'<!--\s*S BO\s*-->(.*)<!--\s*E BO\s*-->', txt, re.UNICODE|re.DOTALL )
     txt = m.group(1)
 
