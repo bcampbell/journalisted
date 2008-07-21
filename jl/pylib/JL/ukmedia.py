@@ -34,7 +34,7 @@ class NonFatal(Exception):
     pass
 
 OFFLINE = False#True    # gtb
-USE_CACHE = False   # gtb
+USE_CACHE = False
 
 defaulttimeout=120  # socket timeout, in secs
 

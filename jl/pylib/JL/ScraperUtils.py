@@ -28,11 +28,12 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
 
     parser = OptionParser()
     parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-    parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+    parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database" )
+    parser.add_option( "-f", "--force", action="store_true", dest="forcerescrape", help="force rescrape of article if already in DB" )
 
     if prepare_parser_fn:
         prepare_parser_fn(parser)
-    
+ 
     (options, args) = parser.parse_args()
     if after_parsing_fn:
         (options, args) = after_parsing_fn(options, args)
@@ -52,8 +53,8 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
     # Hack: publish the store so that we can use its DB connection
     global article_store
     article_store = store
-    
-    ProcessArticles( found, store, extract_fn, post_fn, maxerrors )
+   
+    ProcessArticles( found, store, extract_fn, post_fn, maxerrors, forcerescrape = options.forcerescrape )
 
     return 0
 
@@ -79,7 +80,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
 
         if ukmedia.USE_CACHE:
             ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, os.path.join( "rssCache", srcorgname ) )
-            r = feedparser.parse( os.path.join( "rssCache", srcorgname, GetCacheFilename(feedurl) ) )
+            r = feedparser.parse( os.path.join( "rssCache", srcorgname, ukmedia.GetCacheFilename(feedurl) ) )
         else:
             r = feedparser.parse( feedurl )
         
@@ -167,7 +168,7 @@ def LogScraperError( conn, context, report ):
     c.close()
 
 
-def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10, showexisting=False ):
+def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10, showexisting=False, forcerescrape=False ):
     """Download, scrape and load a list of articles
 
     Each entry in foundarticles must have at least:
@@ -177,10 +178,10 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
     extractfn - function to extract an article from the html
     postfn - option fn to call after article is added to db
     showexisting - if True, print a message when an article already is in DB
+    forcerescrape - if True, rescrape articles already in DB
     """
     failcount = 0
     abortcount = 0
-#   maxerrors = 10
     newcount = 0
 
     for context in foundarticles:
@@ -201,7 +202,8 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
             if article_id:
                 if showexisting:
                     ukmedia.DBUG( u"already got '%s' - [a%s]\n" % (context['srcurl'], article_id ) )
-                continue;   # skip it - we've already got it
+                if not forcerescrape:
+                    continue;   # skip it - we've already got it
 
             html = ukmedia.FetchURL( context['srcurl'], ukmedia.defaulttimeout, os.path.join( "cache", context['srcorgname'] ) )
  
@@ -210,12 +212,16 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
 
             art = extractfn( html, context )
 
+
             if art:
-                artid = store.Add( art )
+                if article_id:  # rescraping existing article?
+                    art['id'] = article_id
+
+                article_id = store.Add( art )
                 newcount = newcount + 1
                 # if there is a post-processing fn, call it
                 if postfn:
-                    postfn( artid, art )
+                    postfn( article_id, art )
 
 
         except Exception, err:
