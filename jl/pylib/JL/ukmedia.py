@@ -35,6 +35,10 @@ class NonFatal(Exception):
 
 OFFLINE = False#True    # gtb
 USE_CACHE = False
+if os.getenv('JL_USE_CACHE','false').lower() in ( '1', 'true' ):
+    USE_CACHE = True
+
+debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
 defaulttimeout=120  # socket timeout, in secs
 
@@ -301,7 +305,6 @@ del name, codepoint
 #----------------------------------------------------------------------------
 # DEBUGGING STUFF
 
-debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
 def DBUG( msg ):
     if debuglevel > 0:
