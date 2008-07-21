@@ -30,41 +30,10 @@ rss_feed_page = "http://www.dailymail.co.uk/home/rssMenu.html"
 #columnistmainpage = 'http://www.dailymail.co.uk/pages/live/columnists/dailymail.html'
 
 
-def FindColumnistArticles():
-    """Dailymail doesn't seem to have an RSS feed for it's columnists,
-    so we'll just grep for links on the columnist page.
-    TODO: could follow archive links for more articles..."""
-
-    ukmedia.DBUG2("Searching Columnist page for articles\n")
-    foundarticles = []
-    html = ukmedia.FetchURL( columnistmainpage )
-    soup = BeautifulSoup( html )
-
-    srcorgname = u'dailymail'
-    lastseen = datetime.now()
-
-    for h in soup.findAll( 'h3' ):
-        url = TidyURL( 'http://www.dailymail.co.uk' + h.a['href'] )
-
-        context = {
-            'srcid': CalcSrcID( url ),
-            'srcurl': url,
-            'permalink': url,
-            'srcorgname' : srcorgname,
-            'lastseen': lastseen,
-            }
-        foundarticles.append( context )
-
-    ukmedia.DBUG2("found %d columnist articles\n" % (len(foundarticles)) )
-    return foundarticles
-
-
-
 
 def FindRSSFeeds( rssurl ):
-    # TODO: can handle "Live mag" and "You mag" with a little more work
-    blacklist = ( 'Pictures', 'Coffee Break', 'Live mag', 'You mag' )
-
+#    blacklist = ( 'Pictures', 'Coffee Break', 'Live mag', 'You mag' )
+    blacklist = ()
     feeds = {}
 
     html = ukmedia.FetchURL( rssurl )
@@ -313,8 +282,6 @@ def FindArticles():
     rssfeeds = FindRSSFeeds( rss_feed_page )
 
     found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
-    # extra articles not from RSS feeds...
-#    found = found + FindColumnistArticles()
     return found
 
 
