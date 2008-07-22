@@ -5,14 +5,13 @@ chdir( dirname(dirname(__FILE__)) );
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
+require_once '../phplib/adm.php';
 
+admPageHeader();
 ?>
-<html>
-<head></head>
-<body>
-<h1>Merge Journo</h1>
-
+<h2>Merge Journo</h2>
 <?php
 
 
@@ -35,11 +34,8 @@ else
 	}
 }
 
-?>
-</body>
-</html>
+admPageFooter();
 
-<?php
 
 
 
@@ -148,13 +144,23 @@ function MergeJourno( $params )
 	db_do( "UPDATE journo_bio SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 
 	db_do( "DELETE FROM journo WHERE id=?", $from_id );
-
 	db_commit();
 
-	printf("<p>Merged '%s' ('%s') into '%s' ('<a href=\"%s\">%s</a>')</p>\n",
+	cache_clear( 'j'.$into_id );
+	cache_clear( 'j'.$from_id );
+
+    // TODO: LOG THIS ACTION!
+
+    print( "<div class=\"action_summary\">\nDone!\n<ul>\n" );
+	printf("<li>Merged '%s' ('%s') into '%s' ('<a href=\"%s\">%s</a>')</li>\n",
 		$fromj['prettyname'], $fromj['ref'],
 		$intoj['prettyname'], '/' . $intoj['ref'], $intoj['ref'] );
+	printf("<li>Deleted '%s' ('%s')</li>\n", $fromj['prettyname'], $fromj['ref'] );
+    print( "</ul></div>\n" );
+
 }
+
+
 
 function JournoOverview( $ref )
 {

@@ -259,6 +259,8 @@ function SplitJourno( $params )
 		return;
 	}
 
+    print( "<div class=\"action_summary\">\nDone!\n<ul>\n" );
+
 	/* do we want to change the ref of the from journo? */
 	if( $params['new_from_ref'] )
 	{
@@ -288,7 +290,7 @@ function SplitJourno( $params )
 		// create the new journo
 		journoCreate( $toj );
 
-		printf("<p>Created new journo, '%s' (id=%d)</p>\n", $toj['ref'], $toj['id'] );
+		printf("<li>Created new journo, '%s' (id=%d)</li>\n", $toj['ref'], $toj['id'] );
 	}
 
 	// move articles
@@ -314,20 +316,22 @@ EOD;
     	// TODO: other data to move??? links? email?
     }
 
+	db_commit();
+
 	// Clear the htmlcache for the to and from journos
 	cache_clear( 'j'.$fromj['id'] );
 	cache_clear( 'j'.$toj['id'] );
 
-	db_commit();
 
-	print "<p>It worked!</p>\n";
+	print( "<li>Journo split!<br />\n" );
 
 	printf( "from: <a href=\"/%s\">%s (id %d)</a>\n", $fromj['ref'],$fromj['ref'], $fromj['id'] );
     printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $fromj['id'] );
 
 	printf( "to: <a href=\"/%s\">%s (id %d)</a>\n", $toj['ref'],$toj['ref'], $toj['id'] );
     printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $toj['id'] );
-
+    print( "</li>" );
+    print( "</ul>\n</div>\n" );
 }
 
 
