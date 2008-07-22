@@ -23,12 +23,14 @@ function admPageHeader( $title = '' )
 </head>
 <body>
 <h1>Journalisted admin</h1>
-<a href="journo">Journos</a> |
 <a href="article">Articles</a> |
 <a href="scrape">Scrape</a> |
-<a href="journo-bios">Journo-Bios</a> |
-<a href="journo-email">Journo-Email</a> |
-<a href="journo-split">Split Journos</a>
+<a href="journo">Journos</a> (<small>
+<a href="journo-bios">Bios</a> |
+<a href="journo-email">Email</a> |
+<a href="journo-split">Split</a> |
+<a href="journo-merge">Merge</a>
+</small>)
 <hr>
 <?php
 

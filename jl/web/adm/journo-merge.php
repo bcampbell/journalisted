@@ -144,6 +144,8 @@ function MergeJourno( $params )
 //	db_do( "UPDATE journo_alias SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_weblink SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_email SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_bio SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 
 	db_do( "DELETE FROM journo WHERE id=?", $from_id );
 
