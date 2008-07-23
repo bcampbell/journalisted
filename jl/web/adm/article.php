@@ -354,9 +354,12 @@ function EmitAddJournoForm( $art, $journo )
 	$prettyname = $journo['prettyname'];
 	$url = '/adm/journo?journo_id='.$journo['id'];
 	$journo_id = $journo['id'];
+	$oneliner = $journo['oneliner'];
+	$ref = $journo['ref'];
+
 ?>
 <form method="post" action="/adm/article">
-<a href="<?=$url;?>"><?=$prettyname;?></a>
+<a href="<?=$url;?>"><?=$prettyname;?> <small>(<code><?=$ref;?></code>)</small></a> (<?=$oneliner;?>) 
 <input type="hidden" name="article_id" value="<?=$art['id'];?>" />
 <input type="hidden" name="action" value="add_journo" />
 <input type="hidden" name="journo_id" value="<?=$journo_id;?>" />
