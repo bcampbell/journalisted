@@ -13,8 +13,8 @@ To create mst user:
   $ sudo -u postgres createuser --no-superuser --no-createrole --createdb mst
 
 
-Text is utf-8 encoded and stored in a latin-1 DB. So the DB _thinks_ it's
-got latin-1 text, but the backend and website know that that text is really
+Text is utf-8 encoded and stored in an ascii DB. So the DB _thinks_ it's
+got ascii text, but the backend and website know that that text is really
 in utf-8). At some point we'll tidy it up so the database knows it's storing
 utf-8.
 
@@ -28,7 +28,7 @@ Kill the old db:
   $ dropdb -U mst mst
 
 Create the new one:
-  $ createdb -U mst -E latin-1 mst
+  $ createdb -U mst -E sql_ascii mst
 
 Allow PL/PgSQL stored procedures:
   $ sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;" mst
@@ -49,5 +49,7 @@ Postgres 8.3 notes
 - can no longer create DBs which have encoding other than what the cluster uses.
 - can turn this off by settings locale to POSIX (or C):
 sudo pg_createcluster --locale POSIX 8.3 main
+- alternative is to use "sql_ascii" encoding when creating the database with
+  createdb (as specified above)
 
 
