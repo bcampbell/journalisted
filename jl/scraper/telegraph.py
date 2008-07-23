@@ -10,11 +10,19 @@
 # The blog ones are done by blogs.py
 #
 # TODO:
+#
+# - see if the telegraph update their master rss feed page. Currently the
+#   list of feeds is a manually-cobbled-together mix of old and new feeds.
+#   At time of writing (2008-07-23) telegraph rss feeds page only lists
+#   old-style feeds.
+#
 # - better sundaytelegraph handling
+#
 # - tidy URLs ( strip jsessionid etc)
 #     http://www.telegraph.co.uk/earth/main.jhtml?view=DETAILS&grid=&xml=/earth/2007/07/19/easeabird119.xml
 #     (strip view param)
-# - handle multi-page articles (currently only pick up first page)
+#
+# - handle multi-page articles (currently only pick up first page) (is this a problem with new website format too?)
 #
 
 import re
@@ -29,7 +37,68 @@ import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 
 
-rssfeeds = {
+# these were obtained by manually going through each section and noting down the feeds.
+new_rssfeeds = {
+
+    "Home feed": "http://www.telegraph.co.uk/rss",
+
+    "News feed": "http://www.telegraph.co.uk/news/rss",
+    "  UK News feed": "http://www.telegraph.co.uk/news/uknews/rss",
+    "  World News feed": "http://www.telegraph.co.uk/news/worldnews/rss",
+    "  Politics feed": "http://www.telegraph.co.uk/news/newstopics/politics/rss",
+    "    Conservative feed": "http://www.telegraph.co.uk/news/newstopics/politics/conservative/rss",
+    "    Labour feed": "http://www.telegraph.co.uk/news/newstopics/politics/labour/rss",
+    "    Liberal Democrats feed": "http://www.telegraph.co.uk/news/newstopics/politics/liberaldemocrats/rss",
+    "  Celebrity News feed": "http://www.telegraph.co.uk/news/newstopics/celebritynews/rss",
+    "  Obituaries feed": "http://www.telegraph.co.uk/news/obituaries/rss",
+    "  How About That? feed": "http://www.telegraph.co.uk/news/newstopics/howaboutthat/rss",
+    # science section is still old style, and mixed in with earth section
+    "  News Topics feed": "http://www.telegraph.co.uk/news/newstopics/rss",
+
+    "Sport feed": "http://www.telegraph.co.uk/sport/rss",
+    "  Football feed": "http://www.telegraph.co.uk/sport/football/rss",
+    "    Leagues feed": "http://www.telegraph.co.uk/sport/football/leagues/rss",
+    # There are actually feeds for every team... but I'm not entering them all by hand :-)
+    # And the leagues feed should cover them all anyway.
+    "    European feed": "http://www.telegraph.co.uk/sport/football/european/rss",
+    "    International feed": "http://www.telegraph.co.uk/sport/football/international/rss",
+    "  Cricket feed": "http://www.telegraph.co.uk/sport/cricket/rss",
+    "    International feed": "http://www.telegraph.co.uk/sport/cricket/international/rss",
+    "    Counties feed": "http://www.telegraph.co.uk/sport/cricket/counties/rss",
+    "  Olympics feed": "http://www.telegraph.co.uk/sport/othersports/olympics/rss",
+    "  Rubgy Union feed": "http://www.telegraph.co.uk/sport/rugbyunion/rss",
+    "    International feed": "http://www.telegraph.co.uk/sport/rugbyunion/international/rss",
+    "    Club feed": "http://www.telegraph.co.uk/sport/rugbyunion/club/rss",
+    "  Formula One feed": "http://www.telegraph.co.uk/sport/motorsport/formulaone/rss",
+    "  Golf feed": "http://www.telegraph.co.uk/sport/golf/rss",
+    "  Tennis feed": "http://www.telegraph.co.uk/sport/tennis/rss",
+    "  Horse Racing feed": "http://www.telegraph.co.uk/sport/horseracing/rss",
+    "  Other Sports feed": "http://www.telegraph.co.uk/sport/othersports/rss",
+    "  sports columnists": "http://www.telegraph.co.uk/sport/columnists/rss",
+
+    # Business section is still old style
+
+    # Comment section is still old style
+
+    "Travel feed": "http://www.telegraph.co.uk/travel/rss",
+    # I think "Types of Trips" and "Destinations" feeds might always be empty
+    "  Types of Trips feed": "http://www.telegraph.co.uk/travel/typesoftrips/rss",
+    "  Destinations feed": "http://www.telegraph.co.uk/travel/destinations/rss",
+    "  Hotels feed": "http://www.telegraph.co.uk/travel/hotels/rss",
+    "    UK Hotel reviews feed": "http://www.telegraph.co.uk/travel/hubs/ukhotelreviews/rss",
+    "    Europe Hotel reviews Feed": "http://www.telegraph.co.uk/travel/hubs/europehotelreviews/rss",
+    "  Travel News feed": "http://www.telegraph.co.uk/travel/travelnews/rss",
+    "  Columnists feed": "http://www.telegraph.co.uk/travel/columnists/rss",
+
+    # Lifestyle section is still old style
+    # Culture section is still old style
+
+}
+
+
+
+
+old_rssfeeds = {
     "Telegraph | Arts": "http://www.telegraph.co.uk/newsfeed/rss/arts.xml",
     "Telegraph | Books": "http://www.telegraph.co.uk/newsfeed/rss/arts-books.xml",
     "Telegraph | Digital Life": "http://www.telegraph.co.uk/newsfeed/rss/connected.xml",
@@ -49,7 +118,11 @@ rssfeeds = {
       
       # BLOGS:
 #    "Telegraph | News | Blog Yourview": "http://www.telegraph.co.uk/newsfeed/rss/news-blog-yourview.xml",
-  
+
+    "Telegraph Business RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_city.xml",
+#    "Telegraph Business | Markets RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_markets.xml",
+    "Telegraph Money | Personal Finance RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_pf.xml",
+
   
     "Telegraph | News | Business": "http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml",
     "Telegraph | Your Money": "http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml",
@@ -57,6 +130,8 @@ rssfeeds = {
       # blogs?
 #    "Telegraph | Opinion": "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_opinion.xml",
 
+    "Telegraph Opinion RSS": "http://www.telegraph.co.uk/newsfeed/rss/opinion.xml",
+    "Telegraph Opinion | Leaders RSS": "http://www.telegraph.co.uk/newsfeed/rss/leaders.xml",
 
     "Telegraph | Leaders": "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_leaders.xml",
     "Telegraph | Property": "http://www.telegraph.co.uk/newsfeed/rss/property.xml",
@@ -92,7 +167,8 @@ rssfeeds = {
 }
 
 
-
+rssfeeds = new_rssfeeds
+rssfeeds.update( old_rssfeeds )
 
 
 
@@ -120,65 +196,61 @@ def Extract( html, context ):
     raise Exception, "Uh-oh... don't know how to handle url '%s'" % (context['srcurl'])
 
 
-
 def Extract_HTML_Article( html, context ):
-    """ extract fn for HTML format articles
-    
-    we use the printer version, as it should be all on a single page
-    """
-
     art = context
+
+
+    # cull out video section before we do anything
+    vidpat = re.compile( r"<!-- Start of Brightcove Player -->.*?<!-- End of Brightcove Player -->", re.DOTALL )
+    html = vidpat.sub( '', html )
+
     soup = BeautifulSoup.BeautifulSoup( html )
 
-    headline = soup.h1.renderContents(None)
-    headline = ukmedia.FromHTML( headline )
-    headline = u' '.join( headline.split() )
+    # 'storyHead' div contains headline and description
+    storyheaddiv = soup.find( 'div', {'class': 'storyHead' } )
 
-    desc = u''
-    h2 = soup.find('h2')
+    title = storyheaddiv.h1.renderContents( None )
+    title = ukmedia.FromHTML( title )
+    title = u' '.join( title.split() )
+    art['title'] = title
+
+    desctxt = u''
+    h2 = storyheaddiv.find('h2')
     if h2:
-        desc = ukmedia.FromHTML( h2.renderContents(None) )
-        desc = u' '.join( desc.split() )
+        desctxt = h2.renderContents(None)
+        desctxt = ukmedia.FromHTML( desctxt )
+        desctxt = u' '.join( desctxt.split() )
 
-    byline = u''
-    bylinediv = soup.find( 'div', {'class':'byline'} )
-    if bylinediv:
-        byline = bylinediv.renderContents(None)
-        byline = ukmedia.FromHTML( byline )
-        byline = u' '.join( byline.split() )
-    if byline == u'' and desc:
-        # if no byline, try and guess from description
-        byline = ukmedia.ExtractAuthorFromParagraph( desc )
+    # 'story' div contains byline and main article text
+    storydiv = soup.find( 'div', {'class': 'story' } )
+    bylinediv = storydiv.find( 'div', {'class':'byline'} )
+    # byline div contains both byline and pubdate
+    txt = bylinediv.renderContents(None)
+    txt = ukmedia.FromHTML( txt )
+    txt = u' '.join( txt.split() )
+    m = re.match( r"\s*(.*?)\s*Last Updated:\s+(.*)", txt )
+    art['byline'] = m.group(1)
+    pubdatetxt = m.group(2) # eg "11:52PM BST 22 Jul 2008"
+    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
 
+    # cull out cruft from the story div:
+    bylinediv.extract()
+    for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\bslideshow\b') } ):
+        cruft.extract()
+    for cruft in storydiv.findAll( 'ul', {'class': 'storylist'} ):
+        cruft.extract()
 
-    datelinediv = soup.find( 'div', {'class':'date'} )
-    pubdatetxt = ukmedia.FromHTML( datelinediv.renderContents(None) )
-    pubdate = ukmedia.ParseDateTime( pubdatetxt )
+    contenttxt = storydiv.renderContents(None)
+    contenttxt = ukmedia.SanitiseHTML( contenttxt )
+    art['content'] = contenttxt
 
-    contentdiv = soup.find( 'div', {'id':'body'} )
-    if not contentdiv:
-        # some articles don't have body div... sigh...
-        soup2 = BeautifulSoup.BeautifulSoup()
-        contentdiv = BeautifulSoup.Tag( soup2, 'div' )
-        soup2.insert( 0, contentdiv )
-
-        last = soup.find( 'div', {'class':'from'} )
-        e = h2.nextSibling
-        while e and e != last:
-            n = e.nextSibling
-            contentdiv.append(e)
-            e = n
-
-    content = contentdiv.renderContents(None)
-    content = ukmedia.SanitiseHTML( content )
-
-    art['title'] = headline
-    art['byline'] = byline
-    art['description'] = desc
-    art['content'] = content
-    art['pubdate'] = pubdate
+    if desctxt == u'':
+        desctxt = ukmedia.FirstPara( art['content'] )
+    art['description'] = desctxt
 
     return art
+
+
 
 
 def Extract_XML_Article( html, context ):
@@ -345,7 +417,7 @@ def ExtractParas( soup, textpart ):
     return desc
 
 
-# eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html?service=print
+# eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html
 srcidpat_html = re.compile( "/(\d+)/[^/]+[.]html$" )
 
 # http://www.telegraph.co.uk/earth/main.jhtml?xml=/earth/2008/03/02/earecycling102.xml
@@ -393,9 +465,12 @@ def ScrubFunc( context, entry ):
         # it's an html article...
         # eg "http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html"
         # trim off all params, fragments...
-        context['permalink'] = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+        url = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+        context['srcurl'] = url
+        context['permalink'] = url
         # use printer version for scraping
-        context['srcurl'] = urlparse.urlunparse( (o[0],o[1],o[2],'','service=print','') );
+#        context['srcurl'] = urlparse.urlunparse( (o[0],o[1],o[2],'','service=print','') );
+
         context['srcid'] = CalcSrcID( url )
 
     elif o[2].lower().endswith( ".jhtml" ):
