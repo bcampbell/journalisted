@@ -21,6 +21,44 @@ from BeautifulSoup import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 
 
+
+def FindRSSFeeds():
+    """ fetch a list of RSS feeds for the mirror.
+
+    returns a list of (name, url) tuples, one for each feed
+    """
+
+    url_blacklist = ( '/fun-games/', '/pictures/', '/video/' )
+
+    ukmedia.DBUG2( "Fetching list of rss feeds\n" );
+
+    sitemap_url = 'http://www.mirror.co.uk/sitemap/'
+    html = ukmedia.FetchURL( sitemap_url )
+    soup = BeautifulSoup(html)
+
+    feeds = []
+    for a in soup.findAll( 'a', {'class':'sitemap-rss' } ):
+        url = a['href']
+#        a2 = a.findNextSibling( 'a' )
+#        if a2:
+#            title = a2.renderContents( None )
+#        else:
+        m = re.search( r'mirror.co.uk/(.*)/rss[.]xml', url )
+        title = m.group(1)
+
+        skip = False
+        for banned in url_blacklist:
+            if banned in url:
+                ukmedia.DBUG2( " ignore feed '%s' [%s]\n" % (title,url) )
+                skip = True
+
+#        print "%s: %s" %(title,url)
+        if not skip:
+            feeds.append( (title,url) )
+
+    return feeds
+
+
 mirror_rssfeeds = {
     # feed not on the mirror sitemap...
     "Kevin Maguire & Friends": "http://feeds.feedburner.com/KevinMaguire",
@@ -117,8 +155,6 @@ sundaymirror_rssfeeds = {
 
 
 
-# mirror bylines have date in
-bylinetidypat = re.compile( """\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*""", re.UNICODE )
 
 
 def Extract( html, context ):
@@ -129,8 +165,62 @@ def Extract( html, context ):
         return Extract_MainSite( html, context )
         
     
-
 def Extract_MainSite( html, context ):
+    art = context
+    soup = BeautifulSoup( html )
+
+
+    if '/sunday-mirror/' in art['srcurl']:
+        art['srcorgname'] = u'sundaymirror'
+    else:
+        art['srcorgname'] = u'mirror'
+
+    maindiv = soup.find( 'div', { 'id': 'three-col' } )
+    h1 = maindiv.h1
+
+    title = h1.renderContents(None)
+    title = ukmedia.FromHTMLOneLine( title )
+    art['title'] = title
+
+    # eg "By Jeremy Armstrong 24/07/2008"
+    bylinepara = maindiv.find( 'p', {'class': 'article-date' } )
+    bylinetxt = bylinepara.renderContents( None )
+    bylinetxt = ukmedia.FromHTMLOneLine( bylinetxt )
+    bylinepat = re.compile( r'\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*' )
+    m = bylinepat.match( bylinetxt )
+    art['byline'] = m.group(1)
+    art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
+
+    # sometimes, only sundaymirror.co.uk in byline is only indicator
+    if u'sundaymirror' in art['byline'].lower():
+        art['srcorgname'] = u'sundaymirror'
+
+    # remove everything except for article text
+    h1.extract()
+    bylinepara.extract()
+    # kill adverts, photos etc...
+    for cruft in maindiv.findAll( 'div' ):
+        cruft.extract()
+    # sometimes a misplaced "link" element!
+    for cruft in maindiv.findAll( 'link' ):
+        cruft.extract()
+
+    content = maindiv.renderContents(None)
+    art['content'] = content
+    art['description'] = ukmedia.FirstPara( content )
+
+    if art['description'].strip() == u'':
+        if re.search( r'\bpix\b', art['title'].lower() ):
+            ukmedia.DBUG2("IGNORE pix page '%s' [%s]\n" % (art['title'],art['srcurl']) )
+            return None
+        if re.search( r'^video:', art['title'].lower() ):
+            ukmedia.DBUG2("IGNORE video page '%s' [%s]\n" % (art['title'],art['srcurl']) )
+            return None
+
+    return art
+
+
+def OLD_Extract_MainSite( html, context ):
     """extract article from a mirror.co.uk page"""
 
     art = context
@@ -145,6 +235,8 @@ def Extract_MainSite( html, context ):
 
     bylinediv = maindiv.find( 'h2', { 'class': 'art-byline' } )
     rawbyline = ukmedia.FromHTML( bylinediv.renderContents(None) )
+    # mirror bylines have date in
+    bylinetidypat = re.compile( """\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*""", re.UNICODE )
     m = bylinetidypat.match( rawbyline )
     art['byline'] = m.group(1)
     art['pubdate' ] = ukmedia.ParseDateTime( m.group(2) )
@@ -208,13 +300,18 @@ def Extract_Blog( html, context ):
 
 # to get unique id out of url
 srcid_patterns = [
-    # mirror:
-    # http://www.mirror.co.uk/news/topstories/2008/02/29/prince-harry-to-be-withdrawn-from-afghanistan-89520-20335665/
-    re.compile( "-(89520-[0-9]+)/([?].*)?$" ),
-    # sundaymirror:
-    # http://www.sundaymirror.co.uk/news/sunday/2008/02/24/commons-speaker-michael-martin-in-new-expenses-scandal-98487-20329121/
-    re.compile( "-(98487-[0-9]+)/([?].*)?$" ),
-    re.compile( "%26(objectid=[0-9]+)%26" ),   # old url style
+
+
+    # new-style:
+    #  http://www.mirror.co.uk/news/top-stories/2008/07/24/exclusive-anne-darwin-vows-to-flee-to-panama-and-1million-fortune-when-out-of-jail-115875-20668758/
+    # old-style (mirror):
+    #  http://www.mirror.co.uk/news/topstories/2008/02/29/prince-harry-to-be-withdrawn-from-afghanistan-89520-20335665/
+    # old-style (sunday mirror):
+    #  http://www.sundaymirror.co.uk/news/sunday/2008/02/24/commons-speaker-michael-martin-in-new-expenses-scandal-98487-20329121/
+    re.compile( "-([-0-9]+)(/([?].*)?)?$" ),
+
+    # really old style:
+    re.compile( "%26(objectid=[0-9]+)%26" ),
 
     # Kevin Maguire & friends blog:
     # http://blogs.mirror.co.uk/maguire/2008/07/beauty-and-the-beast.html
@@ -272,18 +369,20 @@ def ContextFromURL( url ):
     context['srcurl'] = url
     context['permalink'] = url
     context[ 'srcid' ] = CalcSrcID( url )
-    if url.find( 'sundaymirror.co.uk' ) == -1:
-        context['srcorgname'] = u'mirror'
-    else:
+    # looks like sundaymirror.co.uk domainname has been deprecated
+    if 'sundaymirror.co.uk' in url or '/sunday-mirror/' in url:
         context['srcorgname'] = u'sundaymirror'
+    else:
+        context['srcorgname'] = u'mirror'
+
     context['lastseen'] = datetime.now()
     return context
 
 
 
 def FindArticles():
-    found = ScraperUtils.FindArticlesFromRSS( mirror_rssfeeds, u'mirror', ScrubFunc )
-    found = found + ScraperUtils.FindArticlesFromRSS( sundaymirror_rssfeeds, u'sundaymirror', ScrubFunc )
+    feeds = FindRSSFeeds()
+    found = ScraperUtils.FindArticlesFromRSS( feeds, u'mirror', ScrubFunc )
     return found
 
 
