@@ -35,7 +35,9 @@ class NonFatal(Exception):
 
 OFFLINE = False#True    # gtb
 USE_CACHE = False
-if os.getenv('JL_USE_CACHE','false').lower() in ( '1', 'true' ):
+if os.getenv('JL_USE_CACHE','false').lower() in ( '0', 'false','off' ):
+    USE_CACHE = False
+else:
     USE_CACHE = True
 
 debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
@@ -288,6 +290,10 @@ def FromHTML( s ):
         s=u''
     return s
 
+def FromHTMLOneLine( s ):
+    """return html as a single line unicode string"""
+    return u' '.join( FromHTML(s).split() )
+
 # build up a unicode version of the htmlentitydefs.entitydefs table
 # for DescapeHTML()
 
@@ -519,26 +525,26 @@ def PrettyDump( art ):
 def FirstPara( html ):
     """ try and extract the first paragraph from some html
     
-    result is text with all html tags stripped
+    result is single line of unicode text with all html tags stripped
     """
 
 
     # first try text before first <p> (or </p>, because it might be broken)
     m = re.match( "\\s*(.*?)\\s*<([/])?p>", html, re.IGNORECASE|re.DOTALL )
     if m:
-        p = FromHTML(m.group(1))
+        p = FromHTMLOneLine(m.group(1))
         if len(p) > 10:
             return p
 
     # get first non-empty para
     cnt=0
     for m in re.finditer( "<p>\\s*(.*?)\\s*</p>", html, re.IGNORECASE|re.DOTALL ):
-        p = FromHTML( m.group(1) )
+        p = FromHTMLOneLine( m.group(1) )
         if len(p) > 0:
             return p;
 
     # no joy - just try and return the first 50 words
-    words = FromHTML(html).split()
+    words = FromHTMLOneLine(html).split()
     if len( words ) > 0:
         return u' '.join(words[:50] ) + "..."
 

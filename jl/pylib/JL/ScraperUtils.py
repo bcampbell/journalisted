@@ -75,65 +75,85 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
     socket.setdefaulttimeout( ukmedia.defaulttimeout )  # in seconds
 
     ukmedia.DBUG2( "*** %s ***: reading rss feeds...\n" % (srcorgname) )
-    for feedname, feedurl in rssfeeds.iteritems():
-        ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
-        if ukmedia.USE_CACHE:
-            ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, os.path.join( "rssCache", srcorgname ) )
-            r = feedparser.parse( os.path.join( "rssCache", srcorgname, ukmedia.GetCacheFilename(feedurl) ) )
-        else:
-            r = feedparser.parse( feedurl )
-        
-        #debug:     print r.version;
+    # ugly, but temporary. Flaw in dictionaries is that we can't have two feeds with the same name. big problem. So we're switching to lists instead.
+    if isinstance( rssfeeds, dict):
+        # it's a dictionary {name:url} (phasing this out!!!)
+        for feedname, feedurl in rssfeeds.iteritems():
+            foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
+    else:
+        # it's a list of (name,url) tuples:
+        for f in rssfeeds:
+            feedname = f[0]
+            feedurl = f[1]
+            foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
 
-        lastseen = datetime.now()
-        for entry in r.entries:
-            #Each item is a dictionary mapping properties to values
-            url = entry.link        # will be guid if no link attr
-            title = entry.title
-            if hasattr(entry, 'summary'):
-                desc = entry.summary
-            else:
-                desc = u''
-
-            pubdate = None
-            if hasattr(entry, 'updated_parsed'):
-                if entry.updated_parsed:
-                    pubdate = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
-
-#           print "New desc: ",desc.encode('latin-1','replace')
-
-            title = ukmedia.DescapeHTML( title )
-            desc = ukmedia.FromHTML( desc )
-            
-
-            context = {
-                'srcid': url,
-                'srcurl': url,
-                'permalink': url,
-                'description': desc,
-                'title' :title,
-                'srcorgname' : srcorgname,
-                'lastseen': lastseen,
-                'feedname': feedname #gtb
-                }
-
-            if pubdate:
-                context['pubdate'] = pubdate
-
-            if mungefunc:
-                context = mungefunc( context, entry )
-                # mungefunc can suppress by returning None.
-                if not context:
-                    continue
-                if not context.get( 'srcid', None ):
-                    ukmedia.DBUG2( "WARNING: missing/null srcid! ('%s')\n" % (context['srcurl']) )
-
-
-            foundarticles.append( context )
     ukmedia.DBUG2( "found %d articles.\n" % ( len(foundarticles) ) )
     return foundarticles
 
+
+
+def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
+    """fetch a list of articles from an RSS feed"""
+
+    foundarticles = []
+    ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
+
+    if ukmedia.USE_CACHE:
+        # TODO: use domainname instead of srcorgname
+        ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, os.path.join( "rssCache", srcorgname ) )
+        r = feedparser.parse( os.path.join( "rssCache", srcorgname, ukmedia.GetCacheFilename(feedurl) ) )
+    else:
+        r = feedparser.parse( feedurl )
+        
+    #debug:     print r.version;
+
+    lastseen = datetime.now()
+    for entry in r.entries:
+        #Each item is a dictionary mapping properties to values
+        url = entry.link        # will be guid if no link attr
+        title = entry.title
+        if hasattr(entry, 'summary'):
+            desc = entry.summary
+        else:
+            desc = u''
+
+        pubdate = None
+        if hasattr(entry, 'updated_parsed'):
+            if entry.updated_parsed:
+                pubdate = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
+
+#       print "New desc: ",desc.encode('latin-1','replace')
+
+        title = ukmedia.DescapeHTML( title )
+        desc = ukmedia.FromHTML( desc )
+            
+
+        context = {
+            'srcid': url,
+            'srcurl': url,
+            'permalink': url,
+            'description': desc,
+            'title' :title,
+            'srcorgname' : srcorgname,  # kill this! Might not know it until article has been scraped!
+            'lastseen': lastseen,
+            'feedname': feedname #gtb
+            }
+
+        if pubdate:
+            context['pubdate'] = pubdate
+
+        if mungefunc:
+            context = mungefunc( context, entry )
+            # mungefunc can suppress by returning None.
+            if not context:
+                continue
+            if not context.get( 'srcid', None ):
+                ukmedia.DBUG2( "WARNING: missing/null srcid! ('%s')\n" % (context['srcurl']) )
+
+        foundarticles.append( context )
+
+    return foundarticles
 
 
 def ShouldSkip( conn, srcid ):
