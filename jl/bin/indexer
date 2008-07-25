@@ -22,6 +22,8 @@ mysociety.config.set_file("../conf/general")
 xapdbpath = mysociety.config.get('JL_XAPDB')
 
 
+COMMIT_BATCH_SIZE=1000
+
 
 # ids for value field we want to store along with the document
 # (so we can display them in the search results)
@@ -102,14 +104,17 @@ def FetchJournos( conn, article_id ):
     return journos
 
 
-def PerformIndexing( options ):
+def PerformIndexing( xapdb,  options ):
     start = datetime.now()
 
     conn = DB.Connect()
-    xapdb = xapian.WritableDatabase(xapdbpath, xapian.DB_CREATE_OR_OPEN)
 
     conditions = [ "status=%s" ]
     params = [ 'a' ]
+
+    conditions.append( "needs_indexing=%s" )
+    params.append( 'true' )
+
     if options.from_date:
         conditions.append( "lastscraped >= %s::date" )
         params.append( options.from_date )
@@ -119,24 +124,37 @@ def PerformIndexing( options ):
         conditions.append( "lastscraped < %s::date + '1 day'::interval" )
         params.append( options.to_date )
 
-    print "counting..."
+    ukmedia.DBUG2( "counting...\n" )
     sql = "SELECT count(*) FROM article WHERE " + " AND ".join( conditions )
+    if options.max_number:
+        sql = sql + " LIMIT %d" % ( int(options.max_number) )
+
     c = conn.cursor()
+
+
     c.execute( sql, params );
     expected = c.fetchone()[0]
-    print "%d articles to process." % (expected)
+    if options.max_number:
+        if expected > int( options.max_number ):
+            expected = int( options.max_number )
+    ukmedia.DBUG2( "%d articles to process.\n" % (expected) )
 
-    sql = "SELECT * FROM article WHERE " + " AND ".join( conditions )
-    print "fetching articles"
+    sql = "SELECT * FROM article WHERE " + " AND ".join( conditions ) + " ORDER BY lastscraped DESC"
+    if options.max_number:
+        sql = sql + " LIMIT %d" % ( int(options.max_number) )
+
+    ukmedia.DBUG2( "fetching articles\n" )
+    #print sql
 
     c.execute( sql, params );
 
-    print "indexing begins"
+    ukmedia.DBUG2( "indexing begins\n" )
 
     xapdb.begin_transaction()
     tot=0
     cnt=0
     skipped=0
+    indexed_ids = []
     while 1:
         row = c.fetchone()
         if not row:
@@ -150,36 +168,55 @@ def PerformIndexing( options ):
             art[f] = row[f]
 
         skip = False
-        if not options.replace_existing:
-            skip = xapdb.term_exists( 'Q' + str(art['id']) )
+#        if not options.replace_existing:
+#            skip = xapdb.term_exists( 'Q' + str(art['id']) )
 
         if not skip:
             art['journos'] = FetchJournos( conn, art['id'] )
             IndexArticle( xapdb, art )
-# TODO - set a flag in article table to indicate article has been indexed!!!
-#            updatecursor.execute( "UPDATE article SET needs_indexing=false" WHERE id=%s" , (art['id'] )
+            indexed_ids.append( art['id'] )
 
             cnt = cnt+1
             tot = tot+1
-            if cnt >= 1000:
+            if cnt >= COMMIT_BATCH_SIZE:
                 cnt=0
-                print "committing..."
+                ukmedia.DBUG2( "committing...\n" )
                 xapdb.commit_transaction()
-                print "=> committed %d" %(tot)
+                FlagIndexed( conn, indexed_ids )
+                indexed_ids = []
+                ukmedia.DBUG2( "=> committed %d\n" %(tot) )
                 xapdb.begin_transaction()
         else:
             skipped = skipped+1
 
 
     # commit any leftovers
-    xapdb.commit_transaction()
-    print "done. committed %d, skipped %d" %(tot,skipped)
+    if cnt > 0:
+        xapdb.commit_transaction()
+        FlagIndexed( conn, indexed_ids )
+        indexed_ids = []
+    ukmedia.DBUG2( "done. committed %d, skipped %d\n" %(tot,skipped) )
 
     c.close()
 
     fin = datetime.now()
-    print "finished. took %s " % (fin-start)
+    ukmedia.DBUG2( "finished. took %s\n" % (fin-start) )
 
+
+def FlagIndexed( conn, article_ids ):
+    """mark articles in the db as having been indexed"""
+    c = conn.cursor()
+    params = ['%s'] * len( article_ids )
+    sql = "UPDATE article SET needs_indexing=false WHERE id IN ( %s )" % ( ','.join(params) )
+    c.execute( sql, article_ids )
+    conn.commit()
+    c.close()
+
+
+def Zap( xapdb, article_id ):
+    """ remove an article from the xapian DB """
+    article_id_term = 'Q' + article_id
+    xapdb.delete_document( article_id_term )
 
 def main():
     parser = OptionParser()
@@ -192,15 +229,25 @@ def main():
         dest="to_date",
         metavar="DATE",
         help="index articles scraped up to (and including) DATE (yyyy-mm-dd)" )
-    parser.add_option("-r", "--replace",
-        action="store_true", dest="replace_existing",
-        help="reindex articles already in the xapian db")
+    parser.add_option("-z", "--zap",
+        dest="zap_id",
+        metavar="ARTICLE_ID",
+        help="remove the entry for ARTICLE_ID" )
+#    parser.add_option("-r", "--replace",
+#        action="store_true", dest="replace_existing",
+#        help="reindex articles already in the xapian db")
+    parser.add_option("-n", "--max-number",
+        dest="max_number",
+        help="Don't index any more articles than this (most recently-scraped first)")
 
     (options, args) = parser.parse_args()
 
-    PerformIndexing( options )
+    xapdb = xapian.WritableDatabase(xapdbpath, xapian.DB_CREATE_OR_OPEN)
 
-
+    if options.zap_id:
+        Zap( xapdb, options.zap_id )
+    else:
+        PerformIndexing( xapdb, options )
 
 if __name__ == "__main__":
     main()
