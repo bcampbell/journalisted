@@ -281,6 +281,8 @@ def Extract_Blog( html, context ):
         cruft.extract()
     for cruft in body.findAll( 'img' ):
         cruft.extract()
+    for cruft in body.findAll( 'object' ):
+        cruft.extract()
 
 
 
