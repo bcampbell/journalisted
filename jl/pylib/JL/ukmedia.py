@@ -72,7 +72,8 @@ datecrackers = [
     re.compile( """(?P<year>\d{4})/(?P<month>\d\d)/(?P<day>\d\d) (?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
 
     # "Mar 3, 2007 12:00 AM"
-    re.compile( """((?P<month>[A-Z]\w{2}) (?P<day>\d+), (?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
+    # "Jul 21, 08 10:00 AM" (mirror blogs)
+    re.compile( """((?P<month>[A-Z]\w{2}) (?P<day>\d+), (?P<year>\d{2,4}) (?P<hour>\d\d):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
 
     # "09-Apr-2007 00:00" (times, sundaytimes)
     re.compile( """(?P<day>\d\d)-(?P<month>\w+)-(?P<year>\d{4}) (?P<hour>\d\d):(?P<min>\d\d)""", re.UNICODE ),
