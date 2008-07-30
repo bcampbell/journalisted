@@ -1,0 +1,117 @@
+#!/usr/bin/env python2.4
+#
+# Hacky little tool to rebuild srcid of articles using their
+# srcurl.
+#
+
+from optparse import OptionParser
+import sys
+import psycopg2
+
+sys.path.append( "../pylib" )
+from JL import DB
+
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+
+def DoOrg( conn, options ):
+
+    c = conn.cursor()
+    c.execute( "SELECT id FROM organisation WHERE shortname=%s", (options.org_name) )
+    row = c.fetchone()
+    srcorg = row['id']
+
+    print "doing %s (srcorg=%d)..." % (options.org_name, srcorg)
+
+    c.execute( "SELECT id,srcurl,srcid FROM article WHERE srcorg=%s", (srcorg) )
+
+    changed = []
+    unchanged = []
+    bad = []
+    while 1:
+        row = c.fetchone()
+        if not row:
+            break
+        url = row['srcurl']
+        srcid = scrapefront.CalcSrcID( url )
+
+        item = { 'id': row['id'],
+            'srcurl': row['srcurl'],
+            'old_srcid': row['srcid'],
+            'srcid': srcid }
+
+        if srcid == None :
+            bad.append( item )
+        else:
+            if item['old_srcid'] == item['srcid']:
+                unchanged.append( item )
+            else:
+                changed.append( item )
+
+    c.close()
+
+#    for i in changed:
+#        print "OLD: '%s' NEW: '%s'" % (i['old_srcid'], i['srcid'])
+
+
+    print "  %d articles (%d changed, %d unchanged, %d bad)" %( len(changed)+len(unchanged)+len(bad), len(changed), len(unchanged), len(bad) )
+    if len(bad) > 0:
+        for b in bad:
+            print "BAD: %s '%s'" %(b['id'], b['srcurl'])
+        raise Exception, "ABORTED"
+
+    print "  applying changes to db..."
+    Apply( conn, changed )
+    print "  done."
+
+    if not options.dryrun:
+        print "commit changes"
+        conn.commit()
+    else:
+        print "dry run - rolling back"
+        conn.rollback()
+
+
+def Apply( conn, items ):
+    c = conn.cursor()
+
+    errs = 0
+    for i in items:
+        try:
+            c.execute( "UPDATE article SET srcid=%s WHERE id=%s", i['srcid'], i['id'] )
+        except psycopg2.IntegrityError:
+            print >>sys.stderr, "ERROR: duplicate id [a%s], oldsrcid='%s' new srcid='%s'" % (i['id'],i['old_srcid'], i['srcid'] )
+            errs = errs + 1
+            if errs>=20:
+                print >>sys.stderr, "too many errors. aborting."
+                sys.exit(1)
+
+    c.close()
+
+
+#c2.execute( "UPDATE article SET srcid=%s WHERE id=%s", srcid, row['id'] )
+
+
+def main():
+    parser = OptionParser()
+    parser.add_option("-d", "--dry-run", action="store_true", dest="dryrun", help="dry run - don't touch DB")
+    parser.add_option("-o", "--orgname",  dest="org_name", help="Which organisation to rebuild srcids for")
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+
+    if options.org_name:
+        DoOrg( conn, options )
+#    else:
+#        for name,s in sources.iteritems():
+#            DoOne( conn,name )
+
+
+if __name__ == "__main__":
+    main()
+
+
+
