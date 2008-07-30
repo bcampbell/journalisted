@@ -487,14 +487,20 @@ function DisapproveBio( $journo_id, $bio_id )
 
 function EmitEmailAddresses( $journo_id )
 {
-	print "<h3>Email Addresses</h3>\n";
+
+?>
+<h3>Email Addresses</h3>
+<?php
+
 	$rows = db_getAll( "SELECT * FROM journo_email WHERE journo_id=?", $journo_id );
 
 	if( $rows )
 	{
+
 ?>
 	<ul>
 <?php
+
 		foreach( $rows as $r )
 		{
 			$id = $r['id'];
@@ -525,6 +531,9 @@ function EmitEmailAddresses( $journo_id )
             if( $srcurl || $srctype )
                 $desc = "(srctype: '$srctype' srcurl: '$srcurl') ";
 
+            if( !$email )
+                $email = "<em>- Blank Address -</em>\n";
+
 			print " <li>\n";
 			print (" <div class=\"$divclass\">[$id] $email $desc" .
 			       "<small>[$removelink] [$approvelink]</small></div>");
@@ -544,11 +553,18 @@ function EmitEmailAddresses( $journo_id )
 <form method="post">
 email: <input type="text" name="email" size="80" />
 <?php
+
 print form_element_hidden( 'action', 'add_email' );
 print form_element_hidden( 'journo_id', $journo_id );
+
 ?>
 <input type="submit" name="submit" value="Add Email Address" />
 </form>
+<small><p>
+Note: add a blank address to suppress all email display on the journos page.
+This will also suppress any guessing of addresses based on previously-published
+articles.
+</p></small>
 <?php
 
 }
