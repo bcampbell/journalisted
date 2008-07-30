@@ -40,6 +40,12 @@ if os.getenv('JL_USE_CACHE','false').lower() in ( '0', 'false','off' ):
 else:
     USE_CACHE = True
 
+
+# min time between http requests in FetchURL()
+# (so we don't hammer servers and get banned)
+# in seconds (can be a fraction)
+FETCH_INTERVAL = 1
+
 debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
 defaulttimeout=120  # socket timeout, in secs
@@ -450,7 +456,11 @@ def GetCacheFilename(url):
 
 indyurlpat = re.compile( '^(http://)?[^/]*independent[^/]*' )
 
+lastfetchtime = 0.0
+
 def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
+    global lastfetchtime
+
     socket.setdefaulttimeout( timeout )
     # some URLs are down as https erroneously, fix this:
     url = re.sub(u'\\bhttps\\b',u'http',url)
@@ -470,7 +480,13 @@ def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
                 if OFFLINE:
                     return None
                 if not url.startswith('file:'):
-                    time.sleep(1)  # so the website (esp. Wikipedia) doesn't ban us!
+                    # throttle the fetch rate
+                    now = time.clock()
+                    elapsed = now-lastfetchtime
+                    if elapsed < FETCH_INTERVAL:
+                        time.sleep( FETCH_INTERVAL-elapsed )
+                    lastfetchtime = time.clock()
+
                 req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
                 f = urllib2.urlopen(req)
                 dat = f.read()
