@@ -85,55 +85,6 @@ rssfeedGroups = {
             '''
         ]
     },
-    u'guardian':
-    {
-        'rssfeeds':
-        {
-            u'(Guardian Blogs - various)':                  'http://blogs.guardian.co.uk/atom.xml'                      # 'http://blogs.guardian.co.uk/index.html'
-        },
-        'regexp':
-        [
-            u'''
-                <h2>
-                    (?P<author>[^<]+)
-                </h2>
-                .*?
-                <h1>
-                    (?P<title>[^<]+)
-                </h1>
-                \s*
-                <div\ class="blogs-article-excerpt">
-                    (?P<description>.*?)
-                    </div>
-                .*?
-                <div\ class="blogs-article-date">           
-                    (?P<date>[^<]+)
-                .*?
-                <div\ class="blogs-article-content">
-                    (?P<content>.*?)
-                </div>
-            ''',
-            u'''
-                <h1>
-                    (?P<title>[^<]+)
-                </h1>
-                \s*
-                <p\ class="standfirst">
-                    (?P<description>[^<]*)
-                .*?
-                <h2>
-                    (?:<a[^>]*>)?
-                        (?P<author>[^<]+)
-                .*?
-                <div\ id="twocolumnleftcolumntopbaselinetext">
-                    (?P<date>[^|<]+)
-                .*?
-                </div>
-                    (?P<content>.*?)
-                (?:</div>|<small>)
-            '''
-        ]
-    },
 
     u'bbcnews':
     {
