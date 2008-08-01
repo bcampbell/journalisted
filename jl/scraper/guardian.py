@@ -1107,8 +1107,15 @@ def CalcSrcID( url ):
 
 def ScrubFunc( context, entry ):
     """ fn to massage info from RSS feed """
+    url = context['permalink']
 
-    url = TidyURL( context['permalink'] )
+    if url.startswith( "http://www.guardianfeeds.co.uk" ):
+        # The Technology blog rss has it's <link> element going through guardianfeeds.co.uk,
+        # which just redirects them. Luckily, the destination is given in the <guid>
+        # (albeit with isPermaLink="false")
+        url = entry.guid
+
+    url = TidyURL( url )
     context['permalink'] = url;
     context['srcid'] = CalcSrcID( url )
 
