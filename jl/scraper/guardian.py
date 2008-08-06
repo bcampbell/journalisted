@@ -1085,7 +1085,7 @@ srcid_pats = [
 
     # new format
     # "http://www.guardian.co.uk/world/2008/feb/29/afghanistan.terrorism"
-    re.compile( r'.*/(\d{4}/.*?/\d+/.*(?![.]html))$' ),
+    re.compile( r'.*[.]guardian[.]co[.]uk/(.*?\d{4}/.*?/\d+/.*(?![.]html))$' ),
 
     # blogs
     # http://blogs.guardian.co.uk/games/archives/2008/07/28/has_the_iphone_made_mobile_gaming_good.html
@@ -1096,6 +1096,10 @@ def CalcSrcID( url ):
     """ Extract a unique srcid from the URL """
 
     url = TidyURL( url )
+
+    o = urlparse.urlparse( url )
+    if not o[1].endswith( 'guardian.co.uk' ):
+        return None
 
     for pat in srcid_pats:
         m = pat.search( url )
@@ -1166,6 +1170,9 @@ def ScrubFunc( context, entry ):
 # ArticleDB).
 #
 def DupeCheckFunc( artid, art ):
+    if WhichFormat( art['srcurl'] ) != 'storyserver':
+        return
+
     srcorg = orgmap[ art['srcorgname'] ]
     pubdatestr = '%s' % (art['pubdate'])
 
