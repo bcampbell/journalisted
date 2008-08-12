@@ -7,8 +7,7 @@ require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
-/* hmm... not happy about this absolute path here... */
-include "/usr/share/php5/xapian.php";
+require_once 'xapian.php';
 
 $DBPATH = OPTION_JL_XAPDB;
 
@@ -219,6 +218,9 @@ function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=nul
         $qp->set_database($database);
         $qp->set_stemming_strategy(XapianQueryParser::STEM_SOME);
         $qp->set_default_op( XapianQuery::OP_AND );
+
+        $foo = new XapianStringValueRangeProcessor( XAP_PUBDATE_ID );
+        $qp->add_valuerangeprocessor( $foo );
 
         $qp->add_prefix( 'byline', 'B' );
         $qp->add_prefix( 'title', 'T' );

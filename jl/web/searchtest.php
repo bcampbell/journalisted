@@ -8,7 +8,7 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
 /* hmm... not happy about this absolute path here... */
-include "/usr/share/php5/xapian.php";
+include "xapian.php";
 
 $DBPATH = OPTION_JL_XAPDB;
 
