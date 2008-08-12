@@ -117,8 +117,8 @@ function emit_paper( &$paper )
     $end_dt = new DateTime( 'now', new DateTimeZone('UTC') );
  
     $start_dt = new DateTime( 'now', new DateTimeZone('UTC') );
-    $start_dt->modify( "-24 days" );
-    #$start_dt->modify( "-24 hours" );
+    //$start_dt->modify( "-24 days" );
+    $start_dt->modify( "-24 hours" );
 #     print $d->format( DATE_RFC3339 );
 
     $arts = xap_DoQueries( $queries,
