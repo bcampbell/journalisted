@@ -768,6 +768,27 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
 
         return andrew_walker_london
 
+    if rawname == "jane hamilton" and hints['srcorgname'] == u'sun':
+        # two Jane Hamilton's at the sun. One appears to write about scotland,
+        # the other about shoes.
+        content = hints['content'].lower()
+        lookups = { 'jane-hamilton-1': (u'scotland', u'glasgow',u'whisky',u'strathclyde' ),
+            'jane-hamilton-2': ( u'shoe', u'designer', u'fashion', u'j.hamilton@the-sun.co.uk' ),
+            }
+        best = ''
+        bestscore = 0
+        for ref,wordlist in lookups.iteritems():
+            score=0
+            for w in wordlist:
+#                print "%s: %s => %d" % (ref,w,content.count(w))
+                score = score + content.count(w)
+            if score >= bestscore:
+                best = ref
+                bestscore = score
+        if best:
+#            print( "EvilPerJournoSpecialCasesLookup(): picked %s with score %d\n" % (best,bestscore) )
+            return GetJournoIdFromRef( conn, best )
+
 
     # no special cases - just let normal handling proceed!
     return None
