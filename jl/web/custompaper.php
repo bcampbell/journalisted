@@ -56,9 +56,12 @@ function emit_public_paper_list()
 <h2>Index of Custom Newspapers</h2>
 <ul>
 <?php
-    $person_id = $P->id();
+    $person_id = null;
     if($P)
-        $papers = db_getAll( "SELECT * FROM custompaper WHERE is_public=true OR owner=?", $P->id() );
+    {
+        $person_id = $P->id();
+        $papers = db_getAll( "SELECT * FROM custompaper WHERE is_public=true OR owner=?", $person_id );
+    }
     else
         $papers = db_getAll( "SELECT * FROM custompaper WHERE is_public=true" );
 
