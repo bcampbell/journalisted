@@ -83,7 +83,8 @@ We would very much like:
 <h3>Credits</h3>
 <p>
 <a href="http://www.scumways.com">Ben Campbell</a> built the site from his
-rural idyll in North Wales, with help after launch from Gavin Buttimore.
+rural idyll in North Wales, with help after launch from Gavin Buttimore
+and Tom Lynn.
 Ayesha Garrett, Gary Jones, and James Williamson designed it. Simon Roe
 translated the design to the website. Tom Steinberg, Phil Gyford, Louise Crow,
 Tom Loosemore, Matt Cain and others have offered invaluable ideas and advice
