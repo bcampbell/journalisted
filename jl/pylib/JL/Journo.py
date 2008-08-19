@@ -364,6 +364,12 @@ def FindJourno( conn, rawname, hint_context = None ):
     the shortname of an organisation the journo is known to have written for.
     """
 
+    # handle any evil special cases for individual journos
+    # (eg when two journos of the same name write for the same organisation)
+    journo_id = EvilPerJournoSpecialCasesLookup( conn, rawname, hint_context )
+    if journo_id:
+        return journo_id
+
     journos = FindJournoMultiple( conn, rawname )
 
     if not journos:
@@ -390,11 +396,6 @@ def FindJourno( conn, rawname, hint_context = None ):
         raise MultipleJournosException, "Multiple journos found called '%s'" % (rawname)
 
 
-    # handle any evil special cases for individual journos
-    # (eg when two journos of the same name write for the same organisation)
-    journo_id = EvilPerJournoSpecialCasesLookup( conn, rawname, hint_context )
-    if journo_id:
-        return journo_id
 
 
     # which journos have articles in this srcorg?
@@ -707,7 +708,6 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
     """
 
     rawname = rawname.lower()
-    c = conn.cursor()
 
     if rawname == "paul evans":
         # guardian has two Paul Evans'
@@ -789,6 +789,16 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
 #            print( "EvilPerJournoSpecialCasesLookup(): picked %s with score %d\n" % (best,bestscore) )
             return GetJournoIdFromRef( conn, best )
 
+    # this _should_ be handled automatically, but for now...
+    # (she is bylined both with and without the hyphen)
+    if rawname == "alison smith-squire" or rawname=="alison smith squire":
+        return GetJournoIdFromRef( conn, 'alison-smithsquire' )
+
+
+    # Two Michael Fitzpatrick's have written for the guardian. One is a journo, the other a doctor.
+    # we'll just assume it's the journo.
+    if rawname == 'michael fitzpatrick' and hints['srcorgname'] == u'guardian':
+        return GetJournoIdFromRef( conn, 'michael-fitzpatrick-1' )
 
     # no special cases - just let normal handling proceed!
     return None
