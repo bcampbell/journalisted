@@ -110,15 +110,15 @@ def Extract( html, context ):
     # we assume pubdate always there and last thing...
     bylinetxt = u''
     pubdatetxt = u''
-    e = maindiv.find( text=re.compile( r'^\s*By\s*$' ) )
+    e = maindiv.find( text=re.compile( r'^\s*By\s*' ) )
     while e:
         s = u''
         if isinstance( e, NavigableString ):
             s = unicode(e)
         else:
-            # any element other than <a> or <font> probably indicates
+            # any element other than <a>, <br> or <font> probably indicates
             # end of byline
-            if e.name != 'a' and e.name !='font':
+            if e.name.lower() not in ( 'a', 'font', 'br' ):
                 break
             s = e.renderContents( None )
 
