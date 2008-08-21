@@ -71,6 +71,9 @@ def MonthNumber( name ):
 datecrackers = [
     # "2008-03-10 13:21:36 GMT" (technorati api)
     re.compile( """(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)\s+(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
+
+    # "Thursday August 21 2008 10:42 am" (guardian blogs in their new cms)
+    re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>am)|(?P<pm>pm))', re.UNICODE|re.IGNORECASE ),
     
     # 3:19pm on Tue 29 Jan 08 (herald blogs)
     re.compile( """(?P<hour>\d+):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+(on\s+)?(\w+)\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d+)""", re.UNICODE|re.IGNORECASE ),
@@ -106,8 +109,6 @@ datecrackers = [
     re.compile( """(?P<month>\w+)\s+(?P<day>\d+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE ),
 
 
-    # for BLOGS:
-    
     # "22 Oct 2007 (weird non-ascii characters) at(weird non-ascii characters)11:23" (telegraph blogs)
     re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4}).*?at.*?(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE|re.DOTALL ),
     
@@ -129,9 +130,8 @@ datecrackers = [
     # '11 Dec 2007' (Sun (article date))
     # '12 February 2008' (scotsman)
     re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
-    # 03/09/2007' (Sky News blogs, mirror)
+    # '03/09/2007' (Sky News blogs, mirror)
     re.compile( """(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})""", re.UNICODE ),
-
 
     ]
 
