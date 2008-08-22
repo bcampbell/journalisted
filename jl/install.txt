@@ -13,19 +13,23 @@ postgresql
  - not too fussy about version (Currently using 8.2)
 
 php
- - php4 works, php5 is probably better
+ - php5 (php4 _might_ work also...)
  - postgresql bindings
  - HTML_QuickForm (used by admin pages only)
  - needs to be able to run from commandline, as well as webserver
 
 python2.4
- - postgresql bindings (we use PyPgSQL)
+ - psycopg postgresql bindings (we used to use PyPgSQL)
 
 mySociety phplib and pylib
  - available from their CVS
 
+xapian (for the full text index)
+ - php5 bindings
+ - python bindings
+
 On Ubuntu/Debian, this basically boils down to:
-$ apt-get install apache2 cvs libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-pgsql
+$ apt-get install apache2 cvs libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-psycopg2 php5-xapian python-xapian xapian-tools
 $ svn checkout http://journa-list.googlecode.com/svn/trunk/ journa-list
 $ cd journa-list
 $ export CVSROOT=":pserver:anonymous@cvs.mysociety.org:/repos"
