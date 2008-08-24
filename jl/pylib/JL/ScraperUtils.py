@@ -6,6 +6,7 @@ from optparse import OptionParser
 import sys
 import socket
 import traceback
+import urllib2
 import os
 from datetime import datetime
 import time
@@ -67,26 +68,41 @@ article_store = None
 # Assorted scraping stuff
 #
 
-def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None ):
+def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None, maxerrors=5 ):
     """ Get a list of current articles from a set of RSS feeds """
-
-    foundarticles = []
 
     socket.setdefaulttimeout( ukmedia.defaulttimeout )  # in seconds
 
     ukmedia.DBUG2( "*** %s ***: reading rss feeds...\n" % (srcorgname) )
 
     # ugly, but temporary. Flaw in dictionaries is that we can't have two feeds with the same name. big problem. So we're switching to lists instead.
+    # TODO: change all scrapers to use lists of tuples instead of dicts, then kill this code!
     if isinstance( rssfeeds, dict):
+        d = rssfeeds
+        rssfeeds = []
         # it's a dictionary {name:url} (phasing this out!!!)
-        for feedname, feedurl in rssfeeds.iteritems():
-            foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
-    else:
-        # it's a list of (name,url) tuples:
-        for f in rssfeeds:
+        for feedname, feedurl in d.iteritems():
+            rssfeeds.append( (feedname,feedurl) )
+
+    foundarticles = []
+    errcnt = 0
+    for f in rssfeeds:
+        try:
             feedname = f[0]
             feedurl = f[1]
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
+        except urllib2.HTTPError, e:
+            msg = u"RSS FAILED: '%s' (%s):" % (feedname,feedurl)
+            print >>sys.stderr, msg.encode( 'utf-8' )
+            print >>sys.stderr, '-'*60
+            print >>sys.stderr, traceback.format_exc()
+            print >>sys.stderr, '-'*60
+
+            errcnt = errcnt + 1
+            if errcnt >= maxerrors:
+                print >>sys.stderr, "Too many RSS errors - ABORTING"
+                raise
+
 
     ukmedia.DBUG2( "found %d articles.\n" % ( len(foundarticles) ) )
     return foundarticles

@@ -1100,8 +1100,7 @@ def FindArticles():
 
     
     feeds = FindBlogFeeds() + rssfeeds
-    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc )
-    #return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'guardian', ScrubFunc )
+    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=10 )
 
 
 
