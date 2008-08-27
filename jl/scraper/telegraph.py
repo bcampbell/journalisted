@@ -321,6 +321,10 @@ def Extract_XML_Article( html, context ):
         # single line, compress whitespace, strip leading/trailing space
         byline = u' '.join( byline.split() )
 
+    #
+    if byline == u'' and 'dulwich mum' in art['title'].lower():
+        byline = u'Bea Parry-Jones';
+
     art['byline'] = byline
 
 
