@@ -4,21 +4,19 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
-# Scraper for the guardian and observer
+# Scraper for the guardian and observer, including commentisfree and blogs
 #
 # NOTE: guardian unlimited has updated their site. They were using
 # vignette storyserver, but have now written their own I think.
 #
 # Main RSS page doesn't seem be be updated with feeds from new sections
-# (presumably it'll be rejigged once the transition is complete)
+# (maybe it'll be rejigged once the transition is complete)
 # For the new-style sections, there is usually one feed for the main
-# section frontpage, and then an extra feed for each subsection. Just
-# click through all the subsection frontpages and look for the RSS link.
+# section frontpage, and then an extra feed for each subsection.
+# ../hacks/guardian-scrape-rsslist.py crawls the site looking for the
+# RSS feeds.
 #
 # TODO:
-# - Update RSS feed list - currently a mix of old and new ones. Probably
-#   should scrape the list from their site, but can't do that until they
-#   have a proper rss index, if they ever do...
 # - extract journo names from descriptions if possible...
 # - sort out guardian/observer from within Extract fn
 # - For new-format articles, could use class attr in body element to
@@ -568,18 +566,48 @@ rssfeeds = [
 
 
 def FindBlogFeeds():
+    """special case for guardian blogs - try and download the list dynamically each run"""
     feeds = []
+
+    html = ukmedia.FetchURL( 'http://www.guardian.co.uk/tone/blog' )
+    soup = BeautifulSoup( html )
+
+    # some of the blogs are still listed as being at blogs.guardian.co.uk
+    # but in fact most of them remap to a new-style location:
+    oldblog_remaps = {
+        '/sport/': 'http://www.guardian.co.uk/sport/blog/rss',
+        '/usa/': 'http://www.guardian.co.uk/world/deadlineusa/rss',
+        '/greenslade/': 'http://www.guardian.co.uk/media/greenslade/rss',
+        '/mediamonkey/': 'http://www.guardian.co.uk/media/mediamonkeyblog/rss',
+        '/organgrinder/': 'http://www.guardian.co.uk/media/organgrinder/rss',
+        '/digitalcontent/': 'http://www.guardian.co.uk/media/pda/rss',
+        '/askjack/': 'http://www.guardian.co.uk/technology/askjack/rss',
+        '/games/': 'http://www.guardian.co.uk/technology/gamesblog/rss',
+        '/technology/': 'http://www.guardian.co.uk/technology/blog/rss',
+        '/katine/': 'http://www.guardian.co.uk/society/katineblog/rss',
+        # "blogging the quran" still in old form...
+        '/quran/': 'http://blogs.guardian.co.uk/quran/atom.xml',
+    }
 
     # overall feed
 #    feeds.append( ('All guardian.co.uk blog posts', 'http://blogs.guardian.co.uk/atom.xml') )
 
-    html = ukmedia.FetchURL( 'http://blogs.guardian.co.uk/index.html' )
-    soup = BeautifulSoup( html )
 
-    for d in soup.findAll( 'div', {'class':"bloglatest"} ):
-        a = d.find( 'img', {'alt':'Webfeed'} ).parent
+    bloglist = soup.find( 'div', {'id':'related'} ) 
+
+    for a in bloglist.findAll( 'a', {'class': 'link-text'} ):
         url = a['href']
-        title = ukmedia.FromHTML( d.h3.renderContents( None ) )
+        title = ukmedia.FromHTML( a.renderContents( None ) )
+
+        o = urlparse.urlparse( url )
+        if o[1] == 'blogs.guardian.co.uk':
+            if o[2] not in oldblog_remaps:
+                ukmedia.DBUG( "UHOH - SKIPPING unknown old-style blog: %s" % (url ) )
+                continue
+            url = oldblog_remaps[ o[2] ]
+        else:
+            url = url + "/rss"
+
         feeds.append( (title, url) )
 
     return feeds
@@ -1098,7 +1126,6 @@ def ContextFromURL( url ):
 def FindArticles():
     """ get current active articles via RSS feeds """
 
-    
     feeds = FindBlogFeeds() + rssfeeds
     return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=10 )
 
