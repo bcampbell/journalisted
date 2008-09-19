@@ -222,6 +222,20 @@ def Extract_MainSite( html, context ):
     if u'sundaymirror' in art['byline'].lower():
         art['srcorgname'] = u'sundaymirror'
 
+    # look for images
+    art['images'] = []
+    for imgdiv in maindiv.findAll( 'div', {'class': re.compile('article-image|art-o')} ):
+        img = imgdiv.img
+        # special exception to avoid star rating on review pages :-)
+        if img['height'] == "15":
+            continue
+        img_url = img['src']
+        p = imgdiv.find( 'p', {'class': 'article-date'} )
+        img_caption = img['alt']
+        if p:
+            img_caption = p.renderContents(None)
+        art['images'].append( {'url': img_url, 'caption': img_caption} )
+
     # if there was a gallery, pull out all the text we can before it gets culled
     galdiv = maindiv.find( 'div', {'class': re.compile('m-image_gallery')} )
     galtxt = u''
