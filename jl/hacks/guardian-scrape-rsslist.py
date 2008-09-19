@@ -15,8 +15,8 @@ rooturl = 'http://www.guardian.co.uk'
 
 blacklist = [
     # these two are missing
-    '/commentisfree/series/radiocif',
-    '/arts/studentpoliticseducation',
+#    '/commentisfree/series/radiocif',
+#    '/arts/studentpoliticseducation',
     ]
 
 pagequeue =  set()
@@ -106,8 +106,9 @@ def main():
     print "# got", len( feeds ), "feeds"
     print "rssfeeds = ["
     for f in feeds:
-        print "    (\"%s\", \"%s\")," % (f[0].encode('utf-8'),f[1].encode('utf-8'))
-
+        name = f[0].encode('ascii','replace')
+        url = f[1].encode('ascii','replace')
+        print "    (\"%s\", \"%s\")," % (name,url)
     print "]"
 
 if __name__ == "__main__":
