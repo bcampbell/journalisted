@@ -530,8 +530,11 @@ def PrettyDump( art ):
     """ dump an article out to stdout, in a readable(ish) form """
     print "=== %s ===" % (art['srcurl'])
     for f in art:
-        if f != 'content':
+        if f not in ( 'content', 'images' ):
             print "%11s: %s" % (f,unicode( art[f] ).encode('utf-8') )
+    if 'images' in art:
+        for i in art['images']:
+            print "image: %s ('%s')" % ( i['url'], i['caption'].encode('utf-8') )
     print "-----------content----------------------"
     print art['content'].encode('utf-8')
     print "----------------------------------------"

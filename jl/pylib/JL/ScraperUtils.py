@@ -281,7 +281,8 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
             print >>sys.stderr, report
             print >>sys.stderr, '-'*60
 
-            LogScraperError( conn, context, report )
+            if not store.dryrun:    # UGH.
+                LogScraperError( conn, context, report )
 
             abortcount = abortcount + 1
             if abortcount >= maxerrors:

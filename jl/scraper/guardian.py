@@ -37,7 +37,7 @@ from JL import DB,ScraperUtils,ukmedia
 
 
 # guardian non-blog feedlist automatically scraped by ./guardian-scrape-rsslist.py
-# (run 2008-07-28 16:29:20)
+# (run 2008-09-18 22:23:34)
 # got 520 feeds
 rssfeeds = [
     ("News", "http://www.guardian.co.uk/rss"),
@@ -344,7 +344,7 @@ rssfeeds = [
     ("News / Education / Faith schools", "http://www.guardian.co.uk/education/faithschools/rss"),
     ("News / Society / Learning disability", "http://www.guardian.co.uk/society/learningdisability/rss"),
     ("News / World news / Tibet", "http://www.guardian.co.uk/world/tibet+content/audio/rss"),
-    ("News / World news / Guantanamo Bay", "http://www.guardian.co.uk/world/guantanamo/rss"),
+    ("News / World news / Guant?namo Bay", "http://www.guardian.co.uk/world/guantanamo/rss"),
     ("News / Technology / Nintendo", "http://www.guardian.co.uk/technology/nintendo/rss"),
     ("Culture / Art and design / Architecture", "http://www.guardian.co.uk/artanddesign/architecture/rss"),
     ("News / Society / Equality", "http://www.guardian.co.uk/society/equality/rss"),
@@ -503,7 +503,7 @@ rssfeeds = [
     ("Life & style / Sidelines", "http://www.guardian.co.uk/lifeandstyle/series/sidelines/rss"),
     ("Culture / Stage / Theatre", "http://www.guardian.co.uk/stage/theatre+tone/reviews/rss"),
     ("UNKNOWN", "http://www.guardian.co.uk/profile/charliebrooker/rss"),
-#    ("Life & style / Pick of the week", "http://www.guardian.co.uk/lifeandhealth/series/pickoftheweek/rss"),
+    ("Life & style / Pick of the week", "http://www.guardian.co.uk/lifeandhealth/series/pickoftheweek/rss"),
     ("News / Society / Prisons and probation", "http://www.guardian.co.uk/society/prisonsandprobation/rss"),
     ("Culture / Books", "http://www.guardian.co.uk/books/books+content/audio/rss"),
     ("Culture / Books", "http://www.guardian.co.uk/books/books+tone/reviews/rss"),
@@ -519,7 +519,7 @@ rssfeeds = [
     ("Culture / Music / Music Weekly", "http://www.guardian.co.uk/music/series/musicweekly/rss"),
     ("News / World news / Natural disasters", "http://www.guardian.co.uk/world/naturaldisasters/rss"),
     ("News / Society / Public services policy", "http://www.guardian.co.uk/society/policy/rss"),
-    ("News / Society / Climbie inquiry", "http://www.guardian.co.uk/society/climbie/rss"),
+    ("News / Society / Climbi? inquiry", "http://www.guardian.co.uk/society/climbie/rss"),
     ("News / World news / Cyclone Nargis", "http://www.guardian.co.uk/world/cyclonenargis+content/video/rss"),
     ("Life & style / Ask Hadley", "http://www.guardian.co.uk/lifeandstyle/series/askhadley/rss"),
     ("Life & style / Emma Cook on beauty", "http://www.guardian.co.uk/lifeandstyle/series/emmacookonbeauty/rss"),
@@ -548,7 +548,7 @@ rssfeeds = [
     ("News / From the Observer / Main section", "http://www.guardian.co.uk/theobserver/2008/jul/27/news/rss"),
     ("Life & style / Fashion", "http://www.guardian.co.uk/lifeandstyle/fashion/rss"),
     ("News / UK news / Crime", "http://www.guardian.co.uk/uk/ukcrime/rss"),
-    ("Culture / Art and design / Sebastiao Salgado: Genesis", "http://www.guardian.co.uk/artanddesign/series/sebastiaosalgadogenesis/rss"),
+    ("Culture / Art and design / Sebasti?o Salgado: Genesis", "http://www.guardian.co.uk/artanddesign/series/sebastiaosalgadogenesis/rss"),
     ("News / World news / International crime", "http://www.guardian.co.uk/world/internationalcrime/rss"),
     ("News / UK news / UK gun violence", "http://www.guardian.co.uk/uk/ukguns/rss"),
     ("News / UK news / Knife crime", "http://www.guardian.co.uk/uk/knifecrime/rss"),
@@ -561,7 +561,6 @@ rssfeeds = [
     ("News / World news / Venezuela", "http://www.guardian.co.uk/world/venezuela/rss"),
     ("News / World news / Colombia", "http://www.guardian.co.uk/world/colombia/rss"),
 ]
-
 
 
 
@@ -735,9 +734,17 @@ def Extract_newformat( html, context ):
     for cruft in contentdiv.findAll( 'div', {'class': 'send'} ):
         cruft.extract()
 
+    art['images'] = []
     # images
-    for cruft in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
-        cruft.extract()
+    for imagediv in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
+        img = imagediv.img
+        img_url = img['src']
+        p = imagediv.find( 'p', {'class':'caption'} )
+        img_caption = u''
+        if p:
+            img_caption = p.renderContents( None )
+        art['images'].append( { 'url': img_url, 'caption': img_caption } )
+        imagediv.extract()
 
     # long articles have a folding part
 

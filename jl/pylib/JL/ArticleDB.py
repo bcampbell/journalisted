@@ -86,14 +86,17 @@ class ArticleDB:
         # if there was a scraper error entry for this article, delete it now
         cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid) )
 
+        # if there were images, add them too
+        if 'images' in art:
+            for im in art['images']:
+                cursor.execute( "INSERT INTO article_image (article_id,url,caption) VALUES (%s,%s,%s)",
+                    (id, im['url'], im['caption'].encode('utf-8') ) )
 
+        # add tags
         Tags.Generate( self.conn, id, art['content'] )
 
         # parse byline to assign/create journos
         journos = ProcessByline( self.conn, id, art )
-
-
-
 
         if self.dryrun:
             self.conn.rollback()
