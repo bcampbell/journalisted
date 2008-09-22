@@ -203,6 +203,14 @@ def Extract_MainSite( html, context ):
         art['srcorgname'] = u'mirror'
 
     maindiv = soup.find( 'div', { 'id': 'three-col' } )
+    if not maindiv:
+        if "<p>You are viewing:</p>" in html:
+            ukmedia.DBUG2("IGNORE gallery page '%s' [%s]\n" % (art['title'],art['srcurl']) )
+            return None
+        
+
+
+
     h1 = maindiv.h1
 
     title = h1.renderContents(None)
@@ -224,17 +232,27 @@ def Extract_MainSite( html, context ):
 
     # look for images
     art['images'] = []
+    caption_pat = re.compile( ur"\s*(.*?)\s*[(]\s*(?:pic\s*:|pics\s*:)?\s*(.*)[)]\s*$", re.UNICODE|re.IGNORECASE )
     for imgdiv in maindiv.findAll( 'div', {'class': re.compile('article-image|art-o')} ):
         img = imgdiv.img
+        if not img:
+            continue
         # special exception to avoid star rating on review pages :-)
         if img['height'] == "15":
             continue
         img_url = img['src']
         p = imgdiv.find( 'p', {'class': 'article-date'} )
-        img_caption = img['alt']
+        t = img['alt']
         if p:
-            img_caption = p.renderContents(None)
-        art['images'].append( {'url': img_url, 'caption': img_caption} )
+            t = p.renderContents(None)
+        m = caption_pat.match(t)
+        cap = t
+        cred = u''
+        if m:
+            cap = m.group(1)
+            cred = m.group(2)
+
+        art['images'].append( {'url':img_url, 'caption':cap, 'credit':cred } )
 
     # if there was a gallery, pull out all the text we can before it gets culled
     galdiv = maindiv.find( 'div', {'class': re.compile('m-image_gallery')} )
@@ -424,6 +442,6 @@ def FindArticles():
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
 
 

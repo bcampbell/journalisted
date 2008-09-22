@@ -89,8 +89,13 @@ class ArticleDB:
         # if there were images, add them too
         if 'images' in art:
             for im in art['images']:
-                cursor.execute( "INSERT INTO article_image (article_id,url,caption) VALUES (%s,%s,%s)",
-                    (id, im['url'], im['caption'].encode('utf-8') ) )
+                cap = im['caption'].encode('utf-8')
+                cred = ''
+                if 'credit' in im:
+                    cred = im['credit'].encode('utf-8')
+                cursor.execute( "INSERT INTO article_image (article_id,url,caption,credit) VALUES (%s,%s,%s,%s)",
+                    (id, im['url'], cap, cred ) )
+        
 
         # add tags
         Tags.Generate( self.conn, id, art['content'] )

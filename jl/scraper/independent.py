@@ -125,9 +125,6 @@ def Extract( html, context ):
 
     articlediv = soup.find( 'div', { 'id':'article' } )
 
-    if not art['srcid'] and ('-d' in sys.argv or '--dryrun' in sys.argv):
-        art['srcid'] = art['srcurl']
-
     # the headline
     headline = articlediv.find( 'h1' )
     art['title'] = ukmedia.FromHTML( headline.renderContents(None) )
@@ -176,6 +173,20 @@ def Extract( html, context ):
 
     art['byline'] = ukmedia.FromHTML( byline )
 
+    # look for images
+    art['images'] = []
+    for imgdiv in articlediv.findAll( 'div', {'class': 'photoCaption'} ):
+        img = imgdiv.img
+        img_url = img['src']
+        img_caption = img['alt']
+        img_credit = u''
+        p = imgdiv.find( 'p', {'class': 'caption'} )
+        if p:
+            img_caption = p.renderContents(None)
+        p = imgdiv.find( 'p', {'class': 'credits'} )
+        if p:
+            img_credit = p.renderContents(None)
+        art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
 
     # article text is in "body" div
     bodydiv = articlediv.find( 'div',{'class':'body'} )

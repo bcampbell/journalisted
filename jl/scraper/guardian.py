@@ -735,15 +735,23 @@ def Extract_newformat( html, context ):
         cruft.extract()
 
     art['images'] = []
+    caption_pat = re.compile( ur"(.*)\s*(?:photograph:|photographs:|photo:|photos:)\s*(.*)\s*$", re.UNICODE|re.IGNORECASE )
     # images
     for imagediv in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
         img = imagediv.img
         img_url = img['src']
         p = imagediv.find( 'p', {'class':'caption'} )
-        img_caption = u''
+        t = u''
         if p:
-            img_caption = p.renderContents( None )
-        art['images'].append( { 'url': img_url, 'caption': img_caption } )
+            t = p.renderContents( None )
+        m = caption_pat.match( t )
+        cap = u''
+        cred = u''
+        if m:
+            cap = m.group(1)
+            cred = m.group(2)
+
+        art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
         imagediv.extract()
 
     # long articles have a folding part
