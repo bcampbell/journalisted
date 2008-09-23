@@ -92,7 +92,7 @@ along the way. Julian Todd and
 <a href="http://www.flourish.org">Francis Irving</a> generously provided the
 hosting and admin support.
 <a href="http://mediastandardstrust.blogspot.com">Martin Moore</a> has led
-the initiative on behalf of the Media Standards Trust.
+the initiative on behalf of the Media Standards Trust, with assistance from Gavin Freeguard.
 </p>
 
 <?php
