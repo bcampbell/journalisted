@@ -245,6 +245,7 @@ def Extract_MainSite( html, context ):
         t = img['alt']
         if p:
             t = p.renderContents(None)
+            t = ukmedia.FromHTMLOneLine(t)
         m = caption_pat.match(t)
         cap = t
         cred = u''

@@ -744,6 +744,7 @@ def Extract_newformat( html, context ):
         t = u''
         if p:
             t = p.renderContents( None )
+            t = ukmedia.FromHTMLOneLine(t)
         m = caption_pat.match( t )
         cap = u''
         cred = u''

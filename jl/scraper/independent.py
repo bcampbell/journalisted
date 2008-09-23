@@ -186,6 +186,8 @@ def Extract( html, context ):
         p = imgdiv.find( 'p', {'class': 'credits'} )
         if p:
             img_credit = p.renderContents(None)
+        img_caption = ukmedia.FromHTMLOneLine( img_caption )
+        img_credit = ukmedia.FromHTMLOneLine( img_credit )
         art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
 
     # article text is in "body" div
