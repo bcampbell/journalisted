@@ -24,31 +24,30 @@ page_header( "About", array( 'menupage'=>'about' ) );
 
 
 <a name="howcollected"><h3>How is this information collected?</h3></a>
-<p>This information is collected automatically from the websites of <a href="#whichoutlets">various UK national news outlets</a>. Articles are indexed by journalist based on the byline to the article. Statistics are based on articles indexed to each journalist from the date the first article was recorded on this site.</p>
-<p>We started indexing articles in the summer 2007.</p>
+<p>All the information on our site is collected automatically from the websites of <a href="#whichoutlets">21 British news outlets</a>. Altogether, this means 14 news websites, since many daily papers share a website with their sister Sunday paper.</p>
+<p>Articles are indexed by journalist, based on the byline to the article. Keywords and statistics are automatically generated, and the site searches for any blogs or social bookmarking sites linking to the article.</p>
+<p>We started indexing articles in the summer of 2007. Statistics are based on articles indexed to each journalist from the date the first article was recorded on this site.</p>
+<p><b>Journa<i>listed</i> is certainly not comprehensive</b>. Due to the way information is gathered it is also bound to contain mistakes (though we do our best to correct them whenever we find them). And, it will never do full justice to the output of the journalists covered – for which we apologise.</p>
+<p>But in a world of growing information overload we hope it will be an additional way for the public to navigate news, compare different stories and build up a range of journalists that they read regularly and trust.</p>
 
 
 <a name="whichoutlets"><h3>Which news outlets are covered?</h3></a>
-<p>The site currently covers:
+<p>The site currently covers 21 UK news outlets across 14 different websites:
 <ul>
  <li>BBC News</li>
  <li>Financial Times</li>
  <li>Scotland on Sunday</li>
- <li>Sky News (Blogs only)</li>
- <li>The Daily Express</li>
- <li>The Daily Mail</li>
- <li>The Daily Telegraph</li>
- <li>The Guardian</li>
+ <li>Sky News</li>
+ <li>Express.co.uk - Daily Express and Sunday Express</li>
+ <li>Mail Online - Daily Mail and Mail on Sunday</li>
+ <li>Telegraph.co.uk - Daily Telegraph and Sunday Telegraph</li>
+ <li>Guardian.co.uk - The Guardian and The Observer</li>
  <li>The Herald</li>
- <li>The Independent</li>
- <li>The Mirror</li>
- <li>The Observer</li>
+ <li>Independent.co.uk - The Independent and The Independent on Sunday</li>
+ <li>Mirror.co.uk - Daily Mirror and Sunday Mirror</li>
  <li>The Scotsman</li>
  <li>The Sun</li>
- <li>The Sunday Mirror</li>
- <li>The Sunday Telegraph</li>
- <li>The Sunday Times</li>
- <li>The Times</li>
+ <li>Times Online - The Times and The Sunday Times</li>
 </ul>
 </p>
 
