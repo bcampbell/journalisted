@@ -25,7 +25,7 @@ $stats = FetchJournoStats( $journo );
 
 // Disclaimers:
 $publishLink = "<a href=\"about#whichoutlets\">";
-$publishNum  = sprintf("%d", 18);   // hack!
+$publishNum  = sprintf("%d", 14);   // hack!
 $publishInfo = $publishLink.$publishNum." news websites</a>";
 
 $publishDisclaimer = "<p class=\"disclaimer\">Published in one of ".$publishLink.$publishNum." news websites</a>.</p>";
@@ -89,7 +89,7 @@ function emit_journo()
 ?>
     <div class="caution">
         Caution: this list is not comprehensive but based on articles published on
-        <?=$publishLink?><?=$publishNum?> UK national news websites</a>.
+        <?=$publishLink?><?=$publishNum?> UK national news websites, or 21 UK news outlets</a>.
         The information is collected automatically so there are bound to be mistakes.
         Please 
         <a href="/missing?j=<?=$journo['ref'];?>">let us know</a>
