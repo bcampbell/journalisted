@@ -16,6 +16,9 @@
 #   At time of writing (2008-07-23) telegraph rss feeds page only lists
 #   old-style feeds.
 #
+# - Some RSS feeds for old-style (xml) sections no longer seem to work. Columists is hard hit, so see FindColumnistArticles() cheesy hack.
+#   Remove it when opinion section moves over to new format.
+#
 # - better sundaytelegraph handling
 #
 # - tidy URLs ( strip jsessionid etc)
@@ -76,9 +79,30 @@ new_rssfeeds = {
     "  Other Sports feed": "http://www.telegraph.co.uk/sport/othersports/rss",
     "  sports columnists": "http://www.telegraph.co.uk/sport/columnists/rss",
 
-    # Business section is still old style
+    "Finance": "http://www.telegraph.co.uk/finance/rss",
+    "  Finance - News By Sector": "http://www.telegraph.co.uk/finance/newsbysector/rss",
+    "    Finance - News By Sector - Banks and Finance": "http://www.telegraph.co.uk/finance/newsbysector/banksandfinance/rss",
+    "    Finance - News By Sector - Construction and Property": "http://www.telegraph.co.uk/finance/newsbysector/constructionandproperty/rss",
+    "    Finance - News By Sector - Energy": "http://www.telegraph.co.uk/finance/newsbysector/energy/rss",
+    "    Finance - News By Sector - Industry": "http://www.telegraph.co.uk/finance/newsbysector/industry/rss",
+    "    Finance - News By Sector - media tech and telecoms": "http://www.telegraph.co.uk/finance/newsbysector/mediatechnologyandtelecoms/rss",
+    "    Finance - News By Sector - Pharmaceuticals and Chemicals": "http://www.telegraph.co.uk/finance/newsbysector/pharmaceuticalsandchemicals/rss",
+    "    Finance - News By Sector - Retail and Consumer": "http://www.telegraph.co.uk/finance/newsbysector/retailandconsumer/rss",
+    "    Finance - News By Sector - Support Services": "http://www.telegraph.co.uk/finance/newsbysector/supportservices/rss",
+    "    Finance - News By Sector - Transport": "http://www.telegraph.co.uk/finance/newsbysector/transport/rss",
+    "    Finance - News By Sector - Utilities": "http://www.telegraph.co.uk/finance/newsbysector/utilities/rss",
+    "  Finance - Comment": "http://www.telegraph.co.uk/finance/comment/rss",
+        # TODO: also include individual columist feeds?
+    "  Finance - Personal Finance": "http://www.telegraph.co.uk/finance/personalfinance/rss",
+        # TODO - subsections for personal finance...
+    "  Finance - Markets": "http://www.telegraph.co.uk/finance/markets/rss",
+        # TODO - subsections
+    "  Finance - Economics": "http://www.telegraph.co.uk/finance/economics/rss",
+    "  Finance - Your Business": "http://www.telegraph.co.uk/finance/yourbusiness/rss",
+    "  Finance - Topics": "http://www.telegraph.co.uk/finance/financetopics/rss",
+        # TODO - subsections
 
-    # Comment section is still old style
+    # Comment section is still old style (See FindColumnistArticles() hack)
 
     "Travel feed": "http://www.telegraph.co.uk/travel/rss",
     # I think "Types of Trips" and "Destinations" feeds might always be empty
@@ -119,13 +143,13 @@ old_rssfeeds = {
       # BLOGS:
 #    "Telegraph | News | Blog Yourview": "http://www.telegraph.co.uk/newsfeed/rss/news-blog-yourview.xml",
 
-    "Telegraph Business RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_city.xml",
+#    "Telegraph Business RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_city.xml",
 #    "Telegraph Business | Markets RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_markets.xml",
-    "Telegraph Money | Personal Finance RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_pf.xml",
+#    "Telegraph Money | Personal Finance RSS": "http://www.telegraph.co.uk/newsfeed/rss/money_pf.xml",
 
   
-    "Telegraph | News | Business": "http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml",
-    "Telegraph | Your Money": "http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml",
+#    "Telegraph | News | Business": "http://www.telegraph.co.uk/newsfeed/rss/money-city_news.xml",
+#    "Telegraph | Your Money": "http://www.telegraph.co.uk/newsfeed/rss/money-personal_finance.xml",
       
       # blogs?
 #    "Telegraph | Opinion": "http://www.telegraph.co.uk/newsfeed/rss/opinion-dt_opinion.xml",
@@ -421,6 +445,45 @@ def ExtractParas( soup, textpart ):
     return desc
 
 
+
+
+def FindColumnistArticles():
+    """Columnists still use old-style section, but rss feed no longer works, so do some cheesy hackery instead for now"""
+    ukmedia.DBUG( "----Telegraph----\n" )
+    ukmedia.DBUG( "Fetching list of columnists..\n" )
+    columnists = {}
+    # fetch a list of all the columnists and their pages
+    columnistpage = "http://www.telegraph.co.uk/opinion/main.jhtml?menuId=6795&menuItemId=-1&view=DISPLAYCONTENT&grid=A1&targetRule=0"
+    html = ukmedia.FetchURL( columnistpage )
+    soup = BeautifulSoup.BeautifulSoup(html)
+    for d in soup.findAll( 'div', {'class':'menu2'} ):
+        name = d.a.renderContents(None)
+        url = d.a['href']
+        if not "main.jhtml" in url:
+            ukmedia.DBUG("  skip %s (in a new-format section)\n" % (name) )
+            continue
+
+        if not url.startswith('http://'):
+            url = "http://www.telegraph.co.uk" + url
+#        ukmedia.DBUG("%s: %s\n" % (name,url) )
+        columnists[name] = url
+
+    # now go through each columnist's page looking for story links
+    entries = []
+    for name,url in columnists.iteritems():
+        ukmedia.DBUG( "  fetching stories for %s\n" % (name) )
+        html = ukmedia.FetchURL( url )
+        soup = BeautifulSoup.BeautifulSoup( html )
+        for a in soup.findAll( 'a', {'class':'main'} ):
+            art_url = a['href']
+            if not art_url.startswith('http://'):
+                art_url = "http://telegraph.co.uk" + art_url
+            entries.append( ContextFromURL( art_url ) )
+#            ukmedia.DBUG( "  %s\n" % (art_url) )
+
+    return entries
+
+
 # eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html
 srcidpat_html = re.compile( "/(\d+)/[^/]+[.]html$" )
 
@@ -517,7 +580,9 @@ def ContextFromURL( url ):
 
 
 def FindArticles():
-    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
+    l = FindColumnistArticles()
+    l = l + ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
+    return l
 
 
 if __name__ == "__main__":
