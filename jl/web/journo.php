@@ -88,8 +88,8 @@ function emit_journo()
 
 ?>
     <div class="caution">
-        Caution: this list is not comprehensive but based on articles published on
-        <?=$publishLink?><?=$publishNum?> UK national news websites, or 21 UK news outlets</a>.
+        Caution: this list is not comprehensive but based on articles published in
+        <?=$publishLink?>21 UK news outlets across <?=$publishNum?> different websites</a>.
         The information is collected automatically so there are bound to be mistakes.
         Please 
         <a href="/missing?j=<?=$journo['ref'];?>">let us know</a>
