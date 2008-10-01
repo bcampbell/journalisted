@@ -131,6 +131,35 @@ function page_footer( $params=array() )
 <?=SafeMailto( $contactemail, 'Contact us' );?>
 <br />
 &copy; 2007 <a href="http://www.mediastandardstrust.com">Media Standards Trust</a><br />
+
+<?php
+    if( OPTION_JL_PIWIK_ENABLE )
+    {
+?>
+<!-- Piwik -->
+<a href="http://piwik.org" title="Web 2.0 analytics" onclick="window.open(this.href);return(false);">
+<script type="text/javascript">
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://mststats.dyndns.org/" : "http://mststats.dyndns.org/");
+document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+<!--
+piwik_action_name = '';
+piwik_idsite = 1;
+piwik_url = pkBaseURL + "piwik.php";
+piwik_log(piwik_action_name, piwik_idsite, piwik_url);
+//-->
+</script><object>
+<noscript><p>Web 2.0 analytics <img src="http://mststats.dyndns.org/piwik.php" style="border:0" alt="piwik"/></p>
+</noscript></object></a>
+<!-- /Piwik --> 
+
+<?php
+
+    }
+?>
+
+
 </div>
 </body>
 </html>

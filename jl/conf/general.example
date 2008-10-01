@@ -23,4 +23,7 @@ define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN)
 define('OPTION_JL_FSROOT', '/home/ben/proj/journa-list/jl');
 
 define('OPTION_JL_DISABLE_CACHE', '1');
+
+// set to 1 to enable piwik analytics (see phplib/page.php)
+define('OPTION_JL_PIWIK_ENABLE', '0');
 ?>
