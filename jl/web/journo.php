@@ -28,8 +28,8 @@ $publishLink = "<a href=\"about#whichoutlets\">";
 $publishNum  = sprintf("%d", 14);   // hack!
 $publishInfo = $publishLink.$publishNum." news websites</a>";
 
-$publishDisclaimer = "<p class=\"disclaimer\">Published in one of ".$publishLink.$publishNum." news websites</a>.</p>";
-$basedDisclaimer = sprintf( "<p class=\"disclaimer\">Based on %d article%s published in %s since %s.</p>",
+$publishDisclaimer = "<p class=\"disclaimer\">Published in one of ".$publishLink.$publishNum." news websites</a>.</p>\n";
+$basedDisclaimer = sprintf( "<p class=\"disclaimer\">Based on %d article%s published in %s since %s.</p>\n",
     $stats['num_articles'], 
     $stats['num_articles']==1 ? "" : "s", // plural
     $publishInfo,
@@ -577,7 +577,7 @@ function emit_writtenfor( $journo )
         $orglist[] = $s;
     }
 
-    printf( "<p>" . $journo['prettyname'] . " has written articles published in %s.</p>", PrettyImplode( $orglist) );
+    printf( "<p>" . $journo['prettyname'] . " has written articles published in %s.</p>\n", PrettyImplode( $orglist) );
 
     gatso_stop( 'writtenfor' );
     
@@ -621,9 +621,10 @@ function ExpandEmailFormat( $fmt, $journo )
 
     $forms = preg_split( '/\s*,\s*/', $fmt );
 
-    $forms = preg_replace( '/(.+)/', '<a href="mailto:\1">\1</a>', $forms );
+    return $forms;
+//    $forms = preg_replace( '/(.+)/', '<a href="mailto:\1">\1</a>', $forms );
 
-    return implode( " or ", $forms );
+//    return implode( " or ", $forms );
 }
 
 
@@ -636,11 +637,11 @@ function emit_journo_mailto( $journo )
     {
         /* we have an email address on file - show it */
         print "<p><span class=\"journo-email-outer\">";
-        $email = str_replace('@', '&#x0040;', $row['email']);
+        $email = $row['email'];
         /* an empty email address will suppress the display */
         if( $email )
         {
-            print ("Email: <span class=\"journo-email\"><a href=\"mailto:$email\">$email</a></span>" );
+            print ("Email: <span class=\"journo-email\">" . SafeMailTo( $email ) . "</a></span>" );
             /* if we got it from a webpage (or article), say which one */
             $shorturl = $row['srcurl'];
             if( $shorturl )
@@ -651,7 +652,7 @@ function emit_journo_mailto( $journo )
                 print( " <span class=\"disclaimer\">(from <a href=\"" . $row['srcurl'] .
                        "\">" . $shorturl . "</a>)</span>");
             }
-            print( "</span></p>" );
+            print( "</span></p>\n" );
         }
     }
     else
@@ -671,7 +672,11 @@ function emit_journo_mailto( $journo )
             if($phone)
                 $phonefrag = " (Telephone: {$phone})";
 
-            $emailfrag = ExpandEmailFormat( $row['email_format'], $journo );
+            $emails = ExpandEmailFormat( $row['email_format'], $journo );
+            $emailfrags = array();
+            foreach( $emails as $e )
+                $emailfrags[] = SafeMailTo( $e );
+            $emailfrag = implode( ' or ', $emailfrags );
 
             $out = "<p>";
             $out .= "No email address known for {$journo['prettyname']}.<br/>\n";

@@ -6,10 +6,14 @@ function check_login_password_radio() {
     d.checked = true
 }
 
+/* first arg is text for the link, if empty string, the address is displayed.
+ * Following args are parts of the address, in reverse. The last arg is the name.
+ * eg: gen_mailto( 'email Fred', 'com','blah','fred bloggs');
+ */
 function gen_mailto()
 {
 	var i = arguments.length-1;
-	var addr = arguments[ i ] + '@';
+	var addr = arguments[ i ] + '&#x0040';  /* at sign */
 	i--;
 
 	while( i>=2 )

@@ -39,19 +39,27 @@ function pretty_date( $t )
 /***************************************************************************
 *	function:		SafeMailto
 *	description:	return a spam-safe MailTo link using javascript
-*					Uses gen_mailto() in scripts/base.js
+*					Uses gen_mailto() in jl.js
 *					$addr - email address to output
-*					NOTE: doesn't work if name part contains a dot (.)
-*					eg "fred.smith@megacorp.com"
+*                   $text - text for link ('' to use email address)
 ***************************************************************************/
 function SafeMailto( $addr, $text='' )
 {
-	$text = addslashes( $text );
 	$addr = addslashes( $addr );
-	$parts = array_reverse( preg_split( '/[.@]/', $addr ) );
-	
-	$safetext = str_replace('@', '&#x0040;', $text);
-	$out = "<script>gen_mailto( '$text', '" . implode( "','", $parts ). "');</script><noscript>$safetext</noscript>";
+
+
+    $foo = explode( '@', $addr, 2); /* split into name and domain */
+	$parts = array_reverse( explode( '.', $foo[1]) );   /* domain parts in revers order */
+    $parts[] = $foo[0]; /* last arg is name */
+
+	$noscript_text = $text;
+    if( !$noscript_text )
+    {
+        $noscript_text = "[<em>Sorry spam protected - you'll need to enable Javascript</em>]";
+    }
+
+	$text = addslashes( $text );
+	$out = "<script>gen_mailto( '{$text}', '" . implode( "','", $parts ). "');</script><noscript>{$noscript_text}</noscript>";
 
 	return $out;
 }
