@@ -50,6 +50,12 @@ EOT;
  */
 function most_prolific_journo( $interval )
 {
+    /* NOTE: evil special case exclusion of Debbie Frank. Seems unfair,
+       but she writes daily horoscopes and would otherwise be constantly top
+       of the lists.
+    */
+    $exclude_list = "'debbie-frank'";
+
 	$sql = <<<EOT
 SELECT j.prettyname, j.ref, count(*) as num_articles
 	FROM ((article a INNER JOIN journo_attr attr ON attr.article_id=a.id)
@@ -58,6 +64,7 @@ SELECT j.prettyname, j.ref, count(*) as num_articles
 		AND j.status='a'
 		AND a.pubdate > NOW()-interval '$interval'
 		AND a.pubdate <= NOW()
+        AND j.ref not in ( {$exclude_list} )
 	GROUP BY j.ref,j.prettyname
 	ORDER BY num_articles DESC
 	LIMIT 1;
