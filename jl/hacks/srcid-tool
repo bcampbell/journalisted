@@ -23,7 +23,7 @@ def DoOrg( conn, options ):
     row = c.fetchone()
     srcorg = row['id']
 
-    print "doing %s (srcorg=%d)..." % (options.org_name, srcorg)
+    print "rebuilding srcids for %s (srcorg=%d)..." % (options.org_name, srcorg)
 
     c.execute( "SELECT id,srcurl,srcid FROM article WHERE srcorg=%s", (srcorg) )
 
