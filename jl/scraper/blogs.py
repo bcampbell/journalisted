@@ -142,67 +142,6 @@ rssfeedGroups = {
     },
 
 
-    u'skynews':
-    {
-        'rssfeeds':
-        {
-            u'(Frontline blog- various journalists)':   'http://skynews6.typepad.com/my_weblog/index.rdf',
-            u'([Adam Boulton] et al)':                  'http://adamboulton.typepad.com/my_weblog/index.rdf', # 'http://adamboulton.typepad.com/',
-            u'Martin Brunt':                            'http://skynews4.typepad.com/my_weblog/index.rdf',
-            u'(Editors blog- various editors)':         'http://skynews7.typepad.com/my_weblog/index.rdf',
-            u'(Technology blogs- various)':             'http://skynews.typepad.com/technologyblog/index.rdf',
-            u'Michael Wilson':                          'http://www.skynews5.typepad.com/my_weblog/index.rdf',
-            u'Paul Bromley':                            'http://skynews3.typepad.com/my_weblog/index.rdf',
-            u'Greg Milam':                              'http://skynews8.typepad.com/my_weblog/index.rdf',
-            u'Tim Marshall':                            'http://martinstanford.typepad.com/foreign_matters/index.rdf',
-        },
-        'regexp':
-        [
-            # Sky News pattern:
-            u'''
-                <span\ class="entry_header">
-                    .*?
-                    <[bB]>
-                        (?P<title>[^<]+)
-                .*?
-                <span\ class="mainBlack">
-                    (?P<date>[^<]+)
-                    .*?
-                <div\ class="entry-body">
-                \s+
-                (?:
-                    .*?
-                    <strong>
-                        \s*
-                        <img[^>]*>
-                        \s*
-                    </strong>
-                )?
-                (?:
-                    (?P<precontent>
-                        .*?
-                        <strong>
-                        (?:<a[^>]*>)?
-                        (?:<img[^>]*>)?
-                        (?:</a[^>]*>)?
-                    )
-                    (?P<author2>[^<]+)
-                )?
-                (?P<content>.*?)
-                (?:
-                    >
-                    (?:Written|Posted)\ [b|B]y\ 
-                    (?P<author>[^<,]+)
-                    .*?
-                )?
-                <div\ class="comments">
-            '''
-        ]
-#       <strong>By\ Sky\ News\ 
-#           ([a-z ]+)
-#           ([^<]+)
-    },
-
     u'telegraph':
     {
         'rssfeeds':

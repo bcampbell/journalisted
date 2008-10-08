@@ -8,6 +8,8 @@
 #
 # NOTES:
 #
+# Indy runs eScenic CMS and has blogs at typepad.com
+#
 # They changed over to a new system around the end of 2007/beginning of
 # 2008.
 # Old format urls look like:
@@ -20,10 +22,6 @@
 #
 # For blogs, hostnames indyblogs.typepad.com and blogs.independent.co.uk
 # are interchangable.
-#
-# TODO:
-#  - migrate to new RSS feeds (at last check their rss index still had
-#    the old ones only (which still work fine)
 #
 
 
@@ -61,8 +59,12 @@ def FindRSSFeeds():
 
     feeds = []
     bodydiv = soup.find( 'div', {'class':'body'} )
-    for a in bodydiv.findAll( 'a', {'href':re.compile( '/rss$' ) } ):
+    # two kinds of link "/rss" for main paper, ".xml" for blogs
+    for a in bodydiv.findAll( 'a', {'href':re.compile( '(/rss)|([.]xml)$' ) } ):
         url = a['href']
+        # the page has some borked urls...
+        url = url.replace( "http://http://", "http://" )
+
         title = ukmedia.FromHTMLOneLine( a.renderContents( None ) )
 
         skip = False
@@ -99,7 +101,7 @@ def CalcSrcID( url ):
     o = urlparse.urlparse( url )
     # we don't handle blogs here (see blogs.py instead).
     if o[1] in ( 'indyblogs.typepad.com', 'blogs.independent.co.uk' ):
-        return None
+        return 'independent_' + o[2]
 
     if not o[1].endswith( ".independent.co.uk" ):
         return None
@@ -119,6 +121,20 @@ def CalcSrcID( url ):
 
 def Extract( html, context ):
     """Extract article from html"""
+
+    url = context['srcurl']
+
+
+    o = urlparse.urlparse( url )
+    # we don't handle blogs here (see blogs.py instead).
+    if o[1] in ( 'indyblogs.typepad.com', 'blogs.independent.co.uk' ):
+        return Extract_typepad( html, context )
+    else:
+        return Extract_eScenic( html, context )
+
+
+def Extract_eScenic( html, context ):
+    """Extract fn for main paper (eScenic CMS)"""
 
     art = context
     soup = BeautifulSoup( html )
@@ -220,109 +236,71 @@ def Extract( html, context ):
     return art
 
 
-
-
-
-def OLDExtract( html, context ):
-    """parser for old (pre 24jan2008) format articles, just in case we need it..."""
-
+def Extract_typepad( html, context ):
+    """Extract fn for indy blogs (on typepad.com)"""
     art = context
-
     soup = BeautifulSoup( html )
 
-    # if we don't have a description, try the deckheader meta tag...
-    # <meta name="icx_deckheader" content="Stars of reality TV &ndash; and now the culprits blamed for spreading disease" />
-    if not 'description' in art:
-        art['description'] = u''
-    if not art['description'].strip():
-        deckheader = soup.find( 'meta', {'name':'icx_deckheader'} )
-        if deckheader:
-            art['description'] = ukmedia.FromHTML( deckheader['content'] )
-            #print "DECKHEADER: '%s'" % (art['description'])
+    # the headline
+    headlinediv = soup.find( 'h3', {'class':'entry-header'} )
+    art['title'] = ukmedia.FromHTMLOneLine( headlinediv.renderContents(None) )
 
-    articlediv = soup.find( 'div', { 'class':'article' } )
+    # timestamp
+    # some blogs have a little rdf block with iso timestamp, but don't some don't
+#    m = re.compile( r'dc:date="(.*?)"' ).search( html )
+#    d = m.group(1)
+#    art['pubdate'] = dateutil.parser.parse( m.group(1) )
 
-    headline = articlediv.find( 'h1' )
-    for cruft in headline.findAll( 'span' ):
-        cruft.extract()
-    art[ 'title' ] = headline.renderContents(None).strip()
-    art[ 'title' ] = ukmedia.FromHTML( art['title'] )
+    # date and time in separate places. sigh.
+    dateheader = soup.find( 'h2', {'class':'date-header'} )
+    d = dateheader.renderContents(None)     # "Thursday, 05 June 2008"
 
-    bylinepart = articlediv.find( 'h3' )
-    if bylinepart:
-        byline = bylinepart.renderContents(None).strip()
-    else:
-        byline = u''
+    postfooter = soup.find( 'span', {'class':'post-footers'} )
+    t = postfooter.renderContents( None )   # "Posted at 02:22 PM in "...
+    m = re.compile( r"Posted at\s+(\d+:\d+\s+\w\w)\s+" ).search(t)
+    d = d + u' ' + m.group(1)
 
-    # for comment pages - if byline is empty, try and get it from title
-    author_maybe_in_headline = 0
-    comment_section_prefixes = [
-        'http://comment.independent.co.uk', 
-        'http://news.independent.co.uk/fisk',   # special case for Robert Fisk
-        'http://sport.independent.co.uk/football/comment',
-        'http://www.independent.co.uk/living/motoring/comment',
-        ]
+    art['pubdate'] = ukmedia.ParseDateTime( d )
 
-    for prefix in comment_section_prefixes:
-        if art['srcurl'].startswith( prefix ):
-            author_maybe_in_headline = 1
-
-    if byline == u'' and author_maybe_in_headline:
-        # eg "Janet Street-Porter: Our politicians know nothing of real life"
-        m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
+    # description, byline, content
+    # byline (if present) is in first para
+    byline = u''
+    bodydiv = soup.find( 'div', {'class':'entry-body'} )
+    bylinep = bodydiv.p
+    if bylinep:
+        firstpara = ukmedia.FromHTMLOneLine( bylinep.renderContents(None) )
+        if firstpara.startswith( u"By") and len(firstpara.split()) <= 4:
+            byline = firstpara
+            bylinep.extract()
+    
+    if not byline:
+        # try the RDF block (raw regex search in the html)
+        creatorpat = re.compile( r'dc:creator="(.*?)"' )
+        m = creatorpat.search( html )
         if m:
-            byline = m.group(1)
-            # cull out duds
-            if byline.lower() in dudbylines:
-                byline = u''
+            byline = unicode( m.group(1) )
 
+    content = bodydiv.renderContents(None)
+    morediv = soup.find( 'div', {'class':'entry-more'} )
+    if morediv:
+        if art['title'].startswith( u'Cyberclinic:' ):
+            cruft = morediv.find( 'span', {'style':'color: #cccc00;'})
+            if cruft:
+                if u'CONFUSED ABOUT TECHNOLOGY?' in cruft.renderContents(None):
+                    cruft.extract()
 
-    art[ 'byline' ] = ukmedia.FromHTML( byline )
+        content = content + morediv.renderContents( None )
+    content = ukmedia.SanitiseHTML( content )
 
-    pubdate = articlediv.find( 'h4' )
-    art[ 'pubdate' ] = CrackDate( pubdate.renderContents(None) )
+    desc = ukmedia.FirstPara( content )
 
-    body = articlediv.find( 'div', id='bodyCopyContent' )
-
-    # remove the "Interesting? Click here to explore further" link
-    cruft = body.find( 'a', id=re.compile("^proximic_proxit") )
-    if cruft:
-        cruft.extract()
-
-    art['content'] = body.renderContents( None )
-    art['content'] = ukmedia.SanitiseHTML( art['content'] )
-
-    # if we still don't have any description, use first para
-    if art['description'] == u'':
-        art['description'] = ukmedia.FromHTML( body.p.renderContents(None) )
-        #print "FIRSTPARA: '%s'" %(art['description'])
+    art['byline'] = byline
+    art['description'] = desc
+    art['content'] = content
 
     return art
 
 
-
-# TODO: replace with ukmedia generic dateparser
-def CrackDate( raw ):
-    """ return datetime, or None if matching fails
-    
-    example date string: 'Published:&nbsp;01 September 2006'
-    """
-
-    datepat = re.compile( '([0-9]{2})\s+(\w+)\s+([0-9]{4})' )
-    m = datepat.search( raw )
-    if not m:
-        return None
-    day = int( m.group(1) )
-    month = ukmedia.MonthNumber( m.group(2) )
-    year = int( m.group(3) )
-
-    return datetime( year,month,day )
-
-
-#def TidyURL( url ):
-#    """ strip off cruft from URLs """
-#    url = re.sub( "[?]r=RSS", "", url )
-#    return url
 
 
 def ScrubFunc( context, entry ):
