@@ -703,8 +703,11 @@ def Extract_newformat( html, context ):
         # might be a blog...
         raw = ukmedia.FromHTMLOneLine( blogbylinediv.renderContents(None) )
 
+        # seen at least two different "Posted by" formats so far:
         # "Posted by Lee Glendinning Tuesday August 19 2008 1:07 pm"
-        bylinepat = re.compile( ur'Posted\s+(.*?)\s+(\w+\s+\w+\s+\d{1,2}\s+\d{4}\s+\d{1,2}:\d{2}\s+\w{2})', re.UNICODE );
+        # "Posted by Steve Cram Tuesday October 14 2008 00.01 BST"
+        bylinepat = re.compile( ur'Posted\s+(.*?)\s+(\w+\s+\w+\s+\d{1,2}\s+\d{4}\s+.*?)$', re.UNICODE )
+
         m = bylinepat.search( raw )
         byline = m.group(1)
         art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
