@@ -537,6 +537,9 @@ def PrettyDump( art ):
     if 'images' in art:
         for i in art['images']:
             print "image: %s ('%s')" % ( i['url'], i['caption'].encode('utf-8') )
+    if 'commentlinks' in art:
+        for c in art['commentlinks']:
+            print "comments: %d at %s" % ( c['num_comments'], c['comment_url'])
     print "-----------content----------------------"
     print art['content'].encode('utf-8')
     print "----------------------------------------"
