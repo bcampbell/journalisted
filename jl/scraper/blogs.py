@@ -44,48 +44,6 @@ from JL import ArticleDB,ukmedia,ScraperUtils
 
 rssfeedGroups = {
 
-    # Times Online pattern      
-    u'times':
-    {
-        'rssfeeds':
-        {
-            u'Charles Bremner':                         'http://timescorrespondents.typepad.com/charles_bremner/rss.xml',   # 'http://timescorrespondents.typepad.com/charles_bremner/',
-            u'Leo Lewis':                               'http://timesonline.typepad.com/urban_dirt/rss.xml',                # 'http://timesonline.typepad.com/urban_dirt/',
-            u'Ruth Gledhill':                           'http://timescolumns.typepad.com/gledhill/rss.xml',
-            u'Peter Stothard':                          'http://www.timescolumns.typepad.com/stothard/rss.xml',
-            u'David Aaronovitch':                       'http://timesonline.typepad.com/david_aaronovitch/rss.xml',
-            u'Anna Shepherd':                           'http://timesonline.typepad.com/eco_worrier/rss.xml',
-            u'Gerard Baker':                            'http://timescorrespondents.typepad.com/baker/rss.xml'
-        }
-        ,
-        'regexp':
-        [
-            u'''
-                (?:
-                    <meta\ name="description"\ content="
-                        (?P<author>[^,.]+)
-                    .*?
-                )?
-                (?:
-                    <h2\ id="banner-description">
-                        (?P<author2>[^,.]*)
-                        .*?
-                    </h2>
-                )?
-                .*?
-                <h2\ class="date-header">
-                    (?P<date>[^<]+)
-                .*?
-                <h3\ class="entry-header">
-                    (?P<title>[^<]+)
-                .*?
-                <div\ class="entry-body">
-                    (?P<content>.*?)
-                <!--\ technorati\ tags\ -->
-            '''
-        ]
-    },
-
     u'bbcnews':
     {
         'rssfeeds':
@@ -235,36 +193,6 @@ rssfeedGroups = {
     },
 
 
-    u'independent':
-    {
-        'rssfeeds':
-        {
-            u'Independent blogs (various)':             'http://indyblogs.typepad.com/independent/index.rdf' # 'http://indyblogs.typepad.com/',
-        },
-        'regexp':
-        [
-            # Indy pattern:
-            u'''
-                <h2\ class="date-header">
-                    (?P<date>[^<]+)
-                </h2>
-                .*?
-                <h3\ class="entry-header">
-                    (?P<title>[^<]+)
-                </h3>
-                .*?
-                <div\ class="entry-body">
-                    .*?
-                    >By\ (?P<author>[^<]+)
-                    .*?
-                </a>
-                    (?P<content>.*?)
-                <div\ class="entry-footer"> 
-            '''
-        ]
-    },
-
-    
     u'dailymail':
     {
         'rssfeeds':

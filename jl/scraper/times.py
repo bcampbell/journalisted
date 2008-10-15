@@ -45,6 +45,37 @@ sectionnames = ('News',
 siteroot = "http://timesonline.co.uk"
 
 
+
+def FindBlogFeeds():
+    """Scrape a list of all the timesonline blogs, returns a list of (name,url) tuples"""
+
+    mainblogpage = 'http://www.timesonline.co.uk/tol/comment/blogs/'
+
+    html = ukmedia.FetchURL( mainblogpage )
+    soup = BeautifulSoup.BeautifulSoup( html )
+    feed_dict = {}
+    for a in soup.findAll( 'a', {'class':'link-06c', 'href':re.compile(r'\btypepad[.]com\b(?!.*[.]html$)') } ):
+        url = a['href'].strip()
+        if not url.endswith('/'):
+            url += '/'
+#        url += 'atom.xml'   # atom
+#        url += 'index.rdf'  # rss1.0
+        url += 'rss.xml'    # rss2.0
+
+        url = url.encode('ascii')
+        name = a.renderContents(None).strip()
+
+        feed_dict[url] = name
+
+
+
+    feeds = []
+    for url,name in feed_dict.iteritems():
+        feeds.append( (name,url) )
+
+    return feeds
+
+
 def CleanHtml(html):
     '''
     Replaces incorrect Windows-1252 entities with the correct HTML entity.
@@ -64,10 +95,44 @@ def CleanHtml(html):
     return re.sub(r'(?i)&#(1\d\d);|&#(x0*[0-9a-f]{2});', repl, html)
 
 
-def FindArticles():
 
-    ukmedia.DBUG2( "*** times ***: looking for articles...\n" )
+
+puzzle_blacklist = (
+    re.compile( r'^Chess:' ),
+    re.compile( r'^Bridge:' ),
+    re.compile( r'^Codeword solution:'),
+    re.compile( r'^Codeword:'),
+    re.compile( r'^Killer Sudoku'),
+    re.compile( r'^Sudoku \d+'),
+    re.compile( r'^Sudoku solutions'),
+    re.compile( r'^The Workout'),
+    re.compile( r'^Word watching:'),
+    re.compile( r'^Word watching answers:', re.IGNORECASE),
+    re.compile( r'^KenKen'),
+    re.compile( r'^Polygon:'),
+)
+
+
+def ScrubFunc( context, entry ):
+    """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
+
+    # used for the RSS feeds only (ie blogs)
+    url = context[ 'srcurl' ]
+    context['srcid'] = CalcSrcID( url )
+    return context
+
+
+def FindArticles():
     foundarticles = []
+
+    # part 1: get blog posts from RSS feeds
+    ukmedia.DBUG2( "*** times ***: scraping list of blog feeds...\n" )
+    blogfeeds = FindBlogFeeds()
+
+    foundarticles = ScraperUtils.FindArticlesFromRSS( blogfeeds, u'times', ScrubFunc )
+
+    # part 2: get main paper articles from scraping pages
+    ukmedia.DBUG2( "*** times ***: scraping newspaper article list...\n" )
 
     # hit the page which shows the covers of the papers for the week
     # and extract a link to each day
@@ -118,19 +183,31 @@ def FindArticles():
 
             ul = heading.findNextSibling( 'ul' )
             for a in ul.findAll( 'a' ):
-                title = ukmedia.DescapeHTML( a.renderContents(None) )
+                title = ukmedia.FromHTMLOneLine( a.renderContents(None) )
                 url = siteroot + a['href']
 
-                context = {
-                    'title': title,
-                    'srcurl': url,
-                    'srcid': CalcSrcID(url),
-                    'permalink': url,
-                    'lastseen': fetchtime,
-                    'srcorgname' : srcorgname,
-                    }
+                # don't do puzzle solutions
+                skip = False
+                if "games_and_puzzles" in url:
+                    for pat in puzzle_blacklist:
+                        if pat.match( title ):
+#                            ukmedia.DBUG2( "SKIP puzzle solution: '%s' (%s)\n" % (title, url) )
+                            skip=True
 
-                foundarticles.append( context )
+#                    if not skip:
+#                        print "PUZ: '%s': '%s'" %(title,url)
+
+                if not skip:
+                    context = {
+                        'title': title,
+                        'srcurl': url,
+                        'srcid': CalcSrcID(url),
+                        'permalink': url,
+                        'lastseen': fetchtime,
+                        'srcorgname' : srcorgname,
+                        }
+
+                    foundarticles.append( context )
 
     ukmedia.DBUG2( "Found %d articles\n" % ( len(foundarticles) ) )
     return foundarticles
@@ -142,14 +219,10 @@ srcidpat_ece = re.compile( '/(article[0-9]+\.ece)$' )
 def CalcSrcID( url ):
     """ work out a unique srcid for this url """
 
-    if not url.startswith('http') and ('-d' in sys.argv or '--dryrun' in sys.argv):
-        return 'DRYRUN:times.py:' + url
-    
     o = urlparse.urlparse( url )
 
     if o[1].endswith( 'typepad.com' ):
-        # times blogs handled in blogs.py
-        return None
+        return 'times_' + o[2]
 
     if not o[1].endswith( 'timesonline.co.uk' ):
         return None
@@ -162,7 +235,20 @@ def CalcSrcID( url ):
 
 
 def Extract( html, context ):
+    o = urlparse.urlparse( context['srcurl'] )
+    if o[1].endswith( 'typepad.com' ):
+        return Extract_typepad( html, context )
+    else:
+        return Extract_escenic( html,context )
 
+
+
+
+
+
+
+def Extract_escenic( html, context ):
+    """Extract fn for main newspaper (Escenic CMS)"""
     art = context
     html = CleanHtml(html)
     soup = BeautifulSoup.BeautifulSoup( html )
@@ -250,6 +336,84 @@ def Extract( html, context ):
     return art
 
 
+
+def Extract_typepad( html, context ):
+    """Extract fn for times blogs (hosted on typepad.com)"""
+
+    art = context
+
+    # BeautifulSoup seems to go haywire on some pages with embedded video clips
+    # eg http://timesonline.typepad.com/environment/2008/09/clutching-the-m.html
+    # this should work around it
+    html_kludgepat = re.compile( "<object.*?>.*?</object>", re.DOTALL )
+    html = html_kludgepat.sub( '', html )
+
+    soup = BeautifulSoup.BeautifulSoup( html )
+#    print soup.renderContents('utf-8')
+
+    # the headline
+    headlinediv = soup.find( 'h3', {'class':'entry-header'} )
+    art['title'] = ukmedia.FromHTMLOneLine( headlinediv.renderContents(None) )
+
+    # date-header has date but no time
+    dateheader = soup.find( 'h2', {'class':'date-header'} )
+    datetxt = dateheader.renderContents(None)     # "Thursday, 05 June 2008"
+    art['pubdate'] = ukmedia.ParseDateTime(datetxt)
+
+    # TODO: use rdf timestamp if it's there - otherwise we'll have date but no time
+    # some blogs have a little rdf block with iso timestamp (do all of them?)
+#    m = re.compile( r'dc:date="(.*?)"' ).search( html )
+#    pubdate = dateutil.parser.parse( m.group(1) )
+
+    # footer format varies by blog... some have byline, some have time
+    byline = u''
+    postfooter = soup.find( 'span', {'class':'post-footers'} )
+    if not postfooter:
+        postfooter = soup.find( 'p', {'class':'entry-footer'} )
+
+    footertxt = postfooter.renderContents( None )
+
+    # "Posted by Alice Fishburn on October  9, 2008 in ..."
+    m = re.compile( r"Posted by\s+(.*?)\s+on (\w+\s+\d+,\s+\d{4})" ).search( footertxt )
+    if m:
+        byline = m.group(1)
+
+    # "Posted at 02:22 PM in "...
+    #    m = re.compile( r"Posted at\s+(\d+:\d+\s+\w{2})\s+" ).search( footertxt )
+
+    # description, byline, content
+    # byline (if present) is in first para
+    bodydiv = soup.find( 'div', {'class':'entry-body'} )
+ 
+    if not byline:
+        # try the RDF block (raw regex search in the html)
+        creatorpat = re.compile( r'dc:creator="(.*?)"' )
+        m = creatorpat.search( html )
+        if m:
+            byline = unicode( m.group(1).strip() )
+
+
+    content = bodydiv.renderContents(None)
+    morediv = soup.find( 'div', {'class':'entry-more'} )
+    if morediv:
+        content = content + morediv.renderContents( None )
+
+    # TODO: scan content for images and comments 
+    content = ukmedia.SanitiseHTML( content )
+
+    desc = ukmedia.FirstPara( content )
+
+    art['byline'] = byline
+    art['description'] = desc
+    art['content'] = content
+
+
+    return art
+
+
+
+
+
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
     context = {}
@@ -264,4 +428,6 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+
+#    ScraperUtils.ReadFeed( u'Red Box', u'http://timesonline.typepad.com/politics/rss.xml', u'times' )
 
