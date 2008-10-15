@@ -68,7 +68,7 @@ article_store = None
 # Assorted scraping stuff
 #
 
-def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc=None, maxerrors=5 ):
+def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
     """ Get a list of current articles from a set of RSS feeds """
 
     socket.setdefaulttimeout( ukmedia.defaulttimeout )  # in seconds
@@ -241,6 +241,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
                 if not forcerescrape:
                     continue;   # skip it - we've already got it
 
+            #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
             html = ukmedia.FetchURL( context['srcurl'], ukmedia.defaulttimeout, os.path.join( "cache", context['srcorgname'] ) )
  
             # some extra, last minute context :-)
