@@ -18,7 +18,7 @@ import urlparse
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup,NavigableString,Tag
+from BeautifulSoup import BeautifulSoup,NavigableString,Tag,Comment
 from JL import ukmedia,ScraperUtils
 
 
@@ -29,6 +29,23 @@ rss_feed_page = "http://www.dailymail.co.uk/home/rssMenu.html"
 # page which lists columnists and their latest rants
 #columnistmainpage = 'http://www.dailymail.co.uk/pages/live/columnists/dailymail.html'
 
+
+columnistmainpage = "http://www.dailymail.co.uk/debate/columnists/index.html"
+
+columnistnames = None
+
+def GetColumnistNames():
+    """ Scrape a list of the columnist names from the columnist page (cached)"""
+    global columnistnames
+    if not columnistnames:
+        columnistnames = []
+        html = ukmedia.FetchURL( columnistmainpage )
+        soup = BeautifulSoup( html )
+        for a in soup.findAll( 'a', {'class':'author'} ):
+            n = a.renderContents(None).strip()
+            if not n in columnistnames:
+                columnistnames.append( n )
+    return columnistnames
 
 
 def FindRSSFeeds( rssurl ):
@@ -68,12 +85,13 @@ def Extract( html, context ):
 
     maindiv = soup.find( 'div', {'class': re.compile(ur'\bartItem\b') } )
 
-    # kill printPage div and everything after it
-    # (ie everything after article text)
-    printdiv = maindiv.find( 'div', {'class': 'printPage'} )
-    for cruft in printdiv.findAllNext():
+    # kill everything after article text
+    cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bintellicrumbs\b')} )
+    if not cruftstart:
+        cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bprint-or-mail-links\b')} )
+    for cruft in cruftstart.findAllNext():
         cruft.extract()
-    printdiv.extract()
+    cruftstart.extract()
 
     desctxt = u''
     titletxt = u''
@@ -89,10 +107,8 @@ def Extract( html, context ):
         femaildiv.extract()
     else:
 
-        e = maindiv.find( 'h1' )
-        if e:
-            titletxt = e.renderContents(None)
-            titletxt = ukmedia.FromHTML( titletxt )
+        for e in maindiv.findAll( 'h1' ):
+            titletxt = titletxt + ukmedia.FromHTML( e.renderContents(None) )
             e.extract()
 
         if titletxt == u'':
@@ -110,7 +126,12 @@ def Extract( html, context ):
     # we assume pubdate always there and last thing...
     bylinetxt = u''
     pubdatetxt = u''
-    e = maindiv.find( text=re.compile( r'^\s*By\s*' ) )
+
+    #e = maindiv.find( text=re.compile( r'^\s*By\s*' ) )
+    # find first non-comment, non-blank NavigableString
+    e = maindiv.find( text=lambda text: text.string.strip() != u'' and not isinstance(text, Comment))
+    if not re.compile( r'^\s*By\s*' ).match( e.string ):
+        e = None        # don't think it's a byline.
     while e:
         s = u''
         if isinstance( e, NavigableString ):
@@ -138,12 +159,24 @@ def Extract( html, context ):
 
     if bylinetxt == u'':
         # columnists have no bylines, but might have a "More From ..." bit in <div class="columnist-archive"
-        columnistdiv = maindiv.find( 'div', {'class':'columnist-archive'} )
+        # (or "columnist-archive-narrow")
+        columnistdiv = maindiv.find( 'div', {'class':re.compile('columnist-archive')} )
         if columnistdiv:
             h3 = columnistdiv.h3
             morefrompat = re.compile( ur'More from\s+(.*?)\s*[.]{3}', re.IGNORECASE )
             m = morefrompat.search( h3.renderContents(None) )
             bylinetxt = ukmedia.FromHTML( m.group(1) )
+
+    if bylinetxt == u'':
+        # last-ditch attempt - some columnists don't have bylines, but we might be able to guess them...
+        m = soup.find( 'meta', {'name': "divclassbody" } )
+        if m:
+            id = m['content']   # eg "deborah-ross"
+            for n in GetColumnistNames():
+                if id == u'-'.join( n.lower().split() ):
+                    bylinetxt = n
+                    break
+
 
     art['byline'] = u' '.join( bylinetxt.split() )
 
@@ -159,14 +192,42 @@ def Extract( html, context ):
         art['pubdate'] = datetime.now()
 
 
-    # pull out previewLinks - links to comments
-    previewlinks = maindiv.find( 'ul', {'class': 'previewLinks' } )
-    if previewlinks:
-        previewlinks.extract();
+    # pull out links to comments (at top of article)
+    art['commentlinks'] = []
+    commentlinks = maindiv.find( 'div', {'class': 'article-icon-links-container' } )
+    if commentlinks:
+        a = commentlinks.find('a',{'class':'comments-link'})
+        if a:
+            comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
+
+            cntspan = a.find('span', {'class': 'readerCommentNo'} )
+            num_comments = None
+            if cntspan:
+                cnttxt = cntspan.renderContents(None).strip()
+                if cnttxt != u'-':
+                    num_comments = int( cntspan.renderContents(None) )
+
+            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+        commentlinks.extract()
+
+    # pull out images (<img> followed by <p class="imageCaption"> )
+    art['images'] = []
+    for captionp in maindiv.findAll( 'p', {'class':'imageCaption'} ):
+        img = captionp.findPrevious( 'img' )
+        if not img:
+            continue
+
+        img_caption = captionp.renderContents(None)
+        img_credit = u''  # dailymail burns credit onto bottomleft of image
+        img_url = img['src']
+        art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
+
 
     # now extract article text
 
     # cruft removal
+    for cruft in maindiv.findAll( 'h1' ):   # empty h1 is a BeautifulSoup artifact
+        cruft.extract()
     for cruft in maindiv.findAll( 'img' ):
         cruft.extract()
     for cruft in maindiv.findAll( 'p', {'class':'imageCaption'} ):
