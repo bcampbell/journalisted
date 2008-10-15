@@ -143,7 +143,7 @@ def Extract_eScenic( html, context ):
 
     # the headline
     headline = articlediv.find( 'h1' )
-    art['title'] = ukmedia.FromHTML( headline.renderContents(None) )
+    art['title'] = ukmedia.FromHTMLOneLine( headline.renderContents(None) )
 
     # some articles have taglines
     taglinepara = articlediv.find('p',{'class':'tagline'})
