@@ -536,7 +536,7 @@ def PrettyDump( art ):
             print "%11s: %s" % (f,unicode( art[f] ).encode('utf-8') )
     if 'images' in art:
         for i in art['images']:
-            print "image: %s ('%s')" % ( i['url'], i['caption'].encode('utf-8') )
+            print "image: %s ('%s') [%s]" % ( i['url'], i['caption'].encode('utf-8'), i['credit'].encode('utf-8') )
     if 'commentlinks' in art:
         for c in art['commentlinks']:
             print "comments: %d at %s" % ( c['num_comments'], c['comment_url'])
