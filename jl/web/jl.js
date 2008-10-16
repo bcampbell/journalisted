@@ -13,7 +13,7 @@ function check_login_password_radio() {
 function gen_mailto()
 {
 	var i = arguments.length-1;
-	var addr = arguments[ i ] + '&#x0040';  /* at sign */
+	var addr = arguments[ i ] + '@';
 	i--;
 
 	while( i>=2 )
