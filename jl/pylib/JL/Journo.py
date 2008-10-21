@@ -715,11 +715,13 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
         # Most articles by the Country Diarist Paul Evans, but
         # 'Paulville: the town where rightwingers will be free'
         # 'Railing back the years in Iran' are by Paul (David) Evans
-        # (pauldavidevans@gmail.com)
+        # (pauldavidevans@gmail.com).
+        #
+        # Paul (David) Evans has also now written for the Times.
         # 
-        # To tell them apart, Paul Evans (Country Diarist) byline
+        # (one way to tell them apart: Paul Evans (Country Diarist) byline
         # will be hyperlinked on the Guardian site, while Paul (David)
-        # Evans won't be.
+        # Evans won't be)
 
         if hints['srcorgname'] != u'guardian':
             # for non-guardian articles, let normal processing differentiate them
