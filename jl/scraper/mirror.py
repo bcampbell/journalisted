@@ -190,26 +190,29 @@ def Extract_MainSite( html, context ):
     # add the gallery images last (ordering probably will get lost at some point, but hey)
     art['images'].extend( galimages )
 
-    # if there was a gallery, pull out all the text we can before it gets culled
-#    galdiv = maindiv.find( 'div', {'class': re.compile('m-image_gallery')} )
-#    galtxt = u''
-#    if galdiv:
-#       for e in galdiv.findAll( re.compile( '^(h.|p)$' ) ):
-#            galtxt = galtxt + e.prettify( None )
-#    galtxt = ukmedia.SanitiseHTML( galtxt )
 
-    # remove everything except for article text
-    h1.extract()
-    bylinepara.extract()
+
+    # get the main content.
+    # sometimes there is an <div id="article-body">, but not always
+
+    contentdiv = maindiv.find( 'div', {'id':'article-body'} )
+    if contentdiv:
+        pass
+    else:
+        # use main div as the content...
+        contentdiv = maindiv
+        # ...trying to remove everything except for article text
+        h1.extract()
+        bylinepara.extract()
+
     # kill adverts, photos etc...
-    for cruft in maindiv.findAll( 'div' ):
+    for cruft in contentdiv.findAll( 'div' ):
         cruft.extract()
     # sometimes a misplaced "link" element!
-    for cruft in maindiv.findAll( 'link' ):
+    for cruft in contentdiv.findAll( 'link' ):
         cruft.extract()
 
-    content = maindiv.renderContents(None)
-#    content = content + galtxt
+    content = contentdiv.renderContents(None)
 
     art['content'] = content
     art['description'] = ukmedia.FirstPara( content )
