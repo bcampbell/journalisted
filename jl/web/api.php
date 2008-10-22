@@ -129,7 +129,7 @@ function api_front_page($error = '') {
     page_header('API');
 ?>
 <div id="maincolumn">
-<p>Welcome to TheyWorkForYou's API section, where you can learn how to query our database for information.</p>
+<p>Welcome to Journalisted's API section, where you can learn how to query our database for information.</p>
 
 <h3>Overview</h3>
 
