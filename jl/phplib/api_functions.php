@@ -76,7 +76,8 @@ function api_output_xml($v, $k=null) {
 	$verbose = get_http_var('verbose') ? "\n" : '';
 	if (is_array($v)) {
 		if (count($v) && array_keys($v) === range(0, count($v)-1)) {
-			$elt = 'match';
+			$elt = 'item';  /* generic name for anonymous elements */
+            /* TODO: could derive $elt by depluralising $k, eg "image" from "images" */
 			$api_xml_arr++;
 			$out = "<$elt>";
 			$out .= join("</$elt>$verbose<$elt>", array_map('api_output_xml', $v));

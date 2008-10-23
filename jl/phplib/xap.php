@@ -132,15 +132,18 @@ class XapSearch {
         $this->qp->set_stemming_strategy(XapianQueryParser::STEM_SOME);
         $this->qp->set_default_op( XapianQuery::OP_AND );
 
-        /* allow date ranges in queries, but just using string compares, so be careful! */
-    #        $r = new XapianStringValueRangeProcessor( XAP_PUBDATE_ID );
-    #        $qp->add_valuerangeprocessor( $r );
+        /* allow date ranges in queries, but just using string compares, so be careful!
+         * dates follow this format: "YYYY-MM-DDTHH:MM:SS"
+         * (generated with python datetime.isoformat())
+         * so string compare should do the trick (as long as you remember the T)...
+         */
+        $r = new XapianStringValueRangeProcessor( XAP_PUBDATE_ID );
+        /* DISABLED DUE TO CRASHING! uhoh... */
+        //$this->qp->add_valuerangeprocessor( $r );
 
         $this->qp->add_prefix( 'byline', 'B' );
         $this->qp->add_prefix( 'title', 'T' );
         $this->qp->add_prefix( 'journo', 'J' );
-
-        /* parse and combine queries */
     }
 
 
@@ -148,6 +151,7 @@ class XapSearch {
 
     function set_query( $query_strings )
     {
+        /* parse and combine queries */
         $query = null;
         if( !is_array( $query_strings ) )
             $query_strings = array( $query_strings );
@@ -209,6 +213,10 @@ class XapSearch {
             // UGLY UGLY HACK.
             // Store description in xap db!
             $art['description'] = db_getOne( "SELECT description FROM article WHERE id=?", $article_id );
+
+            // images should be optional.
+            $art['images'] = db_getAll( "SELECT url,caption,credit FROM article_image WHERE article_id=?", $article_id );
+        
 
             $results[] = $art;
             $i->next();
