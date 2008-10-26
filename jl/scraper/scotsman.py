@@ -452,6 +452,20 @@ def Extract( html, context ):
     art['byline'] = byline
 
 
+    #comments
+    art['commentlinks'] = []
+    commentli = soup.find('li', {'class':'commentlink'} )
+    if commentli:
+        a = commentli.a
+        comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
+        txt = a.renderContents(None)
+        num_comments = None
+        if u'Be the first to comment on this article' not in txt:
+            cnt_pat = re.compile( r"(\d+) comments on this article" )
+            m = cnt_pat.search(txt)
+            num_comments = int( m.group(1) )
+        art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+
     bodydiv = artdiv.find( 'div', {'id':'va-bodytext'} )
 
     for cruft in bodydiv.findAll( 'div', {'class':'MPUTitleWrapperClass'}):
@@ -473,6 +487,34 @@ def Extract( html, context ):
     content = content.replace( "<br />", "<br />\n" )
     art['content'] = content
 
+
+
+    # images (handled with javascript. why oh why do they all use javascript for images?)
+    art['images'] = []
+    gallery_pat = re.compile( r"var\s+strData\s+=\s+\"(.*?)\"\s*;" )
+    img_pat = re.compile( r"\d+[|](http://.*?)[|](.*?[.]jpg)[|](.*)" )
+    for galmatch in gallery_pat.finditer( html ):
+        bits = galmatch.group(1).split( '[|]' )
+        for b in bits:
+            if b.strip() == '':
+                continue
+            m = img_pat.match( b )
+            url = m.group(1) + m.group(2)
+
+            caption = unicode( m.group(3).decode('string_escape'), soup.originalEncoding )
+            credit = u''
+            # a couple of patterns to split out image copyright
+            credit_pats = (
+                re.compile( r'(.*?)\s*(?:picture|photo|photograph)s?:\s+(.*)\s*$',re.IGNORECASE ),
+                re.compile( r'(.*?)\s*(?:[pP]icture|[pP]hoto|[pP]hotograph)s?\s+([A-Z]+)\s*$' )
+                )
+            for p in credit_pats:
+                m = p.search( caption )
+                if m:
+                    caption = m.group(1)
+                    credit = m.group(2)
+                    break
+            art['images'].append( {'url':url, 'caption':caption, 'credit':credit } )
 
     return art
 
