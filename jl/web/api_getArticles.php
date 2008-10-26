@@ -34,7 +34,7 @@ function api_getArticles_search($search) {
 
     $xap = new XapSearch();
     $xap->set_query( $search );
-    $results = $xap->run($start, $num,'relevance');
+    $results = $xap->run($start, $num,'date');
 
 	$output = array(
 #        'num' => $num,
