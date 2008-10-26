@@ -243,8 +243,12 @@ def Extract( html, context ):
 
 
 
-
-
+def NextTag( el ):
+    while el:
+        el = el.nextSibling
+        if isinstance( el, BeautifulSoup.Tag ):
+            break
+    return el
 
 
 def Extract_escenic( html, context ):
@@ -269,6 +273,55 @@ def Extract_escenic( html, context ):
                 byline = ukmedia.DescapeHTML( byline )
                 byline = u' '.join( byline.split() )
     art['byline'] = byline
+
+
+    # extract images
+    # they seem to use javascript to handle all their images. sigh...
+    art['images'] = []
+    # use regex to pull out block with just one image at a time...
+    img_pat = re.compile( r"aArticleImages\[i\]\s*=\s*'(.*?)'\s*;(.*?)i=i[+]1;", re.DOTALL )
+    # ...then regexes to pull out the parts we're interested in
+    url_pat = re.compile( r"aArticleImages\[i\]\s*=\s*'(.*?)'\s*;" )
+    enlargelink_url_pat = re.compile( r"aImageEnlargeLink\[i\]\s*=\s*'(.*?)'\s*;" )
+    desc_pat = re.compile( r"aImageDescriptions\[i\]\s*=\s*\"(.*?)\"\s*;" )
+    alttext_pat = re.compile( r"aImageAltText\[i\]\s*=\s*\"(.*?)\"\s*;" )
+    credit_pat = re.compile( r"aImagePhotographer\[i\]\s*=\s*\"(.*?)\"\s*;" )
+    for img_m in img_pat.finditer( html ):
+        im = { 'url':None, 'caption':u'', 'credit':u'' }
+        # url (use enlargeimage if present)
+        txt = img_m.group(0).decode( soup.originalEncoding )
+        img_url = url_pat.search( txt ).group(1)
+        m = enlargelink_url_pat.search( txt )
+        if m:
+            img_url = m.group(1)
+        im[ 'url' ] = urlparse.urljoin( art['srcurl'], img_url )
+
+        # description (use alt text if we have to)
+        m = alttext_pat.search( txt )
+        if m:
+            im['caption'] = m.group(1)
+        m = desc_pat.search( txt )
+        if m:
+            im['caption'] = m.group(1)
+
+        # photographer
+        m = credit_pat.search( txt )
+        if m:
+            im['credit'] = m.group(1)
+
+        art['images'].append(im)
+
+
+    # comments
+    # TODO: this doesn't count small numbers of comments (it only looks for the "read all N comments" link
+    art['commentlinks'] = []
+    numcomment_pat = re.compile( r"sReadAllComments\s*=\s*'Read all\s+(\d+)\s+comments'\s*;" )
+    m = numcomment_pat.search(html)
+    num_comments = None
+    comment_url = urlparse.urljoin( art['permalink'], '#comments-form' )
+    if m:
+        num_comments = int( m.group(1) )
+    art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
 
     # Extract the article text and build it into it's own soup
