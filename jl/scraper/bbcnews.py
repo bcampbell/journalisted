@@ -306,7 +306,26 @@ def Extract( html, context ):
     # <!-- S IIMA -->
     #  ...html...
     # <!-- E IIMA -->
-    #
+
+    # try to extract images (in IIMA block)
+    # TODO: could also get images from IBOX blocks?
+    art['images'] = []
+    imgblock_pat = re.compile( r"<!--\s*S\s+(IIMA)\s*-->(.*?)<!--\s*E\s+\1\s*-->", re.DOTALL )
+    for iima in imgblock_pat.finditer( html ):
+        imhtml = unicode( iima.group(2), soup.originalEncoding )
+
+        m = re.compile( ur'<img src="(.*?)"', re.UNICODE ).search( imhtml )
+        if m:
+            # credit is superimposed graphically by the beeb
+            im = { 'url': m.group(1), 'caption':u'', 'credit':u'' }
+            m = re.compile( ur'<div\s+class="cap"\s*>(.*?)</div>', re.IGNORECASE|re.UNICODE|re.DOTALL ).search( imhtml )
+            if m:
+                im['caption'] = m.group(1)
+            # else could try and pull out img alt attr...
+
+            art['images'].append( im )
+
+
     # zap assorted extra blocks from the text
     # (could be problems with nesting... but seems ok)
     # IIMA - image?
