@@ -101,7 +101,7 @@ def Extract( html, context ):
     cullpats = [
         re.compile( "<a name=\"comments\">.*", re.DOTALL ),
         # when comments disabled, it just shows a message
-        re.compile( r"""<img src="http://images[.]\w+[.]co[.]uk/img/comments/nocomments.png" />.*""", re.DOTALL )
+        re.compile( r"""<img src="http://images[.]\w+[.]co[.]uk/img/comments/nocomments[.](gif|png)".*""", re.DOTALL )
     ]
     for cullpat in cullpats:
         html = cullpat.sub( "", html )
@@ -121,25 +121,63 @@ def Extract( html, context ):
     art['title'] = ukmedia.FromHTML( art['title' ] )
     art['title'] = ukmedia.UncapsTitle( art['title'] )      # don't like ALL CAPS HEADLINES!  
 
-    datepara = wrapdiv.find( 'p', {'class':'date'} )
-    art['pubdate'] = ukmedia.ParseDateTime( datepara.renderContents(None).strip() )
-
     introcopypara = wrapdiv.find( 'p', {'class': 'introcopy' } )
     art['description'] = ukmedia.FromHTML( introcopypara.renderContents(None) )
 
-    bylineh4 = wrapdiv.find( 'h4' )
-    if bylineh4:
-        art['byline'] = ukmedia.FromHTML(bylineh4.renderContents(None))
+    datepara = wrapdiv.find( 'p', {'class':'date'} )
+    if datepara is None:
+        #"<span class="date">Monday October 27 2008 <b> byEmily Garnham for express.co.uk</b>"
+        datespan = wrapdiv.find( 'span', {'class':'date'} )
+        bylineb = datespan.b
+        art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
+        art['byline'] = re.sub( '([bB]y)([A-Z])', r'\1 \2', art['byline'] )
+        bylineb.extract()
+        art['pubdate'] = ukmedia.ParseDateTime( datespan.renderContents(None).strip() )
+        datespan.extract()        
     else:
-        # for some sections, try extracting a journo from the description...
-        # (Express usually has names IN ALL CAPS, which the byline-o-matic
-        # misses, so we'll turn anything likely-looking into titlecase
-        # first).
-        art['byline'] = u''
-        if art['srcurl'].find('/travel/') != -1 or art['srcurl'].find('/motoring/') != -1:
-            desc = ukmedia.DecapNames( art['description'] )
-            art['byline'] = ukmedia.ExtractAuthorFromParagraph( desc )
+        art['pubdate'] = ukmedia.ParseDateTime( datepara.renderContents(None).strip() )
+        bylineh4 = wrapdiv.find( 'h4' )
+        if bylineh4:
+            art['byline'] = ukmedia.FromHTML(bylineh4.renderContents(None))
+        else:
+            # for some sections, try extracting a journo from the description...
+            # (Express usually has names IN ALL CAPS, which the byline-o-matic
+            # misses, so we'll turn anything likely-looking into titlecase
+            # first).
+            art['byline'] = u''
+            if art['srcurl'].find('/travel/') != -1 or art['srcurl'].find('/motoring/') != -1:
+                desc = ukmedia.DecapNames( art['description'] )
+                art['byline'] = ukmedia.ExtractAuthorFromParagraph( desc )
 
+    #comments
+    art['commentlinks'] = []
+    comment_cnt_pat = re.compile( "Have your say\s*[(](\d+)[)]" )
+    num_comments = None
+    comment_url = None
+    for marker in soup.findAll( text=comment_cnt_pat ):
+        if marker.parent.name != 'a':
+            continue
+        m = comment_cnt_pat.search( marker )
+        if m:
+            num_comments = int( m.group(1) )
+            comment_url = urlparse.urljoin( art['srcurl'], '#comments' )
+            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+        break   # just the one.
+
+
+    #images
+    art['images'] = []
+    for imgdiv in soup.findAll( 'div', {'class':'articleFirstImage'} ):
+        img = imgdiv.find('img')
+        im = { 'url': img['src'].strip(), 'caption':u'', 'credit': u'' }
+        if im['url'].endswith( "/missingimage.gif" ):
+            continue
+        # find caption para
+        # eg class="articleFirstImageCaption"
+        capp = imgdiv.find('p',{'class':re.compile('caption$',re.IGNORECASE) } )
+        if capp:
+            im['caption'] = ukmedia.FromHTMLOneLine( capp.renderContents(None) ).strip()
+        art['images'].append(im)
 
     # cruft removal - mismatched tags means that cruft can get drawn into
     # story paragraphs... sigh...
@@ -154,7 +192,9 @@ def Extract( html, context ):
     for cruft in wrapdiv.findAll('form' ):      # (search form etc )
         cruft.extract()
 
-
+    for cruft_url_pat in ( re.compile("/creditadvice$"),re.compile("/money$") ):
+        for cruft in wrapdiv.findAll( 'a', href=cruft_url_pat ):
+            cruft.extract()
 
     # OK to build up text body now!
     textpart = BeautifulSoup()
