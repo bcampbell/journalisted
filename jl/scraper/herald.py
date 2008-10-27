@@ -194,6 +194,28 @@ def news_Extract( html, context ):
     contentdiv = soup.find( 'div', {'class':'articleText'} )
 
 
+    # images
+    art['images'] = []
+    for img in soup.findAll( src=re.compile( r"http://images[.]newsquest[.]co[.]uk/.*" ) ):
+        im = { 'url': img['src'], 'caption': img['alt'], 'credit': u'' }
+        art['images'].append( im )
+
+    # comments
+    art['commentlinks'] = []
+    comment_pat = re.compile( r"Read Comments\s+[(]\s*(\d+)\s*[)]" )
+    for marker in soup.findAll( text=comment_pat ):
+        a = marker.parent
+        if a.name != 'a':
+            continue
+        comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
+        num_comments = None
+        m = comment_pat.search( marker )
+        if m:
+            num_comments = int( m.group(1) )
+        art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+        break   # just the one.
+
+    # byline
     byline = u''
     if bylinediv:
         byline = bylinediv.renderContents( None )
