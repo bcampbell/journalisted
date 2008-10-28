@@ -164,15 +164,21 @@ function emit_block_articletags( $article_id )
 function emit_block_commentlinks( $article_id )
 {
 
-	/* profile for various sites we source from - they all use their own terminology */
+	/* profile for various non-newspaper sites we source from - they all use their own terminology */
 	$profiles = array(
-		'digg' => array( 'scoreterm'=>'diggs' ),
-		'reddit' => array( 'scoreterm'=>'points' ),
-		'newsvine' => array( 'scoreterm'=>'votes' ),
-		'fark' => array( 'scoreterm'=>'votes' ),
-		'del.icio.us' => array( 'scoreterm'=>'saves' ),
-		'DEFAULT' => array( 'scoreterm'=>'points' ),
+		'digg' => array( 'scoreterm'=>'diggs', 'prettyname'=>'Digg' ),
+		'reddit' => array( 'scoreterm'=>'points', 'prettyname'=>'Reddit' ),
+		'newsvine' => array( 'scoreterm'=>'votes', 'prettyname'=>'Newsvine' ),
+		'fark' => array( 'scoreterm'=>'votes', 'prettyname'=>'Fark' ),
+		'del.icio.us' => array( 'scoreterm'=>'saves', 'prettyname'=>'del.icio.us' ),
+		'DEFAULT' => array( 'scoreterm'=>'points', 'prettyname'=>'unknown' ),
 	);
+
+    /* add the newspapers to the list of profiles */
+    $rows = db_getAll( "SELECT shortname, prettyname FROM organisation" );
+    foreach( $rows as $r )
+        $profiles[$r['shortname']] = array( 'prettyname'=>$r['prettyname'], 'scoreterm'=>'points' )
+
 
 ?>
 <div class="boxwide">
@@ -184,16 +190,13 @@ function emit_block_commentlinks( $article_id )
 	$n = db_num_rows( $q );
 	if( $n > 0 )
 	{
-		print "<p>Bookmarked at:</p>\n";
 		print "<ul>\n";
 		while( $row = db_fetch_array( $q ) )
 		{
 			$source = $row['source'];
-			if( array_key_exists( $source, $profiles ) ) {
+    		$profile = $profiles['DEFAULT'];
+			if( array_key_exists( $source, $profiles ) )
 				$profile = $profiles[$source];
-			} else {
-				$profile = $profiles['DEFAULT'];
-			}
 
 			$bits = array();
 			if( !is_null( $row['num_comments'] ) )
@@ -202,7 +205,7 @@ function emit_block_commentlinks( $article_id )
 				$bits[] = sprintf( "%d %s", $row['score'], $profile['scoreterm'] );
 
 			printf( "<li>%s (<a href=\"%s\">%s</a>)</li>\n",
-				$source,
+				$profile['prettyname'],
 				$row['comment_url'],
 				implode( ', ', $bits) );
 		}
@@ -212,7 +215,7 @@ function emit_block_commentlinks( $article_id )
 	{
 		print "<p>None known</p>\n";
 	}
-
+/*
 ?>
 <p class="disclaimer">Based on data from
 <a href="http://del.icio.us">del.icio.us</a>,
@@ -221,6 +224,9 @@ function emit_block_commentlinks( $article_id )
 <a href="http://newsvine.com">newsvine</a> and
 <a href="http://reddit.com">reddit</a>
 </p>
+*/
+
+?>
 </div>
 </div>
 <?php

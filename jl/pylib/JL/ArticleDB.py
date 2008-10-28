@@ -8,6 +8,7 @@ import Byline
 import ukmedia
 import Tags
 import Misc
+import CommentLink
 
 class Error(Exception):
     pass
@@ -95,7 +96,12 @@ class ArticleDB:
                     cred = im['credit'].encode('utf-8')
                 cursor.execute( "INSERT INTO article_image (article_id,url,caption,credit) VALUES (%s,%s,%s,%s)",
                     (id, im['url'], cap, cred ) )
-        
+
+        # if there were commentlinks, add them too
+        if 'commentlinks' in art:
+            for c in art['commentlinks']:
+                c['source'] = art['srcorgname']
+                CommentLink.Add( self.conn, id, c )
 
         # add tags
         Tags.Generate( self.conn, id, art['content'] )
