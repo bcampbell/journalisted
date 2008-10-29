@@ -460,10 +460,13 @@ def Extract( html, context ):
         comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
         txt = a.renderContents(None)
         num_comments = None
-        if u'Be the first to comment on this article' not in txt:
+        if u'Be the first to comment on this article' in txt:
+            num_comments = 0;
+        else:
             cnt_pat = re.compile( r"(\d+) comments on this article" )
             m = cnt_pat.search(txt)
             num_comments = int( m.group(1) )
+
         art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
     bodydiv = artdiv.find( 'div', {'id':'va-bodytext'} )
