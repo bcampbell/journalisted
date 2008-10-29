@@ -65,7 +65,7 @@ admPageFooter();
 /* pull an article out of the DB and return it as an array */
 function FetchArticle( $article_id )
 {
-	$q = db_query( 'SELECT id,title,byline,description,pubdate,lastscraped,firstseen,lastseen,content,permalink,srcurl,srcorg,srcid FROM article WHERE id=?', $article_id );
+	$q = db_query( 'SELECT * FROM article WHERE id=?', $article_id );
 
 	$art = db_fetch_array($q);
 	return $art;
@@ -75,13 +75,14 @@ function FetchArticle( $article_id )
 /* display article */
 function EmitArticle( $art )
 {
-	
 	print "<table border=1>\n";
 	print "<tr><th>title</th><td><h2>{$art['title']}</h2></td></tr>\n";
-	print "<tr><th>id</th><td>{$art['id']}</td></tr>\n";
+	print "<tr><th>status</th><td>{$art['status']}</td></tr>\n";
+	print "<tr><th>id</th><td>{$art['id']} [<a href=\"/article?id={$art['id']}\">go to journalisted page</a>]</td></tr>\n";
 	$orgs = get_org_names();
 	$orgname = $orgs[$art['srcorg']];
 	print "<tr><th>srcorg</th><td>{$orgname} (id {$art['srcorg']})</td></tr>\n";
+	print "<tr><th>permalink</th><td><a href=\"{$art['permalink']}\">{$art['permalink']}</a></td></tr>\n";
 	print "<tr><th>pubdate</th><td>{$art['pubdate']}</td></tr>\n";
 	print "<tr><th>lastscraped</th><td>{$art['lastscraped']}</td></tr>\n";
 	print "<tr><th>byline</th>\n";
@@ -92,11 +93,11 @@ function EmitArticle( $art )
 	EmitAttribution( $art );
 	print "</td></tr>\n";
 
-
 	print "<tr><th>description</th><td>{$art['description']}</td></tr>\n";
-	print "<tr><th>permalink</th><td><a href=\"{$art['permalink']}\">{$art['permalink']}</a></td></tr>\n";
-	print "<tr><th>srcid</th><td>{$art['srcid']}</td></tr>\n";
 	print "<tr><th>srcurl</th><td>{$art['srcurl']}</td></tr>\n";
+	print "<tr><th>srcid</th><td>{$art['srcid']}</td></tr>\n";
+	print "<tr><th>total_comments</th><td>{$art['total_comments']}</td></tr>\n";
+	print "<tr><th>total_bloglinks</th><td>{$art['total_bloglinks']}</td></tr>\n";
 
 	print "<tr><th>content</th><td>\n";
 	
