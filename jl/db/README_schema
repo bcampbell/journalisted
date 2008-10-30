@@ -115,7 +115,20 @@ wordcount (integer)
 status ( character(1), default 'a' )
  'a'=active
  Any other value means article is hidden and not included in analysis.
+ 'h'=hidden
  'd'=duplicate
+
+total_bloglinks (integer)
+total_comments (integer)
+ These two track the total number of blog reference and comments, stored
+ in the article_bloglink and article_commentlink tables respectively.
+ They are automatically updated via triggers when those other two tables
+ are modified.
+
+last_comment_check (timestamp)
+ Last time at which the article was checked for comments on it's home site
+ (many papers allow readers to post comments).
+ This allows us to rescrape the comment counts to keep them up to date.
 
 
 journo table
