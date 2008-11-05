@@ -315,13 +315,21 @@ def Extract_escenic( html, context ):
     # comments
     # TODO: this doesn't count small numbers of comments (it only looks for the "read all N comments" link
     art['commentlinks'] = []
+
+    num_comments = None
+    comment_form_div = soup.find( 'div', {'id':"comments-form"} )
+    if comment_form_div is not None:
+        # this page supports comments, but none have yet been posted
+        num_comments = 0
+
     numcomment_pat = re.compile( r"sReadAllComments\s*=\s*'Read all\s+(\d+)\s+comments'\s*;" )
     m = numcomment_pat.search(html)
-    num_comments = None
     comment_url = urlparse.urljoin( art['permalink'], '#comments-form' )
     if m:
         num_comments = int( m.group(1) )
-    art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+
+    if num_comments is not None:
+        art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
 
     # Extract the article text and build it into it's own soup
