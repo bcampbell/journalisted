@@ -10,6 +10,10 @@
 # make use of:
 #   http://news.bbc.co.uk/rss/feeds.opml
 # (~1600 feeds, multiple languages)
+#
+# NOTE: we scrape the low-graphics version of the page - much easier.
+# some pages give 404 errors for their low-graphics counterpart...
+# I _think_ these are video pages (only text is a small caption)
 
 import re
 from datetime import datetime
@@ -234,10 +238,88 @@ def CalcSrcID( url ):
     return 'bbcnews_' + m.group(1)
 
 
-
-
 def Extract( html, context ):
-    """Parse the html of a single article
+    if '/low/' in context['srcurl']:
+        return Extract_low( html, context )
+    else:
+        # NOTE: hi-graphics extract version needs work to handle
+        # embedded video - at the moment these pages confuse it and
+        # cause it to fail (and lots of pages have embedded video now)
+        raise Exception( 'poo' )
+#        return Extract_hi( html, context )
+
+def Extract_low( html, context ):
+    """parse html of a low-graphics page"""
+
+    art = context
+    page_enc = 'ISO-8859-1'
+
+    # pubdate
+    pubdate_pat = re.compile( r'<meta\s+name="OriginalPublicationDate"\s+content="(.*?)"\s*/>' )
+    m = pubdate_pat.search( html )
+    art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
+
+    # title
+    headline_pat = re.compile( r'<a name="startcontent"></a>\s*<h\d>(.*?)</h\d>', re.DOTALL )
+    m = headline_pat.search(html)
+    art['title'] = m.group(1).strip().decode( page_enc )
+
+    # byline
+    byline = u''
+    byline_pat = re.compile( r'<!-- S IBYL -->(.*?)<!-- E IBYL -->', re.DOTALL )
+    m = byline_pat.search( html )
+    if m:
+        byline = m.group(1).decode( page_enc )
+
+        # trim off possible leading all-caps cruft (eg "<b>WHO, WHAT, WHY?</b><br />")
+        byline = re.sub( r'<b>[^a-z]+</b>\s*<br\s*/>', '', byline )
+        # replace <br /> with a comma to retain a little more context when we strip html tags
+        byline = re.sub( ur'<br\s*/>', u',', byline )
+        byline = ukmedia.FromHTMLOneLine(byline)
+        byline = re.sub( u'\s+,', u',', byline )
+        byline = re.sub( u',$', u'', byline )
+        byline = byline.strip()
+        html = byline_pat.sub( '', html )
+    art['byline'] = byline
+
+    # images
+    # NOTE: low-graphics version of page has no caption, but alt attr is OKish.
+    art['images'] = []
+    image_pat = re.compile( r'<!-- S IIMA -->(.*?)<!-- E IIMA -->', re.DOTALL )
+    for im in image_pat.finditer( html ):
+        imtxt = im.group(1)
+        m = re.search( r'src="(.*?)"', imtxt )
+        img_url = m.group(1)
+        m = re.search( r'alt="(.*?)"', imtxt )
+        img_caption = unicode( m.group(1), page_enc )
+        art['images'].append( { 'url': img_url, 'caption': img_caption, 'credit': u'' } )
+    html = image_pat.sub( '', html )
+
+    # main text
+    main_pat = re.compile( r'(?:<!-- S BO -->)+(.*?)<!-- E BO -->', re.DOTALL )
+    m = main_pat.search(html)
+    art['content'] = m.group(1).decode( page_enc )
+
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    # if description came up blank, maybe it's because it was a gallery page
+    if art['description'] == u'':
+        picpage = False
+        for foo in ( r'\bpictures\b',r'\bphotos\b', r'\bgallery\b' ):
+            pat = re.compile( foo, re.IGNORECASE )
+            if pat.search( art['title'] ):
+                picpage = True
+                break
+        if picpage:
+            ukmedia.DBUG2( "IGNORE pictures/photos page ( %s )\n" %( art['srcurl'] ) )
+            return None
+
+    return art
+
+
+
+def Extract_hi( html, context ):
+    """Parse the html of a single article (in hi-graphics form)
 
     html -- the article html
     context -- any extra info we have about the article (from the rss feed)
@@ -294,10 +376,11 @@ def Extract( html, context ):
             return None
 
 
-    if storybody:
-        txt = storybody.renderContents(None)
-    else:
-        txt = unicode( html, soup.originalEncoding )
+#    if storybody:
+#        txt = storybody.renderContents(None)
+#    else:
+#        txt = unicode( html, soup.originalEncoding )
+    txt = unicode( html, soup.originalEncoding )
 
     m = re.search( u'<!--\s*S BO\s*-->(.*)<!--\s*E BO\s*-->', txt, re.UNICODE|re.DOTALL )
     txt = m.group(1)
@@ -370,7 +453,14 @@ def ScrubFunc( context, entry ):
     if not srcid:
         return None # suppress it
 
+    if '/in_pictures/' in context['srcurl']:
+        return None
+
     context['srcid'] = srcid
+
+    # scrape the low-graphics version of the page
+    context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
+
     return context
 
 
@@ -382,9 +472,15 @@ def FindArticles():
 
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
+    # NOTE: urls from the rss feed have a couple of extra components which
+    # we _could_ strip out here...
     context = {}
-    context['srcurl'] = url
     context['permalink'] = url
+    context['srcurl'] = url
+    # scrape the low-graphics version of the page
+    # NOTE: a few pages give 404 errors for their low-graphics counterpart...
+    # I _think_ these are video pages (only text is a small caption)
+    context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
     context['srcid'] = CalcSrcID( url )
     context['srcorgname'] = u'bbcnews'
     context['lastseen'] = datetime.now()
@@ -392,5 +488,6 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    # high maxerrors to cope with some video-only pages which give 404 errors if you try to get the low-graphics version
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
 
