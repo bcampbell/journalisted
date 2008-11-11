@@ -685,17 +685,25 @@ def Extract_newformat( html, context ):
             # para in main-article-info div.
             art['byline'] = u''
 
-        # date
-        pubdate = attrsdiv.find( 'li', { 'class':'date' } ).renderContents(None).strip()
-        art['pubdate'] = ukmedia.ParseDateTime( pubdate )
-
         # guardian or observer?
         # (guardian is the catchall - we use it for web-only content too)
-        publication = attrsdiv.find( 'li', { 'class':'publication' } ).a.string
+        publicationli = attrsdiv.find( 'li', { 'class':'publication' } )
+        publication = publicationli.a.string
         if publication == u'The Observer':
             art['srcorgname'] = u'observer'
         else:
             art['srcorgname'] = u'guardian'
+
+        # date (sometimes is actually in the "publication" bit)
+        dateli = attrsdiv.find( 'li', { 'class':'date' } )
+        if dateli:
+            pubdate = dateli.find.renderContents(None).strip()
+            art['pubdate'] = ukmedia.ParseDateTime( pubdate )
+        else:
+            foo = publicationli.renderContents(None)
+            # TODO: should use a regex to extract just the date part of the string!
+            art['pubdate'] = ukmedia.ParseDateTime( foo )
+
     
         # now strip out all non-text bits of content div
         attrsdiv.extract()

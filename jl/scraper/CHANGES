@@ -18,3 +18,6 @@ Log changes made due to website changes here!
 2008-09-16 guardian: moved the rest of their blogs over to new CMS
 2008-10-15 guardian: changed date format on blogs
 2008-10-15 dailymail: minor markup changes
+2008-11-05 bbcnews: embedded video causing scraper headaches.
+2008-11-11 guardian: minor pubdate fix (some articles have date in the "publication" bit)
+
