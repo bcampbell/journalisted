@@ -59,7 +59,7 @@ function SafeMailto( $addr, $text='' )
     }
 
 	$text = addslashes( $text );
-	$out = "<script>gen_mailto( '{$text}', '" . implode( "','", $parts ). "');</script><noscript>{$noscript_text}</noscript>";
+	$out = "<script type=\"text/javascript\">gen_mailto( '{$text}', '" . implode( "','", $parts ). "');</script><noscript>{$noscript_text}</noscript>";
 
 	return $out;
 }
