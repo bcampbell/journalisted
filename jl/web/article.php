@@ -108,10 +108,9 @@ EOT;
 	foreach( $journos as $j )
 	{
 		$pat = sprintf("/%s/i", $j['prettyname'] );
-		$replacement = sprintf( "<a href=\"/%s\">\\0</a>", $j['ref'] );
 
+        $replacement = '<span class="author vcard"><a class="url fn" href="'. $j['ref'] . '">\0</a></span>';
 		$byline = preg_replace( $pat, $replacement, $byline );
-
 	}
 
 	return $byline;
@@ -121,20 +120,31 @@ EOT;
 function emit_block_articleinfo( $art )
 {
 	$article_id = $art['id'];
-	$title = $art['title'];
-	$byline = markup_byline( $art['byline'], $art['id'] );
 	$orgs = get_org_names();
+
+	$title = $art['title'];
+	$byline = markup_byline( $art['byline'], $article_id );
+
 	$org = $orgs[ $art['srcorg'] ];
-	
-	$pubdate = strftime('%a %e %B %Y', strtotime($art['pubdate']) );
+    $permalink = $art['permalink'];
+    $pubdate_timestamp = strtotime($art['pubdate']);
+	$pubdate_human = strftime('%a %e %B %Y', $pubdate_timestamp );
+	$pubdate_iso = date('c', $pubdate_timestamp );
 	$desc = $art['description'];
 
-	print "<h2>$title</h2>\n";
-	print "$byline<br>\n";
-	print "$org, $pubdate<br>\n";
-	print "<blockquote>$desc</blockquote>\n";
 
-	print "<a href=\"{$art['permalink']}\">Read the original article at $org</a>\n";
+?>
+
+<div class="hentry">
+  <h2 class="entry-title"><?php echo $title; ?></h2>
+  <?php echo $byline; ?><br/>
+  <?php echo $org; ?>, <abbr class="published" title="<?php echo $pubdate_iso; ?>"><?php echo $pubdate_human; ?></abbr><br/>
+  <blockquote><?php echo $desc; ?></blockquote>
+  <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article at <?php echo $org;?></a>
+</div>
+
+<?php
+
 }
 
 
