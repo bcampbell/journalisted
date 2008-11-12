@@ -58,7 +58,7 @@ function AlphabeticalList()
 	if( $order=='firstname' )
 		print "first name (<a href=\"list?letter={$letter}\">order by last name</a>)";
 	else
-		print "last name (<a href=\"list?order=firstname&letter={$letter}\">order by first name</a>)";
+		print "last name (<a href=\"list?order=firstname&amp;letter={$letter}\">order by first name</a>)";
 	print "</p>\n";
 
 	$orderfield = ($order=='firstname') ? 'firstname':'lastname';
@@ -85,7 +85,7 @@ EOT;
         else
         {
             $link = sprintf( "/list?order=%s&letter=%s", $order, $c );
-            printf("<a href=\"%s\">%s</a>\n", $link, strtoupper($c) );
+            printf("<a href=\"%s\">%s</a>\n", htmlentities($link), strtoupper($c) );
         }
     }
     print "</p>\n";
@@ -129,7 +129,7 @@ function FindByName( $name )
 	if( $order=='firstname' )
 		printf( "first name (<a href=\"list?name=%s\">order by last name</a>)", urlencode( $name ) );
 	else
-		printf( "last name (<a href=\"list?name=%s&order=firstname\">order by first name</a>)", urlencode($name) );
+		printf( "last name (<a href=\"list?name=%s&amp;order=firstname\">order by first name</a>)", urlencode($name) );
 	print "</p>\n";
 ?>
 <form action="list" method="get">
@@ -170,7 +170,7 @@ function FindByOutlet( $outlet )
 	if( $order=='firstname' )
 		print "first name (<a href=\"list?outlet={$outlet}\">order by last name</a>)";
 	else
-		print "last name (<a href=\"list?outlet={$outlet}&order=firstname\">order by first name</a>)";
+		print "last name (<a href=\"list?outlet={$outlet}&amp;order=firstname\">order by first name</a>)";
 	print "</p>\n";
 
 /*

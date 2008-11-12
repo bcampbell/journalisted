@@ -122,7 +122,6 @@ function emit_stats()
 	// so we'll just arbitarily pick the 10th.
 
 
-	printf( "<li>Some of today's most popular subjects:<ul>" );
 
 	$sql = <<<EOT
 SELECT t.tag, count(DISTINCT attr.journo_id)
@@ -134,14 +133,20 @@ SELECT t.tag, count(DISTINCT attr.journo_id)
 	OFFSET 10
 EOT;
 	$q = db_query( $sql );
-	while( $r = db_fetch_array( $q ) )
-	{
-		$taglink = tag_gen_link( $r['tag'], null, 'today' );
-		printf( "<li>%d journalists have written about '<a href=\"%s\">%s</a>'</li>",
-			$r['count'], $taglink, $r['tag'] );
-	}
 
-	print( "</ul></li>\n" );
+    if( db_num_rows( $q ) > 0 )
+    {
+    	printf( "<li>Some of today's most popular subjects:\n" );
+        print( "  <ul>\n" );
+    	while( $r = db_fetch_array( $q ) )
+    	{
+    		$taglink = tag_gen_link( $r['tag'], null, 'today' );
+    		printf( "    <li>%d journalists have written about '<a href=\"%s\">%s</a>'</li>",
+    			$r['count'], $taglink, $r['tag'] );
+    	}
+	    print( "  </ul>\n</li>\n" );
+    }
+
 
 ?>
 </ul>

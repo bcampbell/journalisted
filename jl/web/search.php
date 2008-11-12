@@ -70,10 +70,6 @@ page_footer();
 
 /*------------------------------------*/
 
-function FetchJourno( $id_or_ref )
-{
-}
-
 
 
 
@@ -95,7 +91,7 @@ Detailed query syntax <a href="http://www.xapian.org/docs/queryparser.html">here
 */
 
 ?>
-<form method="get">
+<form method="get" action="/search">
 <input type="text" name="q" value="<?php echo htmlspecialchars($query); ?>" />
 <?php
     if( $journo ) {
@@ -105,8 +101,8 @@ Detailed query syntax <a href="http://www.xapian.org/docs/queryparser.html">here
 
 ?>
 <select name="o">
- <option <?php echo $sort_order=='date'?'selected ':''; ?>value="date">order by date</option>
- <option <?php echo $sort_order=='relevance'?'selected ':''; ?>value="relevance">order by relevance</option>
+ <option <?php echo $sort_order=='date'?'selected="selected" ':''; ?>value="date">order by date</option>
+ <option <?php echo $sort_order=='relevance'?'selected="selected" ':''; ?>value="relevance">order by relevance</option>
 </select>
 <br/>
 <input type="submit" value="Find" />
@@ -125,7 +121,8 @@ function PostedFragment( &$r )
     $org = $orgs[ $r['srcorg'] ];
     $pubdate = pretty_date(strtotime($r['pubdate']));
 
-    return "<cite class=\"posted\"><a href=\"{$r['permalink']}\">{$pubdate}, <em>{$org}</em></a></cite>";
+    return sprintf( "<cite class=\"posted\"><a href=\"%s\">%s, <em>%s</em></a></cite>",
+        htmlentities($r['permalink']), $pubdate, $org );
 }
 
 
@@ -167,10 +164,10 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
     if( $start>0 && $total>0 )
     {
         printf( "<a href=\"%s\">%s</a> ",
-            PageURL($query,
+            htmlentities( PageURL($query,
                 $sort_order,
                 max(0,$start-$num_per_page),
-                $num_per_page),
+                $num_per_page) ),
             "Previous" );
     }
 
@@ -180,7 +177,7 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
             printf("%s ", $page+1 );
         } else {
             printf( "<a href=\"%s\">%s</a> ",
-                PageURL($query, $sort_order, $page*$num_per_page, $num_per_page),
+                htmlentities( PageURL($query, $sort_order, $page*$num_per_page, $num_per_page) ),
                 $page+1 );
         }
     }
@@ -188,7 +185,7 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
     if( $start+$num_per_page < $total )
     {
         printf( "<a href=\"%s\">%s</a> ",
-            PageURL($query, $sort_order, $start+$num_per_page, $num_per_page),
+            htmlentities( PageURL($query, $sort_order, $start+$num_per_page, $num_per_page) ),
             "Next" );
     }
 
@@ -278,13 +275,15 @@ function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=nul
                 'permalink' => $doc->get_value( XAP_PERMALINK_ID ),
                 'journos' => DecodeJournoList( $doc->get_value( XAP_JOURNOS_ID ) ) );
 
-            $headlinelink = "<a href=\"/article?id={$art['id']}\">{$art['title']}</a>\n";
+            $headlinelink = sprintf( "<a href=\"/article?id=%s\">%s</a>\n",
+                $art['id'], htmlentities($art['title']) );
+
             $postedfrag = PostedFragment($art);
 
             $journolinks = array();
             foreach( $art['journos'] as $j )
             {
-                $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], $j['prettyname'] );
+                $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], htmlentities( $j['prettyname'] ) );
             }
 
             $journofrag = '';

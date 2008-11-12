@@ -43,7 +43,7 @@ $contactemail = OPTION_TEAM_EMAIL;
 <form action="/list" method="get" class="frontform">
  <label for="outlet">Track down a journalist by news outlet</label>
 
-  <select name="outlet" class="select" >
+  <select id="outlet" name="outlet" class="select" >
 <?php
 	foreach( $orgs as $o )
 		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
@@ -60,9 +60,7 @@ $contactemail = OPTION_TEAM_EMAIL;
 </form>
 
 
-<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Please
-<?=SafeMailto( $contactemail, 'let us know' );?>
- when you find one so we can correct it</p>
+<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Let us know if you spot any!</p>
 
 </div>
 
