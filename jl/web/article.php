@@ -139,7 +139,7 @@ function emit_block_articleinfo( $art )
   <h2 class="entry-title"><?php echo $title; ?></h2>
   <?php echo $byline; ?><br/>
   <?php echo $org; ?>, <abbr class="published" title="<?php echo $pubdate_iso; ?>"><?php echo $pubdate_human; ?></abbr><br/>
-  <blockquote><?php echo $desc; ?></blockquote>
+  <blockquote class="entry-summary"><?php echo $desc; ?></blockquote>
   <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article at <?php echo $org;?></a>
 </div>
 
