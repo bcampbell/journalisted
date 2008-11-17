@@ -120,12 +120,20 @@ EOT;
 function emit_block_articleinfo( $art )
 {
 	$article_id = $art['id'];
-	$orgs = get_org_names();
+
+    $orginfo = db_getRow( "SELECT * FROM organisation WHERE id=?", $art['srcorg'] );
+
+#	$orgs = get_org_names();
 
 	$title = $art['title'];
 	$byline = markup_byline( $art['byline'], $article_id );
 
-	$org = $orgs[ $art['srcorg'] ];
+	$org_name = $orginfo[ 'prettyname' ];
+    $sop_name = $orginfo['sop_name'];
+    $sop_url = $orginfo['sop_url'];
+    $home_url = $orginfo['home_url'];
+
+
     $permalink = $art['permalink'];
     $pubdate_timestamp = strtotime($art['pubdate']);
 	$pubdate_human = strftime('%a %e %B %Y', $pubdate_timestamp );
@@ -138,9 +146,12 @@ function emit_block_articleinfo( $art )
 <div class="hentry">
   <h2 class="entry-title"><?php echo $title; ?></h2>
   <?php echo $byline; ?><br/>
-  <?php echo $org; ?>, <abbr class="published" title="<?php echo $pubdate_iso; ?>"><?php echo $pubdate_human; ?></abbr><br/>
+  <abbr class="published" title="<?php echo $pubdate_iso; ?>"><?php echo $pubdate_human; ?></abbr><br/>
   <blockquote class="entry-summary"><?php echo $desc; ?></blockquote>
-  <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article at <?php echo $org;?></a>
+  <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article</a><br/>
+  (This article was originally published by
+  <span class="published-by vcard"><a class="fn org url" href="<?php echo $home_url;?>"><?php echo $org_name;?></a></span>,
+  under the <a rel="statement-of-principles" href="<?php echo $sop_url;?>"><?php echo $sop_name;?></a>)<br/>
 </div>
 
 <?php
