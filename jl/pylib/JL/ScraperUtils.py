@@ -92,11 +92,11 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
             feedurl = f[1]
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
         except urllib2.HTTPError, e:
-            msg = u"RSS FAILED: '%s' (%s):" % (feedname,feedurl)
+            msg = u"ERROR fetching feed '%s' (%s): %s" % (feedname,feedurl,e.code)
             print >>sys.stderr, msg.encode( 'utf-8' )
-            print >>sys.stderr, '-'*60
-            print >>sys.stderr, traceback.format_exc()
-            print >>sys.stderr, '-'*60
+#            print >>sys.stderr, '-'*60
+#            print >>sys.stderr, traceback.format_exc()
+#            print >>sys.stderr, '-'*60
 
             errcnt = errcnt + 1
             if errcnt >= maxerrors:
