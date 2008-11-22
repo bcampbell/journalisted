@@ -1,0 +1,180 @@
+#!/usr/bin/env python2.4
+#
+# comment-updater
+#
+# Tool to update comment counts for articles from newspapers which have
+# reader comments.
+# Works by rescraping articles - the normal scraping process includes
+# comment information if it's available.
+#
+#
+
+
+from optparse import OptionParser
+import sys
+import psycopg2
+import traceback
+
+sys.path.append( "../pylib" )
+from JL import DB,Misc,ukmedia,CommentLink
+
+sys.path.append( "../scraper" )
+import scrapefront
+
+
+# These are the organisations whose scrapers provide comment info
+# TODO: unhappy having this here... this knowledge should be out
+# in the individual scrapers.
+org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday','times','sundaytimes' )
+
+
+
+
+def UpdateArticle( conn, options, article_id, srcurl ):
+    scraper = scrapefront.PickScraper( srcurl )
+
+    # Assumes that comments are always scraped using as part of the main
+    # article scraping... (ie comment info always on same page as article)
+    # May need to change this assumption in future, but for now seems
+    # reasonable.
+
+
+
+    if options.verbose:
+        print "[a%d] %s:" %( article_id, srcurl )
+
+    # rescrape the whole article...
+    context = scraper.ContextFromURL( srcurl )
+    html = ukmedia.FetchURL( srcurl )
+    art = scraper.Extract( html,context )
+
+    # update any commentlinks that were found
+    if art is not None:
+        if 'commentlinks' in art:
+            for c in art['commentlinks']:
+                if options.verbose:
+                    print " %d comments" % c['num_comments']
+                c['source'] = art['srcorgname']
+                CommentLink.Add( conn, article_id, c )
+    else:
+        print >>sys.stderr, "WARNING: didn't rescrape [a%d] %s" %(article_id,srcurl)
+
+    # mark article as checked
+    cursor = conn.cursor()
+    cursor.execute( "UPDATE article SET last_comment_check = NOW() WHERE id=%s", (article_id) )
+
+
+
+
+def DoIt( conn, options ):
+    """update comments for a batch of articles (ones we judge are due for an update)"""
+
+    max_errors = 5
+    max_articles = options.num_articles
+
+    # restrict all consideration to only articles published within this window
+    # (just to speed up looking for articles which need update)
+    time_window = '7 days'
+
+
+    # find all articles which need comment updates
+    # We try and rescrape 1 day after publication, then again 5 days (when
+    # the comment count is likely to have settled down into more or less
+    # final values)
+    org_list = ','.join( [ str(Misc.GetOrgID(conn,n)) for n in org_names ] )
+    sql="""
+SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
+    AND NOW()-pubdate < '""" + time_window + """'::interval
+    AND srcorg IN (""" + org_list + """)
+    AND (
+         last_comment_check IS NULL
+        OR
+         (NOW()-pubdate > '1 day'::interval AND last_comment_check-pubdate < '1 day'::interval)
+        OR
+         (NOW()-pubdate > '5 days'::interval AND last_comment_check-pubdate < '5 days'::interval )
+        )
+    LIMIT %s
+"""
+
+#    print sql
+
+    if options.verbose:
+        print "Finding articles needing comment update"
+
+    # rescrape them!
+    c = conn.cursor()
+    c.execute( sql, max_articles )
+
+    errcnt = 0
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+        try:
+            UpdateArticle( conn, options, row['id'], row['srcurl'] )
+        except Exception, err:
+            report = traceback.format_exc()
+
+            msg = u"FAILED ON [a%d] %s :" % (row['id'], row['srcurl'])
+            print >>sys.stderr, msg.encode( 'utf-8' )
+            print >>sys.stderr, '-'*60
+            print >>sys.stderr, report
+            print >>sys.stderr, '-'*60
+            errcnt = errcnt + 1
+            if errcnt >=max_errors:
+                print >>sys.stderr, "Too many errors - ABORTING"
+                raise
+
+
+
+def DoSingleArticle( conn,options ):
+    """just update comments for a single article with the given url"""
+    c = conn.cursor()
+    srcid = scrapefront.CalcSrcID( options.url )
+    assert( srcid is not None )
+
+    # look it up in the database
+    c.execute( "SELECT id,srcurl FROM article WHERE srcid=%s" , (srcid) )
+    row = c.fetchone()
+    if row is None:
+        print >>sys.stderr, "ERROR: article not in database"
+        sys.exit(1)
+
+    article_id = row['id']
+
+    UpdateArticle( conn,options, row['id'], row['srcurl'])
+ 
+
+
+def main():
+    parser = OptionParser()
+    parser.add_option("-d", "--dry-run", action="store_true", dest="dryrun", help="dry run - don't touch DB")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option( "-u", "--url", dest="url", help="update single article with this URL", metavar="URL" )
+    parser.add_option( "-n", "--num_articles", dest="num_articles", help="max number of articles to rescrape (default 200)", default=200 )
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+
+    if options.url:
+        DoSingleArticle( conn,options )
+    else:
+        DoIt( conn, options )
+
+
+    if options.dryrun:
+        if options.verbose:
+            print "DRYRUN - rolling back"
+        conn.rollback()
+    else:
+        conn.commit()
+
+    if options.verbose:
+        print "done."
+
+
+if __name__ == "__main__":
+    main()
+
+
