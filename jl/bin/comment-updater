@@ -26,6 +26,7 @@ import scrapefront
 # TODO: unhappy having this here... this knowledge should be out
 # in the individual scrapers.
 org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday','times','sundaytimes' )
+#org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday' )
 
 
 
@@ -69,12 +70,13 @@ def UpdateArticle( conn, options, article_id, srcurl ):
 def DoIt( conn, options ):
     """update comments for a batch of articles (ones we judge are due for an update)"""
 
-    max_errors = 5
     max_articles = options.num_articles
+    max_errors = max( max_articles/5, 10 )
 
     # restrict all consideration to only articles published within this window
     # (just to speed up looking for articles which need update)
     time_window = '7 days'
+
 
 
     # find all articles which need comment updates
@@ -106,12 +108,16 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
     c.execute( sql, max_articles )
 
     errcnt = 0
+    cnt_ok = 0
     while 1:
         row = c.fetchone()
         if row is None:
             break
         try:
             UpdateArticle( conn, options, row['id'], row['srcurl'] )
+	    cnt_ok = cnt_ok + 1
+	    if not options.dryrun:
+		    conn.commit()
         except Exception, err:
             report = traceback.format_exc()
 
@@ -125,6 +131,8 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
                 print >>sys.stderr, "Too many errors - ABORTING"
                 raise
 
+    if options.verbose:
+    	print "%d ok, %d errors" %(cnt_ok,errcnt)
 
 
 def DoSingleArticle( conn,options ):
@@ -151,7 +159,7 @@ def main():
     parser.add_option("-d", "--dry-run", action="store_true", dest="dryrun", help="dry run - don't touch DB")
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
     parser.add_option( "-u", "--url", dest="url", help="update single article with this URL", metavar="URL" )
-    parser.add_option( "-n", "--num_articles", dest="num_articles", help="max number of articles to rescrape (default 200)", default=200 )
+    parser.add_option( "-n", "--num_articles", dest="num_articles", type="int", help="max number of articles to rescrape (default 200)", default=200 )
 
     (options, args) = parser.parse_args()
 
