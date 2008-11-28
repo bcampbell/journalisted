@@ -28,8 +28,14 @@ import traceback
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup,Tag
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup,Tag
 from JL import ukmedia, ScraperUtils
+
+notw_bloggers = (
+    u'Ian Kirby',
+    u'Jamie Lyons',
+    u'Fraser Nelson',
+    u'Sophy Ridge' )
 
 def ArticlesFromSoup( soup ):
     found = []
@@ -49,9 +55,25 @@ def ArticlesFromSoup( soup ):
             found.append( context )
     return found
 
+def ScrubFunc( context, entry ):
+    """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
+
+    url = context[ 'srcurl' ]
+#    if url.find('feedburner') != -1:
+#        url = entry.feedburner_origlink
+#    context['srcurl'] = url
+#    context['permalink'] = url
+    context['srcid'] = CalcSrcID( url )
+    return context
 
 def FindArticles():
     """Gather articles to scrape from the notw website."""
+
+    feeds =  [ ('NOTW Politics', 'http://blogs.notw.co.uk/politics/atom.xml') ]
+
+    found = ScraperUtils.FindArticlesFromRSS( feeds, u'notw', ScrubFunc )
+
+    return found
 
     found = []
     html = ukmedia.FetchURL( 'http://www.newsoftheworld.co.uk/' )
@@ -108,85 +130,65 @@ def ScanPrimary( soup ):
 
 def Extract( html, context ):
     o = urlparse.urlparse( context['srcurl'] )
-    if o[1] == 'notw.typepad.com':
-        return Extract_typepad( html, context )
+#    if o[1] == 'notw.typepad.com':
+#        return Extract_typepad( html, context )
+
+    if o[1] == 'blogs.notw.co.uk':
+        return Extract_blog( html, context )
     else:
         return Extract_notw( html, context )
 
 
-def Extract_typepad( html, context ):
-    """extractor for notw.typepad.com articles"""
+
+def Extract_blog( html, context ):
+    """extractor for blog articles articles (think they are hosted on typepad)"""
 
     art = context
     art['srcorgname'] = u'notw'
 
     soup = BeautifulSoup( html )
 
-    ediv = soup.find( 'div', {'class':'entry'} )
-    h3 = ediv.find( 'h3', {'class':'entry-header'} )
-    #contentdiv = ediv.find( 'div', {'class':'entry-content'} )
-    bodydiv = ediv.find( 'div', {'class':'entry-body'} )
-    morediv = ediv.find( 'div', {'class':'entry-more'} )
-    footerspan = soup.find( 'span', {'class':'post-footers'} )
+    # find headline
+    datespan = soup.find('span',{'class':'entry-date-bar'})
+    b = datespan.findPrevious('b')
+    headline_txt = ukmedia.FromHTMLOneLine( b.renderContents(None) )
+    art['title'] = headline_txt
 
-    headline = h3.renderContents(None)
-    headline = ukmedia.FromHTML( headline )
-    art['title'] = headline
+    # pubdate
+    # if we found this article via an rss/atom feed we'll already
+    # have a good date and time. If not, we'll have to use the shitty
+    # date-only text on the page.
+    if not 'pubdate' in art:
+        datep = soup.find('p',{'class':"entry-footer-info"})
+        foo = ukmedia.FromHTMLOneLine( datep.renderContents(None) )
+        m = re.compile('Posted on\s+(.*?)\s*[|]').search( foo )
+        art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
 
-
-
-    byline = u''
-    footertxt = footerspan.renderContents(None)
-    footercracker = re.compile( "Posted by\\s+(.*?)\\s+on\\s+(.*?\\s+at\\s+.*?)\\s*", re.UNICODE )
-    m = footercracker.search(footertxt)
-    if m:
-        byline = m.group(1)
-        datetxt = m.group(2)
-    else:
-        # "Posted at 12:01 AM"
-        d = soup.find( 'h2', {'class':'date-header'} ).renderContents(None)
-        m = re.search( "Posted at\\s+(.*)", footertxt )
-        datetxt = d + u' ' + m.group(1)
-
-    if byline == u'Online Team':
-        byline = u''
-
-    # often, the first non-empty para is byline
-    if byline == u'':
-        for p in bodydiv.findAll('p'):
-            txt = ukmedia.FromHTML( p.renderContents( None ) )
-            if not txt:
-                continue
-            m = re.match( "By\\s+((\\b\\w+(\\s+|\\b)){2,3})\\s*$" , txt, re.UNICODE|re.IGNORECASE )
-            if m:
-                byline = m.group(1)
-                p.extract()
+    # byline
+    # there is no byline, but there is a thumbnail image of the blogger
+    # image src url contains bloggers first name.
+    art['byline'] = u''
+    thumb_img = soup.find('div',{'class':'thumb'}).img
+    thumb_url = thumb_img['src'].lower()
+    for b in notw_bloggers:
+        firstname = b.split()[0].lower()
+        if firstname in thumb_url:
+            art['byline'] = b
             break
 
+    # content
+    # html is so borked that we're going to use regex instead.
+    content_pat = re.compile( r'(<span\s+class="entry-body"\s*>.*?)\s*<!-- forward and back buttons -->', re.DOTALL )
+    m = content_pat.search( html )
+    content_txt = unicode( m.group(1), soup.originalEncoding )
 
-    # can sometimes get proper author from blog title...
-    if byline == u'':
-        t = soup.find('title')
-        tpat = re.compile( "\\s*((\\b\\w+\\b){2,3}):", re.UNICODE )
-        m = tpat.search( t.renderContents(None) )
-        if m:
-            byline = m.group(1)
-
-
-    art['byline'] = byline
-    art['pubdate'] = ukmedia.ParseDateTime( datetxt )
-
-
-    content = bodydiv.renderContents(None)
-    if morediv:
-        content = content + morediv.renderContents(None)
-    content = ukmedia.SanitiseHTML( content )
-    art['content'] = content
-
-    art['description'] = ukmedia.FromHTML( ukmedia.FirstPara( content ) )
-
-
+    content_txt = ukmedia.DescapeHTML( content_txt )
+    content_txt = ukmedia.SanitiseHTML( content_txt )
+    art['content'] = content_txt
+    art['description'] = ukmedia.FirstPara( content_txt )
     return art
+
+
 
 
 
@@ -305,17 +307,15 @@ def Extract_notw( html, context ):
 
 def CalcSrcID( url ):
     o = urlparse.urlparse( url )
-    if o[1] == 'notw.typepad.com':
-        # eg "http://notw.typepad.com/hyland/2008/01/no-sniping-ross.html"
-#        return o[2]
-        # SCRAPER NEEDS WORK!
-        return None
+    if o[1] == 'blogs.notw.co.uk':
+        # eg: "http://blogs.notw.co.uk/politics/2008/11/jingle-hells.html"
+        return 'notw_blogs_' + o[2]
     if o[1] in ('newsoftheworld.co.uk','www.newsoftheworld.co.uk'):
         # eg http://www.newsoftheworld.co.uk/news/83126/TV-chef-Gordon-Ramsay-cheats-with-Jeffrey-Archers-ex-Sarah-Symonds-behind-wife-Tanas-back.html
         notw_idpat = re.compile( "/([0-9]+)/[^/]+[.]html$" )
         m = notw_idpat.search( url )
         if m:
-            return m.group(1)
+            return 'notw_' + m.group(1)
     return None
 
 def ContextFromURL( url ):
@@ -331,3 +331,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
+
+
