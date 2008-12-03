@@ -206,13 +206,16 @@ function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=nul
         $qp->add_prefix( 'title', 'T' );
         $qp->add_prefix( 'journo', 'J' );
 */
-        $query = $qp->parse_query($query_string);
+        $query = $qp->parse_query($query_string,0);
 
 /*        print "<pre>Parsed query is: {$query->get_description()}</pre>\n"; */
 
         if( $sort_order == 'date' ) {
             $enquire->set_sort_by_value_then_relevance( XAP_PUBDATE_ID );
         }   /* (default is relevance) */
+
+        printf("QUERY:<pre>\n%s\n</pre>\n", $query->get_description() );
+
 
         $enquire->set_query($query);
 #        $enquire->set_cutoff( 50 );
@@ -223,6 +226,8 @@ function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=nul
         $finish_time = getmicrotime();
         $elapsed = $finish_time - $start_time;
         printf( "<p>query took %.5f seconds</p>\n", $elapsed );
+
+
 
 
         // Display the results.
