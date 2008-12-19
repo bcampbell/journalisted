@@ -76,6 +76,8 @@ datecrackers = [
     re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>am)|(?P<pm>pm))', re.UNICODE|re.IGNORECASE ),
     # 'Tuesday October 14 2008 00.01 BST' (Guardian blogs in their new cms)
     re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2})[:.](?P<min>\d\d)\s+', re.UNICODE|re.IGNORECASE ),
+    # 'Tuesday 16 December 2008 16.23 GMT' (Guardian blogs in their new cms)
+    re.compile( r'\w+\s+(?P<day>\d{1,2})\s+(?P<month>\w+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2})[:.](?P<min>\d\d)\s+', re.UNICODE|re.IGNORECASE ),
     
     # 3:19pm on Tue 29 Jan 08 (herald blogs)
     re.compile( """(?P<hour>\d+):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))\s+(on\s+)?(\w+)\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d+)""", re.UNICODE|re.IGNORECASE ),
