@@ -689,7 +689,7 @@ def Extract_newformat( html, context ):
         # (guardian is the catchall - we use it for web-only content too)
         publicationli = attrsdiv.find( 'li', { 'class':'publication' } )
         publication = publicationli.a.string
-        if publication == u'The Observer':
+        if u'The Observer' in publication:
             art['srcorgname'] = u'observer'
         else:
             art['srcorgname'] = u'guardian'
