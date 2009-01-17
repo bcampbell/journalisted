@@ -57,17 +57,26 @@ def FindRSSFeeds( rssurl ):
 
     soup = BeautifulSoup( html )
 
-    for t in soup.findAll( 'table', {'class':'feeds'} ):
+    for t in soup.findAll( 'table', {'class':re.compile('feeds')} ):
         for tr in t.findAll( 'tr' ):
             tds = tr.findAll('td')
             if len(tds) > 1:    # headings have less columns
-                n = tds[0].renderContents(None)
+                n = tds[0].renderContents(None).strip()
 
                 if not n in blacklist:
                     url = 'http://www.dailymail.co.uk' + tds[1].a['href']
                     #print "%s: %s" %(n,url)
                     feeds[ n ] = url
 
+    # some sanity checks
+    assert "Money" in feeds
+    assert "Sport" in feeds
+    assert "News" in feeds
+    assert "Health" in feeds
+    assert "Richard Littlejohn" in feeds
+    assert "Victoria Beckham" in feeds
+    assert "Nutrition" in feeds
+    assert "Manchester United" in feeds
     return feeds
 
 
