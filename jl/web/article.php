@@ -151,7 +151,7 @@ function emit_block_articleinfo( $art )
   <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article</a><br/>
   (This article was originally published by
   <span class="published-by vcard"><a class="fn org url" href="<?php echo $home_url;?>"><?php echo $org_name;?></a></span>,
-  under the <a rel="statement-of-principles" href="<?php echo $sop_url;?>"><?php echo $sop_name;?></a>)<br/>
+  under the <a rel="principles" href="<?php echo $sop_url;?>"><?php echo $sop_name;?></a>)<br/>
 </div>
 
 <?php
