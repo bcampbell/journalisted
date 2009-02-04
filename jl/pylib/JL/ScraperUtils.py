@@ -7,12 +7,30 @@ import sys
 import socket
 import traceback
 import urllib2
+import httplib
 import os
 from datetime import datetime
 import time
+import random
 
 import ukmedia, ArticleDB
 import feedparser
+
+
+def unique_articles( arts ):
+    """ removes dupes from list of articles """
+    # (order preserving)
+    seen = {}
+    result = []
+    for art in arts:
+        id = art['permalink']
+        if id in seen:
+            continue
+        seen[id] = 1
+        result.append(art)
+    return result
+
+
 
 def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxerrors=20,
              prepare_parser_fn=None, after_parsing_fn=None ):
@@ -45,6 +63,16 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
         found.append( context )
     else:
         found = found + findarticles_fn()
+
+    # remove dupes (eg often articles appear in more than one RSS feed)
+    found = unique_articles( found )
+
+    # randomise the order of articles, so that if the scraper does abort due to too many errors,
+    # successive runs should be able to pick up all the scrapable articles.
+    random.shuffle(found)
+
+    ukmedia.DBUG2( "%d articles to scrape\n" % ( len(found) ) )
+
 
     if options.dryrun:
         store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )  # testing
@@ -91,8 +119,8 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
             feedname = f[0]
             feedurl = f[1]
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
-        except urllib2.HTTPError, e:
-            msg = u"ERROR fetching feed '%s' (%s): %s" % (feedname,feedurl,e.code)
+        except (urllib2.HTTPError, httplib.HTTPException), e:
+            msg = u"ERROR fetching feed '%s' (%s): %s code %s" % (feedname,feedurl,e.__class__,e.code)
             print >>sys.stderr, msg.encode( 'utf-8' )
 #            print >>sys.stderr, '-'*60
 #            print >>sys.stderr, traceback.format_exc()
@@ -104,7 +132,6 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
                 raise
 
 
-    ukmedia.DBUG2( "found %d articles.\n" % ( len(foundarticles) ) )
     return foundarticles
 
 

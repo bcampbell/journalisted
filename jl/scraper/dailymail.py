@@ -54,7 +54,7 @@ def FindRSSFeeds( rssurl ):
     feeds = {}
 
     html = ukmedia.FetchURL( rssurl )
-
+    assert html.strip() != ''
     soup = BeautifulSoup( html )
 
     for t in soup.findAll( 'table', {'class':re.compile('feeds')} ):
@@ -65,7 +65,6 @@ def FindRSSFeeds( rssurl ):
 
                 if not n in blacklist:
                     url = 'http://www.dailymail.co.uk' + tds[1].a['href']
-                    #print "%s: %s" %(n,url)
                     feeds[ n ] = url
 
     # some sanity checks
@@ -323,7 +322,7 @@ def CalcSrcID( url ):
 
     o = urlparse.urlparse( url )
     # blogs are handled by blogs.py
-    if o[1] not in ( 'www.dailymail.co.uk', 'www.mailonsunday.co.uk' ):
+    if not o[1].endswith('dailymail.co.uk') and not o[1].endswith( 'mailonsunday.co.uk' ):
         return None
 
     for pat in idpats:

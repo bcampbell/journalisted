@@ -221,9 +221,22 @@ def CalcSrcID( url ):
 
     o = urlparse.urlparse( url )
 
-    if o[1].endswith( 'typepad.com' ):
-        return 'times_' + o[2]
+    # sigh... blogs scattered over a bunch of typepad.com domains.
+    domain = re.sub( '^www.', '', o[1] )
+    blogdomains = (
+        'timesbusiness.typepad.com',
+        'timescolumns.typepad.com',
+        'timescorrespondents.typepad.com',
+        'timesnews.typepad.com',
+        'timesonline.typepad.com' )
 
+    if domain in blogdomains:
+        if o[2].endswith('.html'):
+            return 'times_' + o[2]
+        else:
+            return None
+
+    # main paper?
     if not o[1].endswith( 'timesonline.co.uk' ):
         return None
 
@@ -489,6 +502,4 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
-
-#    ScraperUtils.ReadFeed( u'Red Box', u'http://timesonline.typepad.com/politics/rss.xml', u'times' )
 

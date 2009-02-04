@@ -232,6 +232,12 @@ def Extract_HTML_Article( html, context ):
 
     # 'storyHead' div contains headline and description
     storyheaddiv = soup.find( 'div', {'class': 'storyHead' } )
+    if storyheaddiv is None:     # picture gallery?
+        if soup.find( 'div', {'id':'tmglBody' } ) is None and soup.find( 'div',{'class':'tmglSlideshow'} ) is not None:
+            ukmedia.DBUG2( "IGNORE picture gallery '%s' (%s)\n" % (art['title'], art['srcurl']) );
+            return None
+
+
 
     title = storyheaddiv.h1.renderContents( None )
     title = ukmedia.FromHTML( title )
@@ -517,7 +523,6 @@ def CalcSrcID( url ):
 
 def ScrubFunc( context, entry ):
     """ tidy up context, work out srcid etc... entry param not used """
-
     # we'll assume that all articles published on a Sunday are from
     # the sunday telegraph...
     # TODO: telegraph and sunday telegraph should share srcid space...
@@ -527,6 +532,13 @@ def ScrubFunc( context, entry ):
         context['srcorgname'] = u'telegraph'
 
     url = context['srcurl']
+
+    # ignore obvious picture galleries (doesn't catch em all)
+    bads = ( '/picturegalleries/','/propertypicturegalleries/','/gardeningpicturegalleries/' )
+    for b in bads:
+        if b in url:
+            return None
+
     o = urlparse.urlparse( url )
     if o[2].lower().endswith( ".html" ):
         # it's an html article...

@@ -6,6 +6,7 @@
 #
 # Scraper for Mirror and Sunday Mirror
 #
+# TODO: scrape list of blog rss feeds instead of using hardcoded table
 
 import re
 from datetime import datetime
@@ -63,8 +64,7 @@ blog_rssfeeds = [
     ("blog: 3pm", "http://feeds.feedburner.com/mirror-3pm"),
     ("blog: Amber & friends", "http://feeds.feedburner.com/mirrorfashion"),
     ("blog: Big Brother'", "http://feeds.feedburner.com/big-brother/" ),
-    # Christopher Hitchens rss link is borked
-    #("blog: Christopher Hitchens", 'http://feeds.feedburner.com/.....'),
+    ("blog: Christopher Hitchens", 'http://feeds2.feedburner.com/christopher-hitchens-blog'),
     ("blog: Cricket", "http://feeds.feedburner.com/mirror/cricket"),
     ("blog: Dear Miriam", "http://feeds.feedburner.com/dear-miriam"),
     ("blog: Football Spy", "http://feeds.feedburner.com/FootballSpy" ),
@@ -326,8 +326,7 @@ def ScrubFunc( context, entry ):
     url = context['srcurl']
     o = urlparse.urlparse( url )
 
-    # I think they've switched from feedburner.com... to feedsportal.com...
-    if o[1] == 'feeds.feedburner.com':
+    if o[1] in ( 'feeds.feedburner.com', 'feedproxy.google.com' ):
         # Luckily, feedburner feeds have a special entry
         # which contains the original link
         url = entry.feedburner_origlink
