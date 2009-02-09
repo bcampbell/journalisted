@@ -113,9 +113,11 @@ datecrackers = [
     re.compile( """(?P<month>\w+)\s+(?P<day>\d+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE ),
 
 
-    # "22 Oct 2007 (weird non-ascii characters) at(weird non-ascii characters)11:23" (telegraph blogs)
-    re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4}).*?at.*?(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE|re.DOTALL ),
-    
+    # "22 Oct 2007 (weird non-ascii characters) at(weird non-ascii characters)11:23" (telegraph blogs OLD!)
+#    re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4}).*?at.*?(?P<hour>\d{1,2}):(?P<min>\d\d)""", re.UNICODE|re.DOTALL ),
+    # 'Feb 2, 2009 at 17:01:09' (telegraph blogs)
+    re.compile( r"(?P<month>\w+)\s+(?P<day>\d{1,2}), (?P<year>\d{4}).*?at.*?(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)", re.UNICODE|re.DOTALL ),
+ 
     # "18 Oct 07, 04:50 PM" (BBC blogs)
     # "02 August 2007  1:21 PM" (Daily Mail blogs)
     re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{2,4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM))""", re.UNICODE ),

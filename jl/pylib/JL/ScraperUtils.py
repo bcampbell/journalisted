@@ -119,8 +119,8 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
             feedname = f[0]
             feedurl = f[1]
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
-        except (urllib2.HTTPError, httplib.HTTPException), e:
-            msg = u"ERROR fetching feed '%s' (%s): %s code %s" % (feedname,feedurl,e.__class__,e.code)
+        except (Exception), e:
+            msg = u"ERROR fetching feed '%s' (%s): %s" % (feedname,feedurl,e.__class__)
             print >>sys.stderr, msg.encode( 'utf-8' )
 #            print >>sys.stderr, '-'*60
 #            print >>sys.stderr, traceback.format_exc()
@@ -154,6 +154,12 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
     lastseen = datetime.now()
     for entry in r.entries:
         #Each item is a dictionary mapping properties to values
+
+        if not hasattr( entry, 'link' ):
+            # fix to cope with bad telegraph rss feeds with empty <item/>
+            ukmedia.DBUG2( "UHOH - missing link attr (feed '%s' - %s)\n" % (feedname,feedurl) )
+            continue
+
         url = entry.link        # will be guid if no link attr
         title = entry.title
         if hasattr(entry, 'summary'):
