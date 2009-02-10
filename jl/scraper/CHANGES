@@ -21,3 +21,5 @@ Log changes made due to website changes here!
 2008-11-05 bbcnews: embedded video causing scraper headaches.
 2008-11-11 guardian: minor pubdate fix (some articles have date in the "publication" bit)
 2008-12-19 guardian: minor fix - new date format on blogs
+2009-02-?? telegraph: started wrapping videoplayer with InSkin ad-delivery thingy
+

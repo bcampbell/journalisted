@@ -414,6 +414,9 @@ def Extract_HTML_Article( html, context ):
         cruft.extract()
     for cruft in storydiv.findAll( 'ul', {'class': 'storylist'} ):
         cruft.extract()
+    # inskin ad delivery thingy which wraps around brightcove video player
+    for cruft in storydiv.findAll( 'div', {'id':'skin'} ):
+        cruft.extract()
 
     contenttxt = storydiv.renderContents(None)
     contenttxt = ukmedia.SanitiseHTML( contenttxt )
