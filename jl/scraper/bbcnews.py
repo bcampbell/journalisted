@@ -25,27 +25,127 @@ site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup, Comment
 from JL import ukmedia, ScraperUtils
 
-# sources used by FindArticles
-OLDrssfeeds = {
-    'News Front Page': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/front_page/rss.xml',
-    'World': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/world/rss.xml',
-    'UK': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/uk/rss.xml',
-    'England': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/england/rss.xml',
-    'Northern Ireland': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/northern_ireland/rss.xml',
-    'Scotland': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/scotland/rss.xml',
-    'Business': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/business/rss.xml',
-    'Politics': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/uk_politics/rss.xml',
-    'Health': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/health/rss.xml',
-    'Education': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/education/rss.xml',
-    'Science/Nature': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/sci/tech/rss.xml',
-    'Technology': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/technology/rss.xml',
-    'Entertainment': 'http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/entertainment/rss.xml'
+
+# bbc blog feedlist automatically scraped by ./bbcblogs-scrape-rsslist.py
+# (run 2009-02-16 12:03:24)
+# got 95 feeds
+# THEN HAND EDITED!
+blog_feeds = [
+#    ("BBC Internet blog", "http://www.bbc.co.uk/blogs/bbcinternet/rss.xml"),
+#    ("BBCi Labs", "http://www.bbc.co.uk/blogs/bbcilabs/rss.xml"),
+    ("The Editors", "http://www.bbc.co.uk/blogs/theeditors/rss.xml"),
+    ("JZ's diary (Radio Scotland)", "http://www.bbc.co.uk/blogs/jeffzycinski/index.xml"),
+#    ("Radio Labs", "http://www.bbc.co.uk/blogs/radiolabs/index.xml"),
+    ("Sport Editors' blog", "http://www.bbc.co.uk/blogs/sporteditors/index.xml"),
+#    ("Ouch", "http://www.bbc.co.uk/blogs/ouch/rss.xml"),
+    ("Peston's Picks", "http://www.bbc.co.uk/blogs/thereporters/robertpeston/rss.xml"),
+    ("The Devenport Diaries", "http://www.bbc.co.uk/blogs/thereporters/markdevenport/rss.xml"),
+#    ("Stuart Bailie", "http://www.bbc.co.uk/blogs/stuartbailie/rss.xml"),
+    ("Will & Testament", "http://www.bbc.co.uk/blogs/ni/index.xml"),
+    ("Blether with Brian", "http://www.bbc.co.uk/blogs/thereporters/briantaylor/rss.xml"),
+#    ("Bryan Burnett", "http://www.bbc.co.uk/blogs/bryanburnett//index.xml"),
+#    ("JZ's diary", "http://www.bbc.co.uk/blogs/jeffzycinski/index.xml"),
+    ("Pauline McLean", "http://www.bbc.co.uk/blogs/thereporters/paulinemclean/rss.xml"),
+#    ("Scottish Symphony Orchestra", "http://www.bbc.co.uk/blogs/bbcsso//index.xml"),
+    ("Betsan's blog", "http://www.bbc.co.uk/blogs/thereporters/betsanpowys/rss.xml"),
+#    ("Blog C2", "http://www.bbc.co.uk/blogs/c2/rss.xml"),
+#    ("North-east Wales weblog", "http://blogs.bbc.co.uk/walesnortheast/index.xml"),
+
+# WELSH
+###     ("Vaughan Roderick", "http://www.bbc.co.uk/blogs/thereporters/vaughanroderick/rss.xml"),
+
+#    ("Wales Nature", "http://www.bbc.co.uk/blogs/gardenersworld/alysfowlerrss.xml"),
+#    ("Bobby Friction", "http://www.bbc.co.uk/blogs/friction//index.xml"),
+#    ("Bollywood blog", "http://www.bbc.co.uk/blogs/bollywood//index.xml"),
+#    ("Chart blog", "http://www.bbc.co.uk/blogs/chartblog//index.xml"),
+#    ("The Culture Show", "http://www.bbc.co.uk/blogs/thecultureshow/rss.xml"),
+#    ("Introducing", "http://www.bbc.co.uk/blogs/introducing//index.xml"),
+#    ("Kermode Uncut", "http://www.bbc.co.uk/blogs/markkermode/rss.xml"),
+#    ("Mike Harding's Folk blog", "http://www.bbc.co.uk/blogs/folk//index.xml"),
+#    ("Pauline McLean", "http://www.bbc.co.uk/blogs/thereporters/paulinemclean/rss.xml"),
+#    ("Stuart Bailie", "http://www.bbc.co.uk/blogs/stuartbailie/rss.xml"),
+#    ("Writers' Room", "http://www.bbc.co.uk/blogs/writersroom/index.xml"),
+#    ("Scottish Symphony Orchestra", "http://www.bbc.co.uk/blogs/bbcsso//index.xml"),
+#    ("Betsan's blog", "http://www.bbc.co.uk/blogs/thereporters/betsanpowys/rss.xml"),
+#    ("Blether with Brian", "http://www.bbc.co.uk/blogs/thereporters/briantaylor/rss.xml"),
+#    ("The Devenport Diaries", "http://www.bbc.co.uk/blogs/thereporters/markdevenport/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/10_things/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/caption_comp/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/crunch_creep/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/daily_miniquiz/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/housekeeping/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/how_to_say/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/paper_monitor/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/quote_of_the_day/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/random_stat/rss.xml"),
+#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/your_letters/rss.xml"),
+    ("Mark Easton's UK", "http://www.bbc.co.uk/blogs/thereporters/markeaston/rss.xml"),
+    ("Mark Urban", "http://www.bbc.co.uk/blogs/newsnight/markurban/index.xml"),
+    ("Michael Crick", "http://www.bbc.co.uk/blogs/newsnight/michaelcrick/index.xml"),
+    ("Nick Robinson's Newslog", "http://blogs.bbc.co.uk/nickrobinson/rss.xml"),
+    ("Open Secrets", "http://www.bbc.co.uk/blogs/opensecrets/rss.xml"),
+    ("James Reynolds' China", "http://www.bbc.co.uk/blogs/thereporters/jamesreynolds/rss.xml"),
+    ("Justin Webb's America", "http://www.bbc.co.uk/blogs/thereporters/justinwebb/rss.xml"),
+    ("Mark Mardell's Europe", "http://www.bbc.co.uk/blogs/thereporters/markmardell/rss.xml"),
+    ("Nick Bryant's Australia", "http://www.bbc.co.uk/blogs/thereporters/nickbryant/rss.xml"),
+    ("5 Live Breakfast", "http://www.bbc.co.uk/blogs/fivelivebreakfast/index.xml"),
+#    ("Ace & Vis (1Xtra)", "http://www.bbc.co.uk/blogs/aceandvis/index.xml"),
+#    ("Bryan Burnett (Radio Scotland)", "http://www.bbc.co.uk/blogs/bryanburnett//index.xml"),
+#    ("Chris Evans (Radio 2)", "http://www.bbc.co.uk/blogs/chrisevans//index.xml"),
+#    ("Chris Moyles (Radio 1)", "http://www.bbc.co.uk/blogs/chrismoyles/index.xml"),
+#    ("Greg James (Radio 1)", "http://www.bbc.co.uk/blogs/gregjames//index.xml"),
+
+# UNSURE if we should do iPM blog
+###    ("iPM (Radio 4)", "http://www.bbc.co.uk/blogs/ipm//index.xml"),
+#    ("Jo Whiley (Radio 1)", "http://www.bbc.co.uk/blogs/jowhiley/index.xml"),
+#    ("Mistajam (1Xtra)", "http://www.bbc.co.uk/blogs/mistajam/rss.xml"),
+    ("PM (Radio 4)", "http://www.bbc.co.uk/blogs/pm/index.xml"),
+#    ("Pods and Blogs (Radio 5 Live)", "http://www.bbc.co.uk/blogs/podsandblogs/index.xml"),
+#    ("Steve Lamacq (6 Music)", "http://www.bbc.co.uk/blogs/stevelamacq/index.xml"),
+    ("Today - Evan Davis (Radio 4)", "http://www.bbc.co.uk/blogs/today/evandavis/index.xml"),
+    ("Today - Tom Feilden (Radio 4)", "http://www.bbc.co.uk/blogs/today/tomfeilden/index.xml"),
+    ("Today - Jim Naughtie (Radio 4)", "http://www.bbc.co.uk/blogs/today/jimnaughtie/index.xml"),
+#    ("Victoria Derbyshire (Radio 5 Live)", "http://www.bbc.co.uk/blogs/victoriaderbyshire/index.xml"),
+    ("World Tonight (Radio 4)", "http://www.bbc.co.uk/blogs/worldtonight//index.xml"),
+#    ("World Update (World Service)", "http://www.bbc.co.uk/blogs/worldupdate/index.xml"),
+#    ("Toby Buckland (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/tobybuckland/rss.xml"),
+#    ("Alys Fowler (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/alysfowler/rss.xml"),
+#    ("Joe Swift (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/joeswift/rss.xml"),
+#    ("Euro 2008", "http://www.bbc.co.uk/blogs/football/index.xml"),
+
+    # MIHIR BOSE link is wrong!
+#    ("Mihir Bose", "http://www.bbc.co.uk/blogs/mihirbose/rss.xml"),
+    # corrected:
+    ("Mihir Bose", "http://www.bbc.co.uk/blogs/thereporters/mihirbose/rss.xml"),
+
+#    ("Olympics", "http://www.bbc.co.uk/blogs/olympics/rss.xml"),
+#    ("Test Match Special", "http://www.bbc.co.uk/blogs/tms/index.xml"),
+    ("Dot.life", "http://www.bbc.co.uk/blogs/technology/rss.xml"),
+#    ("Amazon", "http://www.bbc.co.uk/blogs/amazon/rss.xml"),
+#    ("Autumnwatch", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
+#    ("The Culture Show", "http://www.bbc.co.uk/blogs/thecultureshow/rss.xml"),
+#    ("Gardeners' World", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
+#    ("Last Chance to See", "http://www.bbc.co.uk/blogs/lastchancetosee/rss.xml"),
+    ("Newsnight", "http://www.bbc.co.uk/blogs/newsnight/index.xml"),
+#    ("The One Show - Backstage", "http://www.bbc.co.uk/blogs/theoneshow/backstage/rss.xml"),
+#    ("The One Show - Consumer", "http://www.bbc.co.uk/blogs/theoneshow/consumer/rss.xml"),
+#    ("The One Show - One Passions", "http://www.bbc.co.uk/blogs/theoneshow/onepassions/rss.xml"),
+#    ("Springwatch", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
+#    ("Watchdog", "http://www.bbc.co.uk/blogs/watchdog/styles.css"),
+#    ("BBC Brazil", "http://www.bbc.co.uk/blogs/portuguese/index.xml"),
+#    ("BBC Mundo", "http://www.bbc.co.uk/blogs/spanish/index.xml"),
+#    ("BBC Urdu", "http://www.bbc.co.uk/blogs/urdu/index.xml"),
+
+    # HMMM.. she isn't listed on bbc.co.uk/blogs...
+    ("Razia Iqbal", "http://www.bbc.co.uk/blogs/thereporters/raziaiqbal/rss.xml" ),
+]
 
 
-}
 
 
-rssfeeds = {
+
+news_feeds = {
     "BBC News | Also in the news | UK Edition": "http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/also_in_the_news/rss.xml",
     "BBC News | Business | UK Edition": "http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/business/rss.xml",
     "BBC News | Africa | UK Edition": "http://newsrss.bbc.co.uk/rss/newsonline_uk_edition/business/africa/rss.xml",
@@ -217,21 +317,27 @@ rssfeeds = {
 
 # example bbc news url:
 # "http://news.bbc.co.uk/1/hi/world/africa/7268903.stm"
-idpat = re.compile( '/(\d+)\.stm$' )
+news_srcid_pat = re.compile( '/(\d+)\.stm$' )
+
+
+# some blog url patterns:
+# http://www.bbc.co.uk/blogs/thereporters/robertpeston/2009/02/chelsea_reduces_dependence_on.html
+# http://www.bbc.co.uk/blogs/pm/2009/02/pmtv.shtml
+blog_srcid_pat = re.compile( 'http://(?:www[.])?bbc[.]co[.]uk/blogs(/.*[.]s?html)$' )
 
 
 def CalcSrcID( url ):
     """ Extract unique srcid from url. Returns None if this scraper doesn't handle it."""
 
+    m = blog_srcid_pat.match(url)
+    if m:
+        return "bbcblogs_" + m.group(1)
+
     o = urlparse.urlparse(url)
     if o[1] != 'news.bbc.co.uk':
         return None
 
-    # blogs are all at "blogs.bbc.co.uk" (old?) and
-    # "www.bbc.co.uk/blogs/", but we leave that to blogs.py for now...
-    # also blogs have .html or .shtml extension
-
-    m = idpat.search( url )
+    m = news_srcid_pat.search( url )
     if not m:
         return None     # suppress this article (probably a blog)
 
@@ -241,6 +347,8 @@ def CalcSrcID( url ):
 def Extract( html, context ):
     if '/low/' in context['srcurl']:
         return Extract_low( html, context )
+    if 'bbc.co.uk/blogs' in context['srcurl']:
+        return Extract_blog( html, context )
     else:
         # NOTE: hi-graphics extract version needs work to handle
         # embedded video - at the moment these pages confuse it and
@@ -442,7 +550,85 @@ def Extract_hi( html, context ):
 
 
 
+def Extract_blog( html, context ):
+    """Parse the html of a bbc blog post page"""
 
+    art = context
+
+    # hmm, for some blogs BeautifulSoup chooses window-1532 encoding (should be utf-8) not sure why...
+    soup = BeautifulSoup( html )
+
+#    print soup.originalEncoding, context['srcurl']
+    entry_div = soup.find( 'div', {'id':re.compile(r'entry-\d+')} )
+    if entry_div is None:
+        # different on some blogs (eg worldtonight)
+        entry_div = soup.find( 'div', {'class':'entry'} )
+
+    headline_hx = entry_div.find( re.compile(r'h\d') )
+    art['title'] = ukmedia.FromHTMLOneLine( headline_hx.renderContents(None) )
+
+
+    # author/date varies a little by blog (eg northern ireland one has author after article text, in "entryextras")
+    for details_ul in entry_div.findAll('ul', {'class':('entrydetails','authorship_details','entryextras')}):
+        author_li = details_ul.find( 'li', {'class':('author','authorLast')} )
+        if author_li is not None:
+            art['byline'] = ukmedia.FromHTMLOneLine( author_li.renderContents(None) )
+        date_li = details_ul.find( 'li', {'class':'date'} )
+        if date_li is not None:
+            art['pubdate'] = ukmedia.ParseDateTime( date_li.renderContents(None) )
+
+        details_ul.extract()
+
+    if art['byline'] == u'Nick' and '/nickrobinson/' in context['srcurl']:
+        art['byline'] = u'Nick Robinson';
+
+
+
+    # strip the content down to just the text
+
+    # some blogs have author photo in main body, before the heading
+    for cruft in headline_hx.findPreviousSiblings():
+        cruft.extract()
+    headline_hx.extract()
+    for cruft in entry_div.findAll( ('div','ul'), {'class':("social_bookmarks","ami_social_bookmarks")} ):
+        cruft.extract()
+    # kill video
+    for cruft in entry_div.findAll( 'div', {'class':"player"} ):
+        cruft.extract()
+    for cruft in entry_div.findAll( 'script' ):
+        cruft.extract()
+    for cruft in entry_div.findAll( 'object' ):
+        cruft.extract()
+    for cruft in entry_div.findAll( 'style' ):
+        cruft.extract()
+
+    art['content'] = entry_div.renderContents(None)
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    # images (TODO: try and pull description out of caption)
+    art['images'] = []
+    for img in entry_div.findAll( 'img' ):
+        img_caption = ukmedia.FromHTMLOneLine( img.get( 'alt',u'' ) )
+        # occasional image is just broken (usually because of a bad alt, eg alt="that isn"t cricket")
+        if not 'src' in img:
+            continue
+        img_url = img['src']
+        img_credit = u''
+        art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
+
+    # comments
+    comment_div = soup.find( 'div', {'id':'comments'} )
+    num_comments = None
+    comment_id_pat = re.compile( r'comment(\d+)' )
+    # no easy total on page, so look for highest numbered comment
+    for comment_li in comment_div.findAll( 'li', {'id': comment_id_pat} ):
+        num_comments = int( comment_id_pat.match( comment_li['id'] ).group(1) )
+
+    if num_comments is not None:
+        comment_url = art['srcurl'] + "#comments"
+        art['commentlinks'] = [ {'num_comments':num_comments, 'comment_url':comment_url} ]
+
+    return art
 
 
 
@@ -458,16 +644,20 @@ def ScrubFunc( context, entry ):
 
     context['srcid'] = srcid
 
-    # scrape the low-graphics version of the page
-    context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
+    o = urlparse.urlparse(context['srcurl'])
+    if o[1] == 'news.bbc.co.uk':
+        # news page: scrape the low-graphics version
+        context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
 
     return context
 
 
 def FindArticles():
     """ get a set of articles to scrape from the bbc rss feeds """
-    # TODO: filter out "Your Stories" page
-    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'bbcnews', ScrubFunc )
+
+    articles = ScraperUtils.FindArticlesFromRSS( blog_feeds, u'bbcnews', ScrubFunc )
+    articles = articles + ScraperUtils.FindArticlesFromRSS( news_feeds, u'bbcnews', ScrubFunc )
+    return articles
 
 
 def ContextFromURL( url ):

@@ -157,10 +157,10 @@ def Extract_eScenic( html, context ):
 
     # a couple of ways to get byline...
     byline = u''
-    authorelement = infopara.find('author')
+    authorelement = articlediv.find('p',{'class':'author'})
     if authorelement:
         # it's got a _proper_ byline!
-        byline = authorelement.renderContents(None)
+        byline = ukmedia.FromHTMLOneLine( authorelement.renderContents(None) )
 
     # Big names have their own sections which makes bylining them easy
     if not byline:

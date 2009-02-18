@@ -338,9 +338,9 @@ rssfeeds = [
     ("University education feed", "http://www.telegraph.co.uk/education/universityeducation/rss"),
 ]
 
-
-
-
+#anny shaw's blog not linked from rest of site, so manually added here:
+rssfeeds.append(
+    ( "Anny Shaw's blog", 'http://rss.blogs.telegraph.co.uk/rest/ugcBlog?action=getBlogs&rss=1&pCount=3&pullFrom=1&userID=16103657' ) );
 
 
 def Extract( html, context ):
@@ -358,7 +358,7 @@ def Extract( html, context ):
         return Extract_HTML_Article( html, context )
 
     if o[2].endswith( ".jhtml" ):
-        # XML article url format:
+        # XML article url format (OLD format):
         #   http://www.telegraph.co.uk/news/main.jhtml?xml=/news/2008/02/25/ncameron125.xml
         return Extract_XML_Article( html, context )
 
@@ -407,6 +407,36 @@ def Extract_HTML_Article( html, context ):
     art['byline'] = m.group(1)
     pubdatetxt = m.group(2) # eg "11:52PM BST 22 Jul 2008"
     art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
+
+
+
+    # images
+    art['images'] = []
+    for ssimg in storydiv.findAll( 'div', {'class': re.compile('ssImg')} ):
+        img = ssimg.find('img')
+        if img is None:
+            continue
+        img_url = img['src']
+        cap = u''
+        cap_span = ssimg.find( 'span', {'class':'caption'} )
+        if cap_span is not None:
+            cap = ukmedia.FromHTMLOneLine( cap_span.renderContents(None) )
+
+        cred = u''
+        credit_span = ssimg.find( 'span', {'class':'credit'} )
+        if credit_span is not None:
+            cred = ukmedia.FromHTMLOneLine( credit_span.renderContents(None) )
+
+        art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
+
+
+    # comments
+    art['commentlinks'] = []
+    comments_a = bylinediv.find('a',{'href':'#comments'})
+    if comments_a:
+        num_comments = int( comments_a.renderContents(None) )
+        comment_url = urlparse.urljoin( art['srcurl'], comments_a['href'] )
+        art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
     # cull out cruft from the story div:
     bylinediv.extract()
