@@ -91,12 +91,18 @@ def Extract( html, context ):
     # claiming iso-8859-1...
     # soup = BeautifulSoup( html, fromEncoding='windows-1252' )
 
-    maindiv = soup.find( 'div', {'class': re.compile(ur'\bartItem\b') } )
+
+
+
+    maindiv = soup.find( 'div', {'class': re.compile(r'\barticle-text\b') } )
 
     # kill everything after article text
     cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bintellicrumbs\b')} )
     if not cruftstart:
         cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bprint-or-mail-links\b')} )
+    if not cruftstart:
+        cruftstart = maindiv.find( text=re.compile("google_ad_section_end[(]name=s2[)]") )
+
     for cruft in cruftstart.findAllNext():
         cruft.extract()
     cruftstart.extract()
@@ -127,43 +133,17 @@ def Extract( html, context ):
                 titletxt = ukmedia.FromHTML( titletxt )
                 e.extract()
 
-    art['title'] = titletxt
+    art['title'] = u' '.join( titletxt.split() )
 
 
-    # looking for byline and pubdate now
-    # we assume pubdate always there and last thing...
-    bylinetxt = u''
-    pubdatetxt = u''
-
-    #e = maindiv.find( text=re.compile( r'^\s*By\s*' ) )
-    # find first non-comment, non-blank NavigableString
-    e = maindiv.find( text=lambda text: text.string.strip() != u'' and not isinstance(text, Comment))
-    if not re.compile( r'^\s*By\s*' ).match( e.string ):
-        e = None        # don't think it's a byline.
-    while e:
-        s = u''
-        if isinstance( e, NavigableString ):
-            s = unicode(e)
-        else:
-            # any element other than <a>, <br> or <font> probably indicates
-            # end of byline
-            if e.name.lower() not in ( 'a', 'font', 'br' ):
-                break
-            s = e.renderContents( None )
-
-        if u'Last updated at' in s:
-            break;
-
-        n = e.nextSibling
-        e.extract()
-        e = n
-
-        bylinetxt = bylinetxt + s
-
-    bylinetxt = ukmedia.FromHTML( bylinetxt )
-
-
-
+    # extract byline.
+    authors = []
+    a=None
+    for a in maindiv.findAll( 'a', {'class':'author'} ):
+        authors.append( ukmedia.FromHTML( a.renderContents(None ) ) )
+    bylinetxt = u' and '.join( authors )
+    if bylinetxt:
+        maindiv.p.extract()
 
     if bylinetxt == u'':
         # columnists have no bylines, but might have a "More From ..." bit in <div class="columnist-archive"
@@ -185,8 +165,13 @@ def Extract( html, context ):
                     bylinetxt = n
                     break
 
-
     art['byline'] = u' '.join( bylinetxt.split() )
+
+
+
+
+    pubdatetxt = u''
+
 
     # the date part...
     # eg "Last updated at 2:42 PM on 22nd May 2008"
@@ -200,6 +185,7 @@ def Extract( html, context ):
         art['pubdate'] = datetime.now()
 
 
+
     # pull out links to comments (at top of article)
     art['commentlinks'] = []
     commentlinks = maindiv.find( 'div', {'class': 'article-icon-links-container' } )
@@ -209,7 +195,7 @@ def Extract( html, context ):
             comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
 
             cntspan = a.find('span', {'class': 'readerCommentNo'} )
-            num_comments = None
+            num_comments = 0
             if cntspan:
                 cnttxt = cntspan.renderContents(None).strip()
                 if cnttxt != u'-':
@@ -238,6 +224,8 @@ def Extract( html, context ):
         cruft.extract()
     for cruft in maindiv.findAll( 'img' ):
         cruft.extract()
+    for cruft in maindiv.findAll( 'script' ):
+        cruft.extract()
     for cruft in maindiv.findAll( 'p', {'class':'imageCaption'} ):
         cruft.extract()
     for cruft in maindiv.findAll( 'p', {'class':'scrollText'} ):
@@ -245,6 +233,10 @@ def Extract( html, context ):
     for cruft in maindiv.findAll( 'span', {'class':re.compile('^clickTo.*$') } ):
         cruft.extract()
     for cruft in maindiv.findAll( 'div', {'class':'clear'} ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':re.compile( r'\bmoduleFull\b' )} ):
+        cruft.extract()
+    for cruft in maindiv.findAll( 'div', {'class':re.compile( r'\bmoduleHalf\b' )} ):
         cruft.extract()
     for cruft in maindiv.findAll( 'div', {'class':re.compile('^related.*$') } ):
         cruft.extract()
@@ -259,12 +251,13 @@ def Extract( html, context ):
     for cruft in maindiv.findAll( 'div', {'class':re.compile('ArtInlineReadLinks') } ):
         cruft.extract()
 
-    contenttxt = maindiv.prettify(None)
-    contenttxt = contenttxt.replace( u'<o:p>', u'' )
-    contenttxt = contenttxt.replace( u'</o:p>', u'' )
+    contenttxt = maindiv.renderContents(None)
+
+#    contenttxt = maindiv.prettify(None)
+    contenttxt  = re.sub( r'</?(o|st1):.*?>', u'', contenttxt );
+
     contenttxt = ukmedia.SanitiseHTML( contenttxt )
     art['content'] = contenttxt
-
 
     if desctxt == u'':
         desctxt = ukmedia.FirstPara( contenttxt )
