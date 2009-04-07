@@ -10,6 +10,7 @@ require_once '../conf/general';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
+require_once '../../phplib/rabx.php';
 require_once '../phplib/adm.php';
 
 
@@ -71,7 +72,7 @@ function LookupToken( $email )
 {
 
     $sql = <<<EOT
-SELECT token,created
+SELECT token,created,data
     FROM token
     WHERE scope='login' AND encode( data, 'escape' ) ilike ?
     ORDER BY created DESC
@@ -88,16 +89,36 @@ EOT;
     {
         print("<p>Found {$cnt} tokens for <code>{$email}</code> (most recent first)</p>\n" );
 
-        print( "<table>\n" );
-        print( "<tr><th>when issued</th><th>confirmation link</th></tr>\n" );
+        print( "<table border=1>\n" );
+        print( "<tr><th>when issued</th><th>email</th><th>confirmation link</th><th>stashed url</th></tr>\n" );
+
         while( $r = db_fetch_array($q) )
         {
             $t = strtotime($r['created']);
             $issued = strftime('%R %a %e %B %Y',$t);
             $token = $r['token'];
-            $url = OPTION_BASE_URL . "/login?t={$token}";
+            $confirmation_url = OPTION_BASE_URL . "/login?t={$token}";
 
-            print( "<tr><td>{$issued}</td><td><code>{$url}</code></td></tr>\n" );
+            $stashed_url = '????';
+            $email = '????';
+
+            $pos = 0;
+            $res = rabx_wire_rd( &$r['data'], &$pos );
+            if( !rabx_is_error( $res ) ) {
+                $email = $res['email'];
+                $stashed_url = db_getOne( "SELECT url FROM requeststash WHERE key=?", $res['stash'] );
+                if( !$stashed_url ) {
+                    $stashed_url = '-none- (which probably means they clicked the link)';
+                }
+            }
+?>
+<tr>
+  <td><?php echo $issued;?></td>
+  <td><code><?php echo $email; ?></code></td>
+  <td><code><?php echo $confirmation_url; ?></code></td>
+  <td><code><?php echo $stashed_url; ?></code></td>
+</tr>
+<?php
         }
         print( "</table>\n" );
     }
