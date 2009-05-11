@@ -122,8 +122,8 @@ datecrackers = [
     # "02 August 2007  1:21 PM" (Daily Mail blogs)
     re.compile( """(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{2,4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d) ((?P<am>AM)|(?P<pm>PM))?""", re.UNICODE ),
 
-    # 'October 22, 2007  5:31 PM' (old Guardian blogs)
-    re.compile( """((?P<month>\w+)\s+(?P<day>\d+),\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE ),
+    # 'October 22, 2007  5:31 PM' (old Guardian blogs, ft blogs)
+    re.compile( """((?P<month>\w+)\s+(?P<day>\d+),\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s*((?P<am>AM)|(?P<pm>PM)))""", re.UNICODE|re.IGNORECASE ),
 
     # 'October 15, 2007' (Times blogs)
     # 'February 12 2008' (Herald)

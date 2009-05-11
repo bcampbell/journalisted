@@ -43,15 +43,15 @@ def FetchRSSFeeds( masterpage='http://www.ft.com/servicestools/newstracking/rss'
 
     soup = BeautifulSoup( html )
 
-    #<div class="splitcolcontainer" id="rssnews">
-    c = soup.find( 'div', id='rssnews' )
+    c = soup.find( 'div', id='content' )
     for a in c.findAll('a', href=feedpat):
-        a.img.extract()
-        name = ukmedia.FromHTML(a.renderContents(None))
         url = a['href'] #urlparse.urljoin( masterpage, a['href'] )
         o = urlparse.urlparse(url)
         if o[1] not in ('www.ft.com','blogs.ft.com' ):
             continue
+
+        #a.img.extract()
+        name = ukmedia.FromHTML(a.renderContents(None))
 
         # their blog RSS links used to be wrong
 #        if o[1] == 'blogs.ft.com':
@@ -191,7 +191,7 @@ def Extract_article( html, context ):
     if content == u'':
         bs = soup.findAll('body')
         if len(bs) > 1:
-            print "Extra body div!"
+            ukmedia.DBUG2( "Extra body div!\n" );
             content = bs[-1].renderContents( None )
             content = ukmedia.SanitiseHTML( content )
 
@@ -218,7 +218,7 @@ def Extract_blog( html, context ):
     art = context
     soup = BeautifulSoup( html )
 
-    postdiv = soup.find( 'div', {'class':'post'} )
+    postdiv = soup.find( 'div', {'class':re.compile(r'\bpost\b')} )
 
     h3 = postdiv.find( 'h3', {'class': re.compile('entry_header')} )
     headline = h3.renderContents(None)
@@ -362,5 +362,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     Prep()
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
 
