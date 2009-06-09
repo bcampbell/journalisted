@@ -403,7 +403,7 @@ def Extract_HTML_Article( html, context ):
     txt = bylinediv.renderContents(None)
     txt = ukmedia.FromHTML( txt )
     txt = u' '.join( txt.split() )
-    m = re.match( r"\s*(.*?)\s*Last Updated:\s+(.*)", txt )
+    m = re.match( r"\s*(.*?)\s*(?:(?:Last Updated)|(?:Published)):\s+(.*)", txt )
     art['byline'] = m.group(1)
     pubdatetxt = m.group(2) # eg "11:52PM BST 22 Jul 2008"
     art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
@@ -442,12 +442,13 @@ def Extract_HTML_Article( html, context ):
     bylinediv.extract()
     for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\bslideshow\b') } ):
         cruft.extract()
+    for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\brelated_links_inline\b') } ):
+        cruft.extract()
     for cruft in storydiv.findAll( 'ul', {'class': 'storylist'} ):
         cruft.extract()
     # inskin ad delivery thingy which wraps around brightcove video player
     for cruft in storydiv.findAll( 'div', {'id':'skin'} ):
         cruft.extract()
-
     contenttxt = storydiv.renderContents(None)
     contenttxt = ukmedia.SanitiseHTML( contenttxt )
     art['content'] = contenttxt
