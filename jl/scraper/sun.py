@@ -27,8 +27,11 @@ from BeautifulSoup import BeautifulSoup
 from JL import ukmedia,ScraperUtils
 
 
-
 # current url format:
+# http://www.thesun.co.uk/sol/homepage/news/2471744/Browns-Nailed-Plotters.html
+srcidpat_slugstyle = re.compile( '/(\\d+)/[^/]+.html$' );
+
+# prev url format:
 # http://www.thesun.co.uk/sol/homepage/news/royals/article862982.ece
 srcidpat_ecestyle = re.compile( '/(article\\d+[.]ece)$' )
 
@@ -57,6 +60,10 @@ def CalcSrcID( url ):
     o = urlparse.urlparse( url )
     if not o[1].endswith( 'thesun.co.uk' ):
         return None
+
+    m = srcidpat_slugstyle.search( o[2] )
+    if m:
+        return 'sun_' + m.group(1)
 
     m = srcidpat_ecestyle.search( o[2] )
     if m:
@@ -87,11 +94,19 @@ def FindArticles():
         html = ukmedia.FetchURL( sunlite_url )
 
         soup = BeautifulSoup(html)
+        col2 = soup.find( 'div', {'id':'column2-index'} )
+
         cnt = 0
-        for a in soup.findAll( 'a', { 'href': srcidpat_ecestyle, 'class':'black-link' } ):
+        for a in col2.findAll( 'a' ):
+            if not a.has_key('href'):
+                continue
             url = a['href']
             if not url.startswith( "http://" ):
                 url = baseurl + a['href']
+
+            if( CalcSrcID( url ) == None ):
+                continue
+
             title = ukmedia.FromHTML( a.renderContents( None ) )
 
             if '/video/' in url:
@@ -231,9 +246,10 @@ def Extract( html, context ):
     # For now we'll just discard the sub-story. Unhappy about this, but
     # it just makes things too complicated.
     # TODO: something better.
-    col3 = col2.find('div', { 'id':re.compile("\\bcolumn3\\b") } )
+    col3 = col2.find('div', { 'id':re.compile("column3") } )
     if col3:
         col3.extract()
+
 
     # get headline
     h1 = col2.h1
@@ -333,13 +349,14 @@ def Extract( html, context ):
     # try just using the roottag element to grab
     # the main text (tags might be mismatched, so just use regex
     # to pull out the roottag data and prettify it with a new soup)
-    m = re.search( "<roottag>(.*)</roottag>", html, re.DOTALL )
-    if m:
-        roottag_soup = BeautifulSoup( m.group(1), fromEncoding=soup.originalEncoding )
-        for cruft in roottag_soup.findAll( 'div' ):
-            cruft.extract()
-        contenttxt = roottag_soup.renderContents( None )
-    else:            
+#    m = re.search( "<roottag>(.*)</roottag>", html, re.DOTALL )
+#    if m:
+#        roottag_soup = BeautifulSoup( m.group(1), fromEncoding=soup.originalEncoding )
+#        for cruft in roottag_soup.findAll( 'div' ):
+#            cruft.extract()
+#        contenttxt = roottag_soup.renderContents( None )
+#    else:            
+    if 1:
         # first para has 'first-para' class
         # (sometimes have multiple first-paras, so use first non-empty one)
         for p in col2.findAll('p', { 'class': re.compile( '\\bfirst-para\\b' ) } ):
@@ -363,9 +380,6 @@ def Extract( html, context ):
     art['description'] = desctxt
 
     return art
-
-
-
 
 
 
