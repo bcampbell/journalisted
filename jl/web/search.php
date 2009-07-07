@@ -3,22 +3,10 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 /*require_once '../phplib/frontpage.php'; */
-require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/xap.php';
 require_once '../../phplib/db.php';
 
-require_once 'xapian.php';
-
-$DBPATH = OPTION_JL_XAPDB;
-
-# IDs for extra values tied to articles in the xapian db
-# NOTE: these need to be kept in sync with bin/indexer! (written in python)
-define( 'XAP_ARTICLE_ID', 0 );
-define( 'XAP_TITLE_ID', 1 );
-define( 'XAP_PUBDATE_ID', 2 );
-define( 'XAP_SRCORG_ID', 3 );
-define( 'XAP_PERMALINK_ID', 4 );
-define( 'XAP_JOURNOS_ID', 5 );
 
 define( 'DEFAULT_NUM_PER_PAGE', 25 );
 
@@ -113,36 +101,6 @@ Detailed query syntax <a href="http://www.xapian.org/docs/queryparser.html">here
 }
 
 
-
-/* helper for formatting results */
-function PostedFragment( &$r )
-{
-    $orgs = get_org_names();
-    $org = $orgs[ $r['srcorg'] ];
-    $pubdate = pretty_date(strtotime($r['pubdate']));
-
-    return sprintf( "<cite class=\"posted\"><a href=\"%s\">%s, <em>%s</em></a></cite>",
-        htmlentities($r['permalink']), $pubdate, $org );
-}
-
-
-/* helper for formatting results */
-function DecodeJournoList( $jlist )
-{
-    $journos = array();
-
-    if( $jlist )
-    {
-        foreach( explode( ',', $jlist ) as $s )
-        {
-            $parts = explode('|',$s);
-            $journos[] = array( 'ref'=>$parts[0], 'prettyname'=>$parts[1] );
-        }
-    }
-    return $journos;
-}
-
-
 function PageURL( $query, $sort_order, $start, $num_per_page )
 {
     $url = sprintf( "/search?q=%s&start=%d&num=%d",
@@ -163,7 +121,7 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
 
     if( $start>0 && $total>0 )
     {
-        printf( "<a href=\"%s\">%s</a> ",
+        printf( "<a rel=\"prev\" href=\"%s\">%s</a> ",
             htmlentities( PageURL($query,
                 $sort_order,
                 max(0,$start-$num_per_page),
@@ -184,7 +142,7 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
 
     if( $start+$num_per_page < $total )
     {
-        printf( "<a href=\"%s\">%s</a> ",
+        printf( "<a rel=\"next\" href=\"%s\">%s</a> ",
             htmlentities( PageURL($query, $sort_order, $start+$num_per_page, $num_per_page) ),
             "Next" );
     }
@@ -196,114 +154,103 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
 
 
 
+
+function cook( $raw )
+{
+    return htmlentities( $raw,ENT_COMPAT,'UTF-8' );
+}
+
+
 /* perform query, display results */
 function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=null )
 {
-    global $DBPATH;
 
+    $results = array();
     try {
-        $orgs = get_org_names();
+        $journo_id = $journo ? $journo['id'] : null;
 
-        $database = new XapianDatabase( $DBPATH );
-
-        // Start an enquire session.
-        $enquire = new XapianEnquire($database);
-
-        $qp = new XapianQueryParser();
-        $stemmer = new XapianStem("english");
-        $qp->set_stemmer($stemmer);
-        $qp->set_database($database);
-        $qp->set_stemming_strategy(XapianQueryParser::STEM_SOME);
-        $qp->set_default_op( XapianQuery::OP_AND );
-
-        $foo = new XapianStringValueRangeProcessor( XAP_PUBDATE_ID );
-        $qp->add_valuerangeprocessor( $foo );
-
-        $qp->add_prefix( 'byline', 'B' );
-        $qp->add_prefix( 'title', 'T' );
-        $qp->add_prefix( 'journo', 'J' );
-
-        $query = $qp->parse_query($query_string);
-        if( $journo )
-        {
-            /* restrict search to the single journo */
-            $jfilt = new XapianQuery( "J{$journo['id']}" );
-            $query = new XapianQuery( XapianQuery::OP_AND, $jfilt, $query );
-        }
-
-/*        print "<pre>Parsed query is: {$query->get_description()}</pre>\n"; */
-
-        if( $sort_order == 'date' ) {
-            $enquire->set_sort_by_value_then_relevance( XAP_PUBDATE_ID );
-        }   /* (default is relevance) */
-
-        $enquire->set_query($query);
-        $matches = $enquire->get_mset($start, $num_per_page);
-
-        $total = max( $matches->get_matches_estimated(), $start+$matches->size() );
-
-
-        // Display the results.
-        if( $total == 0 )
-        {
-            print( "<p>None found.</p>\n" );
-            return;
-        }
-        printf( "<p>Showing %d-%d of around %d articles, %s:</p>\n",
-            $start+1,
-            min( $start+$num_per_page, $total),
-            $total,
-            $sort_order=='date'?'newest first':'most relevant first' );
-
-        print "<ul>\n";
-        $i = $matches->begin();
-        while (!$i->equals($matches->end())) {
-            $n = $i->get_rank() + 1;
-            $doc = $i->get_document();
-            $data = $doc->get_data();
-
-            $article_id = $doc->get_value( XAP_ARTICLE_ID );
-
-            /* a bunch of values are stored in the xapian db for us, so
-             * we don't have to look them up in the main db.
-             */
-            $art = array(
-                'id'=>$article_id,
-                'title'=> $doc->get_value( XAP_TITLE_ID ),
-                'pubdate'=> $doc->get_value( XAP_PUBDATE_ID ),
-                'srcorg' => $doc->get_value( XAP_SRCORG_ID ),
-                'permalink' => $doc->get_value( XAP_PERMALINK_ID ),
-                'journos' => DecodeJournoList( $doc->get_value( XAP_JOURNOS_ID ) ) );
-
-            $headlinelink = sprintf( "<a href=\"/article?id=%s\">%s</a>\n",
-                $art['id'], htmlentities($art['title']) );
-
-            $postedfrag = PostedFragment($art);
-
-            $journolinks = array();
-            foreach( $art['journos'] as $j )
-            {
-                $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], htmlentities( $j['prettyname'] ) );
-            }
-
-            $journofrag = '';
-            if( $journolinks )
-                $journofrag = ' <small>(' . implode( ', ', $journolinks ) . ")</small>";
-
-            //print "<li>{$i->get_percent()}% \"{$headlinelink}\"<br/>{$postedfrag}</li>\n";
-            print "<li>\"{$headlinelink}\"<br/>{$postedfrag}{$journofrag}</li>\n";
-            $i->next();
-        }
-        print "</ul>\n";
-
-        if( $total >= $num_per_page || $start>0 )
-        {
-            EmitPageControl( $query_string, $sort_order, $start, $num_per_page, $total );
-        }
+        $search = new XapSearch();
+        $search->set_query( $query_string, $journo_id );
+        $results = $search->run( $start, $num_per_page, $sort_order );
     } catch (Exception $e) {
         print $e->getMessage() . "\n";
+    }
 
+
+    if( sizeof( $results ) == 0 ) {
+        print( "<p>None found.</p>\n" );
+        return;
+    }
+
+    $total = $search->total_results;
+    printf( "<p>Showing %d-%d of around %d articles, %s:</p>\n",
+        $start+1,
+        min( $start+$num_per_page, $total ),
+        $total,
+        $sort_order=='date'?'newest first':'most relevant first' );
+
+
+?>
+<ul>
+<?php
+    foreach( $results as $art ) {
+        $journolinks = array();
+        foreach( $art['journos'] as $j ) {
+            $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], cook( $j['prettyname'] ) );
+        }
+?>
+  <li>
+    <a href="/article?id=<?php echo $art['id']; ?>"><?php echo cook($art['title']);?></a><br/>
+    <?php if( $journolinks ) { ?><small><?php echo implode( ', ', $journolinks ); ?></small><br/><?php } ?>
+    <?php echo PostedFragment( $art ); ?>
+  </li>
+<?php } ?>
+</ul>
+<?php
+    if( $total >= $num_per_page || $start>0 ) {
+        EmitPageControl( $query_string, $sort_order, $start, $num_per_page, $total );
     }
 }
+
+
+
+/* helper - return a fragment of html to show when/when article was
+ * published, including a link to it
+ */
+function PostedFragment( &$r )
+{
+    $orgs = get_org_names();
+    $org = $orgs[ $r['srcorg'] ];
+    if( $r['pubdate'] instanceof DateTime )
+        $pubdate = pretty_date( $r['pubdate'] );
+    else
+        $pubdate = pretty_date(strtotime($r['pubdate']));   /* depreicated */
+
+    return sprintf( "<cite class=\"posted\"><a class=\"extlink\" href=\"%s\">%s, <em>%s</em></a></cite>",
+        htmlentities($r['permalink']), $pubdate, $org );
+}
+
+
+/* helper - return a fragment of text to show how many comments and blog links on an article */
+function BuzzFragment( &$r )
+{
+    $parts = array();
+
+
+    $cnt = $r['total_comments'];
+    if( $cnt>0 )
+        $parts[] = ($cnt==1) ? "1 comment" : "{$cnt} comments";
+
+    $cnt = $r['total_bloglinks'];
+    if( $cnt>0 )
+        $parts[] = ($cnt==1) ? "1 blog link" : "{$cnt} blog links";
+
+    if( $parts )
+        return implode( ', ', $parts );
+    else
+        return '';
+}
+
+
 ?>
 
