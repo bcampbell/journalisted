@@ -139,6 +139,11 @@ datecrackers = [
     # '03/09/2007' (Sky News blogs, mirror)
     re.compile( """(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})""", re.UNICODE ),
 
+    #'Tuesday, 21 January, 2003, 15:29 GMT' (historical bbcnews)
+    re.compile( r"(?P<day>\d{1,2})\s+(?P<month>\w+),?\s+(?P<year>\d{4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d)", re.UNICODE ),
+    # '2003/01/21 15:29:49' (historical bbcnews (meta tag))
+    re.compile( r"(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})\s+(?P<hour>\d{1,2}):(?P<min>\d\d):(?P<sec>\d\d)", re.UNICODE ),
+
     ]
 
 def GetGroup(m,nm):

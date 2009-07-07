@@ -24,6 +24,7 @@ else
 
 function emit_page_article( $article_id )
 {
+
 	$art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
 
 	if( $art['status'] != 'a' )
@@ -35,12 +36,13 @@ function emit_page_article( $article_id )
 	print "<div id=\"maincolumn\">\n";
 
 	emit_block_articleinfo( $art );
-	emit_block_commentlinks( $article_id );
 	emit_block_bloglinks( $article_id );
+	emit_similar_articles( $article_id );
 	print "</div> <!-- end maincolumn -->\n";
 
 	print "<div id=\"smallcolumn\">\n\n";
 	emit_block_articletags( $article_id );
+	emit_block_commentlinks( $article_id );
 	print "</div> <!-- end smallcolumn -->\n";
 	page_footer();
 }
@@ -123,35 +125,62 @@ function emit_block_articleinfo( $art )
 
     $orginfo = db_getRow( "SELECT * FROM organisation WHERE id=?", $art['srcorg'] );
 
+    # any images for this article? (only want the first one)
+//    $thumb = db_getRow( "SELECT * FROM article_image WHERE article_id=? LIMIT 1", $art['id'] );
+    // Images disabled for now.
+    $thumb = null;
+    if( $thumb )
+    {
+        $thumb['orig_url'] = $thumb['url'];
+        $thumb['w'] = 128;
+        $thumb['url'] = sprintf( '/imgsize?img=%s&w=%d&unsharp=1',
+            urlencode( $thumb['orig_url'] ),
+            $thumb['w'] );
+    }
+
 #	$orgs = get_org_names();
 
-	$title = $art['title'];
 	$byline = markup_byline( $art['byline'], $article_id );
 
-	$org_name = $orginfo[ 'prettyname' ];
+	$art['srcorgname'] = $orginfo[ 'prettyname' ];
     $sop_name = $orginfo['sop_name'];
     $sop_url = $orginfo['sop_url'];
     $home_url = $orginfo['home_url'];
 
-
     $permalink = $art['permalink'];
     $pubdate_timestamp = strtotime($art['pubdate']);
-	$pubdate_human = strftime('%a %e %B %Y', $pubdate_timestamp );
-	$pubdate_iso = date('c', $pubdate_timestamp );
 	$desc = $art['description'];
 
+    $d = new datetime( $art['pubdate'] );
+    $art['pretty_pubdate'] = pretty_date(strtotime($art['pubdate']));
+    $art['iso_pubdate'] = $d->format('c');
+    $art['buzz'] = BuzzFragment( $art );
 
 ?>
 
 <div class="hentry">
-  <h2 class="entry-title"><?php echo $title; ?></h2>
+  <h2 class="entry-title"><?php echo $art['title']; ?></h2>
+  <span class="publication"><?php echo $art['srcorgname']; ?>,</span>
+  <abbr class="published" title="<?php echo $art['iso_pubdate']; ?>"><?php echo $art['pretty_pubdate']; ?></abbr><br/>
   <?php echo $byline; ?><br/>
-  <abbr class="published" title="<?php echo $pubdate_iso; ?>"><?php echo $pubdate_human; ?></abbr><br/>
-  <blockquote class="entry-summary"><?php echo $desc; ?></blockquote>
-  <a rel="bookmark" href="<?php echo $art['permalink']; ?>">Read the original article</a><br/>
+<?php if($thumb) { ?>
+  <div class="thumb" style="width:<?php echo 2+$thumb['w'];?>px">
+  <a href="<?php echo $thumb['orig_url']; ?>"><img src="<?php echo $thumb['url'];?>" width=<?php $thumb['w']; ?> /></a>
+  <?php /*if($thumb['caption']) { ?>
+    <div class="caption"><?php echo $thumb['caption']; ?></div>
+  <?php }*/ ?>
+  </div>
+<?php } ?>
+  <blockquote class="entry-summary">
+    <?php echo $art['description']; ?>
+  </blockquote>
+  <div class="art-info">
+    <?php if( $art['buzz'] ) { ?> (<?php echo $art['buzz']; ?>)<br /> <?php } ?>
+    <a class="extlink" href="<?php echo $art['permalink'];?>" >Original article at <?php echo $art['srcorgname']; ?></a><br/>
+  </div>
   (This article was originally published by
-  <span class="published-by vcard"><a class="fn org url" href="<?php echo $home_url;?>"><?php echo $org_name;?></a></span>,
-  under the <a rel="principles" href="<?php echo $sop_url;?>"><?php echo $sop_name;?></a>)<br/>
+  <span class="published-by vcard"><a class="fn org url extlink" href="<?php echo $home_url;?>"><?php echo $art['srcorgname'];?></a></span>,
+  which adheres to the <a rel="statement-of-principles" class="extlink" href="<?php echo $sop_url;?>"><?php echo $sop_name;?></a>)<br/>
 </div>
 
 <?php
@@ -164,9 +193,9 @@ function emit_block_articletags( $article_id )
 {
 
 ?>
-<div class="boxnarrow tags">
-<h2>Topics mentioned</h2>
-<div class="boxnarrow-content">
+<div class="box tags">
+<h2>Subjects mentioned</h2>
+<div class="box-content">
 <?php
 
 	$q = db_query( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
@@ -202,9 +231,9 @@ function emit_block_commentlinks( $article_id )
 
 
 ?>
-<div class="boxwide">
-<h2>Where are people talking about this article?</h2>
-<div class="boxwide-content">
+<div class="box">
+<h2>Feedback on the article from the web</h2>
+<div class="box-content">
 <?php
 
 	$q = db_query( "SELECT * FROM article_commentlink WHERE article_id=?", $article_id );
@@ -220,12 +249,16 @@ function emit_block_commentlinks( $article_id )
 				$profile = $profiles[$source];
 
 			$bits = array();
-			if( !is_null( $row['num_comments'] ) )
-				$bits[] = sprintf( "%d comments", $row['num_comments'] );
+			if( !is_null( $row['num_comments'] ) ) {
+                if( $row['num_comments'] > 0 )
+    				$bits[] = sprintf( "%d comments", $row['num_comments'] );
+                else
+                    $bits[] = "no comments yet";
+            }
 			if( $row['score'] )
 				$bits[] = sprintf( "%d %s", $row['score'], $profile['scoreterm'] );
 
-			printf( "<li>%s (<a href=\"%s\">%s</a>)</li>\n",
+			printf( "<li>%s (<a class=\"extlink\" href=\"%s\">%s</a>)</li>\n",
 				$profile['prettyname'],
 				$row['comment_url'],
 				implode( ', ', $bits) );
@@ -261,9 +294,9 @@ function emit_block_bloglinks( $article_id )
 {
 
 ?>
-<div class="boxwide">
+<div class="box">
 <h2>Which blogs are linking to this article?</h2>
-<div class="boxwide-content">
+<div class="box-content">
 <?php
 
 	$q = db_query( "SELECT * FROM article_bloglink WHERE article_id=? ORDER BY linkcreated DESC", $article_id );
@@ -288,7 +321,7 @@ function emit_block_bloglinks( $article_id )
 	// TODO: form to submit blog links?
 
 ?>
-<p class="disclaimer">Based on blogs recorded by <a href="http://technorati.com">Technorati</a></p>
+<p class="disclaimer">Based on blogs recorded by <a class="extlink" href="http://technorati.com">Technorati</a></p>
 </div>
 </div>
 <?php
@@ -300,7 +333,7 @@ function emit_block_bloglinks( $article_id )
 /* return a prettified blog link */
 function gen_bloglink( $l )
 {
-	$blog_link = sprintf( "<a href=\"%s\">%s</a>", $l['blogurl'], $l['blogname'] );
+	$blog_link = sprintf( "<a class=\"extlink\" href=\"%s\">%s</a>", $l['blogurl'], $l['blogname'] );
 
 	$url = $l['nearestpermalink'];
 	if( !$url )
@@ -314,7 +347,7 @@ function gen_bloglink( $l )
 	{
 		$title = $l['blogname'];
 	}
-	$entry_link = sprintf( "<a href=\"%s\">%s</a>", $url, $title );
+	$entry_link = sprintf( "<a class=\"extlink\" href=\"%s\">%s</a>", $url, $title );
 
 	$linkdate = pretty_date(strtotime($l['linkcreated']));
 
@@ -323,3 +356,65 @@ function gen_bloglink( $l )
 	return $s;
 }
 
+function emit_similar_articles( $article_id )
+{
+    $default_cnt = 10;
+
+    $orderby = strtolower( get_http_var( 'sim_orderby', 'score' ) );
+    $showall = strtolower( get_http_var( 'sim_showall', 'no' ) );
+
+    if($orderby=='date')
+        $ord = 'a.pubdate DESC, s.score DESC';
+    else    // 'score'
+        $ord = 's.score DESC, a.pubdate DESC';
+
+    $lim = '';
+#    if( $showall != 'yes' )
+#        $lim = 'LIMIT 10';
+
+    $sql = <<<EOT
+SELECT *
+    FROM article a INNER JOIN article_similar s ON s.other_id=a.id
+    WHERE s.article_id=?
+    ORDER BY {$ord}
+    {$lim}
+EOT;
+	$sim_arts = db_getAll( $sql, $article_id );
+
+    $total_cnt = sizeof($sim_arts);
+    if( $total_cnt > $default_cnt && $showall != 'yes' )
+        $sim_arts = array_slice( $sim_arts, 0, $default_cnt );
+?>
+<div class="box">
+<h2>Similar articles</h2>
+<div class="box-content">
+<small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
+
+
+<p>
+<?php if( $orderby=='date' ) { ?>
+  ordered by date (<a href="<? echo article_url( $article_id, 'score', $showall ); ?>">order by similarity</a>)
+<?php } else { ?>
+  ordered by similarity (<a href="<? echo article_url( $article_id, 'date', $showall ); ?>">order by date</a>)
+<?php } ?>
+</p>
+
+<ul>
+<?php foreach( $sim_arts as $sim_art ) { ?>
+  <li>
+    <a href="<?php echo article_url( $sim_art['id'] );?>"><?php echo $sim_art['title'];?></a>
+        <?php echo BuzzFragment($sim_art); ?><br />
+        <?php print PostedFragment($sim_art); ?>
+        <small><?php echo $sim_art['byline'];?></small>
+  </li>
+<?php } ?>
+</ul>
+
+<?php if( $total_cnt > $default_cnt && $showall != 'yes' ) { ?>
+<a href="<?php echo article_url( $article_id, $orderby, 'yes' ); ?>">Show all <?php print $total_cnt; ?> similar articles.</a>
+<?php } ?>
+</div>
+</div>
+<?php
+
+}

@@ -1,0 +1,251 @@
+#!/usr/bin/env python2.4
+
+from optparse import OptionParser
+import sys
+import re
+import traceback
+import time
+import urllib
+import urlparse
+from datetime import datetime,timedelta
+
+sys.path.append( "../pylib" )
+from JL import ukmedia,DB
+from BeautifulSoup import BeautifulSoup
+
+# scraperfront used to map urls to article srcids
+sys.path.append( "../scraper" )
+import scrapefront
+
+options = None
+
+sitenames = (
+    'independent.co.uk',
+    'dailymail.co.uk',
+    'express.co.uk',
+    'dailyexpress.co.uk',
+    'guardian.co.uk',
+    'thesun.co.uk',
+    'sundaymirror.co.uk',
+    'mirror.co.uk',
+    'telegraph.co.uk',
+    'thescotsman.scotsman.com',
+    'scotlandonsunday.scotsman.com',
+    'ft.com',
+    'theherald.co.uk',
+    'timesonline.co.uk',
+    'news.bbc.co.uk' )
+
+
+
+
+when_pat = re.compile( r'(\d+)\s+(second|minute|hour|day|month|year)s?\b' )
+
+def ParseWhen( whentxt ):
+    """turn a phrase of form '5 minutes ago', '1 day ago' etc... into datetime object"""
+
+    m = when_pat.search( whentxt )
+    num = int( m.group(1) )
+    unit = m.group(2)
+
+    now = datetime.now()
+    if unit=='second':
+        return now - timedelta( seconds=num )
+    if unit=='minute':
+        return now - timedelta( minutes=num )
+    if unit=='hour':
+        return now - timedelta( hours=num )
+    if unit=='day':
+        return now - timedelta( days=num )
+    if unit=='month':
+        return now - timedelta( months=num )
+    if unit=='year':
+        return now - timedelta( years=num )
+
+    assert( 0 )
+    return None
+
+
+def ParseIcerocketResultsPage( html ):
+    """Parse a results page from icerocket.com, returning a list of bloglinks"""
+    soup = BeautifulSoup( html )
+    bloglinks = []
+
+#    latest_td = soup.find('td',{'id':'latest'} )
+#    txt = ukmedia.FromHTMLOneLine( latest_td.renderContents( None ) )
+#    print txt
+
+    name_pat = re.compile( r"(.*) - .*?", re.DOTALL )
+    for table in soup.findAll( 'table', {'class':'content'} ):
+
+        b = { 'source': 'icerocket' }
+
+        # title and permalink of the post
+        main_link = table.find('a', {'class':'main_link'} )
+        b['title'] = main_link.renderContents(None).strip()
+        b['title'] = ukmedia.FromHTMLOneLine( b['title'] )
+        b['nearestpermalink'] = main_link['href']
+
+        # get the blog name and url
+        #eg <a class="blogl" href="http://gbsteve.livejournal.com/">-- GBS -- - gbsteve.livejournal.com</a>
+        blogl = table.find('a', {'class':'blogl'} )
+        if blogl is None:
+            # not always a link to the blog mainpage... derive from post url
+            o = urlparse.urlparse( b['nearestpermalink'] )
+            b['blogurl'] = unicode( o[1] )
+            b['blogname'] = unicode( o[1] )
+        else:
+            b['blogurl'] = blogl['href']
+            m = name_pat.match( blogl.renderContents(None) )
+            b['blogname'] = ukmedia.FromHTMLOneLine( m.group(1) )
+
+        # when was it posted? (also contains author name, but we don't use that)
+        # eg "47 minutes ago", "1 day ago"
+        when = table.find('p', {'class':'signed'} ).span.renderContents(None)
+        b['linkcreated'] = ParseWhen( when )
+
+        # get text excerpt (and it should contain the article link that we are looking for - hooray!)
+        cut = table.find('p', {'class':'cut'} )
+        b['excerpt'] = cut.renderContents(None).strip()
+        b['excerpt'] = ukmedia.FromHTMLOneLine( b['excerpt'] )
+
+#        print soup.originalEncoding, b['title'].__class__, b['title'].encode('utf-8')
+        # look for links to news articles we cover
+
+        for a in cut.findAll( 'a' ):
+            url = a['href']
+            srcid = scrapefront.CalcSrcID( url )
+            if srcid is not None:
+                # it's a link to an article we might have!
+                bloglink = b.copy()
+                bloglink['article_srcid'] = srcid
+                bloglink['article_url'] = url
+                bloglinks.append( bloglink )
+
+    return bloglinks
+
+
+# TODO: factor this out!
+def LoadBlogLinkIntoDB( conn, l ):
+    """ Try and load a single blog link entry into the article_bloglink table """
+    c = conn.cursor()
+
+    assert ('article_srcid' in l) or ('article_url' in l)
+
+    if 'article_srcid' not in l:
+        srcid = scrapefront.CalcSrcID( l['article_url'] )
+        if srcid == None:
+            # url is not handled by our scrapers...
+            return
+        l['article_srcid'] = srcid
+
+    # Do we have that article in our DB?
+    c.execute( "SELECT id FROM article WHERE srcid=%s", l['article_srcid'] )
+    articles = c.fetchall()
+    if len(articles) < 1:
+        # can't find article in DB
+        return 0
+    if len(articles)>1:
+        print >>sys.stderr, "WARNING: multiple articles with same srcid (%s)" % (l['article_srcid'])
+    article_id = articles[0]['id']
+
+    # already got this bloglink?
+    c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND article_id=%s",
+        l['nearestpermalink'], article_id );
+    row = c.fetchone()
+    if row:
+        # already in db
+        bloglinkid = row['id']
+        return 0
+
+    # now insert it into the database
+    c.execute( """INSERT INTO article_bloglink
+        ( article_id, nearestpermalink, title, blogname, blogurl, linkcreated, excerpt, source )
+        VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
+        article_id,
+        l['nearestpermalink'],
+        l['title'].encode('utf-8'),
+        l['blogname'].encode('utf-8'),
+        l['blogurl'],
+        "%s" %(l['linkcreated']),
+        l['excerpt'].encode('utf-8'),
+        l['source'] )
+
+#    c.execute( "select currval('article_bloglink_id_seq')" )
+#    bloglinkid = c.fetchone()[0]
+#   print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, l['article_srcid'], l['nearestpermalink'] )
+    c.close()
+
+    return 1
+
+
+
+def FindBlogLinksOnIcerocket( sitename, page=1, num_per_page=200 ):
+    global options
+
+    params = urllib.urlencode( {
+        'tab': 'blog',
+        'q': 'link:%s'%(sitename),
+        'n': num_per_page,
+        'p': page } )
+
+    url = 'http://www.icerocket.com/search?' + params
+
+#    if options.verbose:
+#        print "fetching %s" % (url)
+    html = ukmedia.FetchURL( url )
+    return ParseIcerocketResultsPage( html )
+
+
+
+def DoSite( conn, s ):
+    global options
+
+    for page in range(1,options.num_pages+1 ):
+        bloglinks = FindBlogLinksOnIcerocket( s,page )
+        if options.verbose:
+            print "%s (%d/%d): %d bloglinks" % (s,page,options.num_pages,len(bloglinks))
+        cnt = 0
+        for b in bloglinks:
+            cnt = cnt + LoadBlogLinkIntoDB( conn, b )
+            if options.dryrun:
+                conn.rollback()
+            else:
+                conn.commit()
+
+        if options.verbose:
+            print "  => %d new" % ( cnt )
+
+
+    
+def main():
+    global options
+
+    parser = OptionParser()
+
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+    parser.add_option("-p", "--pages",
+        dest="num_pages",
+        type="int",
+        default=1,
+        help="how many icerocket query pages to try for per news site (default 1 )")
+    parser.add_option("-s", "--site",
+        action="store", dest="single_site",
+        help="look for bloglinks to given site (eg 'dailymail.co.uk')")
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+
+    if options.single_site:
+        DoSite( conn, options.single_site )
+    else:
+        for s in sitenames:
+            DoSite( conn, s )
+
+if __name__ == "__main__":
+    main()
+
+
+

@@ -16,7 +16,9 @@ require_once "HTML/QuickForm.php";
 //require_once "HTML/QuickForm/Rule.php";
 //require_once "HTML/QuickForm/Renderer/Default.php";
 
-$article_id = get_http_var( 'article_id' );
+$article_id = get_http_var( 'id' );
+if( !$article_id )
+    $article_id = get_http_var( 'article_id' );
 $action = get_http_var( 'action' );
 
 admPageHeader();
@@ -49,6 +51,10 @@ else
 		AddJourno( $art, get_http_var('journo_id') );
 		EmitArticle( $art );
 	}
+	else if( $action == 'update_similar' )
+    {
+        DoUpdateSimilars( $article_id );
+    }
 	else
 	{
 		/* default action is to just display the article */
@@ -75,49 +81,81 @@ function FetchArticle( $article_id )
 /* display article */
 function EmitArticle( $art )
 {
-	print "<table border=1>\n";
-	print "<tr><th>title</th><td><h2>{$art['title']}</h2></td></tr>\n";
-	print "<tr><th>status</th><td>{$art['status']}</td></tr>\n";
-	print "<tr><th>id</th><td>{$art['id']} [<a href=\"/article?id={$art['id']}\">go to journalisted page</a>]</td></tr>\n";
 	$orgs = get_org_names();
 	$orgname = $orgs[$art['srcorg']];
-	print "<tr><th>srcorg</th><td>{$orgname} (id {$art['srcorg']})</td></tr>\n";
-	print "<tr><th>permalink</th><td><a href=\"{$art['permalink']}\">{$art['permalink']}</a></td></tr>\n";
-	print "<tr><th>pubdate</th><td>{$art['pubdate']}</td></tr>\n";
-	print "<tr><th>lastscraped</th><td>{$art['lastscraped']}</td></tr>\n";
-	print "<tr><th>byline</th>\n";
 
-	print "<td>\n";
-	print "raw byline: \"{$art['byline']}\"<br/>\n";
-	print "attributed to:<br/>\n";
-	EmitAttribution( $art );
-	print "</td></tr>\n";
 
-	print "<tr><th>description</th><td>{$art['description']}</td></tr>\n";
-	print "<tr><th>srcurl</th><td>{$art['srcurl']}</td></tr>\n";
-	print "<tr><th>srcid</th><td>{$art['srcid']}</td></tr>\n";
-	print "<tr><th>total_comments</th><td>{$art['total_comments']}</td></tr>\n";
-	print "<tr><th>total_bloglinks</th><td>{$art['total_bloglinks']}</td></tr>\n";
+    $sql = <<<EOT
+SELECT a.id, a.title, a.pubdate, a.srcorg, s.score
+    FROM (article_similar s INNER JOIN article a ON a.id=s.other_id )
+    WHERE s.article_id=?
+    ORDER BY s.score DESC
+EOT;
 
-	print "<tr><th>content</th><td>\n";
+    $similar_articles = db_getAll( $sql, $art['id'] );
+
+    foreach( $similar_articles as &$sim )
+        $sim['srcorgname'] = $orgs[$sim['srcorg'] ];
+    unset($sim);
+
+?>
+<table border="1">
+<tr><th>title</th><td><h2><?php echo $art['title']; ?></h2></td></tr>
+<tr><th>status</th><td><?php echo $art['status']; ?></td></tr>
+<tr><th>id</th><td><?php echo $art['id']; ?> [<a href="/article?id=<?php echo $art['id'];?>">go to journalisted page</a>]
+<tr><th>srcorg</th><td><?php echo $orgname;?> (id <?php echo $art['srcorg'];?>)</td></tr>
+<tr><th>permalink</th><td><a href="<?php echo $art['permalink'];?>"><?php echo $art['permalink']; ?></a></td></tr>
+<tr><th>pubdate</th><td><?php echo $art['pubdate']; ?></td></tr>
+<tr><th>lastscraped</th><td><?php echo $art['lastscraped']; ?></td></tr>
+<tr><th>byline</th>
+  <td>
+  raw byline: "<?php echo $art['byline']; ?>"<br/>
+  attributed to:<br/>
+  <?php EmitAttribution( $art ); ?>
+  </td>
+</tr>
+<tr><th>description</th><td><?php echo $art['description']; ?></td></tr>
+<tr><th>srcurl</th><td><?php echo $art['srcurl']; ?></td></tr>
+<tr><th>srcid</th><td><?php echo $art['srcid']; ?></td></tr>
+<tr><th>total_comments</th><td><?php echo $art['total_comments']; ?></td></tr>
+<tr><th>total_bloglinks</th><td><?php echo $art['total_bloglinks']; ?></td></tr>
+<tr><th>needs_indexing</th><td><?php echo $art['needs_indexing']; ?></td></tr>
+<tr><th>last_similar</th><td><?php echo $art['last_similar']; ?></td></tr>
+<tr><th>last_comment_check</th><td><?php echo $art['last_comment_check']; ?></td></tr>
+
+</table>
+<h2>content</h2>
+<table border=1>
+  <tr><th>displayed</th><th>source HTML</th></tr>
+  <tr>
+    <td width="50%">
+<?php echo $art['content']; ?>
+    </td>
+    <td width="50%">
 	
-	print "<table>\n";
-	print "<tr><th>displayed</th><th>source HTML</th></tr>\n";
-	print "<tr><td width=\"50%\">\n{$art['content']}\n</td>\n";
-	print "<td width=\"50%\">\n";
-	
-//        print "<iframe src=\"{$art['srcurl']}\" width=\"100%\" height=\"100%\"></iframe>\n";
-	
+<?php	
 	$srchtml = htmlentities( $art['content'], ENT_COMPAT, 'UTF-8' );
 	$srchtml = str_replace( "\n", "<br>\n", $srchtml );
 	print $srchtml;
-	print "\n</td></tr>\n";
-	print "</table>\n";
+?>
+    </td>
+  </tr>
+</table>
 
-	print "</td></tr>\n";
-	print "</table>\n";
-
-	print "</table>";
+<h2>similar articles</h2>
+<a href="/adm/article?id=<?php echo $art['id']; ?>&action=update_similar">Run similar-articles tool now</a> (to update the list)<br/>
+<table>
+  <tr><th>score</th><th>other article</th></tr>
+<?php foreach( $similar_articles as $sim) { ?>
+  <tr>
+    <td><?php echo $sim['score']; ?></td>
+    <td>
+      <a href="/adm/article?id=<?php echo $sim['id']; ?>"><?php echo $sim['title']; ?></a>,
+      <?php echo $sim['srcorgname']; ?>, <?php echo $sim['pubdate']; ?>
+    </td>
+<?php } ?>
+</table>
+<?php
 }
 
 
@@ -237,7 +275,7 @@ function process_article_query( $values )
 	print "</tr>\n";
     while( $r=db_fetch_array($q) ) {
 
-        $arturl = "?article_id={$r['id']}";
+        $arturl = "?id={$r['id']}";
         $checkurl = "?page=checkscrapers&article_id={$r['id']}";
 
         $out = '';
@@ -267,7 +305,7 @@ function EmitAttribution( $art )
 	foreach( $journos as $j )
 	{
 		$journo_url = "/adm/journo?journo_id=" . $j['id'];
-		$removal_url = sprintf( "?article_id=%s&action=remove_journo&journo_id=%s",
+		$removal_url = sprintf( "?id=%s&action=remove_journo&journo_id=%s",
 			$article_id, $j['id'] );
 
 		printf( "<li><a href=\"%s\">%s</a> <small>[<a href=\"%s\">remove</a>]</small></li>\n",
@@ -315,7 +353,7 @@ from the article?<br />
 <input type="hidden" name="journo_id" value="<?=$journo_id;?>" />
 <input type="hidden" name="action" value="remove_journo_confirmed" />
 <input type="submit" name="submit" value="Yes!" />
-<a href="?article_id=<?=$art['id'];?>">No, I've changed my mind</a>
+<a href="?id=<?=$art['id'];?>">No, I've changed my mind</a>
 </form>
 <?php
 
@@ -398,6 +436,47 @@ function AddJourno( $art, $journo_id )
 	db_commit();
 	print( "<strong>ADDED JOURNO</strong>" );
 
+}
+
+function DoUpdateSimilars( $article_id )
+{
+    $jlbin = OPTION_JL_FSROOT . '/bin';
+	$cmd = "{$jlbin}/similar-article -v -a {$article_id} 2>&1";
+
+?>
+<h3>Updating similar-article list for article <?php echo $article_id; ?></h3>
+(<a href="/adm/article?id=<?php echo $article_id; ?>">back to article admin page</a>)<br/>
+<tt><?php echo $cmd; ?></tt>
+<hr>
+<?php
+//	putenv("JL_DEBUG=2");
+    ob_start();
+    passthru( $cmd );
+  	$output = ob_get_contents();
+    ob_end_clean();
+
+?>
+<p><pre>
+<?php echo admMarkupPlainText( $output ); ?>
+</pre></p>
+<hr>
+<?php
+
+}
+
+
+
+
+/**********************************/
+
+
+
+function run($command) {
+	ob_start();
+	passthru($command);
+	$ret = ob_get_contents();
+	ob_end_clean();
+    return $ret;
 }
 
 ?>

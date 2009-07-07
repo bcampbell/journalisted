@@ -15,7 +15,11 @@ require_once "HTML/QuickForm.php";
 
 $statusnames = array('i'=>'i - Inactive', 'a'=>'a - Active', 'h'=>'h - Hidden' );
 
+$ref = strtolower( get_http_var( 'ref', '' ) );
 $journo_id = get_http_var( 'journo_id' );
+if( $ref )
+    $journo_id = db_getOne( "SELECT id FROM journo WHERE ref=?", $ref );
+ 
 $action = get_http_var( 'action' );
 
 $journo_name = 'Journos';
@@ -252,7 +256,7 @@ EOT;
 		$divclass = $status=='a' ? 'bio_approved':'bio_unapproved';
 
 		print " <li>\n";
-		print(" <div class=\"$divclass\"><a href=\"/adm/article?article_id=$id\">$title</a>" );
+		print(" <div class=\"$divclass\"><a href=\"/adm/article?id=$id\">$title</a>" );
 		print("  <small>{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
 		print " </li>\n";
 	}

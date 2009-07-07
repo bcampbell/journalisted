@@ -1,0 +1,137 @@
+#!/usr/bin/php
+<?php
+
+// builds journo pages for any journos who need it (ie have had the modified flag set).
+
+require_once 'Console/Getopt.php';
+chdir(dirname($_SERVER['SCRIPT_FILENAME']));
+require_once "../conf/general";
+require_once '../../phplib/db.php';
+//require_once '../../phplib/utility.php';
+require_once "../phplib/misc.php";
+require_once "../phplib/journo.php";
+
+
+
+function Usage()
+{
+?>
+
+Journo page-building tool
+
+Usage: journo-page-builder [options]
+
+-h            Display this help message
+-v            verbose
+-n <maxnum>   don't process more than this number of journos
+-j <ref>      just update the single journos page then exit
+-q            generate quick version of page (leaves journo modified flags untouched)
+-c <minarts>  only consider journos with >= this number of articles
+<?php
+}
+
+$short_opts = "hvj:n:qc:";
+
+// initialize object
+$cg = new Console_Getopt();
+$args = $cg->readPHPArgv();
+$ret = $cg->getopt($args, $short_opts);
+
+if (PEAR::isError($ret)) {
+    die ("Error in command line: " . $ret->getMessage() . "\n");
+}
+
+$settings = array( 'verbose' => false, 'journo' => null, 'maxnum' => 100, 'quick'=>false, 'min_art_count'=>null );
+
+// now parse the options array
+$opts = $ret[0];
+foreach ($opts as $o) {
+    switch ($o[0]) {
+        case 'v':
+            $settings['verbose'] = true;
+            break;
+        case 'h':
+            Usage();
+            exit;
+        case 'j':
+            $settings['journo'] = $o[1];
+            break;
+        case 'n':
+            $settings['maxnum'] = $o[1];
+            break;
+        case 'q':
+            $settings['quick'] = true;
+            break;
+        case 'c':
+            $settings['min_art_count'] = intval( $o[1] );
+            break;
+    }
+}
+
+
+if( !is_null( $settings['journo'] ) )
+    DoSingleJourno( $settings['journo'] );
+else
+    DoBatch();
+
+
+
+function DoBatch()
+{
+    global $settings;
+
+    if( is_null( $settings['min_art_count'] ) ) {
+        $q  = db_query( "SELECT * FROM journo WHERE status='a' AND modified=true LIMIT ?", $settings['maxnum'] );
+    } else {
+        $q = db_query( " SELECT * FROM journo WHERE status='a' AND modified=true AND id IN ( SELECT journo_id FROM journo_attr GROUP BY journo_id HAVING count(*)>? ) LIMIT ?", $settings['min_art_count'], $settings['maxnum'] );
+    }
+
+    if( $settings['verbose'] )
+        printf( "processing %d journos\n", db_num_rows( $q ) );
+    while( $journo = db_fetch_array($q) ) {
+        Process( $journo );
+    }
+
+}
+
+
+function DoSingleJourno( $ref )
+{
+    global $settings;
+
+    $journo  = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
+    if( is_null( $journo ) ) {
+        die( "Couldn't find journo {$ref}\n" );
+    }
+
+    Process( $journo );
+
+}
+
+
+function Process( &$journo )
+{
+    global $settings;
+
+    // build full version of page
+    ob_start();
+    if( $settings['quick'] )
+        journo_emitPageQuick( $journo );
+    else
+        journo_emitPageFull( $journo );
+    $content = ob_get_contents();
+    ob_end_clean();
+
+    // save it in the cache and clear the modified flag
+    $cacheid = $journo['id'];
+    db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
+	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $content );
+    if( !$settings['quick'] )
+        db_do("UPDATE journo SET modified=false WHERE id=?", $journo['id'] );
+	db_commit();
+
+    if( $settings['verbose'] )
+        print "done " . $journo['ref'] . "\n";
+}
+
+?>

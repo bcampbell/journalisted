@@ -20,10 +20,17 @@ def main():
     (options, args) = parser.parse_args()
 
     url = options.url
+
+    if options.srcid:
+        srcid = scrapefront.CalcSrcID( url )
+        if srcid is None:
+            return 1
+        print srcid
+        return 0
+
     scraper = scrapefront.PickScraper( url )
     if not scraper:
         sys.exit( "ERROR: No scraper found to handle url '%s'" % (url) )
-
 
     if options.dryrun:
         store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )
@@ -34,9 +41,6 @@ def main():
     context = scraper.ContextFromURL( url )
     articles.append( context )
 
-    if options.srcid:
-        print context['srcid']
-        return
 
     # call any scraper init required (eg Login)
     if hasattr( scraper, "Prep" ):
@@ -44,7 +48,8 @@ def main():
 
     ScraperUtils.ProcessArticles( articles, store, scraper.Extract,
         showexisting=True)
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit( main() )
 

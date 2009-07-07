@@ -16,6 +16,10 @@ $num_per_page = (int)get_http_var('num', DEFAULT_NUM_PER_PAGE );
 $start = (int)get_http_var('start', '0' );
 $sort_order = get_http_var( 'o', 'date' );
 
+
+/* temp hack */
+$query = str_replace( '"', '', $query );
+
 /* was a particular journo specified? (can be an id or ref) */
 $journo = null;
 $id_or_ref = get_http_var( 'j', null );
@@ -211,46 +215,5 @@ function DoQuery( $query_string, $sort_order, $start, $num_per_page, $journo=nul
         EmitPageControl( $query_string, $sort_order, $start, $num_per_page, $total );
     }
 }
-
-
-
-/* helper - return a fragment of html to show when/when article was
- * published, including a link to it
- */
-function PostedFragment( &$r )
-{
-    $orgs = get_org_names();
-    $org = $orgs[ $r['srcorg'] ];
-    if( $r['pubdate'] instanceof DateTime )
-        $pubdate = pretty_date( $r['pubdate'] );
-    else
-        $pubdate = pretty_date(strtotime($r['pubdate']));   /* depreicated */
-
-    return sprintf( "<cite class=\"posted\"><a class=\"extlink\" href=\"%s\">%s, <em>%s</em></a></cite>",
-        htmlentities($r['permalink']), $pubdate, $org );
-}
-
-
-/* helper - return a fragment of text to show how many comments and blog links on an article */
-function BuzzFragment( &$r )
-{
-    $parts = array();
-
-
-    $cnt = $r['total_comments'];
-    if( $cnt>0 )
-        $parts[] = ($cnt==1) ? "1 comment" : "{$cnt} comments";
-
-    $cnt = $r['total_bloglinks'];
-    if( $cnt>0 )
-        $parts[] = ($cnt==1) ? "1 blog link" : "{$cnt} blog links";
-
-    if( $parts )
-        return implode( ', ', $parts );
-    else
-        return '';
-}
-
-
 ?>
 

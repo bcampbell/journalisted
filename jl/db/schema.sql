@@ -59,6 +59,8 @@ CREATE TABLE article (
     total_bloglinks integer DEFAULT 0 NOT NULL,
     total_comments integer DEFAULT 0 NOT NULL,
     needs_indexing boolean DEFAULT true NOT NULL,
+    last_comment_check timestamp without time zone,
+    last_similar timestamp without time zone,
     CONSTRAINT article_status_check CHECK ((((status = 'a'::bpchar) OR (status = 'h'::bpchar)) OR (status = 'd'::bpchar)))
 );
 
@@ -112,6 +114,34 @@ CREATE TABLE article_dupe (
 ALTER TABLE public.article_dupe OWNER TO mst;
 
 --
+-- Name: article_image; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+--
+
+CREATE TABLE article_image (
+    id integer NOT NULL,
+    article_id integer NOT NULL,
+    url text NOT NULL,
+    caption text DEFAULT ''::text NOT NULL,
+    credit text DEFAULT ''::text NOT NULL
+);
+
+
+ALTER TABLE public.article_image OWNER TO mst;
+
+--
+-- Name: article_similar; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+--
+
+CREATE TABLE article_similar (
+    article_id integer NOT NULL,
+    other_id integer NOT NULL,
+    score real NOT NULL
+);
+
+
+ALTER TABLE public.article_similar OWNER TO mst;
+
+--
 -- Name: article_tag; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
 --
 
@@ -133,8 +163,8 @@ CREATE TABLE custompaper (
     id integer NOT NULL,
     owner integer NOT NULL,
     name text DEFAULT ''::text NOT NULL,
-    is_public boolean DEFAULT false NOT NULL,
-    description text DEFAULT ''::text NOT NULL
+    description text DEFAULT ''::text NOT NULL,
+    is_public boolean DEFAULT false NOT NULL
 );
 
 
@@ -211,6 +241,7 @@ CREATE TABLE journo (
     created timestamp without time zone NOT NULL,
     status character(1) DEFAULT 'i'::bpchar,
     oneliner text DEFAULT ''::text NOT NULL,
+    last_similar timestamp without time zone DEFAULT '1970-01-01 00:00:00'::timestamp without time zone NOT NULL,
     CONSTRAINT journo_status_check CHECK ((((status = 'a'::bpchar) OR (status = 'h'::bpchar)) OR (status = 'i'::bpchar)))
 );
 
@@ -307,6 +338,19 @@ CREATE TABLE journo_jobtitle (
 ALTER TABLE public.journo_jobtitle OWNER TO mst;
 
 --
+-- Name: journo_similar; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+--
+
+CREATE TABLE journo_similar (
+    journo_id integer NOT NULL,
+    other_id integer NOT NULL,
+    score real NOT NULL
+);
+
+
+ALTER TABLE public.journo_similar OWNER TO mst;
+
+--
 -- Name: journo_weblink; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
 --
 
@@ -332,7 +376,10 @@ CREATE TABLE organisation (
     shortname text NOT NULL,
     prettyname text NOT NULL,
     phone text DEFAULT ''::text NOT NULL,
-    email_format text DEFAULT ''::text NOT NULL
+    email_format text DEFAULT ''::text NOT NULL,
+    home_url text DEFAULT ''::text NOT NULL,
+    sop_name text DEFAULT ''::text NOT NULL,
+    sop_url text DEFAULT ''::text NOT NULL
 );
 
 
@@ -365,7 +412,6 @@ CREATE TABLE requeststash (
     url text NOT NULL,
     post_data bytea,
     extra text,
-    email text,
     CONSTRAINT requeststash_check CHECK ((((post_data IS NULL) AND (method = 'GET'::text)) OR ((post_data IS NOT NULL) AND (method = 'POST'::text)))),
     CONSTRAINT requeststash_method_check CHECK (((method = 'GET'::text) OR (method = 'POST'::text)))
 );
@@ -538,6 +584,26 @@ CREATE SEQUENCE article_id_seq
 
 
 ALTER TABLE public.article_id_seq OWNER TO mst;
+
+--
+-- Name: article_image_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
+--
+
+CREATE SEQUENCE article_image_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.article_image_id_seq OWNER TO mst;
+
+--
+-- Name: article_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
+--
+
+ALTER SEQUENCE article_image_id_seq OWNED BY article_image.id;
+
 
 --
 -- Name: custompaper_criteria_journo_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
@@ -738,6 +804,13 @@ ALTER TABLE article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_blogli
 -- Name: id; Type: DEFAULT; Schema: public; Owner: mst
 --
 
+ALTER TABLE article_image ALTER COLUMN id SET DEFAULT nextval('article_image_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+--
+
 ALTER TABLE custompaper ALTER COLUMN id SET DEFAULT nextval('custompaper_id_seq'::regclass);
 
 
@@ -816,11 +889,27 @@ ALTER TABLE ONLY article_dupe
 
 
 --
+-- Name: article_image_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+--
+
+ALTER TABLE ONLY article_image
+    ADD CONSTRAINT article_image_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: article_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
 --
 
 ALTER TABLE ONLY article
     ADD CONSTRAINT article_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: article_similar_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+--
+
+ALTER TABLE ONLY article_similar
+    ADD CONSTRAINT article_similar_pkey PRIMARY KEY (article_id, other_id);
 
 
 --
@@ -912,6 +1001,14 @@ ALTER TABLE ONLY journo
 
 
 --
+-- Name: journo_similar_journo_id_key; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_similar
+    ADD CONSTRAINT journo_similar_journo_id_key UNIQUE (journo_id, other_id);
+
+
+--
 -- Name: journo_uniquename_key; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
 --
 
@@ -994,6 +1091,13 @@ CREATE INDEX article_lastscraped_idx ON article USING btree (lastscraped);
 --
 
 CREATE INDEX article_pubdate_idx ON article USING btree (pubdate);
+
+
+--
+-- Name: article_similar_article_id_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+--
+
+CREATE INDEX article_similar_article_id_idx ON article_similar USING btree (article_id);
 
 
 --
@@ -1173,6 +1277,30 @@ ALTER TABLE ONLY article_dupe
 
 
 --
+-- Name: article_image_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+--
+
+ALTER TABLE ONLY article_image
+    ADD CONSTRAINT article_image_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
+-- Name: article_similar_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+--
+
+ALTER TABLE ONLY article_similar
+    ADD CONSTRAINT article_similar_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
+-- Name: article_similar_other_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+--
+
+ALTER TABLE ONLY article_similar
+    ADD CONSTRAINT article_similar_other_id_fkey FOREIGN KEY (other_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
 -- Name: article_tag_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
 --
 
@@ -1266,6 +1394,22 @@ ALTER TABLE ONLY journo_jobtitle
 
 ALTER TABLE ONLY journo_jobtitle
     ADD CONSTRAINT journo_jobtitle_org_id_fkey FOREIGN KEY (org_id) REFERENCES organisation(id);
+
+
+--
+-- Name: journo_similar_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+--
+
+ALTER TABLE ONLY journo_similar
+    ADD CONSTRAINT journo_similar_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_similar_other_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+--
+
+ALTER TABLE ONLY journo_similar
+    ADD CONSTRAINT journo_similar_other_fkey FOREIGN KEY (other_id) REFERENCES journo(id) ON DELETE CASCADE;
 
 
 --

@@ -47,12 +47,12 @@ function FancyJournoLink( $j )
 
 function AlphabeticalList()
 {
-	page_header("All journalists", array( 'menupage'=>'all' ) );
+	page_header("Journalists A-Z", array( 'menupage'=>'all' ) );
 
 	$letter = strtolower( get_http_var( 'letter', 'a' ) );
 	$order = get_http_var( 'order', 'lastname' );
 
-	print "<h2>All Journalists</h2>\n";
+	print "<h2>Journalists A-Z</h2>\n";
 
 	print "<p>Ordered by ";
 	if( $order=='firstname' )

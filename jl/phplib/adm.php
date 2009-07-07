@@ -11,7 +11,7 @@ err_set_handler_display('admin_display_error');
 
 
 
-function admPageHeader( $title = '' )
+function admPageHeader( $title = '', $extra_head_fn=null )
 {
 	header( 'Content-Type: text/html; charset=utf-8' );
 
@@ -20,6 +20,11 @@ function admPageHeader( $title = '' )
 <head>
 <title>JL admin<?php if( $title ) { print " - $title"; }; ?></title>
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
+<?php
+    if( !is_null( $extra_head_fn ) ) {
+    	call_user_func( $extra_head_fn );
+    }
+?>
 </head>
 <body>
 <h1>Journalisted admin</h1>
@@ -30,7 +35,8 @@ function admPageHeader( $title = '' )
 <a href="journo-email">Email</a> |
 <a href="journo-split">Split</a> |
 <a href="journo-merge">Merge</a>
-</small>)
+</small>) |
+<a href="canned">Canned Queries</a>
 <hr>
 <?php
 

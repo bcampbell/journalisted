@@ -18,63 +18,65 @@ require_once '../../phplib/utility.php';
 function offline_tags_emit()
 {
 
+	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
+		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
+		"WHERE t.kind<>'c' AND a.pubdate<NOW()+interval '24 hours' AND a.pubdate > NOW() - interval '24 hours' ".
+		"GROUP BY t.tag ".
+		"ORDER BY freq DESC " .
+		"LIMIT 64";
+	$tags_24hrs = db_getAll( $sql );
+
+	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
+		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
+		"WHERE t.kind<>'c' AND a.pubdate<NOW()+interval '24 hours' AND a.pubdate > NOW() - interval '1 week' ".
+		"GROUP BY t.tag ".
+		"ORDER BY freq DESC " .
+		"LIMIT 64";
+	$tags_week = db_getAll( $sql );
+
+	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
+		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
+		"WHERE t.kind<>'c' AND a.pubdate<NOW()+interval '24 hours' AND a.pubdate > NOW() - interval '1 year' ".
+		"GROUP BY t.tag ".
+		"ORDER BY freq DESC " .
+		"LIMIT 128";
+	$tags_year = db_getAll( $sql );
+
+
 ?>
-<h2>Most written about topics</h2>
+<h2>Most written about subjects</h2>
 
 
 <p>The larger the word, the more it's been written about. Click on any of
-the words and you'll see which journalists have written about it.</p>
+the words and you'll see which articles mention it.</p>
 
-
-<div class="block">
+<div class="box">
 <h3>Last 24 hours</h3>
-<?php
-
-	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
-		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
-		"WHERE a.pubdate > NOW() - interval '24 hours' ".
-		"GROUP BY t.tag ".
-		"ORDER BY freq DESC " .
-		"LIMIT 64";
-	$q = db_query( $sql );
-	tag_cloud_from_query( $q );
-
-?>
+<div class="box-content">
+<div class="tags">
+<?php tag_cloud_from_getall( $tags_24hrs ); ?>
+</div>
+</div>
 </div>
 
-<div class="block">
+<div class="box">
 <h3>Over the last week</h3>
-<?php
-
-	$sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
-		"FROM ( article a INNER JOIN article_tag t ON a.id=t.article_id ) ".
-		"WHERE a.pubdate > NOW() - interval '1 week' ".
-		"GROUP BY t.tag ".
-		"ORDER BY freq DESC " .
-		"LIMIT 64";
-	$q = db_query( $sql );
-	tag_cloud_from_query( $q );
-
-?>
+<div class="box-content">
+<div class="tags">
+<?php tag_cloud_from_getall( $tags_week ); ?>
+</div>
+</div>
 </div>
 
-<div class="block">
-<h3>All Time (since May 2007)</h3>
-<?php
-	/* TODO: (since May 2007) should really be derived from a DB query,
-    but it's not a big deal unless someelse reuses the code for another
-    dataset :-) */
-	$sql = "SELECT tag, SUM(freq) AS freq ".
-		"FROM article_tag ".
-		"GROUP BY tag ".
-		"ORDER BY freq DESC ".
-		"LIMIT 128";
-	$q = db_query( $sql );
-
-	tag_cloud_from_query( $q );
-
-?>
+<div class="box">
+<h3>Over the last Year</h3>
+<div class="box-content">
+<div class="tags">
+<?php tag_cloud_from_getall( $tags_year ); ?>
 </div>
+</div>
+</div>
+
 <?php 
 
 }

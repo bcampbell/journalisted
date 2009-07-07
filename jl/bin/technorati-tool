@@ -19,7 +19,7 @@
 # we go and try to scrape that from the blog itself...
 #
 # TODO: Should move out domainname list so that other scrapers can use it,
-#		and to make it more obvious to maintain.
+#       and to make it more obvious to maintain.
 #       Try and keep things DRY...
 #
 
@@ -27,6 +27,7 @@ from optparse import OptionParser
 import sys
 import re
 import traceback
+import time
 
 sys.path.append( "../pylib" )
 import technorati
@@ -45,39 +46,39 @@ key = open(keyfile).readline().strip()
 
 
 class LinkStats:
-	""" counts on how many links we've processed """
-	def __init__(self):
-		self.added = 0			# new, added to DB
-		self.existed = 0		# already had in DB
-		self.missing = 0		# can't find article for in DB
-		self.not_handled = 0	# not handled by our scrapers
+    """ counts on how many links we've processed """
+    def __init__(self):
+        self.added = 0          # new, added to DB
+        self.existed = 0        # already had in DB
+        self.missing = 0        # can't find article for in DB
+        self.not_handled = 0    # not handled by our scrapers
 
-	def Accumulate( self, other ):
-		""" add one a set of stats to this one """
-		self.added += other.added
-		self.existed += other.existed
-		self.missing += other.missing
-		self.not_handled += other.not_handled
+    def Accumulate( self, other ):
+        """ add one a set of stats to this one """
+        self.added += other.added
+        self.existed += other.existed
+        self.missing += other.missing
+        self.not_handled += other.not_handled
 
-	def Total( self ):
-		""" total number of links we've accounted for """
-		return self.added + self.existed + self.missing + self.not_handled
+    def Total( self ):
+        """ total number of links we've accounted for """
+        return self.added + self.existed + self.missing + self.not_handled
 
-	def Report( self ):
-		if self.Total() == 0:
-			return "No links processed"
-		else:
-			return "%d out of %d good (%d%%) - %d added, %d existed, %d missing, %d not handled" % (
-				self.added + self.existed,
-				self.Total(),
-				((self.added + self.existed) * 100) / self.Total(),
-				self.added,
-				self.existed,
-				self.missing,
-				self.not_handled,
-				)
-			
-			
+    def Report( self ):
+        if self.Total() == 0:
+            return "No links processed"
+        else:
+            return "%d out of %d good (%d%%) - %d added, %d existed, %d missing, %d not handled" % (
+                self.added + self.existed,
+                self.Total(),
+                ((self.added + self.existed) * 100) / self.Total(),
+                self.added,
+                self.existed,
+                self.missing,
+                self.not_handled,
+                )
+            
+            
 
 
 
@@ -93,283 +94,288 @@ class LinkStats:
 # mq is the max number of queries we'll do (each query returns up to 100 items)
 #
 sites = (
-	{ 'mq':1, 'site':'arts.independent.co.uk' },
-	{ 'mq':1, 'site':'comment.independent.co.uk' },
-	{ 'mq':1, 'site':'environment.independent.co.uk' },
-	{ 'mq':1, 'site':'money.independent.co.uk' },
-	{ 'mq':1, 'site':'news.independent.co.uk' },
-	{ 'mq':1, 'site':'sport.independent.co.uk' },
-	{ 'mq':1, 'site':'student.independent.co.uk' },
-	{ 'mq':1, 'site':'travel.independent.co.uk' },
-	{ 'mq':3, 'site':'independent.co.uk' },
-#	{ 'mq':1, 'site':'bazblog.dailymail.co.uk' },
-#	{ 'mq':1, 'site':'bikeride.dailymail.co.uk' },
-#	{ 'mq':1, 'site':'broganblog.dailymail.co.uk' },
-#	{ 'mq':1, 'site':'fashionblog.dailymail.co.uk' },
-#	{ 'mq':1, 'site':'feeds.feedburner.com' },
-#	{ 'mq':1, 'site':'hitchensblog.mailonsunday.co.uk' },
-#	{ 'mq':1, 'site':'katie.nicholl.mailonsunday.co.uk' },
-	{ 'mq':3, 'site':'dailymail.co.uk' },
-	{ 'mq':3, 'site':'express.co.uk' },
-	{ 'mq':3, 'site':'dailyexpress.co.uk' },
-	{ 'mq':1, 'site':'arts.guardian.co.uk' },
-#	{ 'mq':1, 'site':'blogs.guardian.co.uk' },
-	{ 'mq':1, 'site':'books.guardian.co.uk' },
-	{ 'mq':1, 'site':'business.guardian.co.uk' },
-	{ 'mq':1, 'site':'education.guardian.co.uk' },
-	{ 'mq':1, 'site':'environment.guardian.co.uk' },
-	{ 'mq':1, 'site':'film.guardian.co.uk' },
-	{ 'mq':1, 'site':'football.guardian.co.uk' },
-	{ 'mq':1, 'site':'lifeandhealth.guardian.co.uk' },
-	{ 'mq':1, 'site':'media.guardian.co.uk' },
-	{ 'mq':1, 'site':'money.guardian.co.uk' },
-	{ 'mq':1, 'site':'music.guardian.co.uk' },
-	{ 'mq':1, 'site':'observer.guardian.co.uk' },
-	{ 'mq':1, 'site':'politics.guardian.co.uk' },
-	{ 'mq':1, 'site':'shopping.guardian.co.uk' },
-	{ 'mq':1, 'site':'society.guardian.co.uk' },
-	{ 'mq':1, 'site':'sport.guardian.co.uk' },
-	{ 'mq':1, 'site':'technology.guardian.co.uk' },
-	{ 'mq':3, 'site':'guardian.co.uk' },
-	{ 'mq':3, 'site':'thesun.co.uk' },
-	{ 'mq':3, 'site':'sundaymirror.co.uk' },
-	{ 'mq':3, 'site':'mirror.co.uk' },
-	{ 'mq':3, 'site':'telegraph.co.uk' },
-#	{ 'mq':1, 'site':'adamboulton.typepad.com' },
-#	{ 'mq':1, 'site':'martinstanford.typepad.com' },
-#	{ 'mq':1, 'site':'skynews3.typepad.com' },
-#	{ 'mq':1, 'site':'skynews4.typepad.com' },
-#	{ 'mq':1, 'site':'skynews5.typepad.com' },
-#	{ 'mq':1, 'site':'skynews6.typepad.com' },
-#	{ 'mq':1, 'site':'skynews7.typepad.com' },
-#	{ 'mq':1, 'site':'skynews8.typepad.com' },
-#	{ 'mq':1, 'site':'skynews.typepad.com' },
-	{ 'mq':3, 'site':'thescotsman.scotsman.com' },
-	{ 'mq':3, 'site':'scotlandonsunday.scotsman.com' },
-	{ 'mq':3, 'site':'blogs.ft.com' },
-	{ 'mq':3, 'site':'ft.com' },
-	{ 'mq':3, 'site':'theherald.co.uk' },
-	{ 'mq':3, 'site':'timesonline.co.uk' },
-	{ 'mq':1, 'site':'driving.timesonline.co.uk' },
-	{ 'mq':1, 'site':'entertainment.timesonline.co.uk' },
-	{ 'mq':3, 'site':'news.bbc.co.uk' },
-	{ 'mq':3, 'site':'bbc.co.uk' },
+    { 'mq':1, 'site':'arts.independent.co.uk' },
+    { 'mq':1, 'site':'comment.independent.co.uk' },
+    { 'mq':1, 'site':'environment.independent.co.uk' },
+    { 'mq':1, 'site':'money.independent.co.uk' },
+    { 'mq':1, 'site':'news.independent.co.uk' },
+    { 'mq':1, 'site':'sport.independent.co.uk' },
+    { 'mq':1, 'site':'student.independent.co.uk' },
+    { 'mq':1, 'site':'travel.independent.co.uk' },
+    { 'mq':3, 'site':'independent.co.uk' },
+#   { 'mq':1, 'site':'bazblog.dailymail.co.uk' },
+#   { 'mq':1, 'site':'bikeride.dailymail.co.uk' },
+#   { 'mq':1, 'site':'broganblog.dailymail.co.uk' },
+#   { 'mq':1, 'site':'fashionblog.dailymail.co.uk' },
+#   { 'mq':1, 'site':'feeds.feedburner.com' },
+#   { 'mq':1, 'site':'hitchensblog.mailonsunday.co.uk' },
+#   { 'mq':1, 'site':'katie.nicholl.mailonsunday.co.uk' },
+    { 'mq':3, 'site':'dailymail.co.uk' },
+    { 'mq':3, 'site':'express.co.uk' },
+    { 'mq':3, 'site':'dailyexpress.co.uk' },
+    { 'mq':1, 'site':'arts.guardian.co.uk' },
+#   { 'mq':1, 'site':'blogs.guardian.co.uk' },
+    { 'mq':1, 'site':'books.guardian.co.uk' },
+    { 'mq':1, 'site':'business.guardian.co.uk' },
+    { 'mq':1, 'site':'education.guardian.co.uk' },
+    { 'mq':1, 'site':'environment.guardian.co.uk' },
+    { 'mq':1, 'site':'film.guardian.co.uk' },
+    { 'mq':1, 'site':'football.guardian.co.uk' },
+    { 'mq':1, 'site':'lifeandhealth.guardian.co.uk' },
+    { 'mq':1, 'site':'media.guardian.co.uk' },
+    { 'mq':1, 'site':'money.guardian.co.uk' },
+    { 'mq':1, 'site':'music.guardian.co.uk' },
+    { 'mq':1, 'site':'observer.guardian.co.uk' },
+    { 'mq':1, 'site':'politics.guardian.co.uk' },
+    { 'mq':1, 'site':'shopping.guardian.co.uk' },
+    { 'mq':1, 'site':'society.guardian.co.uk' },
+    { 'mq':1, 'site':'sport.guardian.co.uk' },
+    { 'mq':1, 'site':'technology.guardian.co.uk' },
+    { 'mq':3, 'site':'guardian.co.uk' },
+    { 'mq':3, 'site':'thesun.co.uk' },
+    { 'mq':3, 'site':'sundaymirror.co.uk' },
+    { 'mq':3, 'site':'mirror.co.uk' },
+    { 'mq':3, 'site':'telegraph.co.uk' },
+#   { 'mq':1, 'site':'adamboulton.typepad.com' },
+#   { 'mq':1, 'site':'martinstanford.typepad.com' },
+#   { 'mq':1, 'site':'skynews3.typepad.com' },
+#   { 'mq':1, 'site':'skynews4.typepad.com' },
+#   { 'mq':1, 'site':'skynews5.typepad.com' },
+#   { 'mq':1, 'site':'skynews6.typepad.com' },
+#   { 'mq':1, 'site':'skynews7.typepad.com' },
+#   { 'mq':1, 'site':'skynews8.typepad.com' },
+#   { 'mq':1, 'site':'skynews.typepad.com' },
+    { 'mq':3, 'site':'thescotsman.scotsman.com' },
+    { 'mq':3, 'site':'scotlandonsunday.scotsman.com' },
+    { 'mq':3, 'site':'blogs.ft.com' },
+    { 'mq':3, 'site':'ft.com' },
+    { 'mq':3, 'site':'theherald.co.uk' },
+    { 'mq':3, 'site':'timesonline.co.uk' },
+    { 'mq':1, 'site':'driving.timesonline.co.uk' },
+    { 'mq':1, 'site':'entertainment.timesonline.co.uk' },
+    { 'mq':3, 'site':'news.bbc.co.uk' },
+    { 'mq':3, 'site':'bbc.co.uk' },
 
-	)
+    )
 
 
 def TotalRequiredQueries():
-	""" count the total number of queries we've got planned """
-	cnt = 0;
-	for s in sites:
-		cnt += s[ 'mq']
-	return cnt
+    """ count the total number of queries we've got planned """
+    cnt = 0;
+    for s in sites:
+        cnt += s[ 'mq']
+    return cnt
 
 
 def FindLinks( site, maxqueries ):
-	results = []
+    results = []
 
-	cnt = 0
-	while cnt<maxqueries:
-		errcnt = 0
-		while 1:
-			try:
-				foo = technorati.getCosmos( site, 
-					start=1+(cnt*100),
-					limit=100,
-					querytype=None,
-					current=None,
-					license_key=key )
-				break
-			except Exception, e:
-				if isinstance( e, KeyboardInterrupt ):
-					raise
-				traceback.print_exc()
-				errcnt += 1
-				if errcnt>=3:
-					print >>sys.stderr, "QUITTING - run out of retries"
-					raise
+    cnt = 0
+    while cnt<maxqueries:
+        errcnt = 0
+        while 1:
+            try:
+                print "try (errcnt=%d)" % (errcnt)
+                foo = technorati.getCosmos( site, 
+                    start=1+(cnt*100),
+                    limit=100,
+                    querytype=None,
+                    current=None,
+                    license_key=key )
+                print "got ", len(foo )
+                break
+            except Exception, e:
+                if isinstance( e, KeyboardInterrupt ):
+                    raise
+#                traceback.print_exc()
+                errcnt = errcnt + 1
+                if errcnt>=5:
+                    print >>sys.stderr, "SKIP - run out of retries"
+                    return results
+                    #print >>sys.stderr, "QUITTING - run out of retries"
+                    #raise
+                time.sleep(5)
 
-		cnt=cnt+1
-		if len(foo) == 0:
-			break	# run out of results to fetch!
+        cnt=cnt+1
+        if len(foo) == 0:
+            break   # run out of results to fetch!
 
-#	print "Found %d links" % ( foo['inboundlinks'] )
+#   print "Found %d links" % ( foo['inboundlinks'] )
 
-		for item in foo['inbound']:
-			r = {
-				'blogname': item['weblog']['name'].decode('utf-8'),
-				'blogurl': item['weblog']['url'],
-				'nearestpermalink': item.get( 'nearestpermalink', '' ),
-				'linkurl': item['linkurl'],
-				'linkcreated': ukmedia.ParseDateTime( item['linkcreated'] ),
-				'excerpt': item['excerpt'].decode('utf-8'),
-				}
+        for item in foo['inbound']:
+            r = {
+                'blogname': item['weblog']['name'].decode('utf-8'),
+                'blogurl': item['weblog']['url'],
+                'nearestpermalink': item.get( 'nearestpermalink', '' ),
+                'linkurl': item['linkurl'],
+                'linkcreated': ukmedia.ParseDateTime( item['linkcreated'] ),
+                'excerpt': item['excerpt'].decode('utf-8'),
+                }
 
-			results.append( r )
+            results.append( r )
 
-	return results
+    return results
 
 
 
 
 def LoadBlogLinkIntoDB( conn, l, stats ):
-	""" Try and load a single blog link entry into the article_bloglink table """
-	c = conn.cursor()
+    """ Try and load a single blog link entry into the article_bloglink table """
+    c = conn.cursor()
 
-	#
-	srcid = scrapefront.CalcSrcID( l['linkurl'] )
-	if srcid == None:
-		# url is not handled by our scrapers...
-		stats.not_handled += 1
-		return
+    #
+    srcid = scrapefront.CalcSrcID( l['linkurl'] )
+    if srcid == None:
+        # url is not handled by our scrapers...
+        stats.not_handled += 1
+        return
 
-	# Do we have that article in our DB?
-	c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
-	articles = c.fetchall()
-	if len(articles) < 1:
-		# can't find article in DB
-		stats.missing += 1
-		return
-	if len(articles)>1:
-		print >>sys.stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
-	article_id = articles[0]['id']
-
-
-	# already got this bloglink?
-	c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND article_id=%s",
-		l['nearestpermalink'], article_id );
-	row = c.fetchone()
-	if row:
-		# already in db
-		bloglinkid = row['id']
-#		print "already had bloglink '%s'" %(l['nearestpermalink'])
-		stats.existed += 1
-		return
+    # Do we have that article in our DB?
+    c.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
+    articles = c.fetchall()
+    if len(articles) < 1:
+        # can't find article in DB
+        stats.missing += 1
+        return
+    if len(articles)>1:
+        print >>sys.stderr, "WARNING: multiple articles with same srcid (%s)" % (srcid)
+    article_id = articles[0]['id']
 
 
-	# OK, we can add the bloglink!
+    # already got this bloglink?
+    c.execute( "SELECT id FROM article_bloglink WHERE nearestpermalink=%s AND article_id=%s",
+        l['nearestpermalink'], article_id );
+    row = c.fetchone()
+    if row:
+        # already in db
+        bloglinkid = row['id']
+#       print "already had bloglink '%s'" %(l['nearestpermalink'])
+        stats.existed += 1
+        return
 
-	# first, try and scrape a title for it (ugh):
-	l['title'] = u''
-	if l['nearestpermalink'] != '':
-		t = ScrapeBlogTitle( l['nearestpermalink'] )
-		if t:
-			l['title'] = t
 
-	# now insert it into the database
-	c.execute( """INSERT INTO article_bloglink
-		( article_id, nearestpermalink, title, blogname, blogurl, linkcreated, excerpt, source )
-		VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
-		article_id,
-		l['nearestpermalink'],
-		l['title'].encode('utf-8'),
-		l['blogname'].encode('utf-8'),
-		l['blogurl'],
-		"%s" %(l['linkcreated']),
-		l['excerpt'].encode('utf-8'),
-		'technorati' )
+    # OK, we can add the bloglink!
 
-	c.execute( "select currval('article_bloglink_id_seq')" )
-	bloglinkid = c.fetchone()[0]
-#	print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, srcid, l['nearestpermalink'] )
-	c.close()
+    # first, try and scrape a title for it (ugh):
+    l['title'] = u''
+    if l['nearestpermalink'] != '':
+        t = ScrapeBlogTitle( l['nearestpermalink'] )
+        if t:
+            l['title'] = t
 
-	conn.commit()
+    # now insert it into the database
+    c.execute( """INSERT INTO article_bloglink
+        ( article_id, nearestpermalink, title, blogname, blogurl, linkcreated, excerpt, source )
+        VALUES ( %s,%s,%s,%s,%s,%s,%s,%s )""",
+        article_id,
+        l['nearestpermalink'],
+        l['title'].encode('utf-8'),
+        l['blogname'].encode('utf-8'),
+        l['blogurl'],
+        "%s" %(l['linkcreated']),
+        l['excerpt'].encode('utf-8'),
+        'technorati' )
 
-	stats.added += 1
-	return
+    c.execute( "select currval('article_bloglink_id_seq')" )
+    bloglinkid = c.fetchone()[0]
+#   print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, srcid, l['nearestpermalink'] )
+    c.close()
+
+    conn.commit()
+
+    stats.added += 1
+    return
 
 
 
 def DoSite( conn, sitename, maxqueries ):
-	stats = LinkStats()
-	links = FindLinks( sitename, maxqueries )
-	for l in links:
-		LoadBlogLinkIntoDB( conn, l, stats )
-	ukmedia.DBUG( "technorati-tool: %s: %s\n" % ( sitename, stats.Report() ) )
-	return stats
+    stats = LinkStats()
+    links = FindLinks( sitename, maxqueries )
+    for l in links:
+        LoadBlogLinkIntoDB( conn, l, stats )
+    ukmedia.DBUG( "technorati-tool: %s: %s\n" % ( sitename, stats.Report() ) )
+    return stats
 
 
 
 def ScrapeBlogTitle( url ):
-	"""tries to scrape the name of a blog posting from it's webpage"""
+    """tries to scrape the name of a blog posting from it's webpage"""
 
-	# pick off last part of the url
-	m = re.search( r"/([^/]+)/?$", url )
-	if not m:
-		return None
+    # pick off last part of the url
+    m = re.search( r"/([^/]+)/?$", url )
+    if not m:
+        return None
 
-	lookfor = unicode( m.group(1), 'utf-8' ).lower()
-	lookfor = re.sub( '[.](.*?)$', '', lookfor )	# strip extension
+    lookfor = unicode( m.group(1), 'utf-8' ).lower()
+    lookfor = re.sub( '[.](.*?)$', '', lookfor )    # strip extension
 
-	# tidy it up a bit
-	lookfor = lookfor.replace( '-', ' ' )
-	lookfor = lookfor.replace( '_', ' ' )
-	lookfor = re.sub( '[^\w\s]', '', lookfor )
+    # tidy it up a bit
+    lookfor = lookfor.replace( '-', ' ' )
+    lookfor = lookfor.replace( '_', ' ' )
+    lookfor = re.sub( '[^\w\s]', '', lookfor )
 
-	# build up a regex pattern to match our 
-	pat = lookfor
-	pat = re.sub( r"\s+", r'[\W]+', pat )	# tolerate commas, colons etc...
-	pat = re.sub( r"nt", r'n[\W]?t', pat )	# cant => can't
-	pat = re.sub( r"im", r'i[\W]?m', pat )	# im => I'm
-	pat = re.sub( r"s\b", r'[\W]?s', pat )	# bobs => bob's
+    # build up a regex pattern to match our 
+    pat = lookfor
+    pat = re.sub( r"\s+", r'[\W]+', pat )   # tolerate commas, colons etc...
+    pat = re.sub( r"nt", r'n[\W]?t', pat )  # cant => can't
+    pat = re.sub( r"im", r'i[\W]?m', pat )  # im => I'm
+    pat = re.sub( r"s\b", r'[\W]?s', pat )  # bobs => bob's
 
-	try:
-		html = ukmedia.FetchURL( url, timeout=10 )
-	except Exception, e:
-		# lots of blogs disappear on us...
-		if isinstance( e, KeyboardInterrupt ):
-			raise
-		return None
+    try:
+        html = ukmedia.FetchURL( url, timeout=10 )
+    except Exception, e:
+        # lots of blogs disappear on us...
+        if isinstance( e, KeyboardInterrupt ):
+            raise
+        return None
 
-	soup = BeautifulSoup( html )
+    soup = BeautifulSoup( html )
 
-#	print "looking for '%s'" % (lookfor)
-#	print " (pat '%s')" % (pat)
+#   print "looking for '%s'" % (lookfor)
+#   print " (pat '%s')" % (pat)
 
-	best = None
-	for t in soup.findAll( text=re.compile(pat,re.IGNORECASE) ):
-		candidate = unicode( t ).strip()
-		# skip anything that looks like javascript or html
-		if re.search( '[_={}<>]', candidate ):
-			continue
-		if "()" in candidate:
-			continue
+    best = None
+    for t in soup.findAll( text=re.compile(pat,re.IGNORECASE) ):
+        candidate = unicode( t ).strip()
+        # skip anything that looks like javascript or html
+        if re.search( '[_={}<>]', candidate ):
+            continue
+        if "()" in candidate:
+            continue
 
-		if not best or (len(candidate) < len(best)):
-			best = candidate
-#			print " best: '%s'" % (best)
+        if not best or (len(candidate) < len(best)):
+            best = candidate
+#           print " best: '%s'" % (best)
 
 
-	# if that failed, look through all the headings for one
-	# that contains all the words in our lookfor string
-	if best == None:
-		words = lookfor.split()
-		for h in soup.findAll( ['h1','h2','h3','h4'] ):
-			for t in h.findAll( text=True ):
-				candidate = unicode( t ).strip()
-				cnt = 0
-				lcand = candidate.lower()
-				# all non-numeric words are in the candidate?
-				for w in words:
-					if w.isdigit() or w in lcand:
-						cnt += 1
-				if cnt == len(words):	# all words are there
-					if not best or (len(candidate) < len(best)):
-						best = candidate
+    # if that failed, look through all the headings for one
+    # that contains all the words in our lookfor string
+    if best == None:
+        words = lookfor.split()
+        for h in soup.findAll( ['h1','h2','h3','h4'] ):
+            for t in h.findAll( text=True ):
+                candidate = unicode( t ).strip()
+                cnt = 0
+                lcand = candidate.lower()
+                # all non-numeric words are in the candidate?
+                for w in words:
+                    if w.isdigit() or w in lcand:
+                        cnt += 1
+                if cnt == len(words):   # all words are there
+                    if not best or (len(candidate) < len(best)):
+                        best = candidate
 
-	# last resort - use the <title>
-	if best == None:
-		t = soup.find('title')
-		if t:
-			best = t.renderContents(None)
+    # last resort - use the <title>
+    if best == None:
+        t = soup.find('title')
+        if t:
+            best = t.renderContents(None)
 
-	# resolve any html entities
-	if best:
-		best = ukmedia.DescapeHTML( best )
+    # resolve any html entities
+    if best:
+        best = ukmedia.DescapeHTML( best )
 
-	return best
+    return best
 
 
 
@@ -377,56 +383,56 @@ def ScrapeBlogTitle( url ):
 
 
 def main():
-	parser = OptionParser()
+    parser = OptionParser()
 
-	parser.add_option("-c", "--count-queries",
-		action="store_true", dest="count_queries", default=False,
-		help="print out the number of technorati api queries are planned, then exit")
+    parser.add_option("-c", "--count-queries",
+        action="store_true", dest="count_queries", default=False,
+        help="print out the number of technorati api queries are planned, then exit")
 
-	parser.add_option("-s", "--site",
-		action="store", dest="single_site",
-		help="execute a single query for site url")
+    parser.add_option("-s", "--site",
+        action="store", dest="single_site",
+        help="execute a single query for site url")
 
-	parser.add_option("-t", "--title-lookup",
-		action="store", dest="title_lookup",
-		help="try and scrape a title from a blog post")
+    parser.add_option("-t", "--title-lookup",
+        action="store", dest="title_lookup",
+        help="try and scrape a title from a blog post")
 
-	(options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-	if options.title_lookup:
-		title = ScrapeBlogTitle( options.title_lookup )
-		if title:
-			print "%s" % (title)
-		else:
-			print "couldn't determine title"
-		return
-
-
-	if options.count_queries:
-		print "%d queries planned" % ( TotalRequiredQueries() )
-		return
+    if options.title_lookup:
+        title = ScrapeBlogTitle( options.title_lookup )
+        if title:
+            print "%s" % (title)
+        else:
+            print "couldn't determine title"
+        return
 
 
-	conn = DB.Connect()
-
-	if options.single_site:
-		DoSite( conn, options.single_site, 1 )
-		return
+    if options.count_queries:
+        print "%d queries planned" % ( TotalRequiredQueries() )
+        return
 
 
-	# Do it!
+    conn = DB.Connect()
 
-	overallstats = LinkStats()
-	for site in sites:
-		sitename = site['site']
-		maxqueries = site['mq']
-		stats = DoSite( conn, sitename, maxqueries )
-		overallstats.Accumulate( stats )
+    if options.single_site:
+        DoSite( conn, options.single_site, 1 )
+        return
 
-	ukmedia.DBUG( "technorati-tool: OVERALL: %s" % ( overallstats.Report() ) )
+
+    # Do it!
+
+    overallstats = LinkStats()
+    for site in sites:
+        sitename = site['site']
+        maxqueries = site['mq']
+        stats = DoSite( conn, sitename, maxqueries )
+        overallstats.Accumulate( stats )
+
+    ukmedia.DBUG( "technorati-tool: OVERALL: %s" % ( overallstats.Report() ) )
 
 
 
 if __name__ == "__main__":
-	main()
+    main()
 

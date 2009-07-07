@@ -1,0 +1,71 @@
+#!/usr/bin/env python2.4
+#
+# Script to run sanity checks on the JL database.
+# eg newspapers getting the pubdate of articles wrong
+#
+
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+options = None
+
+
+def IsSpecialCase( a ):
+    """ a whole bunch of special cases - a lot of old dates are valid after all """
+
+    o = urlparse.urlparse( a['permalink'] )
+
+    # guardian in particular has archives going waaaay back...
+    if 'century.guardian.co.uk' in o[1]:
+        return True
+    if 'guardian.co.uk' in o[1]:
+        if '/%d/' % (a['pubdate'].year) in a['permalink']:
+            return True
+    if 'news.bbc.co.uk' in o[1]:
+        if '%d:' % (a['pubdate'].year) in a['title']:
+            return True
+    return False
+
+
+def SanityCheckDates( conn ):
+    global options
+
+    if options.verbose:
+        print "checking dates"
+
+    c=conn.cursor()
+    c.execute( "SELECT id,pubdate,title,permalink FROM article WHERE pubdate<'1990-01-01' OR pubdate>NOW()+interval '2 days'" )
+    badones = c.fetchall()
+
+    # filter out special cases
+    badones = [b for b in badones if not IsSpecialCase(b) ]
+
+    for b in badones:
+        print( "Dodgy Date: %s [a%d %s] - %s" % ( b['pubdate'], b['id'], b['title'], b['permalink'] ) )
+    c.close()
+    if options.verbose:
+        print "found %d dodgy dates" % (len(badones))
+
+
+
+def main():
+    global options
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+    SanityCheckDates( conn )
+
+if __name__ == "__main__":
+    main()
+

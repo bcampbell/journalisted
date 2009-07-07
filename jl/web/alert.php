@@ -16,86 +16,101 @@ require_once '../../phplib/importparams.php';
  */
 
 
+$P = NULL;
+
 /* display different messages depending on why we're here */
 if( get_http_var( 'Add' ) )
 {
-	$journo_ref = get_http_var( 'j' );
-	$jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
+    $journo_ref = get_http_var( 'j' );
+    $jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
 
-	// adding an alert...
-	$r = array(
-		'reason_web' => "To add {$jname} to your My Journalisted newsroom, we need your email address.",
-		'reason_email' => "You'll then be emailed when {$jname} writes anything",
-		'reason_email_subject' => "Set up a My Journalisted email alert"
-		);
+    // adding an alert...
+    $r = array(
+        'reason_web' => "Set up an email alert for {$jname}",
+        'reason_email' => "Set up an email alert for {$jname}",
+        'reason_email_subject' => "Set up a Journalisted email alert"
+        );
+    $P = person_signon($r);
+    /* will redirect to login.php if person not logged in, then come back here afterward */
 }
 else if( get_http_var( 'Remove' ) )
 {
-	$journo_ref = get_http_var( 'j' );
-	$jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
+    $journo_ref = get_http_var( 'j' );
+    $jname = db_getOne( "SELECT prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
 
-	// remove an alert...
-	$r = array(
-		'reason_web' => "Before removing {$jname} from your list, we need to confirm your email address.",
-		'reason_email' => "Your email alert will then be removed",
-		'reason_email_subject' => "Remove a My Journalisted email alert"
-		);
+    // remove an alert...
+    $r = array(
+        'reason_web' => "Remove email alert for {$jname}",
+        'reason_email' => "Remove email alert for {$jname}",
+        'reason_email_subject' => "Remove a Journalisted email alert"
+        );
+    $P = person_signon($r);
+    /* will redirect to login.php if person not logged in, then come back here afterward */
 }
 else
 {
-	// default - just viewing existing alerts (or updating password)
-	$r = array(
-		'reason_web' => "To start using My Journalisted, we need your email address.",
-		'reason_email' => "Then you will be able to use My Journalisted.",
-		'reason_email_subject' => 'My Journalisted: email confirmation'
-		);
+    // default - just viewing existing alerts (or updating password)
+    $r = array(
+        'reason_web' => "Manage your email alerts",
+        'reason_email' => "Manage your email alerts",
+        'reason_email_subject' => 'Journalisted log in: email confirmation'
+        );
+    $P = person_if_signed_on();
 }
-
-/* if user isn't logged in, person_signon will stash the request in the db,
- * redirect to the login page, and redirect back here with the original
- * request when done.
- */
-$P = person_signon($r);
 
 
 /* OK, if we get here, we've got a logged-in user and can start our output! */ 
-page_header( "My Journalisted", array( 'menupage'=>'my') );
-
-print"<div id=\"maincolumn\">\n";
+page_header( "Alerts", array( 'menupage'=>'my') );
 
 ?>
-<div class="boxwide">
-<h2>My Journalisted</h2>
+<div id="maincolumn">
+<div class="box">
+<h2>Alerts</h2>
+<div class="box-content">
 <p>
-Create your own newspaper! Sort of.
-</p>
-<p>
-Tell us who your favourite journalists are and we'll email you whenever they write an article.
+Follow your favourite journalist(s).<br />
+Just enter your email address and you’ll be able to pick
+any bylined journalists from the national press or the BBC. Every time s/he writes a new article
+an alert will be emailed to you automatically each morning, along with those of other journalists you’ve picked.
 </p>
 <?php
 
-if( get_http_var( 'Add' ) )
-{
-	// create a new alert
-	$journo_ref = get_http_var( 'j' );
-	DoAddAlert( $P, $journo_ref );
-}
-else if( get_http_var( 'Remove' ) )
-{
-	// remove an alert
-	$journo_ref = get_http_var( 'j' );
-	DoRemoveAlert( $P, $journo_ref );
+
+if( $P ) {
+    // the logged-in version:
+
+    if( get_http_var( 'Add' ) ) {
+        // create a new alert
+        $journo_ref = get_http_var( 'j' );
+        DoAddAlert( $P, $journo_ref );
+    }
+    else if( get_http_var( 'Remove' ) )
+    {
+        // remove an alert
+        $journo_ref = get_http_var( 'j' );
+        DoRemoveAlert( $P, $journo_ref );
+    }
+
+    alert_emit_list( $P->id );
+    EmitLookupForm();
+} else {
+    // the non logged-in version:
+    loginform_emit();
 }
 
-alert_emit_list( $P->id );
-print "<br>\n";
-EmitLookupForm();
-print"</div>\n";
-print"</div>\n";
-
-print"<div id=\"smallcolumn\">\n";
-EmitChangePasswordBox();
-print"</div>\n";
+?>
+</div>
+</div>
+</div>  <!-- end maincolumn -->
+<div id="smallcolumn">
+<?php
+if( $P ) {
+    EmitChangePasswordBox();
+}
+emit_popularalertsbox();
+?>
+</div>  <!-- end smallcolumn -->
+<?php
 
 page_footer();
 
@@ -103,41 +118,41 @@ page_footer();
 
 function DoAddAlert( $P, $journo_ref )
 {
-	$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
-	if( !$journo )
-		err( "bad journalist ref" );
+    $journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=? AND status='a'", $journo_ref );
+    if( !$journo )
+        err( "bad journalist ref" );
 
 
-	$url = "/{$journo_ref}";
+    $url = "/{$journo_ref}";
 
-	$journo_id = $journo['id'];
-	if( !db_getOne( "SELECT id FROM alert WHERE journo_id=? AND person_id=?", $journo_id, $P->id ) )
-	{
+    $journo_id = $journo['id'];
+    if( !db_getOne( "SELECT id FROM alert WHERE journo_id=? AND person_id=?", $journo_id, $P->id ) )
+    {
 
-		db_query( "INSERT INTO alert (person_id,journo_id) VALUES (?,?)", $P->id, $journo_id );
-		db_commit();
+        db_query( "INSERT INTO alert (person_id,journo_id) VALUES (?,?)", $P->id, $journo_id );
+        db_commit();
 
-		print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> was added to your list.</p>\n" );
-	}
-	else
-	{
-		print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> is already on your list.</p>\n" );
-	}
+        print( "<p class=\"infomessage\"><a href=\"{$url}\">{$journo['prettyname']}</a> was added to your list.</p>\n" );
+    }
+    else
+    {
+        print( "<p class=\"infomessage\"><a href=\"{$url}\">{$journo['prettyname']}</a> is already on your list.</p>\n" );
+    }
 }
 
 
 function DoRemoveAlert( $P, $journo_ref )
 {
-	$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $journo_ref );
-	if( !$journo )
-		err( "bad journalist ref" );
+    $journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $journo_ref );
+    if( !$journo )
+        err( "bad journalist ref" );
 
-	$url = "/{$journo_ref}";
+    $url = "/{$journo_ref}";
 
-	$journo_id = $journo['id'];
-	db_query( "DELETE FROM alert WHERE journo_id=? AND person_id=?", $journo_id, $P->id );
-	db_commit();
-	print( "<p><a href=\"{$url}\">{$journo['prettyname']}</a> was removed from your list.</p>\n" );
+    $journo_id = $journo['id'];
+    db_query( "DELETE FROM alert WHERE journo_id=? AND person_id=?", $journo_id, $P->id );
+    db_commit();
+    print( "<p class=\"infomessage\"><a href=\"{$url}\">{$journo['prettyname']}</a> was removed from your list.</p>\n" );
 }
 
 
@@ -147,9 +162,9 @@ function EmitChangePasswordBox()
 {
     global $q_UpdateDetails, $q_pw1, $q_pw2;
 
-	$P = person_if_signed_on();
-	if( !$P )
-		return;
+    $P = person_if_signed_on();
+    if( !$P )
+        return;
 
     importparams(
     #        array('email',          '/./',          '', null),
@@ -161,18 +176,19 @@ function EmitChangePasswordBox()
     $has_password = $P->has_password();
 
 ?>
-<div class="boxnarrow">
-<h2><?=$has_password ? _('Change password') : _('Set password') ?></h2>
+<div class="box">
+  <h3><?=$has_password ? _('Change your password') : _('Set a password') ?></h3>
+  <div class="box-content">
 <?php
-	if( !$q_UpdateDetails && !$has_password ) {
+    if( !$q_UpdateDetails && !$has_password ) {
 ?>
-<p>Setting up a password means you won't have to confirm your
-email address every time you want to manage your journalist list.</p>
+    <p>Setting up a password means you won't have to confirm your
+    email address every time you want to manage your journalist list.</p>
 <?php
-	}
+    }
 ?>
-<form name="setpassword" action="/alert" method="post">
-	<input type="hidden" name="UpdateDetails" value="1">
+    <form name="setpassword" action="/alert" method="post">
+      <input type="hidden" name="UpdateDetails" value="1">
 <?php
 
 
@@ -187,7 +203,7 @@ email address every time you want to manage your journalist list.</p>
         else {
             $P->password($q_pw1);
             db_commit();
-            print '<p class="success">' . ($has_password ? _('Password successfully updated') 
+            print '<p class="infomessage">' . ($has_password ? _('Password successfully updated') 
                 : _('Password successfully set'))
             . '</p>';
             $has_password = true;
@@ -195,13 +211,17 @@ email address every time you want to manage your journalist list.</p>
         }
     }
     if (!is_null($error))
-        print "<p id=\"error\">$error</p>";
+        print "<p class=\"errhint\">$error</p>";
     ?>
-    <p>
-    <?=_('New password:') ?> <input type="password" name="pw1" id="pw1" size="15">
-    <br><?=_('New password, again:') ?> <input type="password" name="pw2" id="pw2" size="10">
-    <input name="submit" type="submit" value="<?=_('Submit') ?>"></p>
-</form>
+      <p>
+        <label for="pw1">New password:</label>
+        <input type="password" name="pw1" id="pw1" size="15" /><br/>
+        <label for="pw2">New password, again:</label>
+        <input type="password" name="pw2" id="pw2" size="15" />
+      </p>
+      <input name="submit" type="submit" value="<?=_('Submit') ?>">
+    </form>
+  </div>
 </div>
 
     <?
@@ -210,44 +230,40 @@ email address every time you want to manage your journalist list.</p>
 /* output a list of alerts for a user */
 function alert_emit_list( $person_id )
 {
-//	print "<h2>Your Email Alerts</h2>\n";
+//  print "<h2>Your Email Alerts</h2>\n";
 
-	$q = db_query( "SELECT a.id,a.journo_id, j.prettyname, j.ref " .
-		"FROM (alert a INNER JOIN journo j ON j.id=a.journo_id) " .
-		"WHERE a.person_id=? ORDER BY j.lastname" , $person_id );
+    $alerts = db_getAll( "SELECT a.id,a.journo_id, j.prettyname, j.ref, j.oneliner " .
+        "FROM (alert a INNER JOIN journo j ON j.id=a.journo_id) " .
+        "WHERE a.person_id=? ORDER BY j.lastname" , $person_id );
 
-	if( db_num_rows($q) > 0 )
-	{
-		print "<p>Your list of journalists:</p>\n";
-		print "<ul>\n";
-		while( $row=db_fetch_array($q) )
-		{
-			$journopage = "/{$row['ref']}";
-			$removeurl = "/alert?Remove=1&j={$row['ref']}";
-			printf( "<li><a href=\"%s\">%s</a> <small>[<a href=\"%s\">remove</a>]</small></li>",
-				$journopage, $row['prettyname'], $removeurl );
-		}
-		print "</ul>\n";
-	}
-	else
-	{
+    if( $alerts ) {
 
 ?>
-<p>
-You have no journalists on your list.<br>
-To add some, use the "My Journalisted" box on a journalists page, or use
-the search box below...
-</p>
+<p>Your alerts:</p>
+    <ul>
+<?php foreach( $alerts as $j ) { ?>
+      <li>
+        <a href="<?php echo '/'.$j['ref']; ?>"><?php echo $j['prettyname']; ?></a> (<?php echo $j['oneliner']; ?>)
+          <small>[<a href="/alert?Remove=1&j=<?php echo $j['ref']; ?>">remove</a>]</small>
+      </li>
+<?php } ?>
+    </ul>
+<?php
+
+    } else {
+
+?>
+<p> You have no alerts set up.  </p>
 <?
 
-	}
+    }
 }
 
 
 // form to quickly lookup journos by name
 function EmitLookupForm()
 {
-	$lookup = get_http_var('lookup')
+    $lookup = get_http_var('lookup')
 ?>
 <form action="/alert" method="get">
 Look up journalist by name:
@@ -256,24 +272,54 @@ Look up journalist by name:
 </form>
 <?php
 
-	if( $lookup )
-	{
-		$pat = strtolower( "%{$lookup}%" );
-		$q = db_query( "SELECT ref,prettyname FROM journo WHERE status='a' AND LOWER(prettyname) LIKE( ? )", $pat );
-
-		$cnt = 0;
-		print "<ul>\n";
-		while( $j = db_fetch_array($q) )
-		{
-			$cnt++;
-			$url = '/' . $j['ref'];
-			print "<li><a href=\"{$url}\">{$j['prettyname']}</a> ";
-			print "<small>[<a href=\"/alert?Add=1&j={$j['ref']}\">add</a>]</small></li>\n";
-		}
-		print "</ul>\n";
-		print "<p>{$cnt} Matches</p>";
-	}
-	print "<br>\n";
+    if( $lookup )
+    {
+        $pat = strtolower( "%{$lookup}%" );
+        $journos = db_getAll( "SELECT ref,prettyname,oneliner FROM journo WHERE status='a' AND LOWER(prettyname) LIKE( ? )", $pat );
+?>
+    <p><?php echo sizeof($journos); ?> matches:</p>
+    <ul>
+<?php foreach( $journos as $j ) { ?>
+      <li>
+        <a href="<?php echo '/'.$j['ref']; ?>"><?php echo $j['prettyname']; ?></a> (<?php echo $j['oneliner']; ?>)
+          <small>[<a href="/alert?Add=1&j=<?php echo $j['ref']; ?>">add</a>]</small>
+      </li>
+<?php } ?>
+    </ul>
+<?php
+    }
 }
 
+
+function emit_popularalertsbox()
+{
+    $sql = <<<EOT
+SELECT j.prettyname, j.ref, j.oneliner, count(j.ref) AS cnt
+    FROM (journo j INNER JOIN alert a ON a.journo_id=j.id)
+    GROUP BY j.ref,j.prettyname,j.oneliner
+    ORDER BY cnt DESC
+    LIMIT 10
+EOT;
+
+    $popular = db_getAll( $sql );
+
+?>
+<div class="box">
+  <h3>Popular alerts</h3>
+  <div class="box-content">
+    <ul>
+<?php foreach( $popular as $j ) { ?>
+      <li>
+        <a href="<?php echo '/'.$j['ref']; ?>"><?php echo $j['prettyname']; ?></a> (<?php echo $j['oneliner']; ?>)
+          <small>[<a href="/alert?Add=1&j=<?php echo $j['ref']; ?>">add</a>]</small>
+      </li>
+<?php } ?>
+    </ul>
+  </div>
+</div>
+<?php
+
+}
+
+?>
 

@@ -10,8 +10,22 @@
  */
 
 require_once '../conf/general';
-require_once '../phplib/misc.php';
+require_once 'misc.php';
+require_once '../phplib/journo.php';
 require_once '../../phplib/db.php';
+
+
+
+/*
+ * - has had a story published within last 24 hours
+ * - has some bio information
+ * - most recent story has a picture
+ */
+
+function frontpage_findInterestingJournos()
+{
+}
+
 
 
 function offline_frontpage_emit()
@@ -159,10 +173,9 @@ EOT;
 function emit_whoswritingaboutwhat()
 {
 ?>
-
-<div class="boxwide tags">
-<h2>The most written about subjects today are...</h2>
-<div class="boxwide-content">
+<div class="box tags">
+<h2>The most written about subjects today are:</h2>
+<div class="box-content">
 
 <?php
 
@@ -187,5 +200,182 @@ EOT;
 
 }
 
+
+function article_addJournos( &$a )
+{
+    $j = db_getAll( "SELECT prettyname,ref FROM journo j INNER JOIN journo_attr attr ON attr.journo_id=j.id WHERE attr.article_id=? LIMIT 1", ($a['id']) );
+    if( $j )
+        $a['journos'] = $j;
+    else
+        $a['journos'] = array();
+}
+
+/* fn to generate the "most commented on stories today" box */
+function emit_mostcommentedarticles()
+{
+    $sql = <<<EOT
+SELECT a.id,a.srcorg,a.title,a.permalink,a.total_comments,o.prettyname as srcorgname
+    FROM article a INNER JOIN organisation o ON a.srcorg=o.id
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '48 hours'
+    ORDER BY a.total_comments DESC
+    LIMIT 5
+EOT;
+
+    $arts = db_getAll( $sql );
+    foreach( $arts as &$a ) {
+        article_addJournos( $a );
+    }
+
+
+?>
+<div class="box">
+  <h3>Most commented on stories today</h3>
+  <div class="box-content">
+    <ul>
+<?php foreach( $arts as $art ) { ?>
+      <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a><br/>
+        &nbsp;&nbsp;&nbsp;
+<?php if($art['journos']) { $j=$art['journos'][0]; ?>
+        <a href="/<?php echo $j['ref']; ?>"><?php echo $j['prettyname']; ?></a>,
+<?php } ?>
+        <span class="publication"><?php echo $art['srcorgname']; ?></span><br/>
+        &nbsp;&nbsp;&nbsp; (<?php echo $art['total_comments'];?> comments)
+      </li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+
+}
+
+/* fn to generate the "most blogged about stories today" box */
+function emit_mostbloggedarticles()
+{
+    $sql = <<<EOT
+SELECT a.id,a.srcorg,a.title,a.permalink,a.total_bloglinks,o.prettyname as srcorgname
+    FROM article a INNER JOIN organisation o ON a.srcorg=o.id
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '48 hours'
+    ORDER BY a.total_bloglinks DESC
+    LIMIT 5
+EOT;
+
+    $arts = db_getAll( $sql );
+    foreach( $arts as &$a ) {
+        article_addJournos( $a );
+    }
+
+?>
+<div class="box">
+ <h3>Most blogged about stories today</h3>
+ <div class="box-content">
+  <ul>
+<?php foreach( $arts as $art ) { ?>
+      <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a><br/>
+        &nbsp;&nbsp;&nbsp;
+<?php if($art['journos']) { $j=$art['journos'][0]; ?>
+        <a href="/<?php echo $j['ref']; ?>"><?php echo $j['prettyname']; ?></a>,
+<?php } ?>
+        <span class="publication"><?php echo $art['srcorgname']; ?></span><br/>
+        &nbsp;&nbsp;&nbsp; (<?php echo $art['total_bloglinks'];?> blogs)
+      </li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+
+}
+
+
+
+
+
+function frontpage_emitFeaturedJourno( &$journo ) {
+
+    $journo_id = $journo['id'];
+
+    $bios = journo_fetchBios( $journo_id );
+    $writtenfor = journo_fetchWrittenFor( $journo_id );
+
+    $sql = <<<EOT
+SELECT a.id,a.title,a.description,a.pubdate,a.permalink, o.prettyname as srcorgname, a.srcorg,a.total_bloglinks,a.total_comments
+    FROM article a
+        INNER JOIN journo_attr attr ON a.id=attr.article_id
+        INNER JOIN organisation o ON o.id=a.srcorg
+    WHERE a.status='a' AND attr.journo_id=?
+    ORDER BY a.pubdate DESC
+    LIMIT 5
+EOT;
+
+    $articles = db_getAll( $sql , $journo['id'] );
+
+    $newest_art = array_shift( $articles );
+    if( $newest_art ) {
+        $img = db_getRow( "SELECT * FROM article_image WHERE article_id=? LIMIT 1", $newest_art['id'] );
+        if( $img )
+        {
+            $img['thumb_w'] = 128;
+            $img['thumb_url'] = sprintf( '/imgsize?img=%s&w=%d&unsharp=1',
+                urlencode( $img['url'] ),
+                $img['thumb_w'] );
+        }
+        $newest_art['image'] = $img;
+    }
+
+?>
+<div class="box featured-journo">
+
+  <h2>Featured Journalist: <a href="/<?php echo $journo['ref']; ?>"><?php echo $journo['prettyname']; ?></a></h2>
+  <div class="box-content">
+    <ul>
+<?php
+    foreach($bios as $bio ) {
+?>
+    <li class="bio-para"><?php echo $bio['bio']; ?>
+<!--      <div style="clear:both;"></div> -->
+      <div class="disclaimer">
+        (source: <a class="extlink" href="<?php echo $bio['srcurl'];?>"><?php echo $bio['srcname'];?></a>)
+      </div>
+    </li>
+<?php
+    }
+?>
+
+    <li>
+      <?php echo $journo['prettyname'];?> has written articles published in <?php echo $writtenfor; ?>.
+    </li>
+    <div style="clear:both;"></div>
+
+    <li>Most Recent Article:<br/>
+    <div class="art art-summary">
+<!--      <?php $img=$newest_art['image']; if( $img ) { ?>
+      <img class="thumb" src="<?php echo $img['thumb_url']; ?>" />
+      <?php } ?> -->
+      <h3><a href="<?php echo article_url($newest_art['id']);?>" ><?php echo $newest_art['title']; ?></a></h3>
+      <span class="publication"><?php echo $newest_art['srcorgname']; ?></span>
+      <blockquote>
+        <?php echo $newest_art['description']; ?>
+      </blockquote>
+      <div style="clear:both;"></div>
+    </div>
+    </li>
+
+    <li>Previous Articles
+      <ul class="art-list-brief">
+
+
+<?php foreach( $articles as $art ) { ?>
+        <li class="art">'<a href="<?php echo article_url($art['id']);?>" ><?php echo $art['title']; ?></a>', <span class="publication"><?php echo $art['srcorgname']; ?></span></li>
+<?php } ?>
+      </ul>
+    </li>
+
+    </ul>
+
+  </div>
+</div>
+<?php
+}
 
 ?>

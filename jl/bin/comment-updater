@@ -14,6 +14,7 @@ from optparse import OptionParser
 import sys
 import psycopg2
 import traceback
+import urllib2
 
 sys.path.append( "../pylib" )
 from JL import DB,Misc,ukmedia,CommentLink
@@ -95,8 +96,10 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
         OR
          (NOW()-pubdate > '5 days'::interval AND last_comment_check-pubdate < '5 days'::interval )
         )
-    LIMIT %s
 """
+    if options.recent_first:
+        sql = sql + "ORDER BY pubdate DESC \n"
+    sql = sql + """LIMIT %s"""
 
 #    print sql
 
@@ -107,7 +110,8 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
     c = conn.cursor()
     c.execute( sql, max_articles )
 
-    errcnt = 0
+    err_cnt = 0
+    pagenotfound_cnt = 0
     cnt_ok = 0
     while 1:
         row = c.fetchone()
@@ -115,24 +119,37 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
             break
         try:
             UpdateArticle( conn, options, row['id'], row['srcurl'] )
-	    cnt_ok = cnt_ok + 1
-	    if not options.dryrun:
-		    conn.commit()
+            cnt_ok = cnt_ok + 1
+            if not options.dryrun:
+                conn.commit()
         except Exception, err:
-            report = traceback.format_exc()
+            suppress_err = 0
 
-            msg = u"FAILED ON [a%d] %s :" % (row['id'], row['srcurl'])
-            print >>sys.stderr, msg.encode( 'utf-8' )
-            print >>sys.stderr, '-'*60
-            print >>sys.stderr, report
-            print >>sys.stderr, '-'*60
-            errcnt = errcnt + 1
-            if errcnt >=max_errors:
-                print >>sys.stderr, "Too many errors - ABORTING"
+            if isinstance( err, KeyboardInterrupt ):
+                # always just bail out upon ctrl-c
                 raise
+            if isinstance( err, urllib2.HTTPError ):
+                if err.code == 404:
+                    suppress_err = 1
+                    pagenotfound_cnt = pagenotfound_cnt + 1
+                    if options.verbose:
+                        print >>sys.stderr, "HTTPError (%d) on [a%d] %s" % (err.code, row['id'], row['srcurl'] )
+ 
+            if suppress_err==0:
+                report = traceback.format_exc()
+
+                msg = u"FAILED ON [a%d] %s :" % (row['id'], row['srcurl'])
+                print >>sys.stderr, msg.encode( 'utf-8' )
+                print >>sys.stderr, '-'*60
+                print >>sys.stderr, report
+                print >>sys.stderr, '-'*60
+                err_cnt = err_cnt + 1
+                if err_cnt >=max_errors:
+                    print >>sys.stderr, "Too many errors - ABORTING"
+                    raise
 
     if options.verbose:
-    	print "%d ok, %d errors" %(cnt_ok,errcnt)
+    	print "%d ok, %d errors, %d 404s" %(cnt_ok,err_cnt,pagenotfound_cnt)
 
 
 def DoSingleArticle( conn,options ):
@@ -160,6 +177,7 @@ def main():
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
     parser.add_option( "-u", "--url", dest="url", help="update single article with this URL", metavar="URL" )
     parser.add_option( "-n", "--num_articles", dest="num_articles", type="int", help="max number of articles to rescrape (default 200)", default=200 )
+    parser.add_option("-r", "--recent-first", action="store_true", dest="recent_first", help="do the most recently-published ones first")
 
     (options, args) = parser.parse_args()
 

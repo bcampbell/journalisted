@@ -36,6 +36,7 @@ function gatso_report_html()
 	$total = getmicrotime() - $g_gatsostart;
 
 	print "<!--\n";
+	printf("TOTAL page time: %.3fs\n",$total );
 	foreach( $g_gatsos as $name=>$g )
 	{
 		$percent = 100.0 * $g['tot'] / $total;
@@ -44,7 +45,6 @@ function gatso_report_html()
 		else
 			printf( "%s: %.3fs (%.0f%%)\n", $name, $g['tot'], $percent );
 	}
-	printf("TOTAL time: %.3fs\n",$total );
 	print "-->\n";
 }
 

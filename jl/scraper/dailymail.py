@@ -96,6 +96,24 @@ def Extract( html, context ):
 
     maindiv = soup.find( 'div', {'class': re.compile(r'\barticle-text\b') } )
 
+    # pull out links to comments (at top of article)
+    art['commentlinks'] = []
+    commentlinks = maindiv.find( 'div', {'class': 'article-icon-links-container' } )
+    if commentlinks:
+        a = commentlinks.find('a',{'class':'comments-link'})
+        if a:
+            comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
+
+            cntspan = a.find('span', {'class': 'readerCommentNo'} )
+            num_comments = 0
+            if cntspan:
+                cnttxt = cntspan.renderContents(None).strip()
+                if cnttxt != u'-':
+                    num_comments = int( cntspan.renderContents(None) )
+            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
+        commentlinks.extract()
+
+
     # kill everything after article text
     cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bintellicrumbs\b')} )
     if not cruftstart:
@@ -109,41 +127,53 @@ def Extract( html, context ):
 
     desctxt = u''
     titletxt = u''
+    bylinetxt = u''
+    pubdatetxt = u''
 
-    femaildiv = maindiv.find( 'div', {'class':'feMailHeaderWide'} )
-    if femaildiv:
-        h = femaildiv.find( re.compile( 'h[12]' ) )
-        titletxt = h.renderContents(None)
-        titletxt =  ukmedia.FromHTML( titletxt )
+    h1 = maindiv.find('h1')
+    titletxt = ukmedia.FromHTMLOneLine( h1.renderContents(None) );
+
+    # extract byline and date - first one or two paras after headline
+    txt = u''
+    for p in h1.findNextSiblings( 'p', limit=2 ):
+        foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
+        if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
+            txt = u' '.join( (txt, foo) )
+            p.extract()
+
+    foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" );
+    m = foo.search( txt )
+    bylinetxt = m.group(1)
+    if bylinetxt is None:
+        bylinetxt = u''
+    pubdatetxt = m.group(2)
+
+    if 0:
+        femaildiv = maindiv.find( 'div', {'class':'feMailHeaderWide'} )
+        if femaildiv:
+            h = femaildiv.find( re.compile( 'h[12]' ) )
+            titletxt = h.renderContents(None)
+            titletxt =  ukmedia.FromHTML( titletxt )
         # there may or may not also be an h2...
 #        desctxt = femaildiv.h2.renderContents(None)
 #        desctxt =  ukmedia.FromHTML( desctxt )
-        femaildiv.extract()
-    else:
+            femaildiv.extract()
+        else:
 
-        for e in maindiv.findAll( 'h1' ):
-            titletxt = titletxt + ukmedia.FromHTML( e.renderContents(None) )
-            e.extract()
-
-        if titletxt == u'':
-            # sometimes there are no 'h1' elements and the headlines are done with <font>
-            e  = maindiv.find( 'font' )
-            if e and e.has_key('size'):
-                titletxt = e.renderContents(None)
-                titletxt = ukmedia.FromHTML( titletxt )
+            for e in maindiv.findAll( 'h1' ):
+                titletxt = titletxt + ukmedia.FromHTML( e.renderContents(None) )
                 e.extract()
 
-    art['title'] = u' '.join( titletxt.split() )
+            if titletxt == u'':
+                # sometimes there are no 'h1' elements and the headlines are done with <font>
+                e  = maindiv.find( 'font' )
+                if e and e.has_key('size'):
+                    titletxt = e.renderContents(None)
+                    titletxt = ukmedia.FromHTML( titletxt )
+                    e.extract()
 
 
-    # extract byline.
-    authors = []
-    a=None
-    for a in maindiv.findAll( 'a', {'class':'author'} ):
-        authors.append( ukmedia.FromHTML( a.renderContents(None ) ) )
-    bylinetxt = u' and '.join( authors )
-    if bylinetxt:
-        maindiv.p.extract()
+
 
     if bylinetxt == u'':
         # columnists have no bylines, but might have a "More From ..." bit in <div class="columnist-archive"
@@ -165,44 +195,24 @@ def Extract( html, context ):
                     bylinetxt = n
                     break
 
+    art['title'] = u' '.join( titletxt.split() )
     art['byline'] = u' '.join( bylinetxt.split() )
+    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt.strip() )
 
 
+    if 0:
+        # the date part...
+        # eg "Last updated at 2:42 PM on 22nd May 2008"
+        e = maindiv.find( text=re.compile( r'^\s*Last updated at' ) )
+        if e:
+            pubdatetxt = unicode(e)
+            e.extract()
+            art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt.strip() )
+        else:
+            # no pubdate on page.... just make it up
+            art['pubdate'] = datetime.now()
 
 
-    pubdatetxt = u''
-
-
-    # the date part...
-    # eg "Last updated at 2:42 PM on 22nd May 2008"
-    e = maindiv.find( text=re.compile( r'^\s*Last updated at' ) )
-    if e:
-        pubdatetxt = unicode(e)
-        e.extract()
-        art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt.strip() )
-    else:
-        # no pubdate on page.... just make it up
-        art['pubdate'] = datetime.now()
-
-
-
-    # pull out links to comments (at top of article)
-    art['commentlinks'] = []
-    commentlinks = maindiv.find( 'div', {'class': 'article-icon-links-container' } )
-    if commentlinks:
-        a = commentlinks.find('a',{'class':'comments-link'})
-        if a:
-            comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
-
-            cntspan = a.find('span', {'class': 'readerCommentNo'} )
-            num_comments = 0
-            if cntspan:
-                cnttxt = cntspan.renderContents(None).strip()
-                if cnttxt != u'-':
-                    num_comments = int( cntspan.renderContents(None) )
-
-            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
-        commentlinks.extract()
 
     # pull out images (<img> followed by <p class="imageCaption"> )
     art['images'] = []
@@ -250,7 +260,8 @@ def Extract( html, context ):
         cruft.extract()
     for cruft in maindiv.findAll( 'div', {'class':re.compile('ArtInlineReadLinks') } ):
         cruft.extract()
-
+    for cruft in maindiv.findAll( 'div', {'class':'explore-links'} ):
+        cruft.extract()
     contenttxt = maindiv.renderContents(None)
 
 #    contenttxt = maindiv.prettify(None)

@@ -1,0 +1,204 @@
+#!/usr/bin/env python2.4
+#
+# tool to discover similar articles
+# Uses the xapian database to find matches, and puts results in the article_similar table in the postgres db
+#
+
+import sys
+import xapian
+import string
+from datetime import datetime
+from optparse import OptionParser
+import simplejson as json
+#import operator
+#import psycopg2 # for IntegrityError
+
+import site
+site.addsitedir("../pylib")
+from JL import DB,ukmedia
+
+import mysociety.config
+
+
+# how many relevant terms to try to extract from doc (which are then
+# used to find other similar docs)
+NUM_EXPANDED_TERMS = 15
+
+# max number of similar articles to look for
+MAX_SIMILAR_ARTICLES = 50
+
+# discard any similarity matches below this threshold
+SCORE_CUTOFF = 20.0
+
+
+mysociety.config.set_file("../conf/general")
+xapdbpath = mysociety.config.get('JL_XAPDB')
+conn = None
+xap_db = None
+options = None
+
+stopwords = ( 'i', 'all', 'are', 'one', 'but', 'as', 'it', 'that', 'was', 'you', 'be', 'or', 'is', 'by', 'there', 'what', 'with', 'for', 'can',
+    'so', 'then', 'we', 'would', 'this', 'like', 'just', 'an', 'if', 'too', 'us', 'less', 'even', 'me', 'way',
+    'have', 'he', 'who', 'which', 'yes', 'well', 'were', "don't", 'not', 'has', 'few', 'at',
+    'our', "i'm", 'why', 'now', 'his',
+    'from', 'on', 'they', 'your', 'send', 'of', 'these', 'their', 'in', 'and', 'than', 'to', 'a' )
+
+
+class Filter(xapian.ExpandDecider):
+    def __call__(self, term):
+        if term[0].isupper():
+            return False
+        if term in stopwords:
+            return False
+        return True
+
+class DocExcluder(xapian.MatchDecider):
+    def __init__(self, doc_id):
+        xapian.MatchDecider.__init__(self)
+        self.doc_id = doc_id
+    def __call__(self, doc):
+        return doc.get_docid() != self.doc_id
+
+
+def FindSimilarArticles( art ):
+    """ returns a list of (article_id,score) tuples """
+    article_id = art['id']
+    if options.verbose:
+        title = art['title'].decode('utf-8')
+        print "[a%d] %s (%s)" %(article_id, title.encode('utf-8'), art['pubdate'])
+
+    reldocs = xapian.RSet()
+    # article id is stored as a term in the db
+    t = 'Q%d' % (article_id)
+    docs = xap_db.postlist( t )
+    for d in docs:
+        doc_id = d.docid
+        reldocs.add_document(d.docid)
+    if reldocs.size() == 0:
+        return []   # article not yet in xapian
+
+    assert( reldocs.size() == 1 )
+
+    # get set of expanded terms from the rset
+    enquire = xapian.Enquire(xap_db)
+    eterms = enquire.get_eset( NUM_EXPANDED_TERMS, reldocs, Filter() )
+
+    # build a query using those expanded terms
+    qterms = [k[xapian.ESET_TNAME] for k in eterms.items ]
+    if options.verbose:
+        print "  suggested terms: ", repr(qterms)
+    query = xapian.Query(xapian.Query.OP_OR, qterms )
+    enquire.set_query( query )
+
+    # get up to N similar articles...
+    matches = enquire.get_mset(0, MAX_SIMILAR_ARTICLES, None, DocExcluder( doc_id ) )
+
+    results = []
+    for m in matches:
+        score = m.get_weight()
+        if score < SCORE_CUTOFF:
+            continue
+
+        # article is stored as json fields (with abbreviated names - see indexer for details!)
+        other_art = json.loads( m.document.get_data() )
+
+        other_id = other_art['i']
+        if options.verbose:
+            title = other_art['t']
+            print "  (%f) [a%d] '%s'" % (score,other_id,title.encode('utf-8'))
+        results.append( (other_id,score) )
+
+    return results
+
+
+def SetSimilarArticles( art, similar ):
+    article_id = art['id']
+    c = conn.cursor()
+    c.execute( "DELETE FROM article_similar WHERE article_id=%s", (article_id) )
+    for (other_id,score) in similar:
+        c.execute( "INSERT INTO article_similar (article_id,other_id,score) VALUES (%s,%s,%s)",
+                (article_id,other_id,score) )
+    c.execute( "UPDATE article SET last_similar=NOW() WHERE id=%s" , (article_id) )
+
+
+def DoBatch():
+    max_number = 1
+    if options.max_number:
+        max_number = options.max_number
+
+    c = conn.cursor()
+    c.execute( "SELECT id,title,pubdate FROM article WHERE status='a' AND needs_indexing='f' ORDER BY last_similar ASC NULLS FIRST, pubdate DESC NULLS FIRST LIMIT %s", (max_number) )
+    cnt = 0
+    while 1:
+        art = c.fetchone()
+
+        if art is None:
+            break
+
+        similar = FindSimilarArticles( art )
+
+        SetSimilarArticles( art, similar )
+        cnt = cnt + 1
+        # commit after each one
+        if options.dryrun:
+            if options.verbose:
+                print " DRY RUN - rolling back"
+            conn.rollback()
+        else:
+            conn.commit()
+
+    if options.verbose:
+        print "Processed %d" % (cnt)
+
+
+def DoOne( art_id ):
+    c = conn.cursor()
+    c.execute( "SELECT id,title,pubdate FROM article WHERE id=%s",
+        (art_id) )
+    art = c.fetchone()
+    if art is None:
+        print >>sys.stderr, "article not found"
+        return
+    similar = FindSimilarArticles( art )
+
+    SetSimilarArticles( art, similar )
+    # commit
+    if options.dryrun:
+        if options.verbose:
+            print " DRY RUN - rolling back"
+        conn.rollback()
+    else:
+        conn.commit()
+
+    if options.verbose:
+        print "done."
+
+
+def main():
+    global conn,xap_db,options
+
+    parser = OptionParser()
+
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+    parser.add_option("-n", "--max-number",
+        dest="max_number",
+        help="Don't do any more articles than this (ordered by time since last processed and pubdate)")
+    parser.add_option("-a", "--art-id",
+        dest="art_id",
+        help="Just process a single article")
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+    xap_db = xapian.Database(xapdbpath)
+    if options.art_id:
+        DoOne( options.art_id )
+    else:
+        DoBatch()
+
+
+
+if __name__ == "__main__":
+    main()
+

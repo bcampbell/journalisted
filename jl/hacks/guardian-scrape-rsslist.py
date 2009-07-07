@@ -74,7 +74,16 @@ def DoPage( url ):
     feed = soup.head.find( 'link', {'type':"application/rss+xml"} )
     if feed:
         rss_url = feed[ 'href' ]
-        feeds.append( (thispage,rss_url) )
+
+        feed_url_ok=1
+        rss_url_blacklist = ('/audio/','/video/','/gallery')
+        for b in rss_url_blacklist:
+            if b in rss_url:
+                feed_url_ok = 0
+                break
+
+        if feed_url_ok:
+            feeds.append( (thispage,rss_url) )
 #        print " %s: %s" % (thispage, rss_url )
 
 

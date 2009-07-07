@@ -49,6 +49,20 @@ function pretty_date( $t )
     }
 }
 
+// join strings using ", " and " and "
+// eg ("foo", "bar", "wibble") => "foo, bar and wibble"
+function pretty_implode( $parts)
+{
+    if( empty( $parts ) )
+        return '';
+    $last = array_pop( $parts );
+    if( empty( $parts ) )
+        return $last;
+    else
+        return implode( ', ', $parts ) . " and " . $last;
+}
+
+
 
 /***************************************************************************
 *	function:		SafeMailto
@@ -92,7 +106,8 @@ function tag_gen_link( $tag, $journo_ref=null, $period=null )
 */
 
     /* new version, using xapian index */
-    $query = (strpos($tag, ' ') === FALSE ) ? $tag: '"'.$tag.'"';
+//    $query = (strpos($tag, ' ') === FALSE ) ? $tag: '"'.$tag.'"';
+    $query = $tag;
 
     $l = '/search?q=' . urlencode( $query );
     if( $journo_ref )
@@ -101,6 +116,8 @@ function tag_gen_link( $tag, $journo_ref=null, $period=null )
 }
 
 
+
+// TODO: merge with tag_cloud_from_getall()
 function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 {
 	$minsize = 10;
@@ -129,7 +146,19 @@ function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 }
 
 
+// TEMP for journo page - TODO: tidy up all the tag functions
+function tag_cloud_from_getall( &$tags, $journo_ref=null, $period=null )
+{
+    $sorted_tags = array();
+	foreach( $tags as $t )
+	{
+		$sorted_tags[ $t['tag'] ] = intval( $t['freq'] );
+	}
+	ksort( $sorted_tags );
+	tag_display_cloud( $sorted_tags, $journo_ref, $period );
+}
 
+// TODO: KILL THIS ONE
 function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 {
 	$tags = array();
@@ -146,86 +175,16 @@ function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 
 
 
-// emit a list of links to journos who use this tag
-function tag_emit_journo_list( $tag, $excludejourno_id=null, $period=null )
+function article_url( $article_id, $sim_orderby='score', $sim_showall='no' )
 {
-	$periodcond = '';
-	if( $period == 'today' )
-		$periodcond = "  AND a.pubdate > NOW() - INTERVAL '1 day' ";
-	else	// HACKY HACK HACK! TODO: FIXME!
-		$periodcond = "  AND a.pubdate > NOW() - INTERVAL '7 days' ";
-
-	$sql = "SELECT SUM(freq), j.id, j.ref, j.prettyname ".
-		"FROM ((journo j INNER JOIN journo_attr attr ON (j.id=attr.journo_id) ) ".
-		"  INNER JOIN article_tag t ON (t.article_id=attr.article_id)) ".
-		"    INNER JOIN article a ON (t.article_id=a.id) ".
-		"WHERE t.tag=? ".
-		"  AND a.status='a' ".
-		$periodcond .
-		"GROUP BY j.id,j.ref,j.prettyname ".
-		"ORDER BY SUM DESC";
-	$q = db_query( $sql, $tag );
-
-	$cnt = 0;
-	print "<ul>\n";
-	while( $j = db_fetch_array($q) )
-	{
-        if( $excludejourno_id == $j['id'] )
-            continue;
-		$cnt++;
-		$journo_url = '/' . $j['ref'];
-		$tagurl = $journo_url . '/' . urlencode( $tag );
-		printf( "<li><a href=\"%s\">%s</a> (<a href=\"%s\">%d %s</a>)</li>\n",
-           $journo_url,
-           $j['prettyname'],
-           $tagurl,
-           $j['sum'],
-           $j['sum']==1 ? 'mention':'mentions' );
-	}
-	print "</ul>\n";
-    printf( "<p>%d %s</p>\n",
-        $cnt, $cnt==1 ? 'journalist':'journalists' );
+    $url = "/article?id={$article_id}";
+    if( strtolower($sim_orderby) == 'date' )
+        $url .= '&sim_orderby=date';
+    if( strtolower($sim_showall) == 'yes' )
+        $url .= '&sim_showall=yes';
+    return $url;
 }
 
-
-// emit list of articles by a particular journo matching a tag.
-function tag_emit_matching_articles( $tag, $journo_id )
-{
-	$sql = "SELECT a.id,a.title,a.description,a.pubdate,a.permalink,a.srcorg " .
-		"FROM (article a INNER JOIN journo_attr j ON (a.id=j.article_id)) " .
-			"INNER JOIN article_tag t ON (a.id=t.article_id) " .
-		"WHERE a.status='a' AND j.journo_id=? AND t.tag=? " .
-		"ORDER BY a.pubdate DESC";
-
-	$r = db_query( $sql, $journo_id, $tag );
-
-    $cnt = 0;
-	print "<ul>\n";
-	while( $row = db_fetch_array( $r ) )
-	{
-		printf( "<li>%s</li>\n", article_link( $row ) );
-        ++$cnt;
-	}
-	print "</ul>\n";
-
-    printf( "<p>%d %s</p>\n",
-        $cnt, $cnt==1 ? 'article':'articles' );
-}
-
-
-function article_link( $art )
-{
-	$orgs = get_org_names();
-	$htmlfrag = sprintf( "<a href=\"/article?id=%s\">%s</a>, %s, <em>%s</em> ".
-		"<small>(<a href=\"%s\">original article</a>)</small>",
-		$art['id'],
-		$art['title'],
-		pretty_date( strtotime($art['pubdate']) ),
-		$org = $orgs[ $art['srcorg'] ],
-		$art['permalink'] );
-
-	return $htmlfrag;
-}
 
 // Send a text email (swiped from planningalerts.com)
 function jl_send_text_email($to, $from_name, $from_email, $subject, $body)
@@ -251,6 +210,114 @@ function jl_send_html_email($to, $from_name, $from_email, $subject, $htmltext )
     return mail($to, $subject, $body, $headers);
 }
 
+
+
+/* helper - return a fragment of html to show when/when article was
+ * published, including a link to it
+ */
+function PostedFragment( &$r )
+{
+    $orgs = get_org_names();
+    $org = $orgs[ $r['srcorg'] ];
+    if( $r['pubdate'] instanceof DateTime )
+        $pubdate = pretty_date( $r['pubdate'] );
+    else
+        $pubdate = pretty_date(strtotime($r['pubdate']));   /* depreicated */
+
+    return sprintf( "<cite class=\"posted\"><a class=\"extlink\" href=\"%s\">%s, <em>%s</em></a></cite>",
+        htmlentities($r['permalink']), $pubdate, $org );
+}
+
+
+/* helper - return a fragment of text to show how many comments and blog links on an article */
+function BuzzFragment( &$r )
+{
+    $parts = array();
+
+
+    $cnt = $r['total_comments'];
+    if( $cnt>0 )
+        $parts[] = ($cnt==1) ? "1 comment" : "{$cnt} comments";
+
+    $cnt = $r['total_bloglinks'];
+    if( $cnt>0 )
+        $parts[] = ($cnt==1) ? "1 blog link" : "{$cnt} blog links";
+
+    if( $parts )
+        return implode( ', ', $parts );
+    else
+        return '';
+}
+
+
+
+function loginform_emit( $email='', $stash='', $rememberme='', $errs = array())
+{
+    $h_email = htmlspecialchars($email);
+    $h_stash = htmlspecialchars($stash);
+
+
+    $stashpart = $stash ? "stash={$h_stash}&" : "";
+    $register_url = "/login?{$stashpart}action=register";
+    $nopass_url = "/login?{$stashpart}action=sendemail";
+?>
+
+<form action="/login" name="login" class="login" method="POST" accept-charset="utf-8">
+
+
+<strong>New users: <a href="<?php echo $register_url; ?>">REGISTER HERE</a></strong><br/>
+If you already have a Journa<i>listed</i> account, login below
+
+<input type="hidden" name="stash" value="<?=$h_stash?>" />
+
+
+<?php if(array_key_exists('badpass',$errs) ) { ?><p class="errhint"><?php echo $errs['badpass'];?></p><?php } ?>
+
+<p>
+<?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
+<label for="email">Email address</label>
+<input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
+</p>
+
+<p>
+<label for="password">Password</label>
+<input type="password" size="30" name="password" id="password" value="" />
+</p>
+
+<p>
+<label for="rememberme">Remember me</label>
+<input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
+<small>(don't use this on a public or shared computer)</small>
+</p>
+
+<a href="<?php echo $nopass_url; ?>">forgot password?</a>
+<p>
+<input type="submit" name="loginsubmit" value="Continue" />
+</p>
+
+
+</form>
+
+
+<?
+
+}
+
+
+function donatebutton_emit( $txt='Donate', $href='/donate' )
+{
+
+?>
+<div class="donate-box">
+ <div class="donate-box_top"><div></div></div>
+  <div class="donate-box_content">
+    <a class="donatebutton" href="<?php echo $href; ?>"><?php echo $txt; ?></a>
+  </div>
+ <div class="donate-box_bottom"><div></div></div>
+</div>
+<?php
+
+}
 
 
 ?>

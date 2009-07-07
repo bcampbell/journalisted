@@ -1,0 +1,227 @@
+#!/usr/bin/env python2.4
+#
+# Tool to discover journos who write about similar things
+# Uses the xapian database to find matches, and puts results in the journo_similar table in the postgres db
+#
+# TODO: no guarantee that inactive journos won't be included in similar lists...
+#       (if they are still in the xapian db)
+#
+#
+
+import sys
+import xapian
+import string
+from datetime import datetime
+from optparse import OptionParser
+import operator
+import simplejson as json
+
+import site
+site.addsitedir("../pylib")
+from JL import DB,ukmedia
+
+import mysociety.config
+mysociety.config.set_file("../conf/general")
+xapdbpath = mysociety.config.get('JL_XAPDB')
+
+MAX_SIMILAR_JOURNOS = 20
+
+conn = None
+xap_db = None
+options = None
+
+stopwords = ( 'i', 'all', 'are', 'one', 'but', 'as', 'it', 'that', 'was', 'you', 'be', 'or', 'is', 'by', 'there', 'what', 'with', 'for', 'can',
+    'so', 'then', 'we', 'would', 'this', 'like', 'just', 'an', 'if', 'too', 'us', 'less', 'even', 'me', 'way',
+    'have', 'he', 'who', 'which', 'yes', 'well', 'were', "don't", 'not', 'has', 'few', 'at',
+    'our', "i'm", 'why', 'now', 'his',
+    'from', 'on', 'they', 'your', 'send', 'of', 'these', 'their', 'in', 'and', 'than', 'to', 'a' )
+
+
+class Filter(xapian.ExpandDecider):
+    def __call__(self, term):
+        if term[0].isupper():
+            return False
+        if term in stopwords:
+            return False
+        return True
+
+
+
+
+
+def FindRelDocs( j ):
+    """return a xapian rset of articles by the given journo"""
+
+    journo_id = j['id']
+    c = conn.cursor()
+    # get a list of articles written by this journo
+    c.execute( """
+SELECT id
+    FROM article a INNER JOIN journo_attr attr ON a.id=attr.article_id
+    WHERE attr.journo_id=%s
+    ORDER BY a.pubdate DESC
+    LIMIT 30""", (journo_id) )
+
+    # look up those articles in the xapian db
+    reldocs = xapian.RSet()
+    doc_cnt = 0
+    while 1:
+        r = c.fetchone()
+        if r is None:
+            break
+        t = 'Q%d' %(r['id'])
+        docs = xap_db.postlist( t )
+        for d in docs:
+            # should only ever be one doc in the postlist
+            reldocs.add_document(d.docid)
+            doc_cnt = doc_cnt + 1
+
+    if options.verbose:
+        print( "  %s: using %d articles" % (j['ref'],doc_cnt))
+
+    return reldocs
+
+
+
+def DoJourno( j ):
+    """ find journos similar to given one and load results into db """
+    similar = FindSimilarJournos(j)
+
+    if options.verbose:
+        print "  %d similar journos" %(len(similar))
+    c = conn.cursor()
+    c.execute( "DELETE FROM journo_similar WHERE journo_id=%s", (j['id']) )
+    for (other_id,score) in similar:
+#        if options.verbose:
+#            print "  ",score,ref
+
+        c.execute( "INSERT INTO journo_similar (journo_id, other_id, score) VALUES (%s, %s, %s)", (j['id'],other_id,score) )
+    c.execute( "UPDATE journo SET last_similar=NOW() WHERE id=%s", (j['id']) )
+
+
+def FindSimilarJournos( journo ):
+    """ returns a sorted list of (journo_id,score) tuples """
+    journo_id = journo['id']
+    if options.verbose:
+        print "processing %s [id %d]" %(journo['prettyname'],journo_id )
+
+    reldocs = FindRelDocs(journo)
+
+#    if options.verbose:
+#        print "  expanding terms"
+
+    # get set of expanded terms from the relevant documents
+    enquire = xapian.Enquire(xap_db)
+    eterms = enquire.get_eset(20, reldocs, Filter() )
+
+    # build a query using those expanded terms
+    qterms = [k[xapian.ESET_TNAME] for k in eterms.items ]
+    if options.verbose:
+ #       print "  %i suggested terms:" % len(qterms)
+        print "  suggested terms: ", repr(qterms)
+
+    query = xapian.Query(xapian.Query.OP_OR, qterms )
+    enquire.set_query( query )
+
+    # get the top matches (up to 200 articles)
+    matches = enquire.get_mset(0, 200 )
+
+    # score each journo by adding up the weight of their matching articles
+    jscores = {}
+    # for each matching article...
+    for m in matches:
+        art = json.loads( m.document.get_data() )
+        # for each attributed journo...
+        journos = art['j']
+        for j in journos:
+            id = j['i']
+            # disregard the journo we started with!
+            if id == journo['id']:
+                continue
+
+            s = m.get_weight()
+            if id in jscores:
+                s = s + jscores[id]
+            jscores[id] = s
+
+    # sort by score
+    jlist = sorted(jscores.iteritems(), key=operator.itemgetter(1), reverse=True)
+
+    # remove anything < 100 points, and only keep the top MAX_SIMILAR_JOURNOS
+    jlist = [e for e in jlist[:MAX_SIMILAR_JOURNOS] if e[1] > 100.0]
+
+    return jlist
+
+
+
+def SingleJourno( journo_ref ):
+
+    c = conn.cursor()
+    c.execute( "SELECT * FROM journo WHERE ref=%s", (journo_ref) )
+    j = c.fetchone()
+    if j is None:
+        print >>sys.stderr, "Can't find journo: %s" % (journo_ref)
+        sys.exit(1)
+    DoJourno( j )
+    if options.dryrun:
+        if options.verbose:
+            print " DRY RUN - rolling back"
+        conn.rollback()
+    else:
+        conn.commit()
+
+
+def DoBatch():
+    max_number = 100
+    if options.max_number:
+        max_number = options.max_number
+
+    c = conn.cursor()
+    c.execute( "SELECT * FROM journo WHERE status='a' ORDER BY last_similar ASC NULLS FIRST LIMIT %s", (max_number) )
+    cnt = 0
+    while 1:
+        j = c.fetchone()
+        if j is None:
+            break
+        DoJourno( j )
+        cnt = cnt + 1
+        # commit after each one
+        if options.dryrun:
+            if options.verbose:
+                print " DRY RUN - rolling back"
+            conn.rollback()
+        else:
+            conn.commit()
+
+    if options.verbose:
+        print "Processed %d" % (cnt)
+
+
+def main():
+    global conn,xap_db,options
+
+    parser = OptionParser()
+
+    parser.add_option("-j", "--journo",
+        dest="journo_ref",
+        help="find journos similar to this one" )
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
+    parser.add_option("-n", "--max-number",
+        dest="max_number",
+        help="Don't do any more journos than this (ordered by time since last processed) (default 100)")
+
+    (options, args) = parser.parse_args()
+
+    conn = DB.Connect()
+    xap_db = xapian.Database(xapdbpath)
+
+    if options.journo_ref:
+        SingleJourno(options.journo_ref )
+    else:
+        DoBatch()
+
+
+if __name__ == "__main__":
+    main()
+

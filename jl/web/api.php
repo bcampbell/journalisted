@@ -8,70 +8,91 @@ require_once '../phplib/page.php';
 
 # XXX: Need to override error handling! XXX
 
+
 $methods = array(
-    'getArticles' => array(
-        'parameters' => array('search','start','num'),
-        'help' => 'Fetch a list of articles matching given criteria',
+    'findArticles' => array(
+        'parameters' => array('search','offset','limit'),
+        'help' => 'Fetch a list of articles matching search criteria',
+    ),
+    'findJournos' => array(
+        'parameters' => array('name','offset','limit'),
+        'help' => 'Look for journalists',
+    ),
+    'getJourno' => array(
+        'parameters' => array('journo' ),
+        'help' => 'Get details about a single journalist',
+    ),
+    'getJournoArticles' => array(
+        'parameters' => array('journo','offset','limit'),
+        'help' => 'Fetch a list of articles attributed to a journalist',
     ),
 );
 
-if ($q_method = get_http_var('method')) {
-    $match = 0;
-    foreach ($methods as $method => $data) {
-        if (strtolower($q_method) == strtolower($method)) {
-            $match++;
-            if (get_http_var('docs')) {
-                $_GET['verbose'] = 1;
-                ob_start();
-            }
-            foreach ($data['parameters'] as $parameter) {
-                if ($q_param = trim(get_http_var($parameter))) {
-                    $match++;
-                    include_once 'api_' . $method . '.php';
-                    api_call_user_func_or_error('api_' . $method . '_' . $parameter, array($q_param), 'API call not yet functional', 'api');
-                    break;
-                }
-            }
-            if ($match == 1 && (get_http_var('output') || !get_http_var('docs'))) {
-                if ($data['required']) {
-                    api_error('No parameter provided to function "' .
-                    htmlspecialchars($q_method) .
-                        '". Possible choices are: ' .
-                        join(', ', $data['parameters']) );
-                } else {
-                    include_once 'api_' . $method . '.php';
-                    api_call_user_func_or_error('api_' . $method, null, 'API call not yet functional', 'api');
-                    break;
-                }
-            }
-            break;
-        }
-    }
-    if (!$match) {
-        api_front_page('Unknown function "' . htmlspecialchars($q_method) .
-            '". Possible functions are: ' .
-            join(', ', array_keys($methods)) );
-    } else {
-        if (get_http_var('docs')) {
-            $explorer = ob_get_clean();
-            api_documentation_front($method, $explorer);
-        }
-    }
-} else {
+
+
+
+$q_method = get_http_var('method');
+
+if( !$q_method ) {
     api_front_page();
+    return;
 }
+
+$match = 0;
+foreach ($methods as $method=>$data) {
+    if (strtolower($q_method) == strtolower($method)) {
+        $match = 1;
+        break;
+    }
+}
+
+if( !$match ) {
+    api_front_page('Unknown function "' . htmlspecialchars($q_method) .
+        '". Possible functions are: ' .
+        join(', ', array_keys($methods)) );
+   return;
+}
+
+include_once 'api_' . $method . '.php';
+
+if (get_http_var('docs')) {
+    $_GET['verbose'] = 1;
+    ob_start();
+}
+
+// collect params (null for missing ones)
+$params = array();
+foreach ($data['parameters'] as $parameter) {
+    $params[$parameter] = get_http_var($parameter,null);
+}
+
+
+if( get_http_var('output') || !get_http_var('docs') ) {
+    call_user_func('api_' . $method . '_invoke', $params );
+}
+
+if (get_http_var('docs')) {
+    $explorer = ob_get_clean();
+    api_documentation_front($method, $explorer);
+}
+
+
+
 
 function api_documentation_front($method, $explorer) {
     global $methods;
 
     page_header('API');
 
+    $api_url = OPTION_BASE_URL . '/api/' . $method;
 ?>
 <div id="maincolumn">
+<h2>Journa<i>listed</i> API - <code><?php echo $method; ?></code></h2>
+
+<code><?php echo $api_url; ?></code>
 <?php
 
-    include_once 'api_' . $method . '.php';
-    print '<p align="center"><strong>' . OPTION_BASE_URL . '/api/' . $method . '</strong></p>';
+ //   include_once 'api_' . $method . '.php';
     api_call_user_func_or_error('api_' . $method . '_front', null, 'No documentation yet', 'html');
 
 ?>
@@ -129,23 +150,19 @@ function api_front_page($error = '') {
     page_header('API');
 ?>
 <div id="maincolumn">
-<p>Welcome to Journalisted's API section, where you can learn how to query our database for information.</p>
-
-<h3>Overview</h3>
+<h2>Journa<i>listed</i> API - Overview</h2>
 
 <p>All requests take a number of parameters. <em>output</em> is optional, and defaults to <kbd>js</kbd>.</p>
 
-<p align="center"><strong><?php print OPTION_BASE_URL; ?>/api/<em>function</em>?output=<em>output</em>&<em>other_variables</em></strong></p>
+<p align="center"><code><?php print OPTION_BASE_URL; ?>/api/<em>function</em>?output=<em>output</em>&amp;<em>other_variables</em></code></p>
 
-<p>The current version of the API is <em>1.0.0</em>. If we make changes
-to the API,
-we'll increase the version number and make it an argument so you can still
-use the old version.</p>
+<p><strong>The current API is still in flux and subject to change and improvement!</strong>
+if this is likely to cause problems for you, please let us know so we can coordinate!</p>
 
 <h3>Outputs</h3>
 <p>The <em>output</em> argument can take any of the following values:
 <ul>
-<li><strong>xml</strong>. XML. The root element is twfy.</li>
+<li><strong>xml</strong></li>
 <li><strong>php</strong>. Serialized PHP, that can be turned back into useful information with the unserialize() command. Quite useful in Python as well, using <a href="http://hurring.com/code/python/serialize/">PHPUnserialize</a>.</li>
 <li><strong>js</strong>. A JavaScript object. You can provide a callback
 function with the <em>callback</em> variable, and then that function will be
@@ -153,8 +170,19 @@ called with the data as its argument.</li>
 <li><strong>rabx</strong>. "RPC over Anything But XML".</li>
 </ul>
 
-<h3>Licensing</h3>
-<p>TODO</p>
+<p>All text is encoded as UTF-8.</p>
+
+<h3>Errors</h3>
+
+<p>
+If there's an error, either in the arguments provided or in trying to perform the request, this is returned as a top-level error string.
+<ul>
+<li>in XML: <code>&lt;jl&gt;&lt;error&gt;ERROR&lt;/error&gt;&lt;/jl&gt;</code></li>
+<li>in JS: <code>{"error":"ERROR"}</code></li>
+<li>in PHP and RABX: a serialised array containing one entry with key <code>error</code></li>
+</ul>
+</p>
+
 
 </div>
 <div id="smallcolumn">
@@ -169,7 +197,9 @@ called with the data as its argument.</li>
 
 function api_sidebar() {
     global $methods;
-    $sidebar = '<div class="block"><h4>API Functions</h4> <div class="blockbody"><ul>';
+    $sidebar = '<div class="box"><h3>API Functions</h3> <div class="box-content">';
+    $sidebar .= '<ul>';
+    $sidebar .= '<li><a href="/api">Overview</a></li>';
     foreach ($methods as $method => $data){
         $sidebar .= '<li';
         if (isset($data['new']))

@@ -363,7 +363,7 @@ def Extract_low( html, context ):
     page_enc = 'ISO-8859-1'
 
     # pubdate
-    pubdate_pat = re.compile( r'<meta\s+name="OriginalPublicationDate"\s+content="(.*?)"\s*/>' )
+    pubdate_pat = re.compile( r'<meta\s+name="OriginalPublicationDate"\s+content="(.*?)"\s*/?>' )
     m = pubdate_pat.search( html )
     art['pubdate'] = ukmedia.ParseDateTime( m.group(1) )
 

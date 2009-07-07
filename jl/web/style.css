@@ -1,251 +1,592 @@
-/* XXX Backgrounds and colours */
+/*
+ * GENERAL STYLING
+ */
+
 body {
-  background-color:#DDDDDD;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 80%;
 }
 
-#content {
-  background-color:#FFFFFF;
+/* internal links */
+a { color: #0000FF; }
+a:link {text-decoration: none; }
+a:visited {text-decoration: none; color: #4444FF }
+a:active {text-decoration: none; }
+a:hover {text-decoration: underline; }
+
+
+/* external links */
+a.extlink  /* a[href ^='http://'] */ { 
+    padding-right: 12px;
+    background: transparent url(images/external_icon.png) no-repeat center right;
+    color: #660099;
 }
+a.extlink:link {text-decoration: none; }
+a.extlink:visited {text-decoration: none; color: #9944CC; }
+a.extlink:active {text-decoration: none; }
+a.extlink:hover {text-decoration: underline; }
+
+/* tag links */
+/*
+.tags a { color: #666666; }
+.tags a:visited {text-decoration: none; color: #AAAAAA }
+*/
+.tags a { color: #6666FF; }
+.tags a:visited {text-decoration: none; color: #8888FF }
+.tags a:link {text-decoration: none; }
+.tags a:active {text-decoration: none; }
+.tags a:hover {text-decoration: underline; }
+
+/* default list style */
+ul {
+    list-style: disc url(images/red_arrow.png) outside;
+    margin-left: 1.2em;
+    padding-left: 0;
+}
+
+/* default form styling */
+form { background-color: #EEEEEE; padding: 1em; }
+form label { display: inline; }
+/* to display form fields with bad values */
+form .errhint { color: red; }
+#errors { border: dashed red 1px; color:red; background-color:#eeeeee; }
+
+
+
+/* usually for responses to user actions eg "added an email alert for bob smith" */
+.infomessage
+{
+    background-color: #ffff00;
+}
+
+.caution { padding: 1em; color: #ffffff; background-color: #2222ff; }
+.caution a { color: #DDDDDD; text-decoration: underline; }
+.caution a:hover { color: #EEEEEE; }
+
+
+/* "now check your email! */
+.loudmessage
+{
+    border: solid black 0.4em;
+    padding: 2em;
+    font-size: 120%;
+}
+
+/* for faq's */
+.faq { padding: 0.5em; }
+.focused { background-color: #ffffff; border: solid 0.5em #FFFF00; -moz-border-radius: 1em; -webkit-border-radius: 1em; }
+
+/* tooltips - popup on hover (based on: http://www.kollermedia.at/archive/2008/03/24/easy-css-tooltip/) */
+a.tooltip:hover {font-size: 100%;} /* IE kludge - needs some kind of link change on hover */
+a.tooltip span {display:none; padding:2px 3px; margin-left:0px; width:24em; /*130px;*/ }
+a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; border:1px solid #000000; color:#000000;}
+
+/* action link in bottom right of some boxes (eg to submit links) */
+.box-action { /*float: right; margin: 0;*/}
+
+
+/* not used? */
+.overview li,
+.featured-journo li {
+    margin: 1.5em 0;
+}
+
+.greenbox {
+    font-family: georgia, serif;
+    background-color: #D9DF27;
+    padding: 9px;
+    margin: 10px 0;
+}
+
+
+.art-info {
+    margin-left: 2em;
+    margin-bottom: 0.3em;
+}
+
+.disclaimer, .bio-source, .email-source {
+    color: #888888;
+    margin: 0.5em 0 0.5em 2em;
+}
+
+.publication {
+    font-style: italic;
+}
+
+
+
+/* front page: "for journos, developers, press officers" */
+.forlinks li
+{
+    display: inline;
+    padding-right: 2em;
+}
+
+
+
+
+.art-summary {
+    margin-top: 1em;
+    padding: 0.5em;
+}
+
+/* list of articles, brief entry per article */
+.art-list-brief {
+    list-style: none;
+    color: #444444;
+}
+
+#content .art-list-brief li {
+    margin: 0;
+    padding: 0;
+}
+
+.art-list .thumb {
+    float: left;
+    margin-right: 0.5em;
+}
+
+.art-list h4.entry-title { display: inline; }
+.art-list .publication {
+    color: #888888;
+}
+.art-list blockquote {
+    color: #444444;
+}
+
+.art-list .published    { color: #888888; }
+.art-list abbr          { border-bottom: none; } 
+
+/* KLUDGE! to deal with images embedded inside bios */
+.bio-para img {
+    float: left;
+    margin-right: 0.5em;
+}
+
+
+
+
+/*
+ * HEADER
+ */
 
 #head {
-  background-color:#CC0E0E;
+    background-image:url('images/header_grad.gif');
+    background-repeat: repeat-x;
 }
 
-.boxnarrow {
-  background-color:#E3E3E3;
-}
-
-#content .frontform label {
-  color:#CC0E0E;
-}
-
-#content #contenthead {
-  background-color:#F4F4F4;
-}
-
-#head h1 a span {
-  background-image:url('images/title_beta.png');
-  background-position:top right;
-}
-
-#head a { 
-  color: #FFFFFF; 
-}
-
-.popular {
-  color:#6666FF;
-}
-
-.boxnarrow h2 {
-  background-color:#7F0BAF;
-}
-
-
-.boxnarrow h3 {
-  background-color:#7F0BAF;
-}
-
-.boxwide h2 {
-  background-color:#999999;
-}
-
-.boxwide h3 {
-  background-color:#999999;
-}
-
-#maincolumn .tags h2 {
-  background-color:#6666FF;
-}
-
-/* XXX Positions, margin and padding */
-body {
-  margin:0 auto 0 auto;
-  padding:0;
-}
-
-body, #menu, #head {
-  width:780px;
-}
-
-#head {
-  border-top:14px solid #FFFFFF;
-  float:left;
-  padding:0 0 10px 0;
+#head .inner {
+    position: relative;
+    width: 70%;
+    height: 116px;  /* gradient height */
+    margin: 0 auto;
 }
 
 #head h1 {
-  margin:0;
-  padding:0;
-}
-
-#head h1, #head h2 {
-  float:right;
-  clear:both;
-  margin:0;
-  padding:0;
-}
-
-#head p {
-  padding:2em 1em;
-  margin:0;
-}
-
-#head h1 {
-  width: 364px; /* title_beta.png width */
+  position: absolute; /* inside head */
+  top: 0;
+  left: 0;
+/*  width: 233px; height: 60px; */
+/*  width: 310px; height: 66px; */
+  width: 250px; height: 60px;
   overflow:hidden;
-  height: 82px;
-  margin: 0px 0px 0 0;
-}
-
-#head h1 a span {
-  margin-bottom:-0px;
-/* width:289px; */
-  width: 364px; /* title_beta.png width */
-  height: 82px;
-  display:block;
-  position: relative;
-  z-index: 1;
+  margin: 8px 0 0 0;
 }
 
 #head h2 {
-  padding:0 30px 0 0; 
+ color: #FFFFFF;
+ text-transform: uppercase;
 }
 
-#menu {
-  float:left;
-  background-color: #8E2B2B;
-  height:30px;
-  overflow:visible;
- /* border-bottom:8px solid #DDDDDD; */
+/* replace text with logo */
+#head h1 a span {
+/*  width: 233px; height: 60px; */
+/*  width: 310px; height: 66px; */
+  width: 250px; height: 60px;
+  display: block;
+  position: relative;
+  z-index: 1;
+  background-image:url('images/journalisted_logo.png');
+  background-position: top left;
 }
 
-#menu ul {
-  float:right;
-  padding:0px 10px;
-  margin:0;
+#head #tagline {
+  position: absolute;   /* within head */
+  bottom: 1em;
+  left: 0;
+  padding: 0;
+  margin: 0;
+  text-transform: uppercase;
+  color: #FFFFFF; 
+  font-size: 95%;
 }
 
-#menu ul li, #menu .mst {
-  list-style-type:none;
-  display:inline;
-  float:left;
-  padding: 5px 10px;
+#head #mst {
+  position: absolute;   /* within head */
+  top: 0;
+  right: 1.5em;
+  padding: 8px 0;
+  margin:0 0 0 0px;
+  color: #FFFFFF; 
+  font-size: 95%;
+}
+#head #mst a { color: #FFFFFF; text-decoration: none; }
+#head #mst a:hover { text-decoration: underline; }
+
+#head #today {
+  position: absolute;   /* within head */
+  left: 0;
+  bottom: 0.5em;
+  padding: 8px 0;
+  margin:0 0 0 0px;
+  color: #FFFFFF; 
+  font-size: 95%;
+}
+
+
+#head #headsearch {
+    position: absolute;
+	top: 2.2em;
+	right: 0;
+    background-color: inherit;
+    padding: 0;
+}
+
+#head form#headsearch {
+    background-color: #f00000;
+}
+
+#head #headsearch input[type='text'] {
+    border: none;
+    padding: 2px;
+    color: #444444;
+}
+
+#headsearch input[type='submit'] {
+      width: 21px;
+      height: 21px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      background: transparent url(images/arrow_red.png) no-repeat;
+      color: transparent; /* hide text */
+      padding: 0 0 0 21px !important; /* hide text for IE */
+      overflow: hidden;
+      cursor: pointer; /* hand-shaped cursor */
+      }
+
+#headsearch input[type='submit']:hover {
+    background: transparent url(images/arrow_red_hover.png) no-repeat;
+}
+
+
+#head #menu {
+  text-transform: uppercase;
+  font-size: 95%;
+}
+
+#head #menu ul {
+  position: absolute;   /* within head */
+  bottom: 1em;
+  right: 1em;
+  padding: 0;
   margin: 0;
 }
 
-#menu ul li a { 
-  color: #FFFFFF; 
+#head #menu ul li {
+  list-style-type:none;
+  display:inline;
+  float:left;
+  margin: 0;
+
 }
 
-#menu .mst a {
-  float:left;
-  height:20px;
-  margin:0 0 0 10px;
+
+#head #menu a { 
+  color: #FFFFFF; 
+  text-decoration: none;
+  padding: 8px;
 }
+
+#head #menu a:hover { background-color: #AA0000; }
+#head #menu .active a { background-color: #BF0000; }
+#head #menu .active a:hover { background-color: #AA0000; }
+
+/*
+#head #menu a:hover {
+    text-decoration: underline;
+}
+*/
+
+
+
+/*
+ * FOOTER
+ */
+
+#footer {
+    background-image:url('images/footer_grad.gif');
+    background-repeat: repeat-x;
+    height: 116px;  /* gradient height */
+/*    background-color: #231F20; */
+}
+
+#footer .inner
+{
+    width: 70%;
+    margin: 0 auto;
+    color: #CCCCCC;
+}
+
+/* internal links */
+#footer a {
+    color: #999999;
+}
+#footer a:link {text-decoration: none; }
+#footer a:visited {text-decoration: none; color: #999999 }
+#footer a:active {text-decoration: none; }
+#footer a:hover {text-decoration: underline; }
+
+
+/* tramlines just under the header */
+#dateline {
+    border-top: solid #c4c4c4 1px;
+    border-bottom: solid #c4c4c4 1px;
+/*    margin-top: 0.5em;
+    margin-bottom: 0.5em; */
+    color: #666666;
+    height: 1em;
+
+    width: 70%;
+    margin: 0.5em auto;
+    padding: 0.5em;
+    clear: both; }
+
+#dateline a { color: #666666; }
+#dateline #today { height: 100%; float: left; }
+#dateline #hellouser { color: black; height: 100%; float: left; }
+#dateline #mst { float: right; /* margin-top: -6px; */ } 
+#dateline img { border: none; }
+
+
+/* CONTENT PART */
 
 #content {
-  padding:10px 20px;
-  clear:both;
-  width:740px;
-  /*overflow:auto;*/
-  border-bottom:1px solid #ECECEC;
-  line-height: 140%;
-}
+    width: 70%;
+    margin: 0 auto 1em auto;
+    clear: both; }
 
-#content #contenthead {
-  clear:both;
-  width:100%;
-  margin:0 0 10px 0;
-}
-
-#content #contenthead img {
-  float:left;
-}
-
-#contenthead .frontform, #content.home #contenthead p {
-  float:right;
-  width:48%;
-  padding-top:6px;
-}
-
-#content.home #contenthead p {
-  padding:5px 0;
-  margin:0;
-}
-
-#contenthead .frontform label {
-  padding:5px 0px;
-  display:block;
-}
-
-/* used for input elements on front page */
-#content.home #contenthead .frontform input.text, #content.home #contenthead .frontform select.select {
-  width: 260px;
-}
 
 #maincolumn {
   float:left;
-  width:75%;
+  width:64%;
 }
 
 #smallcolumn {
   margin:0 0 0 10px;
   float:right;
-  width:22%;
+  width:33%;
 }
 
 
-/* kludge to stop findarticles input element overrunning boxnarrow and forcing a scrollbar */
-.boxnarrow form input#findarticles {
-	width: 80%;
+#maincolumn .box {
+    background-color: #ffffff;
+/*    border: solid #666666 1px; */
+    border-top: 0.5em solid #666666;
+    padding: 0;
+    margin-bottom: 1em;
 }
 
-#footer {
-  clear:both;
-  background-color:#FFFFFF;
-  color: #888888;
-  padding: .5em;
+#maincolumn .box-content { padding: 0.5em 0; }
+
+#maincolumn .box h1,
+#maincolumn .box h2,
+#maincolumn .box h3 {
+    margin: 0;
+    padding: 0.2em 0.2em 0 0;
+    color: #CC0000;
+    background-color: #EEEEEE;
+    font-weight: normal;
 }
 
-#hellouser {
-  float:left;
-  padding-top: .1em;
-  padding-bottom: .1em;
-  overflow: auto;
-  width:100%;
-  text-align: right;
-  font-size: small;
-  background-color: #FFFFFF;
-}
 
-.boxwide-content table {
-   text-align:left;
-}
-
-.boxwide-content td {
-  padding:2px;
+/* overrides #maincolumn .box */
+#maincolumn .strong-box {
+/*    border: solid #CC0000 1px; */
+    border-top: 0.7em solid #CC0000;
 }
 
 
 
-/* div for showing errors on forms */
-#errors {
-  border: thin solid red;
-}
-
-/* div for showing notes/information (eg results of form submits) */
-#forminfo {
-  border: thin solid blue;
-}
-
-/* login form */
-.login {
-  background-color:#E3E3E3;
+#smallcolumn .box {
+    background-color: #EEEEEE;
+/*    border: solid #666666 1px; */
+    border-top: 0.5em solid #666666;
+    padding: 0;
+    margin-bottom: 1em;
 }
 
 
-/* journo page */
+#smallcolumn .box-content { padding: 0.5em 0; }
 
-ul.previous-articles li {
-  padding-bottom: .75em;
+#smallcolumn .box h2,
+#smallcolumn .box h3 {
+    margin: 0;
+    padding: 0.2em 0.2em 0 0;
+    color: #CC0000;
+    background-color: #FFFFFF;
+    font-weight: normal;
 }
+
+/* action-box - to indicate somehting to do.
+ * note ugliness to get rounded corners. grr... only needed because more
+ * elegant solutions don't work on ie...
+ */
+.action-box {
+    background-color: #4D4D4D;
+    color: #FFFFFF;
+    margin: 10px 0;
+}
+
+.action-box form {
+    background-color: #4D4D4D;
+}
+
+.action-box_top div {
+    background: url(images/frontformbox_tl.png) no-repeat top left;
+}
+.action-box_top {
+    background: url(images/frontformbox_tr.png) no-repeat top right;
+}
+.action-box_bottom div {
+    background: url(images/frontformbox_bl.png) no-repeat bottom left;
+}
+.action-box_bottom {
+    background: url(images/frontformbox_br.png) no-repeat bottom right;
+}
+
+.action-box_top div, .action-box_top, 
+.action-box_bottom div, .action-box_bottom {
+   width: 100%;
+   height: 8px;
+   font-size: 1px;
+}
+.action-box_content { margin: 0 8px; }
+
+
+.action-box a { color: #DDDDDD; text-decoration: underline; }
+.action-box a:hover { color: #EEEEEE; }
+
+.action-box form {
+    margin: 0;
+    background-color: inherit;
+}
+
+.action-box form input[type='text'], .action-box form select {
+    width: 47%;
+    border: none;
+    padding: 2px;
+    color: #444444;
+}
+
+.action-box form input[type='submit'] {
+      width: 21px;
+      height: 21px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      background: transparent url(images/arrow_grey.png) no-repeat;
+      color: transparent; /* hide text */
+      padding: 0 0 0 21px !important; /* hide text for IE */
+      overflow: hidden;
+      cursor: pointer; /* hand-shaped cursor */
+      }
+
+.action-box form input[type='submit']:hover {
+    background: transparent url(images/arrow_grey_hover.png) no-repeat;
+}
+
+
+
+.action-box form label {
+ clear: both;
+ display: block;
+ float:left;
+/* background-color: #333333; */
+ width: 45%;
+}
+
+
+/* donate-box
+ * grr. more rounded corner awfulness.
+ */
+
+
+
+.donate-box {
+    color: #ffffff;
+    background-color: #D9DF27;
+    margin: 10px 0;
+}
+
+.donate-box_top div {
+    background: url(images/greenbox_tl.png) no-repeat top left;
+}
+.donate-box_top {
+    background: url(images/greenbox_tr.png) no-repeat top right;
+}
+.donate-box_bottom div {
+    background: url(images/greenbox_bl.png) no-repeat bottom left;
+}
+.donate-box_bottom {
+    background: url(images/greenbox_br.png) no-repeat bottom right;
+}
+
+.donate-box_top div, .donate-box_top, 
+.donate-box_bottom div, .donate-box_bottom {
+   width: 100%;
+   height: 8px;
+   font-size: 1px;
+}
+
+.donate-box_content {
+  margin: 0 8px;
+  font-family: georgia, serif;
+  font-size: 150%;
+  color: black;
+}
+
+.donatebutton {
+    display:block;
+    color: black;
+/*    text-align: center; */
+}
+.donate-box_content a { color: black; }
+.donate-box_content a:hover {
+    text-decoration: underline;
+    color: #444444;
+}
+
+
+
+#forjournosform textarea {
+    width: 100%;
+}
+
+
+
+/* "#content" is hack to force precedence over #maincolumn/#smallcolumn .box headings */
+#content .art h2,
+#content .art h3,
+#content .art h4 {
+    margin: 0;
+    padding: 0.2em 0.2em 0 0;
+    border: none;
+    color: #000000;
+    background-color: #FFFFFF;
+    font-weight: bolder;
+}
+
+

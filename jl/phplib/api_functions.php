@@ -1,4 +1,5 @@
 <?
+/* helper functions for API, derived from theyworkforyou.com */
 
 require_once '../conf/general';
 require_once '../../phplib/utility.php';
@@ -13,7 +14,7 @@ function api_output($arr, $last_mod=null) {
 	}
 	if ($output == 'xml') {
 		$out = '<?xml version="1.0" encoding="utf-8"?>'."\n";
-		$out .= '<journalisted>' . api_output_xml($arr) . '</journalisted>';
+		$out .= '<jl>' . api_output_xml($arr) . '</jl>';
 	} elseif ($output == 'php') {
 		$out = api_output_php($arr);
 	} elseif ($output == 'rabx') {

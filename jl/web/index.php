@@ -13,6 +13,82 @@ require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 
+require_once '../phplib/offline_frontpage.php';
+
+
+NEW_version();
+
+function NEW_version()
+{
+
+    $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
+
+    // setup for placeholder text in input forms
+    $head_extra = <<<EOT
+      <script type="text/javascript" language="JavaScript">
+        window.onload=function() {
+          activatePlaceholders();
+        }
+      </script>
+EOT;
+
+    page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
+
+?>
+
+<div class="greenbox">
+Journa<i>listed</i> is an independent, non-profit site run by the <a class="extlink" href="http://www.mediastandardstrust.org">Media Standards Trust</a> to help the public navigate the news
+</div>
+
+<div class="action-box">
+ <div class="action-box_top"><div></div></div>
+  <div class="action-box_content">
+
+   <form action="/list" method="get" class="frontform">
+    <label for="name">Find a journalist</label>
+    <input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
+    <input type="submit" value="Find" alt="find" />
+<!--    <input type="image" src="images/white_arrow.png" alt="find" /> -->
+   </form>
+
+   <form action="/list" method="get" class="frontform">
+    <label for="outlet">See journalists by news outlet</label>
+
+     <select id="outlet" name="outlet" class="select" >
+<?php foreach( $orgs as $o ) { ?>
+		<option value="<?php echo $o['shortname'];?>"><?php echo $o['prettyname']; ?></option>
+<?php } ?>
+     </select>
+    <input type="submit" value="Find" alt="find" />
+   </form>
+
+
+   <form action="/search" method="get" class="frontform">
+    <label for="q">Search articles</label>
+    <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
+<!--    <input type="submit" value="Find" /><br /> -->
+    <input type="submit" value="Find" alt="find" />
+   </form>
+
+  </div>
+ <div class="action-box_bottom"><div></div></div>
+</div>
+
+<p>Journa<i>listed</i> is also for: &nbsp;&nbsp;&nbsp;<a href="/forjournos">journalists</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/pressofficers">press officers</a></p>
+
+</p>
+<?php
+
+page_footer();
+}
+
+
+
+
+function OLD_version()
+{
+
+$orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
 // setup for placeholder text in input forms
 $head_extra = <<<EOT
@@ -25,76 +101,81 @@ EOT;
 
 page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
 
-$orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
-$contactemail = OPTION_TEAM_EMAIL;
-
 ?>
-<div id="contenthead">
-<img src="/images/paper.png" alt="" />
 
-<p>Journalisted is an independent, non-commercial website built to help the public navigate the news</p>
+<div class="greenbox">
+Journa<i>listed</i> is an independent, non-profit web service to help the public navigate the news
+</div>
 
-<form action="/list" method="get" class="frontform">
- <label for="name">Find out more about a journalist</label>
-<input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
-<input type="submit" value="Find" />
-</form>
+<div id="maincolumn">
 
-<form action="/list" method="get" class="frontform">
- <label for="outlet">Track down a journalist by news outlet</label>
 
-  <select id="outlet" name="outlet" class="select" >
+
+
+
+<div class="action-box">
+ <div class="action-box_top"><div></div></div>
+  <div class="action-box_content">
+
+   <form action="/list" method="get" class="frontform">
+    <label for="name">Find out more about a journalist</label>
+    <input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
+<!--    <input type="submit" value="Find" /><br /> -->
+    <input type="image" src="images/white_arrow.png" alt="find" />
+   </form>
+
+   <form action="/list" method="get" class="frontform">
+    <label for="outlet">Track down a journalist by news outlet</label>
+
+     <select id="outlet" name="outlet" class="select" >
 <?php
 	foreach( $orgs as $o )
 		print "   <option value=\"{$o['shortname']}\">{$o['prettyname']}</option>\n";
 ?>
-  </select>
- <input type="submit" value="Find" />
-</form>
+     </select>
+    <input type="image" src="images/white_arrow.png" alt="find" />
+<!--    <input type="submit" value="Find" /><br /> -->
+   </form>
 
 
-<form action="/search" method="get" class="frontform">
- <label for="q">Search articles</label>
- <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
- <input type="submit" value="Find" />
-</form>
+   <form action="/search" method="get" class="frontform">
+    <label for="q">Search articles</label>
+    <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
+<!--    <input type="submit" value="Find" /><br /> -->
+    <input type="image" src="images/white_arrow.png" alt="find" />
+   </form>
 
-
-<p>This website is in beta - all information is generated automatically so there are bound to be mistakes. Let us know if you spot any!</p>
-
+  </div>
+ <div class="action-box_bottom"><div></div></div>
 </div>
 
 
-<div id="maincolumn">
+
+
 <?php
-
-// the stats and tags boxes are generated offline and never
-// updated in response to web access because they are so slow.
-// (The generation code is offline_frontpage_emit() in "../phplib/offline_frontpage.php")
-cache_emit( 'frontpage', null, null );
-
+#$featured = db_getRow( "SELECT * FROM journo WHERE ref='jeff-prestridge'" );
+#$featured = db_getRow( "SELECT * FROM journo WHERE ref='ben-goldacre'" );
+$featured = db_getRow( "SELECT * FROM journo WHERE ref='jim-alkhalili'" );
+frontpage_emitFeaturedJourno( $featured );
+cache_emit( "fp_tags","emit_whoswritingaboutwhat",60*60*24 );
 ?>
-</div>
+
+</div>  <!-- end maincolumn -->
+
+
 <div id="smallcolumn">
-<?php
-
-$P = person_if_signed_on(true);
-if( $P )
-{
-	emit_my_journos_box($P);
-}
-else
-{
-	/* recent journos only refreshed once every 10 mins */
-	cache_emit( 'f_recent', 'emit_recent_journos_box', 10*60 );
-}
-?>
+<div class="greenbox">Build your own newsroom</div>
+<div class="greenbox">Donate</div>
+<div class="greenbox">journa<i>listed</i> blog</div>
+<?php emit_mostbloggedarticles(); ?>
+<?php emit_mostcommentedarticles(); ?>
+<div class="greenbox">What should Journa<i>listed</i> do next?</div>
 </div>
+
 <?php
 
 page_footer();
-
-
+}
 
 
 
@@ -126,25 +207,6 @@ function emit_my_journos_box( &$P )
 
 
 }
-
-// returns a human-readable string representing an interval
-// (very coarse grained - rounds to appropriate whole units
-// eg "1 day")
-function prettyinterval( $seconds )
-{
-	$inmins = (int)($seconds/60);
-	$inhours = (int)($seconds/(60*60));
-	$indays = (int)($seconds/(60*60*24));
-
-	// no less than 1min.
-	if( $inmins < 60 )
-		return $inmins<=1 ? '1 minute' : "$inmins minutes";
-	else if( $inhours < 24 )
-		return $inhours==1 ? '1 hour' : "$inhours hours";
-	else
-		return $indays==1 ? '1 day' : "$indays days";
-}
-
 
 
 // a list of the journos who were most recently published.

@@ -205,15 +205,9 @@ def Extract( html, context ):
     # sigh... sometimes express articles have nested paras, without the
     # "storycopy" class. probably due to cutting and pasting from another
     # source...
-    p = wrapdiv.find( 'p', {'class':'storycopy'} )
-    while p:
-        n = p.findNext('p')
-        # because of the tag mismatching, we sometimes
-        # get nested paras. extract()ing paras as we go should flatten
-        # things out...
+    for p in wrapdiv.findAll( 'p', {'class':'storycopy'} ):
         p.extract()
         textpart.append( p )
-        p = n
 
     content = textpart.prettify( None )
     content = ukmedia.DescapeHTML( content )

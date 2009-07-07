@@ -6,12 +6,41 @@
 # using xapian.
 #
 #
+# TODO:
+# - add stopwords to indexer?
+# - indexer should remove docs from xapian if status<>'a' and
+#   needs_indexing='t' in postgres db. (and should have db triggers or
+#   php code which marks modified articles for reindexing!)
+
+
+
+# the "data" of each document in the xapian db is a json format object
+# holding some of the article information. The field names are
+# abbreviated to save space:
+#
+#  i: id
+#  t: title
+#  o: srcorg  (org id)
+#  l: permalink
+#  d: description
+#  j: journo list 0 or more items consisting of:
+#     i: journo_id, r: ref, n: prettyname
+
+# ids for value fields we store along with the document
+# We need the pubdate for restricting query by range, and
+# the datetime version for sorting. xapian _should_ be able to use
+# a datetime for range queries, but it can't yet... so date only.
+XAP_PUBDATETIME_ID = 0      # "YYYYMMDDHHMMSS"
+XAP_PUBDATE_ID = 1          # "YYYYMMDD"
+
+
 
 import sys
 import xapian
 import string
 from datetime import datetime
 from optparse import OptionParser
+import simplejson as json
 
 import site
 site.addsitedir("../pylib")
@@ -22,26 +51,98 @@ mysociety.config.set_file("../conf/general")
 xapdbpath = mysociety.config.get('JL_XAPDB')
 
 
-COMMIT_BATCH_SIZE=1000
+COMMIT_BATCH_SIZE=10000
 
 
-# ids for value field we want to store along with the document
-# (so we can display them in the search results)
-# NOTE: these values need to be kept in sync with web/search.php!
-XAP_ARTICLE_ID = 0
-XAP_TITLE_ID = 1
-XAP_PUBDATE_ID = 2
-XAP_SRCORG_ID = 3
-XAP_PERMALINK_ID = 4
-XAP_JOURNOS_ID = 5
+# STOPWORDS (not used at the moment...)
+stopwords = (
+	'the',
+	'a',
+	'to',
+	'and',
+	'in',
+	'of',
+	'for',
+	'on',
+	'is',
+	'with',
+	'at',
+	'that',
+	'it',
+	'as',
+	'was',
+	'by',
+	'be',
+	'from',
+	'have',
+	'but',
+	'has',
+	'an',
+	'are',
+	'this',
+	'said',
+	'not',
+	'he',
+	'been',
+	'who',
+	'will',
+	'they',
+	'which',
+	'up',
+	'had',
+	'his',
+	'their',
+	'one',
+	'after',
+	'more',
+	'out',
+	'were',
+	'when',
+	'year',
+	'all',
+	'would',
+	'there',
+	'about',
+	'we',
+	'last',
+	'or',
+	'also',
+	'than',
+	'if',
+	'two',
+	'i',
+	'over',
+	'time',
+	'so',
+	'into',
+	'first',
+	'new',
+	'no',
+	'can',
+	'now',
+	'could',
+	'its',
+	'some',
+	'what',
+	'only',
+	'just',
+)
 
 
 def IndexArticle( xapdb, art ):
     indexer = xapian.TermGenerator()
+
     stemmer = xapian.Stem("english")
     indexer.set_stemmer(stemmer)
 
+#    stopper = xapian.SimpleStopper()
+#    for s in stopwords:
+#        stopper.add( s )
+#    indexer.set_stopper(stopper)
+
     #print "indexing: '%s'"  %(art['title'].encode('utf-8'))
+
+    # strip off html to get raw text
     txt = ukmedia.FromHTML( art['content'] );
 
     doc = xapian.Document()
@@ -51,27 +152,36 @@ def IndexArticle( xapdb, art ):
     article_id_term = 'Q' + str(art['id'])
     doc.add_term( article_id_term )
 
-    # TODO:
-    # add source org as a term
-    # - add name and srcorg...
+    # add source org id as a term
+    srcorg_id_term = 'O' + str(art['srcorg'])
+    doc.add_term( srcorg_id_term )
 
-
-    journo_list = []
+    # add journo ids as terms to support search-by-journo
     for j in art['journos']:
-        # pretty name is already encoded as utf-8
-        journo_list.append( "%s|%s" %(j['ref'],j['prettyname']) )
-        # add journo ids as terms to support search-by-journo
         doc.add_term( 'J'+str(j['id']) )
 
+    d = art['pubdate']
+    doc.add_value( XAP_PUBDATETIME_ID, "%04d%02d%02d%02d%02d%02d" % ( d.year, d.month, d.day, d.hour, d.minute, d.second ) )
+    doc.add_value( XAP_PUBDATE_ID, "%04d%02d%02d" % ( d.year, d.month, d.day ) )
+
     # add all the things we need to be able to display in search results...
-    doc.add_value( XAP_ARTICLE_ID, str(art['id']) )
-    doc.add_value( XAP_TITLE_ID, art['title'].encode('utf-8') )
-    doc.add_value( XAP_PUBDATE_ID, art['pubdate'].isoformat() )
-    doc.add_value( XAP_SRCORG_ID, str(art['srcorg']) )
-    doc.add_value( XAP_PERMALINK_ID, art['permalink'] )
-    # comma-separated list of attributed journo refs & names
-    # eg: "bob-smith|Bob Smith,fred-blogs-1|Fred Blogs"
-    doc.add_value( XAP_JOURNOS_ID, ','.join( journo_list ) )
+    # serialise them and store them as the document data
+    dat = {}
+    dat['i']=art['id']
+    dat['t']=art['title']
+    dat['o']=art['srcorg']
+    dat['l']=art['permalink']
+    dat['d']=art['description']
+    journo_list = []
+    for j in art['journos']:
+        journo_list.append( {'i':j['id'], 'r':j['ref'], 'n':j['prettyname']} )
+    dat['j']=journo_list
+
+    dat_serialised = json.dumps( dat, separators=(',',':') )
+
+    #print dat_serialised
+
+    doc.set_data( dat_serialised )
 
     # index the main text of the article...
     indexer.set_document(doc)
@@ -81,10 +191,10 @@ def IndexArticle( xapdb, art ):
     indexer.increase_termpos()
     indexer.index_text( art['title'], 1, 'T' )
 
-    # ...and the byline.
-    indexer.increase_termpos()
-    indexer.index_text( art['byline'], 1, 'B' )
-
+    # ...and authors
+    for j in art['journos']:
+        indexer.increase_termpos()
+        indexer.index_text( j['prettyname'], 1, 'A' )
 
     xapdb.replace_document( article_id_term, doc )
 
@@ -97,10 +207,17 @@ def FetchJournos( conn, article_id ):
             FROM ( journo_attr attr INNER JOIN journo j ON j.id=attr.journo_id )
             WHERE attr.article_id=%s
         """, (article_id) )
-    journos = c.fetchall()
-    if journos == None:
-        journos = []
+    rows = c.fetchall()
+    journos = []
+    if rows is not None:
+        for row in rows:
+            journos.append( {
+                'id':row['id'],
+                'ref':row['ref'],
+                'prettyname': row['prettyname'].decode('utf-8'),
+                } )
     c.close()
+
     return journos
 
 
@@ -108,37 +225,49 @@ def PerformIndexing( xapdb,  options ):
     start = datetime.now()
 
     conn = DB.Connect()
-
-    conditions = [ "status=%s" ]
-    params = [ 'a' ]
-
-    conditions.append( "needs_indexing=%s" )
-    params.append( 'true' )
-
-    if options.from_date:
-        conditions.append( "lastscraped >= %s::date" )
-        params.append( options.from_date )
-
-    if options.to_date:
-        # +1 day to include the day of to_date
-        conditions.append( "lastscraped < %s::date + '1 day'::interval" )
-        params.append( options.to_date )
-
-    ukmedia.DBUG2( "counting...\n" )
-    sql = "SELECT count(*) FROM article WHERE " + " AND ".join( conditions )
-    if options.max_number:
-        sql = sql + " LIMIT %d" % ( int(options.max_number) )
-
     c = conn.cursor()
 
+    conditions = []
+    params = []
 
-    c.execute( sql, params );
-    expected = c.fetchone()[0]
-    if options.max_number:
-        if expected > int( options.max_number ):
-            expected = int( options.max_number )
-    ukmedia.DBUG2( "%d articles to process.\n" % (expected) )
+    if options.single_article_id is None:
+        # normal batch operation
+        conditions.append( "status=%s" )
+        params.append( 'a' )
 
+        conditions.append( "needs_indexing=%s" )
+        params.append( 'true' )
+
+        if options.from_date:
+            conditions.append( "lastscraped >= %s::date" )
+            params.append( options.from_date )
+
+        if options.to_date:
+            # +1 day to include the day of to_date
+            conditions.append( "lastscraped < %s::date + '1 day'::interval" )
+            params.append( options.to_date )
+
+        ukmedia.DBUG2( "counting...\n" )
+        sql = "SELECT count(*) FROM article WHERE " + " AND ".join( conditions )
+        if options.max_number:
+            sql = sql + " LIMIT %d" % ( int(options.max_number) )
+
+
+        c.execute( sql, params );
+        expected = c.fetchone()[0]
+        if options.max_number:
+            if expected > int( options.max_number ):
+                expected = int( options.max_number )
+        ukmedia.DBUG2( "%d articles to process.\n" % (expected) )
+    else:
+        # just indexing a single article - ignore other params and ignore
+        # the needs_indexing flag.
+        conditions.append( "id=%s" )
+        article_id = int( options.single_article_id )
+        params.append( article_id )
+        ukmedia.DBUG2( "Indexing single article (id=%d).\n" % (article_id) )
+
+    # retrieve articles
     sql = "SELECT * FROM article WHERE " + " AND ".join( conditions ) + " ORDER BY lastscraped DESC"
     if options.max_number:
         sql = sql + " LIMIT %d" % ( int(options.max_number) )
@@ -161,9 +290,9 @@ def PerformIndexing( xapdb,  options ):
             break
         art = {}
         # decode all the fields that need to be in unicode
-        for f in ( 'title', 'content', 'byline' ):
+        for f in ( 'title', 'content', 'byline', 'description' ):
             art[f] = row[f].decode( 'utf-8' )
-        # plain ascii ones...
+        # ones we can just copy without any processing
         for f in ( 'id','srcorg', 'pubdate','permalink' ):
             art[f] = row[f]
 
@@ -233,6 +362,10 @@ def main():
         dest="zap_id",
         metavar="ARTICLE_ID",
         help="remove the entry for ARTICLE_ID" )
+    parser.add_option("-a", "--articleid",
+        dest="single_article_id",
+        metavar="ARTICLE_ID",
+        help="reindex the entry for ARTICLE_ID" )
 #    parser.add_option("-r", "--replace",
 #        action="store_true", dest="replace_existing",
 #        help="reindex articles already in the xapian db")

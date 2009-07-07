@@ -11,20 +11,6 @@
  * email token, we can't give any indication of whether the user has an account
  * or not.
  * 
- * There are a number of pages here:
- * 
- *  login
- *      Shown when the user doesn't have a cookie and login is needed. Either
- *      solicit a password or allow the user to click a button to get sent an
- *      email with a token in it. Supplied with parameters: stash, the stash
- *      key for the request which should complete once the user has logged in;
- *      email, the user's email address; and optionally name, the user's real
- *      name.
- *
- *  login-error
- *      Shown when the user enters an incorrect password or an unknown email
- *      address on the login page.
- * 
  */
 
 
@@ -36,26 +22,29 @@ require_once '../../phplib/stash.php';
 require_once '../../phplib/rabx.php';
 require_once '../../phplib/importparams.php';
 
-/* As a first step try to set a cookie and read it on redirect, so that we can
- * warn the user explicitly if they appear to be refusing cookies. */
-if (!array_key_exists('test_cookie', $_COOKIE)) {
-    if (array_key_exists('test_cookie', $_GET)) {
-        page_header(_("Please enable cookies"));
-        print p(_('It appears that you don\'t have "cookies" enabled in your browser.
-<strong>To continue, you must enable cookies</strong>. Please
-read <a href="http://www.google.com/cookies.html">this page from Google
-explaining how to do that</a>, and then click the "back" button and
-try again'));
-        page_footer();
-        exit();
-    } else {
-        setcookie('test_cookie', '1', null, '/', person_cookie_domain(), false);
-        header("Location: /login.php?" . $_SERVER['QUERY_STRING'] . "&pb_test_cookie=1\n");
-        exit();
-    }
+
+// TODO - make this a site-wide thing?
+function jl_handle_error($num, $message, $file, $line, $context)
+{
+    header('HTTP/1.0 500 Internal Server Error');
+    page_header("Sorry! Something's gone wrong.");
+
+?>
+<h2>Sorry! Something's gone wrong.</h2>
+<em><?php echo $message; ?></em>
+<!-- <?php echo "{$file}:{$line}"; ?> -->
+<?php
+    page_footer();
 }
 
-/* Get all the parameters which we might use. */
+
+err_set_handler_display('jl_handle_error');
+
+
+EnsureCookiesEnabled();
+
+
+/* Get all the parameters which we might use (pulls them into $q_ prefixed vars) */
 importparams(
         array('stash',          '/^[0-9a-f]+$/',    '', null),
         array('email',          '/./',              '', null),
@@ -64,27 +53,24 @@ importparams(
         array('t',              '/^.+$/',           '', null),
         array('rememberme',     '/./',              '', false)
     );
-if ($q_name==_('<Enter your name>')) {
-    $q_name=null;
-}
+
 
 /* General purpose login, asks for email also. */
-if (get_http_var("now")) {
+if( get_http_var("now")) {
     $P = person_signon(array(
-                    'reason_web' => _("To use My Journalisted, we need your email address."),
-                    'reason_email' => _("Then you will be logged into My Journalisted, and can set or change your password."),
-                    'reason_email_subject' => _('Log into My Journalisted')
+        'reason_web' => "Log in",
+        'reason_email' => "Log in to Journalisted",
+        'reason_email_subject' => 'Log in to Journalisted'
+    ));
 
-                ));
-
-	// "my alerts" is closest thing we have to an account management page
+	// alerts is closest thing we have to an account management page
     header("Location: /alert");
     exit;
 }
 
-/* Do token case first because if the user isn't logged in *and* has a token
- * (unlikely but possible) the other branch would fail for lack of a stash
- * parameter. */
+
+
+/* is there a token? (i.e. user coming in via a confirmation email) */
 if (!is_null($q_t)) {
     $q_t = preg_replace('#</a$#', '', $q_t);
     /* Process emailed token */
@@ -97,259 +83,96 @@ if (!is_null($q_t)) {
     }
 
     $P->inc_numlogins();
-    
+ 
     db_commit();
 
     /* Now give the user their cookie. */
     set_login_cookie($P);
 
-    /* Recover "parameters" from token. */
-    $q_h_email = htmlspecialchars($q_email = $d['email']);
-    if (array_key_exists('name', $d) && !is_null($d['name'])) {
-        $q_h_name = htmlspecialchars($q_name = $d['name']);
-    } else {
-        $q_h_name = $q_name = null;
-    }
-    $q_h_stash = htmlspecialchars($q_stash = $d['stash']);
-
-    /* Set name if it has changed */
-    if ($q_name && !$P->matches_name($q_name))
-        $P->name($q_name);
-
-    stash_redirect($q_stash);
+    RedirectToOriginalDest( $d['stash'] );
     /* NOTREACHED */
 }
 
+
 $P = person_if_signed_on();
 if (!is_null($P)) {
-    /* Person is already signed in. */
-    if ($q_name && !$P->matches_name($q_name))
-        /* ... but they have specified a name which differs from their recorded
-         * name. Change it. */
-        $P->name($q_name);
-    if (!is_null($q_stash))
-        /* No name change, just pass them through to the page they actually
-         * wanted. */
-        stash_redirect($q_stash);
-    else
-        /* This happens if you are logged in and type (or go in browser history)
-         * to /login. May as well redirect to login as a new person. */
-        header("Location: /login?now=1");
-} elseif (is_null($q_stash)) {
-    header("Location: /login?now=1");
+    RedirectToOriginalDest( $q_stash );
+    /* NOT REACHED */
 } else {
-    /* Main login page. */
-    login_page();
+
+    $action = strtolower(get_http_var('action', 'login') );
+    if( $action == 'login') {
+        DoLoginPage();
+    } else if( $action == 'register' or $action == 'sendemail' ) {
+        DoLoginViaEmailPage();
+    }
+
 }
+
+
+
+/* doesn't return */
+function RedirectToOriginalDest( $stash ) {
+    if (!is_null($stash)) {
+        /* just pass them through to the page they actually wanted. */
+        stash_redirect($stash);
+        /* NOTREACHED */
+    } else {
+	    // alerts is closest thing we have to a user page
+        header("Location: /alert");
+        exit;
+    }
+}
+
+
+
+function Reason()
+{
+    global $q_stash;
+
+    if( is_null( $q_stash ) )
+        return "Log in";
+
+    $template_data = rabx_unserialise(stash_get_extra($q_stash));
+    return htmlspecialchars($template_data['reason_web']);
+}
+
+
 
 /* login_page
  * Render the login page, or respond to a button pressed on it. */
-function login_page() {
+function DoLoginPage()
+{
     global $q_stash, $q_email, $q_name, $q_rememberme;
 
-    if (is_null($q_stash)) {
-        err(_("Required parameter was missing"));
+
+    $errs = array();
+    if( get_http_var( 'loginsubmit', NULL ) ) {
+        $errs = LoginForm_AttemptLogin();
+        if( !$errs ) {
+            RedirectToOriginalDest( $q_stash );
+            /* NOT REACHED */
+        }
     }
 
-    if (get_http_var("loginradio") == 'LogIn') {
-        /* User has tried to log in. */
-        if (is_null($q_email)) {
-            login_form(array('email'=>_('Please enter your email address')));
-            exit();
-        }
-        if (!validate_email($q_email)) {
-            login_form(array('email'=>_('Please enter a valid email address')));
-            exit();
-        }
-        global $q_password;
-        $P = person_get($q_email);
-        if (is_null($P) || !$P->check_password($q_password)) {
-            login_form(array('badpass'=>_('Either your email or password weren\'t recognised.  Please try again.')));
-            exit();
-        } else {
-            /* User has logged in correctly. Decide whether they are changing
-             * their name. */
-            set_login_cookie($P, $q_rememberme ? 28 * 24 * 3600 : null); // one month
-            if ($q_name && !$P->matches_name($q_name))
-                $P->name($q_name);
-            $P->inc_numlogins();
-            db_commit();
-            stash_redirect($q_stash);
-            /* NOTREACHED */
-        }
-    } else if (get_http_var("loginradio") == 'SendEmail' ||
-            get_http_var("loginradio") == 'SendEmailForgotten') {
-        /* User has asked to be sent email. */
-        if (is_null($q_email)) {
-            login_form(array('email'=>_('Please enter your email address')));
-            exit();
-        }
-        if (!validate_email($q_email)) {
-            login_form(array('email'=>_('Please enter a valid email address')));
-            exit();
-        }
-        $token = auth_token_store('login', array(
-                        'email' => $q_email,
-                        'name' => $q_name,
-                        'stash' => $q_stash
-                    ));
-        db_commit();
+    $reason = Reason();
 
+    page_header( "Logging in" );
 
-		/* send out a confirmation email */
-		$url = OPTION_BASE_URL . "/login?t={$token}";
-
-		$values = rabx_unserialise(stash_get_extra($q_stash));
-		$body = "Please click on the link below to confirm your email address.\n" .
-			"{$values['reason_email']}\n" .
-			"\n" .
-			"{$url}\n" .
-			"\n";
-
-		$subject = $values['reason_email_subject'];
-		$from_name = "Journalisted";
-		$from_email = OPTION_TEAM_EMAIL;
-		jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
-
-
-//        $url = "SHITE!";	//TODO: pb_domain_url(array("path" => "/L/$token"));
-//        $template_data = rabx_unserialise(stash_get_extra($q_stash));
-//        $template_data['url'] = $url;
-//        $template_data['user_name'] = $q_name;
-//        if (is_null($template_data['user_name']))
-//            $template_data['user_name'] = 'Pledge signer';
-//        $template_data['user_email'] = $q_email;
-//        pb_send_email_template($q_email, 
-//            array_key_exists('template', $template_data) 
-//                ?  $template_data['template'] : 'generic-confirm', 
-//            $template_data);
-        page_header(_("Now check your email!"));
-        /* XXX show message only for Hotmail users? Probably not worth it. */
-
-    ?>
-<p class="loudmessage">
-<?=_('Now check your email!') ?><br>
-<?=_("We've sent you an email, and you'll need to click the link in it before you can
-continue") ?>
-<?
-
-        page_footer(array('nonav' => 1));
-        exit();
-            /* NOTREACHED */
-    } else {
-        login_form();
-        exit();
-    }
-}
-
-/* login_form ERRORS
- * Print the login form. ERRORS is a list of errors encountered when the form
- * was processed. */
-function login_form($errors = array()) {
-    /* Just render the form. */
-    global $q_h_stash, $q_h_email, $q_h_name, $q_stash, $q_email, $q_name, $q_rememberme;
-
-    page_header(_('Checking Your Email Address'), array( 'menupage'=>'my') );
-
-    if (is_null($q_name))
-        $q_name = $q_h_name = '';   /* shouldn't happen */
-
-    $template_data = rabx_unserialise(stash_get_extra($q_stash));
-    $reason = htmlspecialchars($template_data['reason_web']);
-
-
-    /* Split into two forms to avoid "do you want to remember this
-     * password" prompt in, e.g., Mozilla. */
-
-
-	/* show My-Journalisted blurb here, as that's the only thing
-     * login is currently required for */
 ?>
-
-<div class="block">
-
-<h2>My Journalisted</h2>
-
-<p>Build your own newsroom of favourite journalists.</p>
-
-<p>Just enter your email address and you'll be able to pick any bylined journalists
-from the national press or the BBC. Every time he/she writes a new
-article it will be emailed to you automatically, along with
-those of the other journalists you've picked.</p>
-
-<p>Perhaps you want to keep up-to-date with the latest scientific
-developments? If so, you could add Richard Black, Alok Jha, Mark Henderson,
-Pallab Ghosh, Jeremy Laurance, Fiona Macrae and Roger Highfield to your
-My Journalisted newsroom.</p>
-
-<p>Or maybe economic commentary is your thing? You could combine James
-Harding with Larry Elliott, Liam Halligan, Anatole Kaletsky, Sean O'Grady
-and Edmund Conway?</p>
-
-<br/ >
+<div class="box">
+<h3><?php echo $reason; ?></h3>
+<div class="box-content">
+<?php loginform_emit( $q_email, $q_stash, $q_rememberme, $errs ); ?>
+</div>
+</div>
 <?php
-
-    if (sizeof($errors)) {
-        print '<div id="errors"><ul><li>';
-        print join ('</li><li>', array_values($errors));
-        print '</li></ul></div>';
-    }
-
-?>
-<form action="/login" name="login" class="login" method="POST" accept-charset="utf-8">
-<input type="hidden" name="stash" value="<?=$q_h_stash?>">
-<input type="hidden" name="name" id="name" value="<?=$q_h_name?>">
-
-<p><strong><?=$reason?></strong></p>
-
-<? if (is_null($q_email) || $errors) { ?>
-
-<ul>
-
-<li> <?=_('What is your email address?') ?> <input<? if (array_key_exists('email', $errors) || array_key_exists('badpass', $errors)) print ' class="error"' ?> type="text" size="30" name="email" id="email" value="<?=$q_h_email?>">
-
-</ul>
-
-<? } else { ?>
-
-<input type="hidden" name="email" value="<?=$q_h_email?>">
-
-<? } ?>
-
-<p><strong><?=_('Have you used My Journalisted before?') ?></strong></p> 
-<div id="loginradio">
-
-<p><input type="radio" name="loginradio" value="SendEmail" id="loginradio1" <?=get_http_var("loginradio") == '' || get_http_var('loginradio') == 'SendEmail' ? 'checked' : ''?>><label for="loginradio1"><?=strip_tags(_("I've never used My Journalisted before")) ?></label>
-<br>
-<small><?=_("(we'll send an email, click the link in it to confirm your email is working)") ?></small>
-
-<p><input type="radio" name="loginradio" id="loginradio2" value="LogIn" <?=get_http_var("loginradio") == 'LogIn' ? 'checked' : ''?>><label for="loginradio2"><?=_('I have a My Journalisted <strong>password</strong>') ?>:</label>
-<input type="password" name="password" id="password" value="" <? if (array_key_exists('badpass', $errors)) print ' class="error"' ?> onchange="check_login_password_radio()">
-<br>
-<label for="rememberme"><?=_('Remember me') ?></label>
-<input type="checkbox" name="rememberme" id="rememberme" <?=$q_rememberme ? "checked" : ""?> onchange="check_login_password_radio()"><strong>
-</strong>
-<small><?=_("don't use this on a public or shared computer") ?></small>
-</p>
-
-<p>
-<input type="radio" name="loginradio" value="SendEmailForgotten" id="loginradio3" <?=get_http_var("loginradio") == 'SendEmailForgotten' ? 'checked' : ''?>><label for="loginradio3"><?=_("I've forgotten or didn't set a password") ?></label>
-<br>
-<small><?=_("(we'll send an email, click the link in it to confirm your email is working.<br>if you like, you can then set a password)") ?></small>
-<br>
-</p>
-
-<p><input type="submit" name="loginsubmit" value="Continue">
-</p>
-
-</div>
-
-</form>
-</div>
-<?
 
     page_footer();
 }
+
+
+
 
 /* set_login_cookie PERSON [DURATION]
  * Set a login cookie for the given PERSON. If set, EXPIRES is the time which
@@ -358,5 +181,190 @@ function set_login_cookie($P, $duration = null) {
     // error_log('set cookie');
     setcookie('pb_person_id', person_cookie_token($P->id(), $duration), is_null($duration) ? null : time() + $duration, '/', person_cookie_domain(), false);
 }
+
+
+
+/* only returns if cookies are enabled. otherwise outputs error page and exits */
+function EnsureCookiesEnabled()
+{
+    /* As a first step try to set a cookie and read it on redirect, so that we can
+     * warn the user explicitly if they appear to be refusing cookies. */
+    if (!array_key_exists('test_cookie', $_COOKIE)) {
+        if (array_key_exists('test_cookie', $_GET)) {
+            page_header(_("Please enable cookies"));
+    ?>
+    <p>It appears that you don't have "cookies" enabled in your browser.</p>
+    <p><strong>To continue, you must enable cookies</strong>.</p>
+    <p>Please read <a href="http://www.google.com/cookies.html">this page from Google
+    explaining how to do that</a>, then click the "back" button and try again.</p>
+    <?php
+            page_footer();
+            exit();
+        } else {
+            setcookie('test_cookie', '1', null, '/', person_cookie_domain(), false);
+            header("Location: /login.php?" . $_SERVER['QUERY_STRING'] . "&test_cookie=1\n");
+            exit();
+        }
+    }
+}
+
+// returns array of error messages for the login form
+function LoginForm_AttemptLogin()
+{
+    global $q_stash, $q_email, $q_name, $q_rememberme;
+
+
+    /* User has tried to log in. */
+    if (is_null($q_email)) {
+        return array('email'=>'Please enter your email address');
+    }
+    if (!validate_email($q_email)) {
+        return array('email'=>'Please enter a valid email address');
+    }
+
+    global $q_password;
+    $P = person_get($q_email);
+    if (is_null($P) || !$P->check_password($q_password)) {
+        return( array('badpass'=>'Either your email or password weren\'t recognised.  Please try again.') );
+    } else {
+        /* User has logged in correctly. Decide whether they are changing
+         * their name. */
+        set_login_cookie($P, $q_rememberme ? 28 * 24 * 3600 : null); // one month
+        $P->inc_numlogins();
+        db_commit();
+        return array();
+    }
+}
+
+
+
+
+function DoLoginViaEmailPage()
+{
+    global $q_stash, $q_email, $q_name, $q_rememberme;
+
+    $action = strtolower( get_http_var('action') );
+
+    $errs = array();
+    if( get_http_var( 'registersubmit', NULL ) ) {
+        /* check the inputs... */
+        if (is_null($q_email)) {
+            $errs['email'] = 'Please enter your email address';
+        } else if (!validate_email($q_email)) {
+            $errs[ 'email' ] = 'Please enter a valid email address';
+        }
+
+        if( !$errs )
+        {
+            // send the email...
+            DoConfirmationEmail();
+
+            page_header("Now check your email!" );
+?>
+<p class="loudmessage">
+Now check your email!<br/>
+<br/>
+We've sent you an email, and you'll need to click the link in it to log in.
+</p>
+<?php
+
+            page_footer();
+            return;
+        }
+    }
+
+    page_header( "Register" );
+
+?>
+<div class="box">
+<?php if( $action =='register' ) { ?>
+  <h3>Register new account</h3>
+  <p>To register, please tell us your email address.</p>
+  <p>We'll send you an email, click the link in it to confirm your email is working.</p>
+<?php } else { ?>
+  <h3>Lost/forgotten/missing password</h3>
+  <p>To log in, please tell us your email address.</p>
+  <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
+<?php } ?>
+<div class="box-content">
+<?php RegisterForm_Emit( $errs ); ?>
+</div>
+</div>
+<?php
+
+    page_footer();
+}
+
+
+function DoConfirmationEmail()
+{
+    global $q_stash, $q_email, $q_name, $q_rememberme;
+
+    if( is_null( $q_stash ) ) {
+        // create a default stashed request to take returning user to "/alert",
+        // the closest thing we have to a user profile page
+        $template_data = array(
+            'reason_web' => "Log in",
+            'reason_email' => "Log in to Journalisted",
+            'reason_email_subject' => 'Log in to Journalisted' );
+
+        $q_stash = stash_new_request( "POST", "/alert", null, rabx_serialise($template_data), null );
+    }
+
+
+    $token = auth_token_store('login', array(
+                    'email' => $q_email,
+                    'name' => $q_name,
+                    'stash' => $q_stash
+                ));
+    db_commit();
+
+
+    /* send out a confirmation email */
+    $url = OPTION_BASE_URL . "/login?t={$token}";
+
+    $values = rabx_unserialise(stash_get_extra($q_stash));
+    $body = "Please click on the link below to confirm your email address.\n" .
+        "{$values['reason_email']}\n" .
+        "\n" .
+        "{$url}\n" .
+        "\n";
+
+    $subject = $values['reason_email_subject'];
+    $from_name = "Journalisted";
+    $from_email = OPTION_TEAM_EMAIL;
+    jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+
+}
+
+    
+function RegisterForm_Emit($errs = array())
+{
+    global $q_h_stash, $q_h_email, $q_h_name, $q_stash, $q_email, $q_name, $q_rememberme;
+
+    $action = strtolower( get_http_var('action', '' ) );
+?>
+
+<form action="/login" name="register" class="login" method="POST" accept-charset="utf-8">
+<input type="hidden" name="stash" value="<?=$q_h_stash?>" />
+<input type="hidden" name="action" value="<?php echo $action; ?>" />
+
+<p>
+<?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
+<label for="email">Email address</label>
+<input type="text" size="30" name="email" id="email" value="<?php echo $q_h_email; ?>" />
+</p>
+
+<p>
+<input type="submit" name="registersubmit" value="Continue" />
+</p>
+
+</form>
+<?
+
+}
+
+
+
 
 ?>
