@@ -277,7 +277,7 @@ EOT;
 
 		print " <li>\n";
 		print(" <div class=\"$divclass\"><a href=\"/adm/article?id=$id\">$title</a>" );
-		print("  <small>morra-aaronsmele?full=yes{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
+		print("  <small>{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
 		print " </li>\n";
 	}
 ?>
