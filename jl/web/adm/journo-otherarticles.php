@@ -74,7 +74,6 @@ Show
 function ExtraHead()
 {
 ?>
-<script type="text/javascript" src="/jquery.js"></script>
 <script type="text/JavaScript">
 $(document).ready(function(){
 

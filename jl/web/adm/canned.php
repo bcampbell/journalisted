@@ -17,9 +17,9 @@ require_once '../phplib/adm.php';
 /* two sets of buttons/action selectors */
 $action = get_http_var( 'action' );
 
-admPageHeader();
+admPageHeader( "Canned Queries" );
 
-$canned = array( new ProlificJournos(), new KnownEmailAddresses(), new OrgList(), new ArticleCount() );
+$canned = array( new ProlificJournos(), new KnownEmailAddresses(), new OrgList(), new ArticleCount(), new AlertUsers() );
 
 function ShowMenu()
 {
@@ -186,8 +186,29 @@ function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
 
 
 function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
+    if( $col=='ref' ) {
+        $ref = $row[$col];
+        return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
+    }
+
     return admMarkupPlainText( $row[$col] );
 }
+
+/*
+function ExtraHead() {
+
+?>
+<script type="text/JavaScript">
+$(document).ready(function() 
+    { 
+        $("#canned-output").tablesorter(); 
+    } 
+);
+</script>
+<?php
+}
+*/
+
 
 function Tabluate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 
@@ -204,7 +225,7 @@ function Tabluate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
     $prevrow = null;
 
 ?>
-<table border=1>
+<table border=1 id="canned-output">
 <thead>
   <tr>
     <?php foreach( $columns as $col ) { ?><th><?php echo $col; ?></th><?php } ?>
@@ -356,6 +377,26 @@ class ArticleCount extends CannedQuery {
 
         $sql = <<<EOT
 SELECT count(*) as num_articles FROM article WHERE status='a';
+EOT;
+
+        $rows = db_getAll( $sql );
+        Tabluate( $rows );
+    }
+}
+
+class AlertUsers extends CannedQuery {
+    function __construct() {
+        $this->name = "AlertList";
+        $this->ident = "alertlist";
+        $this->desc = "List of alerts (ordered by email address)";
+    }
+
+    function go() {
+        echo "<h2>{$this->name}</h2>\n";
+        echo "<p>{$this->desc}</p>\n";
+
+        $sql = <<<EOT
+SELECT p.email, j.ref FROM ((alert a INNER JOIN person p ON a.person_id=p.id) INNER JOIN journo j ON a.journo_id=j.id) ORDER BY p.email;
 EOT;
 
         $rows = db_getAll( $sql );
