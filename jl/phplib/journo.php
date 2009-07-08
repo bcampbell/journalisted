@@ -37,7 +37,7 @@ gatso_start("maincolumn");
     journo_emitOverviewBlock( $journo, $slowdata );
     gatso_stop('overview');
     gatso_start('article_list');
-    journo_emitArticleblocks( $journo, $slowdata );
+    journo_emitArticleBlocks( $journo, $slowdata );
     gatso_stop('article_list');
     journo_emitFriendlyStatsBlock( $journo, $slowdata );
     journo_emitByNumbersBlock( $journo, $slowdata );
@@ -200,6 +200,7 @@ EOT;
 <div class="box">
   <h3>Most Recent article</h3>
   <div class="box-content art-list">
+<?php if( $newest_art ) { ?>
 <!--<div class="box recent">-->
     <div class="hentry">
       <?php $img=$newest_art['image']; if( $img ) { ?>
@@ -219,6 +220,9 @@ EOT;
         <a class="extlink" href="<?php echo $newest_art['permalink'];?>" >Original article at <?php echo $newest_art['srcorgname']; ?></a><br/>
       </div>
     </div>
+<?php } else { ?>
+  <p>None known</p>
+<?php } ?>
   </div>
 </div>
 
@@ -237,6 +241,9 @@ EOT;
           <a class="extlink" href="<?php echo $a['permalink'];?>" >Original article at <?php echo $a['srcorgname']?></a><br/>
         </div>
     </li>
+<?php } ?>
+<?php if( !$arts ) { ?>
+  <p>None known</p>
 <?php } ?>
 
   </ul>
@@ -317,7 +324,12 @@ function journo_emitByNumbersBlock( &$journo, &$slowdata )
     array_key_exists('wc_max',$slowdata) ) {
 ?>
     <ul>
-      <li><?php echo $slowdata['num_articles'];?> articles (since <?php echo $slowdata['first_pubdate'];?>)</li>
+      <li>
+        <?php echo $slowdata['num_articles'];?> articles
+        <?php if($slowdata['num_articles']>0) { ?>
+            (since <?php echo $slowdata['first_pubdate'];?>)
+        <?php } ?>
+      </li>
       <li>Average article: <?php printf( "%.0f", $slowdata['wc_avg']/30); ?> column inches (<?php printf( "%.0f", $slowdata['wc_avg']); ?> words)</li>
       <li>Shortest article: <?php printf( "%.0f", $slowdata['wc_min']/30); ?> column inches (<?php printf( "%.0f", $slowdata['wc_min']); ?> words)</li>
       <li>Longest article: <?php printf( "%.0f", $slowdata['wc_max']/30); ?> column inches (<?php printf( "%.0f", $slowdata['wc_max']); ?> words)</li>
