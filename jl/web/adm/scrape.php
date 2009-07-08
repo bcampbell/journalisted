@@ -21,7 +21,7 @@ admPageHeader();
 
 $url = get_http_var( 'url', '' );
 $action = get_http_var( 'action' );
-$preview = $action ? get_http_var( 'preview' ) : 'on';
+$preview = get_http_var( 'preview' );
 
 
 /*
