@@ -88,6 +88,22 @@ switch( $action )
 		DisapproveEmail( $journo_id, get_http_var('email_id') );
 		EmitJourno( $journo_id );
 		break;
+	case "add_otherarticle":
+		AddOtherArticle( $journo_id, get_http_var('url'), get_http_var('title'), get_http_var('pubdate'), get_http_var('publication') );
+		EmitJourno( $journo_id );
+		break;
+	case "remove_otherarticle_confirmed":
+		RemoveOtherArticle( $journo_id, get_http_var('otherarticle_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "approve_otherarticle":
+		ApproveOtherArticle( $journo_id, get_http_var('otherarticle_id') );
+		EmitJourno( $journo_id );
+		break;
+	case "disapprove_otherarticle":
+		DisapproveOtherArticle( $journo_id, get_http_var('otherarticle_id') );
+		EmitJourno( $journo_id );
+		break;
 
 	default:
 		if( $journo_id )
@@ -189,10 +205,13 @@ function EmitJourno( $journo_id )
 
 	$j = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
 
-	printf("<h2>%s</h2>\n", $j['prettyname'] );
-	printf("<a href=\"/%s\">Jump to their page</a>\n", $j['ref'] );
+?>
+<h2><?php echo $j['prettyname']; ?></h2>
+<a href="/<?php echo $j['ref'];?>?full=yes">Jump to their page</a>
+(<a href="/<?php echo $j['ref'];?>?full=yes">Force a page rebuild</a>)
+<h3>General</h3>
+<?php
 
-	print( "<h3>General</h3>\n");
 	printf("<form method='post'>\n");
 	printf("<strong>status:</strong> %s\n", $statusnames[ $j['status'] ] );
 	print form_element_hidden( 'action', 'change_status' );
@@ -220,6 +239,7 @@ function EmitJourno( $journo_id )
 	EmitWebLinks( $journo_id );
 	EmitBios( $journo_id );
 	EmitArticles( $journo_id );
+	EmitOtherArticles( $journo_id );
 }
 
 
@@ -233,7 +253,7 @@ function EmitArticles( $journo_id )
 	$sql = <<<EOT
 SELECT id,title,permalink,status,srcorg,pubdate
 	FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
-		WHERE attr.journo_id=?
+		WHERE attr.journo_id=? ORDER BY pubdate DESC
 EOT;
 
 	$rows = db_getAll( $sql, $journo_id );
@@ -257,7 +277,7 @@ EOT;
 
 		print " <li>\n";
 		print(" <div class=\"$divclass\"><a href=\"/adm/article?id=$id\">$title</a>" );
-		print("  <small>{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
+		print("  <small>morra-aaronsmele?full=yes{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
 		print " </li>\n";
 	}
 ?>
@@ -265,6 +285,7 @@ EOT;
 <?php
 
 }
+
 
 
 
@@ -628,6 +649,93 @@ function DisapproveEmail( $journo_id, $email_id )
 	db_query( "UPDATE journo_email SET approved=false WHERE id=?", $email_id );
 	db_query( "DELETE FROM htmlcache WHERE name='j$journo_id'" );
 	EmitActionMsg( "Disapproved Email (id $email_id)" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+
+
+/* show a list of other articles attributed to this journo */
+function EmitOtherArticles( $journo_id )
+{
+
+	print "<h3>Other Articles (not covered by scrapers)</h3>\n";
+
+	$sql = <<<EOT
+SELECT * FROM journo_other_articles WHERE journo_id=? ORDER BY pubdate DESC
+EOT;
+
+	$rows = db_getAll( $sql, $journo_id );
+
+?>
+<p><?php echo sizeof($rows); ?> other articles:</p>
+<table>
+<thead><tr><th>url</th><th>title</th><th>pubdate</th><th>publication</th><th>status</th><th></th></tr></thead>
+<tbody>
+<?php foreach( $rows as $row ) { ?>
+
+    <tr class="<?php echo $row['status']=='a' ? 'bio_approved':'bio_unapproved'; ?>">
+        <td><a href="<?php echo $row['url'];?>"><?php echo $row['url'];?></a></td>
+        <td><?php echo $row['title'];?></td>
+        <td><?php $d=new DateTime( $row['pubdate'] ); echo $d->format('Y-m-d H:i:s');?></td>
+        <td><?php echo $row['publication'];?></td>
+        <td><?php echo $row['status'];?></td>
+        <td>
+			<a href="?action=remove_otherarticle_confirmed&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">remove</a>
+<?php if( $row['status'] == 'h' ) { ?>
+			<a href="?action=approve_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">approve</a>
+<?php } else { ?>
+			<a href="?action=disapprove_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">disapprove</a>
+<?php } ?>
+        <td>
+    </tr>
+<?php } ?>
+</tbody>
+</table>
+
+<form method="post">
+<input type="hidden" name="journo_id" value="<?php echo $journo_id; ?>" />
+url: <input type="text" name="url" size="40" />
+title: <input type="text" name="title" size="40" /><br/>
+pubdate (yyyy-mm-dd): <input type="text" name="pubdate" />
+publication: <input type="text" name="publication" /><br/>
+<button type="submit" name="action" value="add_otherarticle">Add Other Article</button>
+</form>
+
+<?php
+
+}
+
+
+function AddOtherArticle( $journo_id, $url,$title,$pubdate,$publication )
+{
+	db_query( "INSERT INTO journo_other_articles (journo_id,url,title,pubdate,publication,status) VALUES (?,?,?,?,?,?)",
+        $journo_id, $url, $title, $pubdate, $publication, 'a' );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+	EmitActionMsg( "Added other article ({$title} - {$url})" );
+}
+
+function RemoveOtherArticle( $journo_id, $otherarticle_id )
+{
+	db_query( "DELETE FROM journo_other_articles WHERE id=?", $otherarticle_id );
+	EmitActionMsg( "Removed Other Article\n" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function ApproveOtherArticle( $journo_id, $otherarticle_id )
+{
+	db_query( "UPDATE journo_other_articles SET status='a' WHERE id=?", $otherarticle_id );
+	EmitActionMsg( "Approved Other Article" );
+	/* TODO: LOG THIS ACTION! */
+	db_commit();
+}
+
+function DisapproveOtherArticle( $journo_id, $otherarticle_id )
+{
+	db_query( "UPDATE journo_other_articles SET status='h' WHERE id=?", $otherarticle_id );
+	EmitActionMsg( "Disapproved Other Article" );
 	/* TODO: LOG THIS ACTION! */
 	db_commit();
 }
