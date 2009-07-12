@@ -11,7 +11,7 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 
-require_once "HTML/QuickForm.php";
+//require_once "HTML/QuickForm.php";
 
 $statusnames = array('i'=>'i - Inactive', 'a'=>'a - Active', 'h'=>'h - Hidden' );
 
