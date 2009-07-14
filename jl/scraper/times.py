@@ -24,11 +24,11 @@ from JL import ukmedia, ScraperUtils
 # The Times website seems a little crap and stalls regularly, so
 # we timeout. Should handle it a bit more gracefully...
 #
-# The Times RSS feeds seem a bit rubbish, and only have 5 articles
-# each.
-# So we scrape links from the html pages. The Times has a page for
+# The Times RSS feeds used to be a bit rubbish,  but have improved.
+#
+# Also scrape links from the html pages. The Times has a page for
 # each days edition which contains links to all the headlines for that day.
-# That's what we want.
+# That's what we want. But it doesn't cover online-only articles
 
 
 # lots of links on the page which we don't want, so we'll
@@ -44,6 +44,29 @@ sectionnames = ('News',
 
 siteroot = "http://timesonline.co.uk"
 
+
+def FetchRSSFeeds():
+    """Scrape a list of all the timesonline rss feeds, returns a list of (name,url) tuples"""
+    html = ukmedia.FetchURL( 'http://www.timesonline.co.uk/tol/tools_and_services/rss/' )
+    soup = BeautifulSoup.BeautifulSoup(html)
+
+    feeds = []
+
+    foo = soup.find( 'div', {'id':'region-column1-layout2'} )
+    for a in foo.findAll( 'a' ):
+        name = ukmedia.FromHTMLOneLine( a.renderContents( None ) )
+        url = a['href'].encode('ascii').strip()
+        o = urlparse.urlparse( url )
+
+        ok = False
+        if 'timesonline.co.uk' in o[1] or 'typepad.com' in o[1]:
+            ok = True
+        if 'podcast.timesonline.co.uk' in o[1]:
+            ok = False
+        if ok:
+            feeds.append( (name,url) )
+
+    return feeds
 
 
 def FindBlogFeeds():
@@ -62,7 +85,7 @@ def FindBlogFeeds():
 #        url += 'index.rdf'  # rss1.0
         url += 'rss.xml'    # rss2.0
 
-        url = url.encode('ascii')
+        url = url.encode('ascii').strip()
         name = a.renderContents(None).strip()
 
         feed_dict[url] = name
@@ -116,22 +139,30 @@ puzzle_blacklist = (
 def ScrubFunc( context, entry ):
     """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
 
-    # used for the RSS feeds only (ie blogs)
     url = context[ 'srcurl' ]
+    o = urlparse.urlparse( url )
+    if o[1] == 'feeds.timesonline.co.uk':
+        # sigh... obsfucated url (presumably for tracking)
+        # Luckily the guid has proper link, marked as non-permalink
+        url = entry.guid
+
     context['srcid'] = CalcSrcID( url )
     return context
 
 
 def FindArticles():
+    """ use various sources to make sure we get both print and online-only articles"""
     foundarticles = []
 
-    # part 1: get blog posts from RSS feeds
-    ukmedia.DBUG2( "*** times ***: scraping list of blog feeds...\n" )
-    blogfeeds = FindBlogFeeds()
+    # part 1: get RSS feeds
+    ukmedia.DBUG2( "*** times ***: scraping lists of feeds...\n" )
+    mainfeeds = FetchRSSFeeds()
+    blogfeeds = FindBlogFeeds()     # their main rss list isn't 100% complete. sigh.
+    feeds = MergeFeedLists( (blogfeeds,mainfeeds) )
 
-    foundarticles = ScraperUtils.FindArticlesFromRSS( blogfeeds, u'times', ScrubFunc )
+    foundarticles = ScraperUtils.FindArticlesFromRSS( feeds, u'times', ScrubFunc )
 
-    # part 2: get main paper articles from scraping pages
+    # part 2: get main paper articles from scraping pages (_should_ mirror what's in the print editions)
     ukmedia.DBUG2( "*** times ***: scraping newspaper article list...\n" )
 
     # hit the page which shows the covers of the papers for the week
@@ -485,6 +516,14 @@ def Extract_typepad( html, context ):
     return art
 
 
+
+def MergeFeedLists( feedlists ):
+    """merges lists of (name,url) tuples, keyed by url"""
+    u = {}
+    for l in feedlists:
+        for f in l:
+            u[f[1]] = f[0]
+    return [(v,k) for k,v in u.iteritems()]
 
 
 
