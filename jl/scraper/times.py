@@ -460,10 +460,6 @@ def Extract_typepad( html, context ):
     headlinediv = soup.find( 'h3', {'class':'entry-header'} )
     art['title'] = ukmedia.FromHTMLOneLine( headlinediv.renderContents(None) )
 
-    # date-header has date but no time
-    dateheader = soup.find( 'h2', {'class':'date-header'} )
-    datetxt = dateheader.renderContents(None)     # "Thursday, 05 June 2008"
-    art['pubdate'] = ukmedia.ParseDateTime(datetxt)
 
     # TODO: use rdf timestamp if it's there - otherwise we'll have date but no time
     # some blogs have a little rdf block with iso timestamp (do all of them?)
@@ -482,6 +478,15 @@ def Extract_typepad( html, context ):
     m = re.compile( r"Posted by\s+(.*?)\s+on (\w+\s+\d+,\s+\d{4})" ).search( footertxt )
     if m:
         byline = m.group(1)
+        datetxt = m.group(2)
+        art['pubdate'] = ukmedia.ParseDateTime(datetxt)
+
+    if 'pubdate' not in art:
+        # date-header has date but no time
+        # sometimes american-style - eg "07/17/2009". ugh.
+        dateheader = soup.find( 'h2', {'class':'date-header'} )
+        datetxt = dateheader.renderContents(None)     # "Thursday, 05 June 2008"
+        art['pubdate'] = ukmedia.ParseDateTime(datetxt)
 
     # "Posted at 02:22 PM in "...
     #    m = re.compile( r"Posted at\s+(\d+:\d+\s+\w{2})\s+" ).search( footertxt )
