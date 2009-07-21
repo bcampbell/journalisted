@@ -375,7 +375,7 @@ function emit_similar_articles( $article_id )
     $sql = <<<EOT
 SELECT *
     FROM article a INNER JOIN article_similar s ON s.other_id=a.id
-    WHERE s.article_id=?
+    WHERE s.article_id=? and a.status='a'
     ORDER BY {$ord}
     {$lim}
 EOT;
