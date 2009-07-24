@@ -575,6 +575,36 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
     width: 100%;
 }
 
+#missing fieldset {
+    margin: 0.4em;
+}
+
+/* missing-article form */
+
+#missing .field {
+    margin: 0.4em;
+}
+
+#missing label {
+    display: inline-block;
+    text-align: right;
+    width: 20%;
+    margin-right: 1em;
+    vertical-align: top;
+}
+
+#missing input.wide {
+    width: 75%;
+}
+
+
+#missing span.errhint {
+    display: block;
+    margin-left: 20%;
+    margin-top: 1em;
+    padding-left: 1em;
+}
+
 
 
 /* "#content" is hack to force precedence over #maincolumn/#smallcolumn .box headings */

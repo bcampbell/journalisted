@@ -12,8 +12,6 @@ require_once '../phplib/scrapeutils.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
-
-
 $state = strtolower( get_http_var('state','initial' ) );
 $ref = strtolower( get_http_var( 'j' ) );   /* eg 'fred-bloggs' */
 $journo = NULL;
@@ -21,73 +19,29 @@ if( $ref )
     $journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=? AND status='a'", $ref );
 
 if( $journo )
-    $title = "Tell us about a missing article for " . $journo['prettyname'];
+    $title = "Tell us about missing articles for " . $journo['prettyname'];
 else
-    $title = "Tell us about a missing article";
+{
+    page_header('');
+?>
+<p>No journalist specified</p>
+<?php
+    page_footer();
+    return;
+}
 
 page_header($title);
 
 ?>
 <div id="maincolumn">
-  <div class="box">
-    <h2><?php echo $title; ?></h2>
-    <div class="box-content">
+
+<h2>Submit missing articles for <a href="/<?php echo $journo['ref'];?>"><?php echo $journo['prettyname']; ?></a></h2>
 <?php
 
-switch( $state )
-{
-    case 'initial':
-        $basic = new BasicForm( $journo );
-        $basic->Emit();
-        break;
-    case 'submit_basic': // url only
-        // check url.
-        $basic = new BasicForm( $journo );
-        $errs = $basic->Validate();
-        if( !$errs ) {
-            // params look OK. is it an article we handle?
-            $url = $basic->URL();
-            $srcid = scrape_CalcSrcID( $url );
-            if( $srcid ) {
+do_it();
 
-                // url is scrapable
-                // TODO: 
-                // - Scrape it.
-                // - show results.
-                // send email only if required.
-                Article_Process( $journo, $url );
-
-                EmitDoneBlurb();
-
-            } else {
-                // url can't be scraped
-                $extended = new ExtendedForm( $journo );
-                $extended->Emit();
-            }
-        } else {
-            $basic->Emit( $errs );
-        }
-
-        break;
-    case 'submit_extended': // url, title, pubdate, publication
-        $extended = new ExtendedForm( $journo );
-        $errs = $extended->Validate();
-        if( !$errs ) {
-
-            $extended->SendToDB();         
 
 ?>
-<p>Thanks for letting us know!</p>
-<?php
-            EmitDoneBlurb();
-        } else {
-            $extended->Emit( $errs );
-        }
-        break;
-}
-?>
-    </div>
-  </div>
 </div> <!-- end maincolumn -->
 <div id="smallcolumn">
   <div class="box">
@@ -111,262 +65,364 @@ page_footer();
 
 
 
-function EmitDoneBlurb()
-{
+
+function emit_rawform() {
     global $journo;
 ?>
-<p>Go back to <a href="/<?php echo $journo['ref']; ?>"><?php echo $journo['prettyname'];?>'s page</a>
-(or tell us about another missing article)</p>
+      <form action="/missing" method="POST">
+        <input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
+        <p>Please enter the urls of the article(s) you want to submit (one url per line):</p>
+        <textarea name="rawurls" style="width: 100%;" rows="8"></textarea><br/>
+        <button type="submit" name="action" value="go">Submit</button>
+      </form>
 <?php
-
-    $basic = new BasicForm( $journo );
-    $basic->BlankOutParams();
-    $basic->Emit();
 }
 
 
 
-function Article_Process( $journo, $url )
-{
-    $msg = '';
-    if( $journo )
-        $subject = sprintf( "[missing article for %s]", $journo['prettyname'] );
-    else
-        $subject = '[missing article]';
+function get_items() {
 
-    $to_email = OPTION_TEAM_EMAIL;
-    $from_name = "Journalisted";
-    $from_email = OPTION_TEAM_EMAIL;
-
-
-    if( $journo )
-    {
-        /* provide a nice easy link to journos page */
-
-        $journo_url = OPTION_BASE_URL . "/" . $journo['ref'];
-        $journo_admin_url = OPTION_BASE_URL . "/adm/journo?journo_id=" . $journo['id'];
-
-        $msg .= sprintf( "Missing article URL submitted for %s:\n", $journo['prettyname'] );
-        $msg .= "$url\n\n";
-
-        $msg .= $journo['prettyname'] . "'s pages:\n";
-        $msg .= "$journo_url\n";
-        $msg .= "$journo_admin_url\n";
-        $msg .= "\n";
-    }
-    else
-    {
-        $msg .= "Missing article URL submitted:\n$url\n";
-    }
-
-
-    /* SEND IT! */
-    if( jl_send_text_email( $to_email, $from_name, $from_email, $subject, $msg ) )
-    {
-
-?>
-<div id="forminfo">
-<p>The Journalisted team has been notified of the missing article.</p>
-<p>Thanks for letting us know!</p>
-</div>
-<?php
-
-    }
-    else
-    {
-
-?>
-<div id="errors">
-<p>Uh-oh... there was an unknown problem when notifying
-The Journalisted team...</p>
-</div>
-<?php
-
-    }
-}
-
-
-
-
-// Basic form handling submission of articles  - URL only.
-class BasicForm
-{
-    public $params = array();
-    public $journo = NULL;
-
-    function __construct( $journo )
-    {
-        $this->journo = $journo;
-        $this->params['url'] = get_http_var( 'url' );
-    }
-
-
-    // blank out all the fields in the form so it can be reused
-    function BlankOutParams()
-    {
-        $this->params['url'] = '';
-    }
-
-    function URL()
-        { return $this->params['url']; }
-
-
-    // Display the form itself, with (optionally) error info
-    function Emit( $errs=array() )
-    {
-	    $errhtml='';
-
-        $p = &$this->params;
-
-?>
-<p>Please enter the details of the article you want to tell us about:</p>
-
-<form method="post" action="/missing">
-
-<input type="hidden" name="j" value="<?php echo $this->journo['ref']; ?>" />
-<input type="hidden" name="state" value="submit_basic" />
-
-<p>
-<?php if(array_key_exists('url',$errs)) { ?><span class="errhint"><?php echo $errs['url'];?></span><?php } ?>
-<label for="url">Article URL ( <code>http://</code>... )</label>
-<input type="text" name="url" id="url" size="80" value="<?php echo $p['url']; ?>" />
-</p>
-
-<p class="submit">
-<input type="submit" name="submit" value="Submit" />
-</p>
-</form>
-<?php
-    }
-
-
-    /* check the form params - returns an array containing any bad params (with error messages) */
-    function Validate()
-    {
-	    $errs = array();
-    	if( !$this->params['url'] )
-	    	$errs['url'] = "Please enter the URL of the article";
-    	return $errs;
-    }
-}
-
-
-
-
-// form for handling submission of articles from publications we don't otherwise cover
-// which means we need to ask for title, pubdate, publication as well as url.
-class ExtendedForm
-{
-    public $params = array();
-    public $journo = NULL;
-
-    function __construct( $journo )
-    {
-        $this->journo = $journo;
-        $this->params['url'] = get_http_var( 'url' );
-        $this->params['title'] = get_http_var( 'title' );
-        $this->params['pubdate'] = get_http_var( 'pubdate' );
-        $this->params['publication'] = get_http_var( 'publication' );
-    }
-
-
-    // blank out all the fields in the form so it can be reused
-    function BlankOutParams()
-    {
-        $this->params['url'] = '';
-        $this->params['title'] = '';
-        $this->params['pubdate'] = '';
-        $this->params['publication'] = '';
-    }
-
-
-    // Display the form itself, with (optionally) error info
-    function Emit( $errs=array() )
-    {
-	    $errhtml='';
-
-        $p = &$this->params;
-
-?>
-<p>It looks like this article is from an outlet we don't yet cover, so we'll need a few more details:</p>
-
-<form class="missingarticle" method="post" action="/missing">
-
-<input type="hidden" name="j" value="<?php echo $this->journo['ref']; ?>" />
-<input type="hidden" name="state" value="submit_extended" />
-
-<p>
-<?php if(array_key_exists('url',$errs)) { ?><span class="errhint"><?php echo $errs['url'];?></span><?php } ?>
-<label for="url">Article URL (required) <small>( <code>http://</code>... )</small></label>
-<input type="text" name="url" id="url" size="80" value="<?php echo $p['url']; ?>" />
-</p>
-
-<p>
-<?php if(array_key_exists('title',$errs)) { ?><span class="errhint"><?php echo $errs['title'];?></span><?php } ?>
-<label for="title">Article title (required)</label>
-<input type="text" name="title" id="title" size="80" value="<?php echo $p['title']; ?>" />
-</p>
-
-<p>
-<?php if(array_key_exists('pubdate',$errs)) { ?><span class="errhint"><?php echo $errs['pubdate'];?></span><?php } ?>
-<label for="pubdate">Date published (required) <small>(dd-mm-yyyy)</small></label>
-<input type="text" name="pubdate" id="pubdate" size="20" value="<?php echo $p['pubdate']; ?>" />
-</p>
-
-<p>
-<?php if(array_key_exists('publication',$errs)) { ?><span class="errhint"><?php echo $errs['publication'];?></span><?php } ?>
-<label for="publication">Name of publication</label>
-<input type="text" name="publication" id="publication" size="40" value="<?php echo $p['publication']; ?>" />
-</p>
-
-
-<input type="submit" name="submit" value="Submit" />
-</form>
-<?php
-    }
-
-
-    /* check the form params - returns an array containing any bad params (with error messages) */
-    function Validate()
-    {
-	    $errs = array();
-    	if( !$this->params['url'] )
-	    	$errs['url'] = "Please enter the URL of the article";
-    	if( !$this->params['title'] )
-	    	$errs['title'] = "Please enter the title of the article";
-    	if( $this->params['pubdate'] )
-        {
-
-            $dt = strtotime( $this->params['pubdate'] );
-            if( !$dt )
-	    	    $errs['pubdate'] = 'Please enter the date in the form: YYYY-MM-DD';
-        } else {
-	    	$errs['pubdate'] = "Please supply a date";
+    $items = array();
+    // fetch unprocessed items (just a bunch of urls)
+    $rawurls = get_http_var( 'rawurls', null );
+    if( $rawurls ) {
+        $urls = array_unique( explode("\n",$rawurls) );
+        foreach( $urls as $u ) {
+            $u = trim($u);
+            if( $u ) {
+                $items[] = array(
+                    'url'=>$u,
+                    'state'=>'pending',
+                    'title'=>null,
+                    'pubdate'=>null,
+                    'publication'=>null,
+                    'errs'=>array() );
+            }
         }
+    }
+//    print "<pre>" . sizeof($items) . " from raw</pre>\n";
 
-    	return $errs;
+    // fetch processed items
+    $cnt = get_http_var( 'cnt', 0 );
+    for( $i=0; $i<$cnt; ++$i ) {
+        $url = get_http_var( "url{$i}" );
+        if(!$url )
+            continue;
+
+        $items[] = array(
+            'url'=>$url,
+            'state'=>get_http_var( "state{$i}" ),
+            'title'=>get_http_var( "title{$i}", null ),
+            'pubdate'=>get_http_var( "pubdate{$i}", null ),
+            'publication'=>get_http_var( "publication{$i}", null ),
+            'errs'=>array()
+        );
+    }
+//    print "<pre>" . $cnt . " cnt</pre>\n";
+//    print "<pre>" . sizeof($items) . " total</pre>\n";
+
+    // add "http://" prefix if missing
+/*    foreach( $items as &$item ) {
+        if( preg_match( "%^[a-zA-Z]+://%", $item['url'] ) == 0 ) {
+            $item['url'] = "http://" . $item['url'];
+        }
+    }
+*/
+    return $items;
+}
+
+
+function do_it() {
+    $items = get_items();
+    if( $items ) {
+        $idx = 0;
+        foreach( $items as &$item ) {
+            process_item( $item );
+        }
+        emit_form($items);
+    } else {
+        emit_rawform();
+    }
+}
+
+
+// differs from built-in parse_url() in these ways:
+// - doesn't abort with errors if it gets confused
+// - if it looks like a valid url, _all_ fields will be returned (missing ones will be empty)
+function crack_url( $url )
+{
+    $fields = array( 'scheme','user','pass','host','port','path','query','fragment' );
+    $m = array();
+    if( preg_match( "/^((?P<scheme>\w+):\/\/)?((?P<user>.+?)(:(?P<pass>.+?))?@)?(?P<host>[^\/:?]+)?(:(?P<port>\d+))?(?P<path>.+?)?([?](?P<query>.*?))?([#](?P<fragment>.*?))?$/",$url,&$m ) > 0 ) {
+
+
+        $ret = array();
+        foreach( $fields as $f ) {
+            $ret[$f] = array_key_exists( $f, $m ) ? $m[$f] : '';
+        }
+        return $ret;
+    } else {
+        /* actually, I'm not sure the preg_match can ever fail... every part is optional... */
+        return FALSE;
     }
 
-    // Process the action for this form: add the article details to the DB.
-    // Assumes params have already been validated.
-    function SendToDB()
-    {
-        $sql = <<<EOT
+}
+
+//
+function is_sane_article_url( $url )
+{
+    $bits = crack_url( $url );
+    if( $bits === FALSE )
+        return "Please enter the full url of the article";
+    // default to http://
+    if( $bits['scheme'] == '' ) {
+        $bits['scheme'] = 'http';
+    }
+
+    $host = trim( $bits['host'] );
+    $scheme = trim( strtolower( $bits['scheme'] ) );
+    $path = trim( $bits['path'] );
+    $query = trim( $bits['query'] );
+
+    if( $host == '' ) {
+        return "Please enter the full url of the article";
+    }
+
+    // no ftp: or internal file: links please!
+    if( $scheme != 'http' && $scheme != 'https' ) {
+        return "Sorry, \"{$scheme}://\" urls are not supported";
+    }
+
+    // hostnames probably shouldn't have spaces in them...
+    // (proably user entering  a headline... sigh...)
+    if( strpos( $host, ' ' ) !== False ) {
+        return "Please enter a valid url";
+    }
+
+    // make sure we've got at least a non-blank path (or a non-blank query)
+    if( ($path=='' || $path=='/') && $query=='' ) {
+        return "Please enter the FULL url of the article";
+    }
+
+    return null;
+}
+
+function is_url_scrapable( $url )
+{
+    $srcid = scrape_CalcSrcID( $url );
+    if( $srcid )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+function check_details( $item )
+{
+    $errs = array();
+    if( $item['pubdate'] == '' ) {
+        $errs['pubdate'] = "Please enter the date the article was published";
+    } else {
+        $dt = strtotime( $item['pubdate'] );
+        if( !$dt ) {
+            $errs['pubdate'] = "Please enter a valid date";
+        }
+    }
+
+    if( $item['title'] == '' ) {
+        $errs['title'] = "Please enter the title of the article";
+    }
+
+    return $errs;
+}
+
+
+
+// process a single item, and set it's state/error messages appropriately.
+function process_item( &$item )
+{
+    global $journo;
+    if( $item['state'] == 'ok' || $item['state'] =='ok_extra' ) {
+        return; // no further processing needed
+    }
+
+    $err = is_sane_article_url($item['url']);
+    if( $err ) {
+        $item['state'] = 'badurl';
+        $item['errs'] = array( 'url'=>$err );
+        return;
+    }
+
+    if( is_url_scrapable( $item['url'] ) ) {
+        db_do( "INSERT INTO missing_articles (journo_id,url) VALUES (?,?)",
+            $journo['id'], $item['url'] );
+        db_commit();
+        $item['state'] = 'ok';
+    } else {
+        // not scrapable
+        if( $item['state'] == 'need_extra' ) {
+            $item['errs'] = check_details( $item );
+            if( !$item['errs'] ) {
+                $sql = <<<EOT
 INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
     VALUES ( ?,?,?,?,?,'u' )
 EOT;
+                $dt = new DateTime( $item['pubdate'] );
+                db_do( $sql, $journo['id'], $item['url'], $item['title'], $dt->format(DateTime::ISO8601), $item['publication'] );
+                db_commit();
 
-        $j = &$this->journo;
-        $p = &$this->params;
-
-        db_do( $sql, $j['id'], $p['url'], $p['title'], $p['pubdate'], $p['publication'] );
-        db_do( "DELETE FROM htmlcache WHERE name=?",
-	        'j' . $j['id'] );
-
-        db_commit();
+                $item['state'] = 'ok_extra';
+            }
+        } else {
+            $item['state'] = 'need_extra';
+            // TODO: could use url here to look up publication!
+        }
     }
+}
+
+
+
+
+
+function emit_form( &$items )
+{
+    global $journo;
+    $accepted = 0;
+    $pending = 0;
+    foreach( $items as &$item ) {
+        if( $item['state'] == 'ok' || $item['state'] == 'ok_extra' ) {
+            ++$accepted;
+        } else {
+            ++$pending;
+        }
+    }
+
+    // show the ones that have already been accepted and processed
+    // (they'll be repeated later as hidden form elements too)
+    if( $accepted > 0 ) {
+        if( sizeof($items)==1 ) {
+?><p>Thank you! This article has been submitted:</p><?php
+        } else {
+?><p>Thank you! These articles have been submitted:</p><?php
+        }
+?>
+<ul class="art-list" >
+<?php
+        foreach( $items as &$item ) {
+            if( $item['state'] == 'ok' ) {
+?>
+<li><a href="<?php echo $item['url']; ?>"><?php echo $item['url']; ?></a></li>
+<?php
+            } else if( $item['state'] == 'ok_extra' ) {
+                $dt = new DateTime( $item['pubdate'] );
+?>
+<li>
+<a href="<?php echo $item['url']; ?>"><?php echo $item['title']; ?></a><?php if( $item['publication'] ) { ?>, <span class="publication"><?php echo $item['publication']; ?></span><?php } ?>, <span class="published"><?php echo pretty_date($dt); ?></span>
+</li>
+<?php
+            }
+        }
+
+?>
+</ul>
+<?php
+
+    }
+
+    // if they've all been done, we can bail out now.
+    if( $pending == 0 ) {
+?>
+        <p><a href="/missing?j=<?php echo $journo['ref']; ?>">Submit more missing articles for <?php echo $journo['prettyname']; ?></a></p>
+
+<?php
+        return;
+    }
+
+
+    // show the ones still being sorted out
+?>
+</ul>
+
+<form method="POST" action="/missing" id="missing">
+<input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
+<input type="hidden" name="cnt" value="<?php echo sizeof($items); ?>" />
+
+<?php
+    $idx = 0;
+    foreach( $items as &$item ) {
+        emit_item( $item, $idx );
+        ++$idx;
+    }
+?>
+<button name="action" value="go">Submit</button>
+</form>
+<?php
 
 }
 
+
+
+// output an individual item on the form. May be editable, may be hidden, depending on its state
+function emit_item( $item, $idx )
+{
+    $state = $item['state'];
+    $errs = $item['errs'];
+    if( $state == 'ok' ) {
 ?>
+<input type="hidden" name="state<?php echo $idx;?>" value="<?php echo $item['state']; ?>" />
+<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+<?php
+    } elseif( $state == 'ok_extra' ) {
+?>
+<input type="hidden" name="state<?php echo $idx;?>" value="<?php echo $item['state']; ?>" />
+<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+<input type="hidden" name="title<?php echo $idx;?>" value="<?php echo $item['title']; ?>" />
+<input type="hidden" name="pubdate<?php echo $idx;?>" value="<?php echo $item['pubdate']; ?>" />
+<input type="hidden" name="publication<?php echo $idx;?>" value="<?php echo $item['publication']; ?>" />
+<?php
+    } elseif( $state == 'need_extra' ) {
+?>
+<fieldset>
+
+<p>Please tell us a little more about this article:</p>
+
+<input type="hidden" name="state<?php echo $idx;?>" value="<?php echo $item['state']; ?>" />
+
+<div class="field">
+<?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span><br/> <?php } ?>
+<label for="url<?php echo $idx;?>">article url</label>
+<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+</div>
+
+<div class="field">
+<?php if( array_key_exists('title',$errs) ) { ?> <span class="errhint"><?php echo $errs['title']; ?></span> <?php } ?>
+<label for="title<?php echo $idx;?>">article title</label>
+<input type="text" class="wide" id="title<?php echo $idx;?>" name="title<?php echo $idx;?>" value="<?php echo $item['title']; ?>" />
+</div>
+
+<div class="field">
+<?php if( array_key_exists('pubdate',$errs) ) { ?> <span class="errhint"><?php echo $errs['pubdate']; ?></span> <?php } ?>
+<label for="pubdate<?php echo $idx;?>">publication date<br/><small>(YYYY-MM-DD)</small></label>
+<input type="text" id="pubdate<?php echo $idx;?>" name="pubdate<?php echo $idx;?>" value="<?php echo $item['pubdate']; ?>" />
+</div>
+
+<div class="field">
+<label for="publication<?php echo $idx;?>">publication<br/><small>(optional)</small></label>
+<input type="text" id="publication<?php echo $idx;?>" name="publication<?php echo $idx;?>" value="<?php echo $item['publication']; ?>" />
+</div>
+
+</fieldset>
+<?php
+
+    } else {
+
+?>
+<fieldset>
+<input type="hidden" name="<?php echo "state{$idx}";?>" value="<?php echo $item['state']; ?>" />
+<?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span> <?php } ?>
+<label for="url<?php echo $idx;?>">article url</label>
+<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+</fieldset>
+<?php
+    }
+}
 

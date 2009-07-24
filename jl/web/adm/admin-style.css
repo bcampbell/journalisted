@@ -12,3 +12,14 @@
     background-color: silver;
     padding: 1em; }
 
+.widget-container {
+    margin: 0.5em;
+    padding: 0.5em;
+    border: 1px solid #cccccc;
+}
+
+blockquote {
+    background-color: #eeeeee;
+    padding: 1em;
+}
+
