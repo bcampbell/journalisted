@@ -41,7 +41,7 @@ if (PEAR::isError($ret)) {
     die ("Error in command line: " . $ret->getMessage() . "\n");
 }
 
-$settings = array( 'verbose' => false, 'journo' => null, 'maxnum' => 100, 'quick'=>false, 'min_art_count'=>null );
+$settings = array( 'verbose' => false, 'journo' => null, 'maxnum' => 3000, 'quick'=>false, 'min_art_count'=>null );
 
 // now parse the options array
 $opts = $ret[0];
