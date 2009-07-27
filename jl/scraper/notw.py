@@ -66,14 +66,16 @@ def ScrubFunc( context, entry ):
     context['srcid'] = CalcSrcID( url )
     return context
 
+
+
 def FindArticles():
     """Gather articles to scrape from the notw website."""
 
-    feeds =  [ ('NOTW Politics', 'http://blogs.notw.co.uk/politics/atom.xml') ]
+#    feeds =  [ ('NOTW Politics', 'http://blogs.notw.co.uk/politics/atom.xml') ]
 
-    found = ScraperUtils.FindArticlesFromRSS( feeds, u'notw', ScrubFunc )
+#    found = ScraperUtils.FindArticlesFromRSS( feeds, u'notw', ScrubFunc )
 
-    return found
+#    return found
 
     found = []
     html = ukmedia.FetchURL( 'http://www.newsoftheworld.co.uk/' )
@@ -84,6 +86,7 @@ def FindArticles():
     for li in nav_primary.findAll('li'):
         a = li.a
         url = a['href']
+        url = urlparse.urljoin( "http://www.newsoftheworld.co.uk", url )
         name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
         ukmedia.DBUG2( "scan %s [%s]\n" % (name,url) )
 
@@ -115,6 +118,7 @@ def ScanPrimary( soup ):
         if url == 'INVALID_ARTICLE_ID':
             ukmedia.DBUG2( "  SKIP %s [%s]\n" % (name,url) )
             continue
+        url = urlparse.urljoin( "http://www.newsoftheworld.co.uk", url )
 
         ukmedia.DBUG2( "  scan %s [%s]..." % (name,url) )
 
@@ -167,8 +171,9 @@ def Extract_blog( html, context ):
     # byline
     # there is no byline, but there is a thumbnail image of the blogger
     # image src url contains bloggers first name.
+    # ugh.
     art['byline'] = u''
-    thumb_img = soup.find('div',{'class':'thumb'}).img
+    thumb_img = soup.find('img',{'src':re.compile('thumb[.]jpg$')})
     thumb_url = thumb_img['src'].lower()
     for b in notw_bloggers:
         firstname = b.split()[0].lower()
@@ -177,12 +182,16 @@ def Extract_blog( html, context ):
             break
 
     # content
-    # html is so borked that we're going to use regex instead.
+    # html is so borked that we're going to use regex to grab the text,
+    # then use beautifulsoup to reformat it.
     content_pat = re.compile( r'(<span\s+class="entry-body"\s*>.*?)\s*<!-- forward and back buttons -->', re.DOTALL )
     m = content_pat.search( html )
-    content_txt = unicode( m.group(1), soup.originalEncoding )
+    content_soup = BeautifulSoup(unicode( m.group(1), soup.originalEncoding ) )
 
-    content_txt = ukmedia.DescapeHTML( content_txt )
+    for cruft in content_soup.findAll('script' ):
+        cruft.extract()
+
+    content_txt = ukmedia.DescapeHTML( content_soup.renderContents(None) )
     content_txt = ukmedia.SanitiseHTML( content_txt )
     art['content'] = content_txt
     art['description'] = ukmedia.FirstPara( content_txt )
