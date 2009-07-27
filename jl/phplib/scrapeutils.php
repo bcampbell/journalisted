@@ -32,18 +32,26 @@ function scrape_CalcSrcID( $url )
 }
 
 
-
-// possible returns:
-//
-// scraped successfully
-// already had it
-// failed
-//
-// extra: article_id, journo list.
+// returns text output, or NULL if error
 function scrape_ScrapeURL( $url )
 {
+    global $JLBIN;
 
+	putenv("JL_DEBUG=2");
 
+	$cmd = $JLBIN . "/scrape-tool";
+	$cmd .= ' -u ' . escapeshellarg( $url );
+
+	ob_start();
+    $ret = -1;
+    passthru($cmd, &$ret );
+	$out = ob_get_contents();
+	ob_end_clean();
+
+    if($ret == 0 )
+        return $out;
+    else
+        return NULL;
 }
 
 

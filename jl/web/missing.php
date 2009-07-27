@@ -288,13 +288,17 @@ function emit_form( &$items )
     global $journo;
     $accepted = 0;
     $pending = 0;
+
     foreach( $items as &$item ) {
         if( $item['state'] == 'ok' || $item['state'] == 'ok_extra' ) {
             ++$accepted;
         } else {
             ++$pending;
         }
+        // add htmlentities()-encoded strings to items
+        $item = h_array($item);
     }
+    unset($item);
 
     // show the ones that have already been accepted and processed
     // (they'll be repeated later as hidden form elements too)
@@ -309,14 +313,16 @@ function emit_form( &$items )
 <?php
         foreach( $items as &$item ) {
             if( $item['state'] == 'ok' ) {
+                /* it's a url we should be able to scrape */
 ?>
-<li><a href="<?php echo $item['url']; ?>"><?php echo $item['url']; ?></a></li>
+<li><a href="<?php echo $item['h_url']; ?>"><?php echo $item['h_url']; ?></a></li>
 <?php
             } else if( $item['state'] == 'ok_extra' ) {
+                /* it's a url we don't scrape, with title,date etc */
                 $dt = new DateTime( $item['pubdate'] );
 ?>
 <li>
-<a href="<?php echo $item['url']; ?>"><?php echo $item['title']; ?></a><?php if( $item['publication'] ) { ?>, <span class="publication"><?php echo $item['publication']; ?></span><?php } ?>, <span class="published"><?php echo pretty_date($dt); ?></span>
+<a href="<?php echo $item['h_url']; ?>"><?php echo $item['h_title']; ?></a><?php if( $item['h_publication'] ) { ?>, <span class="publication"><?php echo $item['h_publication']; ?></span><?php } ?>, <span class="published"><?php echo pretty_date($dt); ?></span>
 </li>
 <?php
             }
@@ -369,15 +375,15 @@ function emit_item( $item, $idx )
     if( $state == 'ok' ) {
 ?>
 <input type="hidden" name="state<?php echo $idx;?>" value="<?php echo $item['state']; ?>" />
-<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
 <?php
     } elseif( $state == 'ok_extra' ) {
 ?>
 <input type="hidden" name="state<?php echo $idx;?>" value="<?php echo $item['state']; ?>" />
-<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
-<input type="hidden" name="title<?php echo $idx;?>" value="<?php echo $item['title']; ?>" />
-<input type="hidden" name="pubdate<?php echo $idx;?>" value="<?php echo $item['pubdate']; ?>" />
-<input type="hidden" name="publication<?php echo $idx;?>" value="<?php echo $item['publication']; ?>" />
+<input type="hidden" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
+<input type="hidden" name="title<?php echo $idx;?>" value="<?php echo $item['h_title']; ?>" />
+<input type="hidden" name="pubdate<?php echo $idx;?>" value="<?php echo $item['h_pubdate']; ?>" />
+<input type="hidden" name="publication<?php echo $idx;?>" value="<?php echo $item['h_publication']; ?>" />
 <?php
     } elseif( $state == 'need_extra' ) {
 ?>
@@ -390,24 +396,24 @@ function emit_item( $item, $idx )
 <div class="field">
 <?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span><br/> <?php } ?>
 <label for="url<?php echo $idx;?>">article url</label>
-<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
 </div>
 
 <div class="field">
 <?php if( array_key_exists('title',$errs) ) { ?> <span class="errhint"><?php echo $errs['title']; ?></span> <?php } ?>
 <label for="title<?php echo $idx;?>">article title</label>
-<input type="text" class="wide" id="title<?php echo $idx;?>" name="title<?php echo $idx;?>" value="<?php echo $item['title']; ?>" />
+<input type="text" class="wide" id="title<?php echo $idx;?>" name="title<?php echo $idx;?>" value="<?php echo $item['h_title']; ?>" />
 </div>
 
 <div class="field">
 <?php if( array_key_exists('pubdate',$errs) ) { ?> <span class="errhint"><?php echo $errs['pubdate']; ?></span> <?php } ?>
 <label for="pubdate<?php echo $idx;?>">publication date<br/><small>(YYYY-MM-DD)</small></label>
-<input type="text" id="pubdate<?php echo $idx;?>" name="pubdate<?php echo $idx;?>" value="<?php echo $item['pubdate']; ?>" />
+<input type="text" id="pubdate<?php echo $idx;?>" name="pubdate<?php echo $idx;?>" value="<?php echo $item['h_pubdate']; ?>" />
 </div>
 
 <div class="field">
 <label for="publication<?php echo $idx;?>">publication<br/><small>(optional)</small></label>
-<input type="text" id="publication<?php echo $idx;?>" name="publication<?php echo $idx;?>" value="<?php echo $item['publication']; ?>" />
+<input type="text" id="publication<?php echo $idx;?>" name="publication<?php echo $idx;?>" value="<?php echo $item['h_publication']; ?>" />
 </div>
 
 </fieldset>
@@ -420,7 +426,7 @@ function emit_item( $item, $idx )
 <input type="hidden" name="<?php echo "state{$idx}";?>" value="<?php echo $item['state']; ?>" />
 <?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span> <?php } ?>
 <label for="url<?php echo $idx;?>">article url</label>
-<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['url']; ?>" />
+<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
 </fieldset>
 <?php
     }

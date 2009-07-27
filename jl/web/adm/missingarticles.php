@@ -13,26 +13,12 @@ require_once '../phplib/adm.php';
 require_once 'missingarticle_widget.php';
 
 
-/*
-view basic details
-scrape
-delete
-*/
-
-
-$ajax = get_http_var( 'ajax' );
-if( $ajax )
-{
-    $widget = get_http_var( 'widget' );
-    if( $widget=='missingarticle' ) {
-        MissingArticleWidget::dispatch_ajax();
-    }
-
-    return;
-}
-
 
 admPageHeader( "Missing Articles", "ExtraHead" );
+?>
+<h2>Missing articles</h2>
+<?php
+
 $sql = "SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted
     FROM missing_articles m LEFT JOIN journo j ON m.journo_id=j.id
     ORDER BY submitted DESC";

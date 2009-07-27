@@ -320,4 +320,19 @@ function donatebutton_emit( $txt='Donate', $href='/donate' )
 }
 
 
+// htmlentities()-encode any strings in the array, adding them under
+// new values with an "h_"-prefixed key
+function h_array( $a )
+{
+    $out = array();
+    foreach( $a as $key=>$value ) {
+        if( strpos( $key,'h_')!==0 && is_string($value) )
+            $out[ "h_{$key}" ] = htmlentities($value);
+        $out[ $key ] = $value;
+    }
+
+    return $out;
+}
+
+
 ?>

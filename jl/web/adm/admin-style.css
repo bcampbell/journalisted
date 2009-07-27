@@ -19,7 +19,8 @@
 }
 
 blockquote {
+    border: 1px dashed #cccccc;
     background-color: #eeeeee;
-    padding: 1em;
+    padding: 0.5em;
 }
 

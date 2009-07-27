@@ -9,17 +9,19 @@ require_once '../phplib/adm.php';
 
 class MissingArticleWidget
 {
+    // a widget for displaying/handling a missing article entry.
+    // uses ajax to work in-place if javascript is enabled, but
+    // should still work if javascript is disabled (it'll
+    // jump to a new page rather than working in-place).
 
     // output javascript block to put in page <head>
     public static function emit_head_js()
     {
-
         /* set up all link elements with class "widget" to:
             1) GET the href url, with the extra param: "ajax=1"
         2) find the nearest parent with class ".widget-container", and replace it's content
            with the html returned in step 1)
         */
-
 ?>
 <script type="text/JavaScript">
 $(document).ready(function(){
@@ -37,7 +39,8 @@ $(document).ready(function(){
     }
 
 
-    public static function dispatch_ajax() {
+    // process a request (either ajax or not)
+    public static function dispatch() {
         $id = get_http_var('id');
         $action = get_http_var('action');
 
@@ -48,9 +51,22 @@ SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted
 EOT;
         $row = db_getRow( $sql, $id );
 
+
         $w = new MissingArticleWidget( $row );
+        // perform whatever action has been requested
         $w->perform( $action );
-        $w->emit_core();
+
+        // is request ajax?
+        $ajax = get_http_var('ajax') ? true:false;
+        if( $ajax ) {
+            $w->emit_core();
+        } else {
+            // not an ajax request, so output a full page
+            admPageHeader( "Missing Article", "MissingArticleWidget::emit_head_js" );
+            print( "<h2>Missing article</h2>\n" );
+            $w->emit_full();
+            admPageFooter();
+        }
     }
 
     function __construct( $r )
@@ -68,7 +84,7 @@ EOT;
     }
 
     function action_url( $action ) {
-        return "/adm/ajax?&widget=missingarticle&action={$action}&id={$this->id}";
+        return "/adm/widget?widget=missingarticle&action={$action}&id={$this->id}";
     }
 
     function perform( $action ) {
@@ -93,6 +109,8 @@ EOT;
     }
 
 
+    // output the widget, including it's outer container (which will contain
+    // any future stuff returned via ajax
     function emit_full()
     {
 ?>
