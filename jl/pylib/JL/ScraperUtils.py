@@ -143,9 +143,8 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
     ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
 
     if ukmedia.USE_CACHE:
-        # TODO: use domainname instead of srcorgname
-        ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, os.path.join( "rssCache", srcorgname ) )
-        r = feedparser.parse( os.path.join( "rssCache", srcorgname, ukmedia.GetCacheFilename(feedurl) ) )
+        ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, "rssCache" )
+        r = feedparser.parse( os.path.join( "rssCache", ukmedia.GetCacheFilename(feedurl) ) )
     else:
         r = feedparser.parse( feedurl )
         
@@ -275,7 +274,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
                     continue;   # skip it - we've already got it
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
-            html = ukmedia.FetchURL( context['srcurl'], ukmedia.defaulttimeout, os.path.join( "cache", context['srcorgname'] ) )
+            html = ukmedia.FetchURL( context['srcurl'] )
  
             # some extra, last minute context :-)
             context[ 'lastscraped' ] = datetime.now()
