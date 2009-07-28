@@ -21,6 +21,10 @@ class OtherArticleWidget
             1) GET the href url, with the extra param: "ajax=1"
         2) find the nearest parent with class ".widget-container", and replace it's content
            with the html returned in step 1)
+        
+          Do similar with forms - hook the submit button, add "ajax=1",
+          submit the GET ourselves and replace the widget contents with the
+          returned data.
         */
 ?>
 <script type="text/JavaScript">
@@ -32,6 +36,16 @@ $(document).ready(function(){
         foo.load( url, "ajax=1" );
         return false;
         });
+    $("form.widget").live( "submit", function(e) {
+        var url = $(this).attr('action');
+
+        var params = $(this).formSerialize() + "&ajax=1";
+        var foo = $(this).closest(".widget-container");
+        foo.html( "<blink>working...</blink>" );
+        alert( url+params);
+        foo.load( url, params );
+        return false;
+        });
 });
 </script>
 <?php
@@ -41,11 +55,15 @@ $(document).ready(function(){
 
     // process a request (either ajax or not)
     public static function dispatch() {
-        $id = get_http_var('id');
         $action = get_http_var('action');
-
-        $row = OtherArticleWidget::fetch_one( $id );
-        $w = new OtherArticleWidget( $row );
+        $r=null;
+        if( $action == 'update' ) {
+            $r = OtherArticleWidget::fetch_from_httpvars();
+        } else {
+            $id = get_http_var('id');
+            $r = OtherArticleWidget::fetch_one( $id );
+        }
+        $w = new OtherArticleWidget( $r );
         // perform whatever action has been requested
         $w->perform( $action );
 
@@ -74,6 +92,7 @@ EOT;
     }
 
 
+
     public static function fetch_lots( $status_filter='' ) {
     	$whereclause = '';
     	if( $status_filter=='approved' )
@@ -92,6 +111,20 @@ EOT;
     	return db_getAll( $sql );
     }
 
+    public static function fetch_from_httpvars() {
+        $r = array(
+            'id'=>get_http_var('id'),
+            'url'=>get_http_var('url'),
+            'title'=>get_http_var('title'),
+            'pubdate'=>get_http_var('pubdate'),
+            'status'=>get_http_var('status'),
+            'publication'=>get_http_var('publication'),
+             'journo_id'=>get_http_var('journo_id'),
+             'journo_ref'=>get_http_var('journo_ref'),
+             'journo_prettyname'=>get_http_var('journo_prettyname'),
+            );
+        return $r;
+    }
 
 
     function __construct( $r )
@@ -123,6 +156,17 @@ EOT;
             $this->state = 'deleted';
         } else if( $action == 'edit' ) {
             $this->state = 'editing';
+        } else if( $action == 'update' ) {
+            // update the db to reflect the changes
+            db_do( "UPDATE journo_other_articles SET url=?, title=?, pubdate=?, publication=? WHERE id=?",
+                $this->url,
+                $this->title,
+                $this->pubdate->format(DateTime::ISO8601),
+                $this->publication,
+                $this->id );
+            db_commit();
+            // back to non-editing mode
+            $this->state = '';
         } else if( $action == 'approve' ) {
             $this->status = 'a';
             db_do( "UPDATE journo_other_articles SET status=? WHERE id=?",
@@ -158,44 +202,16 @@ EOT;
 ?><div class="<?php echo $this->status=='a' ? "approved":"unapproved"; ?>"><?php
         }
 
-?>
-<a href="<?php echo $this->url; ?>"><?php echo $this->url; ?></a><br/>
-<small>
-journo: <a href="/<?php echo $this->journo['ref']; ?>"><?php echo $this->journo['ref'] ?></a>
-(<a href="/adm/<?php echo $this->journo['ref']; ?>">admin</a>)<br/>
-title: "<?php echo $this->title; ?>" pubdate: "<?php echo $this->pubdate->format( "Y-m-d" ); ?>" publication: "<?php echo $this->publication; ?>"<br/>
-</small>
-
-<?php
-        if( $this->state == 'deleted' ) {
-?></del><?php
-        } else {
-?></div><?php
-        }
-
-?>
-<?php
-
         if( $this->state == 'editing' ) {
-/*
-?>
-<form class="widget">
-<input type="hidden" name="id" value="<?php echo $this->id; ?>" />
-<input type="text" size=80 name="url" value="<?php echo $this->url; ?>" /><br/>
-<button type="submit">set</button>
-<a class="widget" href="<?php echo $this->action_url(''); ?>">cancel</a>
-</form>
-<?php
-*/
-?>
-<small>[<a class="widget" href="<?php echo $this->action_url('delete'); ?>">delete</a>]</small>
-<?php
+            $this->emit_edit_form();
         } elseif( $this->state == 'delete_requested' ){
+            $this->emit_details();
 ?>
 [<a class="widget" href="<?php echo $this->action_url('confirm_delete'); ?>">REALLY delete</a>] |
 [<a class="widget" href="<?php echo $this->action_url(''); ?>">no</a>]<br/>
 <?php
         } else {
+            $this->emit_details();
 
             if( $this->status == 'a' ) {
 ?>
@@ -211,9 +227,48 @@ title: "<?php echo $this->title; ?>" pubdate: "<?php echo $this->pubdate->format
 <small>[<a class="widget" href="<?php echo $this->action_url('edit'); ?>">edit</a>]</small>
 <small>[<a class="widget" href="<?php echo $this->action_url('delete'); ?>">delete</a>]</small>
 <br/>
-<?php
+
+<?php if( $this->state == 'deleted' ) { ?></del><?php } else {?></div><?php }
         }
     }
-}
 
+
+
+    function emit_details() {
+        //
+?>
+<a href="<?php echo $this->url; ?>"><?php echo $this->url; ?></a><br/>
+<small>
+journo: <a href="/<?php echo $this->journo['ref']; ?>"><?php echo $this->journo['ref'] ?></a>
+(<a href="/adm/<?php echo $this->journo['ref']; ?>">admin</a>)<br/>
+title: "<?php echo $this->title; ?>" pubdate: "<?php echo $this->pubdate->format( "Y-m-d" ); ?>" publication: "<?php echo $this->publication; ?>"<br/>
+</small>
+<?php
+    }
+
+
+
+    private function emit_edit_form() {
+        // form to edit an existing otherarticle
+?>
+<form class="widget" method="post" action="/adm/widget">
+<small>journo: <a href="/<?php echo $this->journo['ref']; ?>"><?php echo $this->journo['ref'] ?></a></small><br/>
+<input type="hidden" name="widget" value="otherarticle" />
+<input type="hidden" name="id" value="<?php echo $this->id; ?>" />
+<input type="hidden" name="status" value="<?php echo $this->status; ?>" />
+<input type="hidden" name="journo_id" value="<?php echo $this->journo['id']; ?>" />
+<input type="hidden" name="journo_ref" value="<?php echo $this->journo['ref']; ?>" />
+<input type="hidden" name="journo_prettyname" value="<?php echo $this->journo['prettyname']; ?>" />
+<label>url: <input type="text" size=80 name="url" value="<?php echo $this->url; ?>" /></label><br/>
+<label>title: <input type="text" size=80 name="title" value="<?php echo $this->title; ?>" /></label><br/>
+<label>pubdate: <input type="text" size=20 name="pubdate" value="<?php echo $this->pubdate->format( 'Y-m-d H:i'); ?>" /></label><br/>
+<label>publication: <input type="text" size=40 name="publication" value="<?php echo $this->publication; ?>" /></label><br/>
+<input type="hidden" name="action" value="update" />
+<button type="submit">apply</button>
+<small>[<a class="widget" href="<?php echo $this->action_url(''); ?>">cancel</a>]</small>
+</form>
+<?php
+    }
+
+}
 ?>
