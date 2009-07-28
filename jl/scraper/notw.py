@@ -8,14 +8,11 @@
 #
 #
 # NOTW have their content split into two: their own website, and on
-# notw.typepad.com. Perhaps the former is for stuff that appears in
-# print, and the typepad stuff is additional online-only content?
+# notw.typepad.com (blogs.newsoftheworld.co.uk).
 #
 # notw rss feeds look pretty useless, so we do a shallow crawl for links.
 # the typepad rss feeds would probably be OK...
 #
-# TODO:
-# Can we split the crawling out (similar code in sun.py)?
 
 
 import sys
@@ -38,11 +35,25 @@ notw_bloggers = (
     u'Sophy Ridge' )
 
 def ArticlesFromSoup( soup ):
+
+    blacklist = ( '/celebgallery/', '/yourscore/' )
+
     found = []
     for a in soup.findAll('a'):
         if not a.has_key( 'href' ):
             continue
         url = a['href']
+        url = urlparse.urljoin( "http://www.newsoftheworld.co.uk", url )
+
+
+        skip = False
+        for b in blacklist:
+            if b in url:
+                skip = True
+        if skip:
+            continue
+
+
         srcid = CalcSrcID( url )
         if srcid is not None:
             context = {
@@ -237,6 +248,7 @@ def Extract_notw( html, context ):
         # last ditch try:
         m = re.search( r'var jsTitle = "(.*?)";', html )
         headline_txt = m.group(1).decode( soup.originalEncoding )
+        headline_txt = ukmedia.DescapeHTML( headline_txt )
 
     art['title'] = headline_txt
 
@@ -318,7 +330,9 @@ def CalcSrcID( url ):
     o = urlparse.urlparse( url )
     if o[1] == 'blogs.notw.co.uk':
         # eg: "http://blogs.notw.co.uk/politics/2008/11/jingle-hells.html"
-        return 'notw_blogs_' + o[2]
+        if o[2].endswith('.html'):
+            return 'notw_blogs_' + o[2]
+
     if o[1] in ('newsoftheworld.co.uk','www.newsoftheworld.co.uk'):
         # eg http://www.newsoftheworld.co.uk/news/83126/TV-chef-Gordon-Ramsay-cheats-with-Jeffrey-Archers-ex-Sarah-Symonds-behind-wife-Tanas-back.html
         notw_idpat = re.compile( "/([0-9]+)/[^/]+[.]html$" )
