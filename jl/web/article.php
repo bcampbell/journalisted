@@ -321,7 +321,9 @@ function emit_block_bloglinks( $article_id )
 	// TODO: form to submit blog links?
 
 ?>
-<p class="disclaimer">Based on blogs recorded by <a class="extlink" href="http://technorati.com">Technorati</a></p>
+<p class="disclaimer">Based on blogs recorded by
+<a class="extlink" href="http://technorati.com">Technorati</a> and
+<a class="extlink" href="http://www.icerocket.com">IceRocket</a></p>
 </div>
 </div>
 <?php
