@@ -336,7 +336,7 @@ def CalcSrcID( url ):
     if o[1] in ('newsoftheworld.co.uk','www.newsoftheworld.co.uk'):
         # eg http://www.newsoftheworld.co.uk/news/83126/TV-chef-Gordon-Ramsay-cheats-with-Jeffrey-Archers-ex-Sarah-Symonds-behind-wife-Tanas-back.html
         notw_idpat = re.compile( "/([0-9]+)/[^/]+[.]html$" )
-        m = notw_idpat.search( url )
+        m = notw_idpat.search( o[2] )
         if m:
             return 'notw_' + m.group(1)
     return None

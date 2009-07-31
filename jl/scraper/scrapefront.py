@@ -19,7 +19,7 @@
 
 scrapers = ( 'bbcnews', 'dailymail', 'express', 'ft',
 	'guardian', 'herald', 'independent', 'mirror',
-	'scotsman', 'sun', 'telegraph', 'times' )
+	'scotsman', 'sun', 'telegraph', 'times', 'notw' )
 
 modules = []
 for s in scrapers:
