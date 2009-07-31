@@ -99,7 +99,6 @@ function faq_end() {
 <ul>
   <li>BBC News Online</li>
   <li>Financial Times</li>
-  <li>Scotland on Sunday</li>
   <li>Express.co.uk - Daily Express and Sunday Express</li>
   <li>Mail Online - Daily Mail and Mail on Sunday</li>
   <li>Telegraph.co.uk - Daily Telegraph and Sunday Telegraph</li>
@@ -108,8 +107,10 @@ function faq_end() {
   <li>Independent.co.uk - The Independent and The Independent on Sunday</li>
   <li>Mirror.co.uk - Daily Mirror and Sunday Mirror</li>
   <li>The Scotsman</li>
+  <li>Scotland on Sunday</li>
   <li>The Sun</li>
   <li>Times Online - The Times and The Sunday Times</li>
+  <li>News of the World</li>
 </ul>
 <?php faq_end(); ?>
 
