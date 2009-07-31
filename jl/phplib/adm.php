@@ -21,6 +21,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <title>JL admin<?php if( $title ) { print " - $title"; }; ?></title>
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
 <script type="text/javascript" src="/adm/jquery.js"></script>
+<script type="text/javascript" src="/adm/jquery.form.js"></script>
 <!-- <script type="text/javascript" src="/adm/jquery.tablesorter.js"></script> -->
 <?php
     if( !is_null( $extra_head_fn ) ) {
