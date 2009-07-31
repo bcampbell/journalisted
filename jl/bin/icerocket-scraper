@@ -1,4 +1,11 @@
 #!/usr/bin/env python2.4
+#
+# scraper to find blog posts which reference articles we cover, using icerocket.com
+#
+# note: icerocket has rss feeds for their search results, but there is more
+# information in the normal html results - specifically the actual link to
+# the article, which we need. So we'll do html scrapery stuff.
+#
 
 from optparse import OptionParser
 import sys
@@ -17,8 +24,11 @@ from BeautifulSoup import BeautifulSoup
 sys.path.append( "../scraper" )
 import scrapefront
 
-options = None
 
+HARD_MAX_PAGES = 20     # never query more than this per site
+
+
+# TODO: should be in a config file
 sitenames = (
     'independent.co.uk',
     'dailymail.co.uk',
@@ -34,8 +44,11 @@ sitenames = (
     'ft.com',
     'theherald.co.uk',
     'timesonline.co.uk',
-    'news.bbc.co.uk' )
+    'news.bbc.co.uk',
+    'newsoftheworld.co.uk' )
 
+
+_options = None
 
 
 
@@ -69,12 +82,15 @@ def ParseWhen( whentxt ):
 def ParseIcerocketResultsPage( html ):
     """Parse a results page from icerocket.com, returning a list of bloglinks"""
     soup = BeautifulSoup( html )
+
+
     bloglinks = []
 
 #    latest_td = soup.find('td',{'id':'latest'} )
 #    txt = ukmedia.FromHTMLOneLine( latest_td.renderContents( None ) )
 #    print txt
 
+    result_cnt = 0
     name_pat = re.compile( r"(.*) - .*?", re.DOTALL )
     for table in soup.findAll( 'table', {'class':'content'} ):
 
@@ -85,6 +101,7 @@ def ParseIcerocketResultsPage( html ):
         b['title'] = main_link.renderContents(None).strip()
         b['title'] = ukmedia.FromHTMLOneLine( b['title'] )
         b['nearestpermalink'] = main_link['href']
+
 
         # get the blog name and url
         #eg <a class="blogl" href="http://gbsteve.livejournal.com/">-- GBS -- - gbsteve.livejournal.com</a>
@@ -122,12 +139,18 @@ def ParseIcerocketResultsPage( html ):
                 bloglink['article_url'] = url
                 bloglinks.append( bloglink )
 
-    return bloglinks
+        result_cnt = result_cnt + 1
+
+    return (result_cnt, bloglinks)
 
 
 # TODO: factor this out!
 def LoadBlogLinkIntoDB( conn, l ):
-    """ Try and load a single blog link entry into the article_bloglink table """
+    """ Try and load a single blog link entry into the article_bloglink table
+
+    returns "nomatch", "alreadygot" or "added"
+    """
+    
     c = conn.cursor()
 
     assert ('article_srcid' in l) or ('article_url' in l)
@@ -136,7 +159,7 @@ def LoadBlogLinkIntoDB( conn, l ):
         srcid = scrapefront.CalcSrcID( l['article_url'] )
         if srcid == None:
             # url is not handled by our scrapers...
-            return
+            return "nomatch"
         l['article_srcid'] = srcid
 
     # Do we have that article in our DB?
@@ -144,9 +167,8 @@ def LoadBlogLinkIntoDB( conn, l ):
     articles = c.fetchall()
     if len(articles) < 1:
         # can't find article in DB
-        return 0
-    if len(articles)>1:
-        print >>sys.stderr, "WARNING: multiple articles with same srcid (%s)" % (l['article_srcid'])
+        return "nomatch"
+    assert len(articles)==1
     article_id = articles[0]['id']
 
     # already got this bloglink?
@@ -156,7 +178,7 @@ def LoadBlogLinkIntoDB( conn, l ):
     if row:
         # already in db
         bloglinkid = row['id']
-        return 0
+        return "alreadygot"
 
     # now insert it into the database
     c.execute( """INSERT INTO article_bloglink
@@ -176,70 +198,101 @@ def LoadBlogLinkIntoDB( conn, l ):
 #   print "new blog link (%s) to article '%s': '%s'" % ( bloglinkid, l['article_srcid'], l['nearestpermalink'] )
     c.close()
 
-    return 1
+    return "added"
 
 
-
-def FindBlogLinksOnIcerocket( sitename, page=1, num_per_page=200 ):
-    global options
-
-    params = urllib.urlencode( {
-        'tab': 'blog',
-        'q': 'link:%s'%(sitename),
-        'n': num_per_page,
-        'p': page } )
-
-    url = 'http://www.icerocket.com/search?' + params
-
-#    if options.verbose:
-#        print "fetching %s" % (url)
-    html = ukmedia.FetchURL( url )
-    return ParseIcerocketResultsPage( html )
 
 
 
 def DoSite( conn, s ):
-    global options
+    global _options
 
-    for page in range(1,options.num_pages+1 ):
-        bloglinks = FindBlogLinksOnIcerocket( s,page )
-        if options.verbose:
-            print "%s (%d/%d): %d bloglinks" % (s,page,options.num_pages,len(bloglinks))
-        cnt = 0
-        for b in bloglinks:
-            cnt = cnt + LoadBlogLinkIntoDB( conn, b )
-            if options.dryrun:
-                conn.rollback()
-            else:
-                conn.commit()
+    oldest = datetime.now() - timedelta( hours=_options.max_age )
 
-        if options.verbose:
-            print "  => %d new" % ( cnt )
+    num_per_page = 200  # max allowed by icerocket
+    # need to be tolerant - sometimes there is borked data
+    # (eg bad links in snippets from original blog posts)
+    allowed_errs = 5   # per site
+    errcnt = 0
+    stop = False
+    page =1 
+    while( not stop and page < HARD_MAX_PAGES+1 ):
+        try:
+            params = urllib.urlencode( {
+                'tab': 'blog',
+                'q': 'link:%s'%(s),
+                'n': num_per_page,
+                'p': page } )
 
+            url = 'http://www.icerocket.com/search?' + params
+#            if _options.verbose:
+#                print "fetching %s" % (url)
+            html = ukmedia.FetchURL( url )
+            (result_cnt,bloglinks) = ParseIcerocketResultsPage( html )
+
+
+            cnts = {'added':0,'alreadygot':0,'nomatch':0}
+            for b in bloglinks:
+                if b['linkcreated']<oldest:
+                    # got enough. stop after this page.
+                    stop = True
+
+                foo = LoadBlogLinkIntoDB( conn, b )
+                cnts[foo] = cnts[foo] + 1
+                if _options.dryrun:
+                    conn.rollback()
+                else:
+                    conn.commit()
+
+            if _options.verbose:
+                print "%s (%d): got %d, from %d items => %d added, %d alreadygot, %d nomatch" % (
+                    s, page, len(bloglinks), result_cnt, cnts['added'], cnts['alreadygot'], cnts['nomatch'] )
+        except (Exception), e:
+            # always just bail out upon ctrl-c
+            if isinstance( e, KeyboardInterrupt ):
+                raise
+            msg = u"ERROR doing %s, page %d (%s)" % (s, page,e.__class__)
+            print >>sys.stderr, msg.encode( 'utf-8' )
+            print >>sys.stderr, '-'*60
+            print >>sys.stderr, traceback.format_exc()
+            print >>sys.stderr, '-'*60
+
+            errcnt = errcnt + 1
+            if errcnt > allowed_errs:
+                print >>sys.stderr, "Too many errors - ABORTING %s" % (s)
+                raise
+
+
+        page=page+1
 
     
 def main():
-    global options
+    global _options
 
     parser = OptionParser()
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
     parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database")
-    parser.add_option("-p", "--pages",
-        dest="num_pages",
+    parser.add_option("-a", "--maxage",
+        dest="max_age",
         type="int",
-        default=1,
-        help="how many icerocket query pages to try for per news site (default 1 )")
+        default=24,
+        help="keep fetching pages until we get links older than max_age hours old (default 24 )")
+#    parser.add_option("-p", "--pages",
+#        dest="num_pages",
+#        type="int",
+#        default=1,
+#        help="how many icerocket query pages to try for per news site (default 1). ignored if -a set")
     parser.add_option("-s", "--site",
         action="store", dest="single_site",
         help="look for bloglinks to given site (eg 'dailymail.co.uk')")
 
-    (options, args) = parser.parse_args()
+    (_options, args) = parser.parse_args()
 
     conn = DB.Connect()
 
-    if options.single_site:
-        DoSite( conn, options.single_site )
+    if _options.single_site:
+        DoSite( conn, _options.single_site )
     else:
         for s in sitenames:
             DoSite( conn, s )
