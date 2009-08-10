@@ -17,6 +17,7 @@ require_once 'missingarticle_widget.php';
 admPageHeader( "Missing Articles", "ExtraHead" );
 ?>
 <h2>Missing articles</h2>
+<p>User-submitted articles we <em>should</em> be able to scrape...</p>
 <?php
 
 $sql = "SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted

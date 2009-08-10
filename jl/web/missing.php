@@ -35,13 +35,18 @@ page_header($title);
 ?>
 <div id="maincolumn">
 
-<h2>Submit missing articles for <a href="/<?php echo $journo['ref'];?>"><?php echo $journo['prettyname']; ?></a></h2>
+<div class="box">
+<h2>Tell us about missing articles for <a href="/<?php echo $journo['ref'];?>"><?php echo $journo['prettyname']; ?></a></h2>
+<div class="box-content">
+
 <?php
 
 do_it();
 
 
 ?>
+</div>
+</div>
 </div> <!-- end maincolumn -->
 <div id="smallcolumn">
   <div class="box">
@@ -71,7 +76,7 @@ function emit_rawform() {
 ?>
       <form action="/missing" method="POST">
         <input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
-        <p>Please enter the urls of the article(s) you want to submit (one url per line):</p>
+        <p>Please enter the urls of the article(s) you want to submit, one per line:</p>
         <textarea name="rawurls" style="width: 100%;" rows="8"></textarea><br/>
         <button type="submit" name="action" value="go">Submit</button>
       </form>
@@ -407,7 +412,7 @@ function emit_item( $item, $idx )
 
 <div class="field">
 <?php if( array_key_exists('pubdate',$errs) ) { ?> <span class="errhint"><?php echo $errs['pubdate']; ?></span> <?php } ?>
-<label for="pubdate<?php echo $idx;?>">publication date<br/><small>(YYYY-MM-DD)</small></label>
+<label for="pubdate<?php echo $idx;?>">publication date<br/><small>(yyyy-mm-dd)</small></label>
 <input type="text" id="pubdate<?php echo $idx;?>" name="pubdate<?php echo $idx;?>" value="<?php echo $item['h_pubdate']; ?>" />
 </div>
 

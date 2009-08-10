@@ -18,6 +18,7 @@ admPageHeader( "Other Articles", "ExtraHead" );
 $status = get_http_var('status','unapproved');
 ?>
 <h2>Other articles</h2>
+<p>Submitted articles from outlets we don't cover</p>
 
 <form method="post" action="">
 Show:

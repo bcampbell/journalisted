@@ -42,7 +42,6 @@ $(document).ready(function(){
         var params = $(this).formSerialize() + "&ajax=1";
         var foo = $(this).closest(".widget-container");
         foo.html( "<blink>working...</blink>" );
-        alert( url+params);
         foo.load( url, params );
         return false;
         });

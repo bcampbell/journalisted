@@ -31,15 +31,20 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 </head>
 <body>
 <h1>Journalisted admin</h1>
-<a href="article">Articles</a> |
-<a href="scrape">Scrape</a> |
-<a href="journo">Journos</a> (<small>
-<a href="journo-bios">Bios</a> |
-<a href="journo-email">Email</a> |
-<a href="journo-split">Split</a> |
-<a href="journo-merge">Merge</a> |
-<a href="journo-create">Create</a>
-</small>) |
+<a href="article">Articles</a>
+ (<small>
+ <a href="scrape">Scrape</a> |
+ <a href="missingarticles">MissingArticles</a> |
+ <a href="otherarticles">OtherArticles</a>
+ </small>) |
+<a href="journo">Journos</a>
+ (<small>
+ <a href="journo-bios">Bios</a> |
+ <a href="journo-email">Email</a> |
+ <a href="journo-split">Split</a> |
+ <a href="journo-merge">Merge</a> |
+ <a href="journo-create">Create</a>
+ </small>) |
 <a href="canned">Canned Queries</a>
 <hr>
 <?php
