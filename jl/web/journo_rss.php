@@ -50,11 +50,11 @@ function emit_recent_articles( $journo )
 	{
 		print( "\t\t<item>\n" );
 		printf( "\t\t\t<title>%s</title>\n", htmlspecialchars( $art['title'],ENT_COMPAT,'UTF-8') );
-		printf( "\t\t\t<link>%s</link>\n", $art['permalink'] );
+		printf( "\t\t\t<link>%s</link>\n", htmlentities( $art['permalink'] ) );
 		printf( "\t\t\t<description>%s</description>\n", htmlspecialchars( $art['description'],ENT_COMPAT,'UTF-8') );
         #Wed, 02 Oct 2002 15:00:00 +0200
 		printf( "\t\t\t<pubDate>%s</pubDate>\n", date( "D, d M Y H:i:s O", $art['unixtime']) );
-		printf( "\t\t\t<guid>%s</guid>\n", $art['permalink'] );
+		printf( "\t\t\t<guid>%s</guid>\n", htmlentities( $art['permalink'] ) );
 		print( "\t\t</item>\n" );
 	}
 
