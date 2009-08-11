@@ -119,11 +119,21 @@ def ScanPrimary( soup ):
  
     # find links to all the secondary sections
     nav_sec = soup.find('div',{'class':'nav-secondary'})
-    if nav_sec is None:
-        return found
+    nav_links = []
+    if nav_sec is not None:
+        for li in nav_sec.findAll('li'):
+            nav_links.append( li.a )
+    else:
+        # "fabulous" mag section has it's own layout.
+        # main nav menu on left column is done via javascript (why?)
+        # but there are links at the bottom we can use.
+        nav_sec = soup.find('div',{'id':'fabfooter-links-container'} )
+        if nav_sec is not None:
+            for li in nav_sec.findAll('li'):
+                nav_links.append( li.a )
 
-    for li in nav_sec.findAll('li'):
-        a = li.a
+
+    for a in nav_links:
         name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
         url = a['href']
         if url == 'INVALID_ARTICLE_ID':
@@ -354,5 +364,4 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
-
 
