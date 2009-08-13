@@ -1,0 +1,156 @@
+#!/usr/bin/env python2.4
+""" Tool to scrape and maintain journo profiles from The Guardian """
+
+
+# guardian seems to have two types of profile pages:
+#
+# the ones for CiF contributors, eg:
+# http://commentisfree.guardian.co.uk/fiona_mactaggart/profile.html
+#
+# the one on the main guardian.co.uk domain, eg:
+# http://www.guardian.co.uk/profile/fionamactaggart
+#
+# A lot (most? all?) of the CiF ones redirect to guardian ones -
+# I guess these are guardian journos as opposed to CiF contributors.
+# It looks likes the guardian is also putting up full profile pages for
+# these ones, using their main CMS.
+# (eg http://www.guardian.co.uk/global/2009/jul/29/profile-terry-macalister)
+# 
+#
+# TODO:
+# - pick up on permanant HTTP redirects and update the urls in the
+# database accordingly.
+
+import re
+from datetime import datetime
+from optparse import OptionParser
+import traceback
+import sys
+import os
+
+sys.path.append( "../pylib" )
+from BeautifulSoup import BeautifulSoup
+from JL import ukmedia, DB, Journo
+
+
+_conn = None
+_options = None
+
+def scrape_profile_page( profile_url ):
+    """ grab stuff from a single profile page """
+    profile = {}
+
+    html = ukmedia.FetchURL( profile_url )
+    soup = BeautifulSoup(html)
+
+    foo = soup.find('div',{'id':'biography'})
+    if foo is not None:
+        # page on main guardian site
+        bio_div = foo.find('div',{'class':'bio'})
+
+        bio = {}
+        bio['bio'] = bio_div.renderContents(None)
+        bio['srcurl'] = profile_url
+        bio['kind'] = 'guardian-profile'
+        profile['bio'] = bio
+
+        # TODO: image licensing
+        pic = soup.find( 'img', {'class':'contributor-pic'} )
+        if pic:
+            profile['image'] = { 'url': pic['src'] }
+    else:
+        # might be a comment-is-free page
+        foo = soup.find('div', {'id':'twocolumnleftcolumninsideleftcolumn'})
+        txt = foo.p.renderContents(None).strip()
+        if txt != u'':
+            bio = {}
+            bio['bio'] = u"<p>" + txt + u"</p>";
+            bio['srcurl'] = profile_url
+            bio['kind'] = 'guardian-profile'
+            profile['bio'] = bio
+        # TODO: image
+
+    return profile
+
+
+
+def update_bios():
+    """ use guardian profile entries in journo_weblinks to drive updates """
+
+    global _conn
+    global _options
+
+    c = _conn.cursor()
+    if( _options.single_journo ):
+        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+            FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
+            WHERE j.status='a' AND l.kind='guardian-profile'
+            AND j.ref=%s"""
+        c.execute( sql, _options.single_journo  )
+    else:
+        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+            FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
+            WHERE j.status='a' AND l.kind='guardian-profile'"""
+        c.execute( sql )
+
+    good=0
+    failed=0
+    for row in c.fetchall():
+        try:
+            if _options.verbose:
+                print "processing %s" %(row['url'])
+            profile = scrape_profile_page( row['url'] )
+            # if weblink is approved, assume bio is good too (won't affect bios we've already got)
+            default_approval = row['approved']
+            if 'bio' in profile:
+                Journo.load_or_update_bio( _conn, row['journo_id'], profile['bio'], default_approval )
+                _conn.commit();
+                good = good+1
+            else:
+                print >>sys.stderr, "WARNING: blank bio %s\n" % (row['url'])
+
+        except Exception,e:
+            # always just bail out upon ctrl-c
+            if isinstance( e, KeyboardInterrupt ):
+                raise
+            print >>sys.stderr, "ERROR processing %s\n" % (row['url'])
+            print >>sys.stderr, '-'*60
+            print >>sys.stderr, traceback.format_exc()
+            print >>sys.stderr, '-'*60
+            failed = failed+1
+            continue
+
+    if _options.verbose:
+        print "%d good, %d failed" % (good,failed)
+
+
+
+
+
+def main(argv=None):
+    global _conn
+    global _options
+
+    if argv is None:
+        argv = sys.argv
+
+    parser = OptionParser()
+    parser.add_option( "-j", "--journo", dest="single_journo", help="just do a single journo (eg 'fred-smith')" )
+    parser.add_option( "-u", "--url", dest="url", help="just scrape a single profile page and dump to stdout (doesn't touch DB)", metavar="URL" )
+    parser.add_option( "-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    (_options, args) = parser.parse_args()
+
+    if _options.url:
+        inf = scrape_profile_page( _options.url )
+        print inf
+        return 0
+    else:
+        _conn = DB.Connect()
+        update_bios()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+
+
+

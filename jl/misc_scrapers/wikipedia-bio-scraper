@@ -21,6 +21,7 @@ import time
 from datetime import datetime
 from optparse import OptionParser
 import re
+import urllib2
 
 sys.path.insert(0, '../pylib')
 from JL import DB
@@ -43,11 +44,12 @@ class DisambiguationNeeded(Exception):
 class UnsureException(Exception):
     '''May not be the right person'''
 
-class DeadPersonException(Exception):
-    '''This is an ex-person! Bereft of life, they write no more.'''
+#class DeadPersonException(Exception):
+#    '''This is an ex-person! Bereft of life, they write no more.'''
 
 
 def scrape_wikipedia_bio( wikipedia_url ):
+    """fetch a wikipedia page and try to scrape a journo bio from it"""
     bio = {}
     html = ukmedia.FetchURL( wikipedia_url );
 
@@ -341,7 +343,55 @@ def replace_with_contents(tag):
         index += 1
 
 
+def url_from_prettyname( prettyname )
+        # "Titles on Wikipedia are case sensitive except for the first character"
+        foo = prettyname.replace(' ','_')
+        return 'http://en.wikipedia.org/wiki/' + urllib2.quote(foo)
+
+
+def process_scraped_bio( journo_id, url, bio, trusted ):
+    global _conn
+    c = _conn.cursor()
+    c.execute( """SELECT id, approved FROM journo_bio WHERE journo_id=%s AND type='wikipedia-bio-scraper'""", row['journo_id'] )
+    row = c.fetch()
+    c.close()
+
+    # DO STUFF HERE
+
+
+
+
+
+
+def update_bios():
+    """update/scrape bios for journos with an approved wikipedia weblink"""
+
+    global _conn
+
+    c=_conn.cursor()
+    # find all wikipedia weblinks
+    # (don't care if they were automatically discovered or added by hand)
+    sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+        FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
+        WHERE j.status='a' AND l.type='wikipedia'"""
+    c.execute( sql )
+    cnt = 0
+    for row in c.fetchall():
+
+
+        try:
+            bio = scrape_wikipedia_bio( row['url'] )
+            ProcessBio( row['journo_id'], url, bio )
+        except Exception, e:
+            pass
+
+        cnt=cnt+1
+    print cnt
+
+
+
 def main(argv=None):
+    global _conn
     if argv is None:
         argv = sys.argv
 
@@ -351,8 +401,12 @@ def main(argv=None):
     parser.add_option( "-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
     (options, args) = parser.parse_args()
 
-    bio = scrape_wikipedia_bio( options.url )
-    print bio['text']
+    if options.url:
+        bio = scrape_wikipedia_bio( options.url )
+        print bio['text']
+    else:
+        _conn = DB.Connect()
+        UpdateBios()
 
 
 if __name__ == "__main__":

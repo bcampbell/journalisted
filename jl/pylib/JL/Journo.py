@@ -806,4 +806,29 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
     return None
 
 
+# this fn is for scraped bios, where each journo is assumed to only have one of each
+# kind (ie only one wikipedia bio).
+# manually-maintained bios probably all just handled through web admin pages.
+def load_or_update_bio( conn, journo_id, bio, default_approval=False ):
+    """ load/update a journo bio entry of a specific kind """
+
+    assert( 'kind' in bio and bio['kind']!='' )
+    c = conn.cursor()
+    c.execute( "SELECT * FROM journo_bio WHERE journo_id=%s AND kind=%s", journo_id, bio['kind'] )
+    old_bios = c.fetchall()
+
+    # each journo can only have one bio of a kind
+    assert( len( old_bios ) in (0,1) )
+
+    if len(old_bios) > 0:
+        # update existing bio, keeping the approval status
+        c.execute( "UPDATE journo_bio SET bio=%s,srcurl=%s WHERE journo_id=%s AND kind=%s", bio['bio'].encode('utf-8'), bio['srcurl'], journo_id, bio['kind'] )
+
+    else:
+        # create new bio entry
+        c.execute( "INSERT INTO journo_bio (journo_id, bio, kind,srcurl, approved ) VALUES (%s,%s,%s,%s,%s)", journo_id, bio['bio'].encode('utf-8'), bio['kind'], bio['srcurl'], default_approval )
+
+
+
+
 

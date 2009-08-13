@@ -384,7 +384,7 @@ function EmitBios( $journo_id )
 			$id  = $row['id'];
 			$srcurl = $row['srcurl'];
 			$bio = $row['bio'];
-			$bio_type = $row['type'];
+			$bio_type = $row['kind'];
 			$approved = ($row['approved']=='t');
 			
 			if ( $approved )
@@ -402,14 +402,7 @@ function EmitBios( $journo_id )
 					$journo_id, $id );
 			}
 			
-			if ( $bio_type == 'wikipedia:journo' )
-				$source = 'Wikipedia';
-			else if ( $bio_type == 'cif:contributors-az' )
-				$source = 'commentisfree';
-			else
-				$source = $bio_type;
-			
-			$source = "<a href=\"$srcurl\">$source</a>";
+			$source = "<a href=\"$srcurl\">$bio_type</a>";
 			
 			print " <li>\n";
 			print(" <div class=\"$divclass\">[$id] $bio <small>(source: $source)</small><br />" .

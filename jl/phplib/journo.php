@@ -386,14 +386,14 @@ function journo_getBioLinks( &$journo )
 {
     $links = array();
 
-    $rows = db_getAll( "SELECT srcurl,type FROM journo_bio WHERE approved=true AND journo_id=?", $journo['id'] );
+    $rows = db_getAll( "SELECT srcurl,kind FROM journo_bio WHERE approved=true AND journo_id=?", $journo['id'] );
 
     foreach( $rows as $r )
     {
         $desc = '';
-        if( $r['type'] == 'cif:contributors-az' ) {
+        if( $r['kind'] == 'guardian-profile' ) {
             $desc = "Biography (from The Guardian)";
-        } elseif( $r['type'] == 'wikipedia:journo' ) {
+        } elseif( $r['kind'] == 'wikipedia-profile' ) {
             $desc = "Biography (from Wikipedia)";
         } else {
             continue;
@@ -413,7 +413,6 @@ function journo_emitLinksBlock( &$journo )
     $sql = "SELECT url, description " .
         "FROM journo_weblink " .
         "WHERE journo_id=? " .
-        "AND journo_weblink.type!='cif:blog:feed' " .
         "AND approved";
 
     $links = db_getAll( $sql, $journo_id );
@@ -804,18 +803,18 @@ function journo_calcWrittenFor( $journo_id )
 function journo_fetchBios( $journo_id )
 {
     $bios = array();
-    $q = db_query("SELECT bio, srcurl, type FROM journo_bio " .
+    $q = db_query("SELECT bio, srcurl, kind FROM journo_bio " .
                      "WHERE journo_id=? AND approved",
                      $journo_id);
 
     while( $row = db_fetch_array($q) )
     {
-        switch( $row['type'] ) {
-            case 'wikipedia:journo':
+        switch( $row['kind'] ) {
+            case 'wikipedia-profile':
                 $srcname='Wikipedia';
                 break;
-            case 'cif:contributors-az':
-                $srcname='Comment is free';
+            case 'guardian-profile':
+                $srcname='The Guardian';
                 break;
             default:
                 $srcname=$row['srcurl'];
