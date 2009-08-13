@@ -326,13 +326,71 @@ function h_array( $a )
 {
     $out = array();
     foreach( $a as $key=>$value ) {
-        if( strpos( $key,'h_')!==0 && is_string($value) )
-            $out[ "h_{$key}" ] = htmlentities($value);
+        if( strpos( $key,'h_')!==0 ) {
+            if( is_string($value) )
+                $out[ "h_{$key}" ] = htmlentities($value);
+            elseif( is_null( $value ) )
+                $out[ "h_{$key}" ] = '';
+        }
         $out[ $key ] = $value;
     }
 
     return $out;
 }
+
+
+// differs from built-in parse_url() in these ways:
+// - doesn't abort with errors if it gets confused
+// - if it looks like a valid url, _all_ fields will be returned (missing ones will be empty)
+function crack_url( $url )
+{
+    $fields = array( 'scheme','user','pass','host','port','path','query','fragment' );
+    $m = array();
+    if( preg_match( "/^((?P<scheme>\w+):\/\/)?((?P<user>.+?)(:(?P<pass>.+?))?@)?(?P<host>[^\/:?]+)?(:(?P<port>\d+))?(?P<path>.+?)?([?](?P<query>.*?))?([#](?P<fragment>.*?))?$/",$url,&$m ) > 0 ) {
+        $ret = array();
+        foreach( $fields as $f ) {
+            $ret[$f] = arr_get( $f, $m, '' );
+        }
+        return $ret;
+    } else {
+        /* actually, I'm not sure the preg_match can ever fail... every part is optional... */
+        return FALSE;
+    }
+}
+
+
+// return a value in an array if it exists, otherwise return the default.
+function arr_get( $key, &$arr, $default=NULL )
+{
+    assert( is_array( $arr ) );
+    if( array_key_exists( $key, $arr ) )
+        return $arr[$key];
+    else
+        return $default;
+}
+
+
+// modified from glue_url() posted in user comments on the php parse_url() docs page
+function glue_url($parsed) {
+    assert( is_array($parsed) );
+
+    $uri = arr_get('scheme',$parsed) ? $parsed['scheme'].':'.((strtolower($parsed['scheme']) == 'mailto') ? '' : '//') : '';
+    $uri .= arr_get('user',$parsed) ? $parsed['user'].(arr_get('pass',$parsed) ? ':'.$parsed['pass'] : '').'@' : '';
+    $uri .= arr_get('host',$parsed) ? $parsed['host'] : '';
+    $uri .= arr_get('port',$parsed) ? ':'.$parsed['port'] : '';
+
+    if (arr_get('path',$parsed)) {
+        $uri .= (substr($parsed['path'], 0, 1) == '/') ?
+            $parsed['path'] : ((!empty($uri) ? '/' : '' ) . $parsed['path']);
+    }
+
+    $uri .= arr_get('query',$parsed) ? '?'.$parsed['query'] : '';
+    $uri .= arr_get('fragment',$parsed) ? '#'.$parsed['fragment'] : '';
+
+    return $uri;
+}
+
+
 
 
 ?>

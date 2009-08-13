@@ -151,27 +151,6 @@ function do_it() {
 }
 
 
-// differs from built-in parse_url() in these ways:
-// - doesn't abort with errors if it gets confused
-// - if it looks like a valid url, _all_ fields will be returned (missing ones will be empty)
-function crack_url( $url )
-{
-    $fields = array( 'scheme','user','pass','host','port','path','query','fragment' );
-    $m = array();
-    if( preg_match( "/^((?P<scheme>\w+):\/\/)?((?P<user>.+?)(:(?P<pass>.+?))?@)?(?P<host>[^\/:?]+)?(:(?P<port>\d+))?(?P<path>.+?)?([?](?P<query>.*?))?([#](?P<fragment>.*?))?$/",$url,&$m ) > 0 ) {
-
-
-        $ret = array();
-        foreach( $fields as $f ) {
-            $ret[$f] = array_key_exists( $f, $m ) ? $m[$f] : '';
-        }
-        return $ret;
-    } else {
-        /* actually, I'm not sure the preg_match can ever fail... every part is optional... */
-        return FALSE;
-    }
-
-}
 
 //
 function is_sane_article_url( $url )
