@@ -1,5 +1,5 @@
 <?php
-// admin page for managing submitted other articles
+// admin page for managing submitted web links for journos
 
 // sigh... stupid php include-path trainwreck...
 chdir( dirname(dirname(__FILE__)) );
@@ -9,15 +9,15 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
-require_once 'otherarticle_widget.php';
+require_once 'weblink_widget.php';
 
 
 
-admPageHeader( "Other Articles", "ExtraHead" );
+admPageHeader( "Web Links", "ExtraHead" );
 $status = get_http_var('status','unapproved');
 ?>
-<h2>Other articles</h2>
-<p>Submitted articles from outlets we don't cover</p>
+<h2>Web Links</h2>
+<p>Web links for journos</p>
 
 <form method="post" action="">
 Show:
@@ -30,9 +30,9 @@ Show:
 </form>
 <?php
 
-$rows = OtherArticleWidget::fetch_lots($status);
+$rows = WeblinkWidget::fetch_lots(null,$status);
 foreach( $rows as $r ) {
-    $w = new OtherArticleWidget( $r );
+    $w = new WeblinkWidget( $r );
     $w->emit_full();
 }
 admPageFooter();
@@ -41,7 +41,7 @@ admPageFooter();
 
 function ExtraHead()
 {
-    OtherArticleWidget::emit_head_js();
+    WeblinkWidget::emit_head_js();
 }
 
 

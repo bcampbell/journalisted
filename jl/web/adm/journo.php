@@ -11,7 +11,14 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 
+require_once 'weblink_widget.php';
+
 //require_once "HTML/QuickForm.php";
+
+function ExtraHead()
+{
+    WeblinkWidget::emit_head_js();
+}
 
 $statusnames = array('i'=>'i - Inactive', 'a'=>'a - Active', 'h'=>'h - Hidden' );
 
@@ -27,7 +34,7 @@ if( $journo_id )
     $journo_name = db_getOne( "SELECT prettyname FROM journo WHERE id=?",$journo_id);
 
 
-admPageHeader( $journo_name );
+admPageHeader( $journo_name, "ExtraHead" );
 
 switch( $action )
 {
@@ -305,6 +312,31 @@ function ChangeJournoStatus( $journo_id, $status )
 function EmitWebLinks( $journo_id )
 {
 	print "<h3>Web links</h3>\n";
+
+    $links = WeblinkWidget::fetch_lots( $journo_id, '' );
+    foreach( $links as $l ) {
+        $w = new WeblinkWidget( $l );
+        $w->emit_full();
+    }
+
+/* cheesy form to add a link */
+/* replace with widget-based version */
+?>
+<form method="post">
+url: <input type="text" name="url" size="40" />
+description: <input type="text" name="desc" size="40" />
+<?php
+print form_element_hidden( 'action', 'add_link' );
+print form_element_hidden( 'journo_id', $journo_id );
+?>
+<input type="submit" name="submit" value="Add Link" />
+</form>
+<?php
+    return;
+}
+
+function OLD_EmitWebLinks( $journo_id )
+{
 	//$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? AND type!='cif:blog:feed'", $journo_id );
 	$links = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $journo_id );
 
@@ -319,7 +351,7 @@ function EmitWebLinks( $journo_id )
 			$url = $l['url'];
 			$desc = $l['description'];
 			$approved = ($l['approved']=='t');
-			
+
 			$anchor = "<a href=\"$url\">$url</a>";
 			$removelink = (
 				"<a href=\"?action=remove_link&journo_id=$journo_id&link_id=$id\">remove</a>");

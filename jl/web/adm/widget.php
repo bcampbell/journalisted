@@ -11,6 +11,7 @@ require_once '../../phplib/utility.php';
 
 require_once 'missingarticle_widget.php';
 require_once 'otherarticle_widget.php';
+require_once 'weblink_widget.php';
 
 header("Cache-Control: no-cache");
 
@@ -22,6 +23,9 @@ switch( $widget )
         break;
     case 'otherarticle':
         OtherArticleWidget::dispatch();
+        break;
+    case WeblinkWidget::PREFIX:
+        WeblinkWidget::dispatch();
         break;
 }
 
