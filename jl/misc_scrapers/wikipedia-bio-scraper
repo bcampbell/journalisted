@@ -1,38 +1,24 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.4
 #
 # Tool to scrape journalist bios from wikipedia
 # (core wikipedia scraper written by Tom Lynn)
 #
-#
-#
-#
-#
-#
-#
-#
-
-
-
 
 import sys
 import time
 #import textwrap
-#import simplejson
+import traceback
 from datetime import datetime
 from optparse import OptionParser
 import re
 import urllib2
 
 sys.path.insert(0, '../pylib')
-from JL import DB
-from JL import ukmedia
+from JL import ukmedia, Journo, DB
 from BeautifulSoup import BeautifulSoup,Tag,NavigableString
 
-PARANOID = False  # tries JohnDoe_(journalist), etc. before JohnDoe
-QUIET = False
 
 _conn = None  # DB connection
-_reasons = {}
 
 
 class NoSuchArticle(Exception):
@@ -50,6 +36,7 @@ class UnsureException(Exception):
 
 def scrape_wikipedia_bio( wikipedia_url ):
     """fetch a wikipedia page and try to scrape a journo bio from it"""
+    profile = {}
     bio = {}
     html = ukmedia.FetchURL( wikipedia_url );
 
@@ -294,16 +281,20 @@ def scrape_wikipedia_bio( wikipedia_url ):
     # Replace ", ." with ".". Arises from our removing cross-references.
     text = re.sub(r',\s*\.', '.', text)
     
-    bio['image'] = image
+    # TODO: image licensing
+    profile['image'] = { 'url': image }
 
 #    if image:
 #        bio_text = unicode(BeautifulSoup(text).p)  # include <p> tag
 #    else:
     bio_text = BeautifulSoup(text).p.renderContents(None)
     bio_text = re.sub('<b>(.*?)</b>', r'\1', bio_text)
-    bio['text'] = bio_text
+    bio['bio'] = bio_text
+    bio['kind'] = 'wikipedia-profile'
+    bio['srcurl'] = wikipedia_url
 
-    return bio
+    profile['bio'] = bio;
+    return profile
 
 
 ## Helpers
@@ -343,70 +334,88 @@ def replace_with_contents(tag):
         index += 1
 
 
-def url_from_prettyname( prettyname )
+# unused - left here for reference if page-discovery code is added back in.
+def url_from_prettyname( prettyname ):
         # "Titles on Wikipedia are case sensitive except for the first character"
         foo = prettyname.replace(' ','_')
         return 'http://en.wikipedia.org/wiki/' + urllib2.quote(foo)
 
 
-def process_scraped_bio( journo_id, url, bio, trusted ):
-    global _conn
-    c = _conn.cursor()
-    c.execute( """SELECT id, approved FROM journo_bio WHERE journo_id=%s AND type='wikipedia-bio-scraper'""", row['journo_id'] )
-    row = c.fetch()
-    c.close()
-
-    # DO STUFF HERE
-
-
-
-
 
 
 def update_bios():
-    """update/scrape bios for journos with an approved wikipedia weblink"""
+    """ use wikipedia-profile entries in journo_weblinks to drive updates """
 
     global _conn
+    global _options
 
-    c=_conn.cursor()
-    # find all wikipedia weblinks
-    # (don't care if they were automatically discovered or added by hand)
-    sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
-        FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
-        WHERE j.status='a' AND l.type='wikipedia'"""
-    c.execute( sql )
-    cnt = 0
+    c = _conn.cursor()
+    if( _options.single_journo ):
+        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+            FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
+            WHERE j.status='a' AND l.kind='wikipedia-profile'
+            AND j.ref=%s"""
+        c.execute( sql, _options.single_journo  )
+    else:
+        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+            FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
+            WHERE j.status='a' AND l.kind='wikipedia-profile'"""
+        c.execute( sql )
+
+    good=0
+    failed=0
     for row in c.fetchall():
-
-
         try:
-            bio = scrape_wikipedia_bio( row['url'] )
-            ProcessBio( row['journo_id'], url, bio )
-        except Exception, e:
-            pass
+            if _options.verbose:
+                print "processing %s" %(row['url'])
+            profile = scrape_wikipedia_bio( row['url'] )
+            # if weblink is approved, assume bio is good too (won't affect bios we've already got)
+            default_approval = row['approved']
+            if 'bio' in profile:
+                Journo.load_or_update_bio( _conn, row['journo_id'], profile['bio'], default_approval )
+                _conn.commit();
+                good = good+1
+            else:
+                print >>sys.stderr, "WARNING: blank bio %s\n" % (row['url'])
 
-        cnt=cnt+1
-    print cnt
+        except Exception,e:
+            # always just bail out upon ctrl-c
+            if isinstance( e, KeyboardInterrupt ):
+                raise
+            print >>sys.stderr, "ERROR processing %s\n" % (row['url'])
+            print >>sys.stderr, '-'*60
+            print >>sys.stderr, traceback.format_exc()
+            print >>sys.stderr, '-'*60
+            failed = failed+1
+            continue
+
+    if _options.verbose:
+        print "%d good, %d failed" % (good,failed)
+
+
 
 
 
 def main(argv=None):
     global _conn
+    global _options
+
     if argv is None:
         argv = sys.argv
 
-
     parser = OptionParser()
-    parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
+    parser.add_option( "-j", "--journo", dest="single_journo", help="just do a single journo (eg 'fred-smith')" )
+    parser.add_option( "-u", "--url", dest="url", help="just scrape a single profile page and dump to stdout (doesn't touch DB)", metavar="URL" )
     parser.add_option( "-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
-    (options, args) = parser.parse_args()
+    (_options, args) = parser.parse_args()
 
-    if options.url:
-        bio = scrape_wikipedia_bio( options.url )
-        print bio['text']
+    if _options.url:
+        inf = scrape_wikipedia_bio( _options.url )
+        print inf
+        return 0
     else:
         _conn = DB.Connect()
-        UpdateBios()
+        update_bios()
 
 
 if __name__ == "__main__":
