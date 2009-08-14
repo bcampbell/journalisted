@@ -41,6 +41,7 @@ function scrape_ScrapeURL( $url )
 
 	$cmd = $JLBIN . "/scrape-tool";
 	$cmd .= ' -u ' . escapeshellarg( $url );
+	$cmd = $cmd . ' 2>&1';
 
 	ob_start();
     $ret = -1;
