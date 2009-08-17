@@ -47,7 +47,7 @@ def main():
         scraper.Prep()
 
     ScraperUtils.ProcessArticles( articles, store, scraper.Extract,
-        showexisting=True)
+        extralogging=True)
     return 0
 
 if __name__ == "__main__":

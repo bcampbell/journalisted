@@ -236,7 +236,20 @@ def LogScraperError( conn, context, report ):
     c.close()
 
 
-def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10, showexisting=False, forcerescrape=False ):
+def GetAttrLogStr( conn,article_id ):
+    """ return a list of attributed journos for logging eg "[a1234 fred blogs], [a4321 bob roberts]" """
+    c = conn.cursor()
+    sql = """
+SELECT j.id,j.ref,j.prettyname
+    FROM ( JOURNO j INNER JOIN journo_attr attr ON attr.journo_id=j.id )
+    WHERE attr.article_id=%s
+"""
+    c.execute( sql, article_id )
+    rows = c.fetchall()
+    return ", ".join( [ "[j%d %s]" % (int(row['id']),row['prettyname']) for row in rows ] )
+
+
+def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10, extralogging=False, forcerescrape=False ):
     """Download, scrape and load a list of articles
 
     Each entry in foundarticles must have at least:
@@ -245,7 +258,7 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
 
     extractfn - function to extract an article from the html
     postfn - option fn to call after article is added to db
-    showexisting - if True, print a message when an article already is in DB
+    extralogging - enables extra debug output (eg when article already is in DB, etc)
     forcerescrape - if True, rescrape articles already in DB
     """
     failcount = 0
@@ -257,19 +270,19 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
         conn = store.conn   # ugh...
         srcid = context['srcid']
         if not srcid:
-            ukmedia.DBUG2( u"WARNING: missing srcid! '%s' (%s)\n" % (getattr(context,'title',''), context['srcurl'] ) )
+            ukmedia.DBUG2( u"WARNING: missing srcid! '%s' ( %s )\n" % (getattr(context,'title',''), context['srcurl'] ) )
             continue
 
 
         if ShouldSkip( conn, srcid ):
-            ukmedia.DBUG2( u"s for skip: '%s' (%s)\n" % (getattr(context,'title',''), context['srcurl'] ) )
+            ukmedia.DBUG2( u"s for skip: %s (%s)\n" % (getattr(context,'title',''), context['srcurl'] ) )
             continue
 
         try:
             article_id = store.ArticleExists( srcid )
             if article_id:
-                if showexisting:
-                    ukmedia.DBUG( u"already got '%s' - [a%s]\n" % (context['srcurl'], article_id ) )
+                if extralogging:
+                    ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(conn,article_id) ) )
                 if not forcerescrape:
                     continue;   # skip it - we've already got it
 
