@@ -45,7 +45,8 @@ function admPageHeader( $title = '', $extra_head_fn=null )
  <a href="journo-merge">Merge</a> |
  <a href="journo-create">Create</a>
  </small>) |
-<a href="canned">Canned Queries</a>
+<a href="canned">Canned Queries</a> |
+<a href="alerts">Alerts</a>
 <hr>
 <?php
 
