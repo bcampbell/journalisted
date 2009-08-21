@@ -49,7 +49,8 @@ def scrape_profile_page( profile_url ):
         bio_div = foo.find('div',{'class':'bio'})
 
         bio = {}
-        bio['bio'] = bio_div.renderContents(None)
+        txt = ukmedia.FromHTMLOneLine(bio_div.renderContents(None) )
+        bio['bio'] = txt
         bio['srcurl'] = profile_url
         bio['kind'] = 'guardian-profile'
         profile['bio'] = bio
@@ -61,10 +62,10 @@ def scrape_profile_page( profile_url ):
     else:
         # might be a comment-is-free page
         foo = soup.find('div', {'id':'twocolumnleftcolumninsideleftcolumn'})
-        txt = foo.p.renderContents(None).strip()
+        txt = ukmedia.FromHTMLOneLine( foo.p.renderContents(None).strip() )
         if txt != u'':
             bio = {}
-            bio['bio'] = u"<p>" + txt + u"</p>";
+            bio['bio'] = txt
             bio['srcurl'] = profile_url
             bio['kind'] = 'guardian-profile'
             profile['bio'] = bio
@@ -82,13 +83,13 @@ def update_bios():
 
     c = _conn.cursor()
     if( _options.single_journo ):
-        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+        sql = """SELECT l.url, l.journo_id, j.ref, j.prettyname, l.approved
             FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
             WHERE j.status='a' AND l.kind='guardian-profile'
             AND j.ref=%s"""
         c.execute( sql, _options.single_journo  )
     else:
-        sql = """SELECT l.url, l.journo_id, j.prettyname, l.approved
+        sql = """SELECT l.url, l.journo_id, j.ref, j.prettyname, l.approved
             FROM journo_weblink l INNER JOIN journo j ON j.id=l.journo_id
             WHERE j.status='a' AND l.kind='guardian-profile'"""
         c.execute( sql )
@@ -97,9 +98,9 @@ def update_bios():
     failed=0
     for row in c.fetchall():
         try:
-            if _options.verbose:
-                print "processing %s" %(row['url'])
             profile = scrape_profile_page( row['url'] )
+            if _options.verbose:
+                print "%s: '%s'" %(row['ref'],profile['bio']['bio'])
             # if weblink is approved, assume bio is good too (won't affect bios we've already got)
             default_approval = row['approved']
             if 'bio' in profile:
