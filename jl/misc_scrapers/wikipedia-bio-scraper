@@ -12,6 +12,7 @@ from datetime import datetime
 from optparse import OptionParser
 import re
 import urllib2
+import urlparse
 
 sys.path.insert(0, '../pylib')
 from JL import ukmedia, Journo, DB
@@ -19,7 +20,7 @@ from BeautifulSoup import BeautifulSoup,Tag,NavigableString
 
 
 _conn = None  # DB connection
-
+_options = None
 
 class NoSuchArticle(Exception):
     pass
@@ -91,6 +92,18 @@ def scrape_wikipedia_bio( wikipedia_url ):
         raise Exception("No modification date.")  # probably no article
 #    context['pubdate'] = ukmedia.ParseDateTime(m.group(1))
 
+
+    # try for an image in the infobox
+    soup = BeautifulSoup(html)  # ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ!!!!
+    infobox = soup.find('table', {'class': re.compile(r'\binfobox\b')})
+    if infobox:
+        print "GOT infobox"
+        img_link = infobox.find('a', {'class': 'image'})
+        if img_link:
+            image_page = urlparse.urljoin( wikipedia_url, img_link['href'] )
+            image = scrape_image( image_page )
+    
+
     # Extract infobox. Unfortunately BeautifulSoup isn't up to it.
     image = ''
     infobox = None
@@ -107,7 +120,8 @@ def scrape_wikipedia_bio( wikipedia_url ):
             image = ''
     
     soup = BeautifulSoup(html)
-    
+
+
     keywords = []
     for meta in soup.findAll('meta'):
         attrs = dict(meta.attrs)
@@ -284,6 +298,7 @@ def scrape_wikipedia_bio( wikipedia_url ):
     # TODO: image licensing
     profile['image'] = { 'url': image }
 
+
 #    if image:
 #        bio_text = unicode(BeautifulSoup(text).p)  # include <p> tag
 #    else:
@@ -332,6 +347,28 @@ def replace_with_contents(tag):
     for child in children:
         parent.insert(index, child)
         index += 1
+
+
+
+
+
+def scrape_image( image_page_url ):
+    print "SCRAPING ",image_page_url
+
+    html = ukmedia.FetchURL( image_page_url )
+    soup = BeautifulSoup( html )
+
+    desc_div = soup.find('div', {'id':'shared-image-desc'} )
+    if not desc_div:
+        return None
+
+    foo = desc_div.find( text="Licensing" );
+    print foo.findParent( 'h2' ).renderContents();
+
+    return None
+
+
+
 
 
 # unused - left here for reference if page-discovery code is added back in.
@@ -411,7 +448,7 @@ def main(argv=None):
 
     if _options.url:
         inf = scrape_wikipedia_bio( _options.url )
-        print inf
+#        print inf
         return 0
     else:
         _conn = DB.Connect()

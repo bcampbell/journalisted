@@ -99,16 +99,16 @@ def update_bios():
     for row in c.fetchall():
         try:
             profile = scrape_profile_page( row['url'] )
-            if _options.verbose:
-                print "%s: '%s'" %(row['ref'],profile['bio']['bio'])
             # if weblink is approved, assume bio is good too (won't affect bios we've already got)
             default_approval = row['approved']
-            if 'bio' in profile:
+            if 'bio' in profile and profile['bio'] != u'':
                 Journo.load_or_update_bio( _conn, row['journo_id'], profile['bio'], default_approval )
                 _conn.commit();
                 good = good+1
+                if _options.verbose:
+                    print "%s: '%s'" %(row['ref'],profile['bio']['bio'].encode('utf-8'))
             else:
-                print >>sys.stderr, "WARNING: blank bio %s\n" % (row['url'])
+                print >>sys.stderr, "WARNING: missing/blank bio %s\n" % (row['url'])
 
         except Exception,e:
             # always just bail out upon ctrl-c
