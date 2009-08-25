@@ -27,22 +27,14 @@ function pretty_date( $t )
 {
     if( $t instanceof DateTime ) {
         $now = new DateTime();
-        if( $t->format('Ymd') == $now->format('Ymd') )
-            return 'today';
-        elseif( $t->format('W Y') == $now->format('W Y') )
-            return $t->format('l'); // eg "Monday"
-        elseif( $t->format('Y') == $now->format('Y') )
+        if( $t->format('Y') == $now->format('Y') )
             return $t->format('l j F'); // eg "Monday 24 October"
         else
             return $t->format('D j F Y'); // eg "Mon 24 October 2006"
     } else {
         /* depreicated */
         $now = time();
-        if( strftime('%Y%m%d',$t) == strftime('%Y%m%d',$now) )
-            return 'today';
-        elseif( strftime('%U %Y',$t) == strftime('%U %Y',$now) )
-            return strftime('%A',$t);
-        elseif( strftime('%Y',$t) == strftime('%Y',$now) )
+        if( strftime('%Y',$t) == strftime('%Y',$now) )
             return strftime('%A %e %B',$t);
         else
             return strftime('%a %e %B %Y',$t);
