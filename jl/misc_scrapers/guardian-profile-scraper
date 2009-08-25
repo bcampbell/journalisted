@@ -96,6 +96,7 @@ def update_bios():
 
     good=0
     failed=0
+    missing=0
     for row in c.fetchall():
         try:
             profile = scrape_profile_page( row['url'] )
@@ -109,6 +110,7 @@ def update_bios():
                     print "%s: '%s'" %(row['ref'],profile['bio']['bio'].encode('utf-8'))
             else:
                 print >>sys.stderr, "WARNING: missing/blank bio %s\n" % (row['url'])
+                missing=missing+1
 
         except Exception,e:
             # always just bail out upon ctrl-c
@@ -122,7 +124,7 @@ def update_bios():
             continue
 
     if _options.verbose:
-        print "%d good, %d failed" % (good,failed)
+        print "%d good, %d failed, %d missing" % (good,failed,missing)
 
 
 
