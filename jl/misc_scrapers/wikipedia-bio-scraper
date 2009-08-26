@@ -350,7 +350,11 @@ def replace_with_contents(tag):
 
 
 
-
+def find_containing( soup, tag, text ):
+    for t in soup.findAll( tag ):
+        if t.find( text=text ):
+            return t
+    return None
 
 def scrape_image( image_page_url ):
     print "SCRAPING ",image_page_url
@@ -362,9 +366,36 @@ def scrape_image( image_page_url ):
     if not desc_div:
         return None
 
-    foo = desc_div.find( text="Licensing" );
-    print foo.findParent( 'h2' ).renderContents();
+#    license_h2 = find_containing( desc_div, 'h2', text=( "Licensing", "License information") )
+#    table = license_h2.findNextSibling( 'table' )
 
+    for foo in desc_div.findAll( 'span', {'class':re.compile(r"\bdescription\b") } ):
+        l = foo.renderContents(None).lower()
+        licence = None
+        if( "GNU Free Documentation License" in l ):
+            licence = "GFDL"
+        if foo.find( 'a', href=re.compile() )
+
+
+
+        l = ukmedia.SanitiseHTML(l)
+        print l
+
+
+    td = desc_div.find( 'th', {'id':"fileinfotpl_desc"} ).findNextSibling('td')
+    for cruft in td.findAll( 'span', {'style':re.compile(r"display:\s*none;?")} ):
+        cruft.extract()
+    desc = td.renderContents(None)
+    desc = ukmedia.FromHTMLOneLine( desc )
+
+    td = desc_div.find( 'th', {'id':"fileinfotpl_aut"} ).findNextSibling('td')
+    for cruft in td.findAll( 'span', {'style':re.compile(r"display:\s*none;?")} ):
+        cruft.extract()
+    author = td.renderContents(None)
+    author = ukmedia.FromHTMLOneLine( author )
+
+    print "DESC: '%s'" % ( desc )
+    print "AUTHOR: '%s'" % ( author )
     return None
 
 
@@ -444,9 +475,12 @@ def main(argv=None):
     parser.add_option( "-j", "--journo", dest="single_journo", help="just do a single journo (eg 'fred-smith')" )
     parser.add_option( "-u", "--url", dest="url", help="just scrape a single profile page and dump to stdout (doesn't touch DB)", metavar="URL" )
     parser.add_option( "-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option( "-i", "--image", dest="image_url", help="just scrape image page and dump output to stdout", metavar="IMAGEURL" )
     (_options, args) = parser.parse_args()
 
-    if _options.url:
+    if _options.image_url:
+        scrape_image( _options.image_url )
+    elif _options.url:
         inf = scrape_wikipedia_bio( _options.url )
 #        print inf
         return 0
