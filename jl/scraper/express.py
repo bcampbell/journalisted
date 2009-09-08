@@ -4,6 +4,10 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
+# NOTES:
+# express has rss feeds, but they seem a little a) chaotic and b) rubbish
+#
+
 # TODO:
 # use bylineomatic on health, food others?
 
@@ -19,63 +23,23 @@ from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
 
-expressroot = u'http://www.express.co.uk'
 
-
-rssfeeds = {
-    'News / Showbiz': 'http://www.express.co.uk/rss/news.xml',
-    'Sport': 'http://www.express.co.uk/rss/sport.xml',
-    'Features (All Areas)': 'http://www.express.co.uk/rss/features.xml',
-    'Day & Night': 'http://www.express.co.uk/rss/dayandnight.xml',
-    'Express Yourself': 'http://www.express.co.uk/rss/expressyourself.xml',
-    'Health': 'http://www.express.co.uk/rss/health.xml',
-    'Fashion & Beauty': 'http://www.express.co.uk/rss/fashionandbeauty.xml',
-    'Gardening': 'http://www.express.co.uk/rss/gardening.xml',
-    'Food & Recipes': 'http://www.express.co.uk/rss/food.xml',
-    'Have Your Say': 'http://www.express.co.uk/rss/haveyoursay.xml',
-    'Express Comment': 'http://www.express.co.uk/rss/expresscomment.xml',
-    'Entertainment(All Areas)': 'http://www.express.co.uk/rss/entertainment.xml',
-    'Music Reviews': 'http://www.express.co.uk/rss/music.xml',
-    'DVD Reviews': 'http://www.express.co.uk/rss/dvd.xml',
-    'Film Reviews': 'http://www.express.co.uk/rss/films.xml',
-    'Theatre Reviews': 'http://www.express.co.uk/rss/theatre.xml',
-    'Book Reviews': 'http://www.express.co.uk/rss/books.xml',
-#   'TV Guide': 'http://www.express.co.uk/rss/tv.xml',
-    'The Crusader': 'http://www.express.co.uk/rss/crusader.xml',
-    'Money (All Areas)': 'http://www.express.co.uk/rss/money.xml',
-    'City & Business': 'http://www.express.co.uk/rss/city.xml',
-    'Your Money': 'http://www.express.co.uk/rss/yourmoney.xml',
-    'Columnists (All)': 'http://www.express.co.uk/rss/columnists.xml',
-    'Motoring': 'http://www.express.co.uk/rss/motoring.xml',
-    'Travel': 'http://www.express.co.uk/rss/travel.xml',
-#   'Competitions': 'http://www.express.co.uk/rss/competitions.xml',
-    # blogs handled separately
-#   'Express BLOGS': 'http://www.express.co.uk/rss/blogs.xml',
-
-    # extra feeds not on the rss page (found by guessing urls, using the express
-    # sitemap page as a guide):
-    'Retirement': 'http://www.express.co.uk/rss/retirement.xml',
-    'Careers': 'http://www.express.co.uk/rss/careers.xml',
-    'Diana inquest': 'http://www.express.co.uk/rss/dianainquest.xml',
-    'Football': 'http://www.express.co.uk/rss/football.xml',
-    'Cricket': 'http://www.express.co.uk/rss/cricket.xml',
-    'Rugby Union': 'http://www.express.co.uk/rss/rugbyunion.xml',
-    'Rugby League': 'http://www.express.co.uk/rss/rugbyleague.xml',
-    'Golf': 'http://www.express.co.uk/rss/golf.xml',
-    'Tennis': 'http://www.express.co.uk/rss/tennis.xml',
-    'Motorsport': 'http://express.co.uk/rss/motorsport.xml',
-    'Racing': 'http://express.co.uk/rss/racing.xml',
-    'Netball': 'http://express.co.uk/rss/netball.xml',
-    'Our Comment': 'http://express.co.uk/rss/ourcomment.xml',
-    'Games & Gadgets': 'http://www.express.co.uk/rss/games.xml',
-    'Credit Advice': 'http://express.co.uk/rss/creditadvice.xml',
-    'Property': 'http://express.co.uk/rss/property.xml'
-}
 
 # url formats:
-# http://www.dailyexpress.co.uk/posts/view/13737
-# http://www.express.co.uk/posts/view/25358/HISTORY-The-Queen-60-Years-Of-Marriage-8-30pm-ITV1
-srcidpat = re.compile( "/(?:posts|features)/view/(\d+)(/.*)?$" )
+#   http://www.dailyexpress.co.uk/posts/view/13737
+#   http://www.express.co.uk/posts/view/25358/HISTORY-The-Queen-60-Years-Of-Marriage-8-30pm-ITV1
+#
+# blogs are a bit annoying - blog summary pages _look_ like normal pages:
+#   http://www.express.co.uk/blogs/post/36635/blog
+# but we should ignore these.
+#
+# the real blog urls are like this:
+#   http://www.dailyexpress.co.uk/blogs/post/36635/blog/2009/08/20/121709/America-may-have-a-black-president-but-racism-is-still-deeply-rooted
+#   http://www.dailyexpress.co.uk/blogs/post/267/blog/2009/08/18/121246/Prince-Charles-should-stop-bullying-opponents
+
+main_srcidpat = re.compile( "/(?:posts|features)/view/(\d+)(/.*)?$" )
+blog_srcidpat = re.compile( "/blogs/.*/(\d+)(?:/[^/]+/?)?$" )
+
 
 def CalcSrcID( url ):
     """ Work out a unique srcid from an express url """
@@ -86,15 +50,24 @@ def CalcSrcID( url ):
     if d not in expressdomains:
         return None
 
-    m = srcidpat.search( url )
-    if not m:
+    # _don't_ want to accidentally scrape blog summary pages
+    if o[2].endswith( '/blog' ):
         return None
 
-    return 'express_' + m.group(1)
+    m = main_srcidpat.search( url )
+    if m is not None:
+        return 'express_' + m.group(1)
+
+    m = blog_srcidpat.search( url )
+    if m is not None:
+        return 'express_blog_' + m.group(1)
+
+    return None
 
 
 
 def Extract( html, context ):
+    """ handle express articles, including blogs """
     art = context
 
     # cheesiness - kill everything from comments onward..
@@ -110,6 +83,9 @@ def Extract( html, context ):
     soup = BeautifulSoup( html, fromEncoding = 'windows-1252' )
 
     wrapdiv = soup.find( 'div', {'class':'articleWrapper'} )
+    if wrapdiv is None:
+        # for blogs(?)
+        wrapdiv = soup.find( 'td', {'class':'contentcontainer'} )
 
     missing = soup.find( 'p', text=u"The article you are looking for does not exist.  It may have been deleted." )
     if missing:
@@ -119,19 +95,27 @@ def Extract( html, context ):
     headline = wrapdiv.find( 'h1', { 'class':'articleHeading' } )
     art['title'] = headline.renderContents( None )
     art['title'] = ukmedia.FromHTML( art['title' ] )
-    art['title'] = ukmedia.UncapsTitle( art['title'] )      # don't like ALL CAPS HEADLINES!  
+    if art['title'].upper() == art['title']:
+        art['title'] = ukmedia.UncapsTitle( art['title'] )      # don't like ALL CAPS HEADLINES!  
 
-    introcopypara = wrapdiv.find( 'p', {'class': 'introcopy' } )
-    art['description'] = ukmedia.FromHTML( introcopypara.renderContents(None) )
+    introcopypara = wrapdiv.find( 'p', {'class': re.compile(r'\bintrocopy\b') } )
+    art['description'] = ukmedia.FromHTMLOneLine( introcopypara.renderContents(None) )
 
     datepara = wrapdiv.find( 'p', {'class':'date'} )
     if datepara is None:
         #"<span class="date">Monday October 27 2008 <b> byEmily Garnham for express.co.uk</b>"
         datespan = wrapdiv.find( 'span', {'class':'date'} )
         bylineb = datespan.b
-        art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
-        art['byline'] = re.sub( '([bB]y)([A-Z])', r'\1 \2', art['byline'] )
-        bylineb.extract()
+        if bylineb is not None:
+            art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
+            art['byline'] = re.sub( '([bB]y)([A-Z])', r'\1 \2', art['byline'] )
+            bylineb.extract()
+        else:
+            # blogs(?) have slightly different date/byline layout
+            bylineb = wrapdiv.b
+            art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
+
+
         art['pubdate'] = ukmedia.ParseDateTime( datespan.renderContents(None).strip() )
         datespan.extract()        
     else:
@@ -214,6 +198,9 @@ def Extract( html, context ):
     content = ukmedia.SanitiseHTML( content )
     art['content'] = content
 
+    if art['description'] == u'':
+        art['description'] = ukmedia.FirstPara( content )
+
     return art
 
 
@@ -228,17 +215,87 @@ def ScrubFunc( context, entry ):
 
 
 def FindArticles():
-    """ get a set of articles to scrape from the express rss feeds """
-    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'express', ScrubFunc )
+    """ collect article list for the express"""
+    ukmedia.DBUG2( "express - finding articles" )
+    articles = FindArticlesFromNavPages()
+
+    # special case for blogs - use the rss feed
+    feeds = [ ("blogs","http://www.express.co.uk/posts/rss/27/blogs") ]   
+    articles = articles + ScraperUtils.FindArticlesFromRSS( feeds, u'express', ScrubFunc, maxerrors=10 )
+
+    return articles
+
+
+def FindArticlesFromNavPages():
+    """ get a set of articles to scrape by scraping pages in the navigation menu """
+
+    # (the home page is in the nav menu under "/home", which means we'll be
+    # fetching it one extra redundant time, but hey)
+    start_url = 'http://www.express.co.uk'
+
+    visited = set()
+    queued = set()
+    queued.add(start_url)
+
+    article_urls = {}
+
+    while queued:
+        page_url = queued.pop()
+        visited.add( page_url )
+        ukmedia.DBUG2( "fetching %s\n" % (page_url) )
+        html = ukmedia.FetchURL( page_url )
+        soup = BeautifulSoup( html )
+        # first, look for any sections (or subsections) we might want to scrape
+        nav = soup.find('div',{'id':'nav'} )
+        if nav is None:
+            continue
+        for a in nav.findAll( 'a', {'class':re.compile( r"(\bnav\b)|(\bnavon\b)|(\bsubnav\b)|(\bsubnavactive\b)" ) } ):
+            name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
+            section_url = urlparse.urljoin( page_url, a['href'] )
+            if section_url not in visited and section_url not in queued:
+                o = urlparse.urlparse( section_url )
+                if o[2] not in [ '/myexpress', '/cartoon', '/horoscopes', '/fun', '/video',' /galleries' ]:
+                    queued.add( section_url )
+
+        # now look for articles
+        artcnt=0
+        for a in soup.findAll( 'a' ):
+            if not a.has_key( 'href' ):
+                continue
+            art_url = TidyURL( urlparse.urljoin( page_url, a['href'] ) )
+            srcid = CalcSrcID( art_url )
+            if srcid is not None:
+                article_urls[srcid] = art_url
+
+    articles = []
+    for art_url in article_urls.itervalues():
+        context = ContextFromURL( art_url )
+        if context is not None:
+            articles.append( context );
+
+    return articles
+
+
+def TidyURL( url ):
+    """ Tidy up URL - trim off params, query, fragment... """
+    o = urlparse.urlparse( url )
+    url = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+    return url
+    
 
 
 
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
     context = {}
+
+    url = TidyURL( url )
+
     context['srcurl'] = url
     context['permalink'] = url
     context['srcid'] = CalcSrcID( url )
+    if context['srcid'] is None:
+        return None
     context['srcorgname'] = u'express'
     context['lastseen'] = datetime.now()
     return context
@@ -246,4 +303,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+
 
