@@ -22,8 +22,6 @@ from BeautifulSoup import BeautifulSoup,NavigableString,Tag,Comment
 from JL import ukmedia,ScraperUtils
 
 
-# page to read the list of rss feeds from
-rss_feed_page = "http://www.dailymail.co.uk/home/rssMenu.html"
 
 
 # page which lists columnists and their latest rants
@@ -48,34 +46,28 @@ def GetColumnistNames():
     return columnistnames
 
 
-def FindRSSFeeds( rssurl ):
+def FindRSSFeeds():
+
 #    blacklist = ( 'Pictures', 'Coffee Break', 'Live mag', 'You mag' )
     blacklist = ()
-    feeds = {}
+    feeds = []
 
-    html = ukmedia.FetchURL( rssurl )
+    # page to read the list of rss feeds from
+    rss_feed_page = "http://www.dailymail.co.uk/home/rssMenu.html"
+    html = ukmedia.FetchURL( rss_feed_page )
     assert html.strip() != ''
     soup = BeautifulSoup( html )
 
-    for t in soup.findAll( 'table', {'class':re.compile('feeds')} ):
-        for tr in t.findAll( 'tr' ):
-            tds = tr.findAll('td')
-            if len(tds) > 1:    # headings have less columns
-                n = tds[0].renderContents(None).strip()
+    # look for rss icons, step back to find the links.
+    for img in soup.findAll( 'img', {'src':re.compile('feeds_rss.gif$') } ):
+        a = img.parent
+        feed_url = urlparse.urljoin( rss_feed_page, a['href'] )
+        # could get a more human-readable name, but relative url is good enough
+        feed_name = a['href']
+        feeds.append( (feed_name,feed_url) )
 
-                if not n in blacklist:
-                    url = 'http://www.dailymail.co.uk' + tds[1].a['href']
-                    feeds[ n ] = url
+    assert len(feeds) > 120         # 168 feeds at time of writing
 
-    # some sanity checks
-    assert "Money" in feeds
-    assert "Sport" in feeds
-    assert "News" in feeds
-    assert "Health" in feeds
-    assert "Richard Littlejohn" in feeds
-    assert "Victoria Beckham" in feeds
-    assert "Nutrition" in feeds
-    assert "Manchester United" in feeds
     return feeds
 
 
@@ -352,7 +344,7 @@ def ContextFromURL( url ):
 def FindArticles():
     """Look for recent articles"""
 
-    rssfeeds = FindRSSFeeds( rss_feed_page )
+    rssfeeds = FindRSSFeeds()
 
     found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'dailymail', ScrubFunc )
     return found
