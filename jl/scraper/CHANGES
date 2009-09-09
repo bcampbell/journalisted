@@ -25,4 +25,4 @@ Log changes made due to website changes here!
 2009-06-09 telegraph: trvial fix to handle new date marker in byline
 2009-06-09 sun: Fixes to handle new URL scheme.
 2009-09-08 express: RSS borked (now crawl nav pages instead)
-
+2009-09-09 dailymail: rss feed page changed, so updated FindRSSFeeds()

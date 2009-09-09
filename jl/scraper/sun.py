@@ -33,6 +33,7 @@ srcidpat_slugstyle = re.compile( '/(\\d+)/[^/]+.html$' );
 
 # prev url format:
 # http://www.thesun.co.uk/sol/homepage/news/royals/article862982.ece
+# http://www.thescottishsun.co.uk/scotsol/homepage/news/article2438517.ece
 srcidpat_ecestyle = re.compile( '/(article\\d+[.]ece)$' )
 
 # Old url format, no longer used (vignette storyserver cms, I think)
@@ -58,7 +59,7 @@ def CalcSrcID( url ):
     """Extract a unique srcid from url"""
 
     o = urlparse.urlparse( url )
-    if not o[1].endswith( 'thesun.co.uk' ):
+    if not (o[1].endswith('thesun.co.uk') or o[1].endswith('thescottishsun.co.uk') ):
         return None
 
     m = srcidpat_slugstyle.search( o[2] )
