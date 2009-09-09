@@ -536,7 +536,7 @@ def UncapsTitle( title ):
     # "Title'S Apostrophe Badness" => "Title's Apostrophe Badness"
     # I'Ll I'M I'D Don'T We'Ll I'Ve...
     for suffix in ( u'Ve', u'S', u'L', u'T', u'Ll', u'M', u'D' ):
-        pat = re.compile( "(\w)('%s\\b)" % (suffix), re.UNICODE )
+        pat = re.compile( u"(\w)(['\u2019]%s\\b)" % (suffix), re.UNICODE )
         title = pat.sub( "\\1'%s" % (suffix.lower() ), title )
     return title.strip()
 

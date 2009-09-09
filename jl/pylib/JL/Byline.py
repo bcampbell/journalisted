@@ -14,7 +14,7 @@ bylinecrackers = [
     { 'fmt': '(n)(n)(n)(n)', 'pat': '(?:by |from |)(.+), (.+), (.+) and (.+)$' },
     { 'fmt': '(n)(n)(n)', 'pat': '(?:by |from |)(.+), (.+) and (.+)$' },
     { 'fmt': '(n)(n)(nl)', 'pat': '(?:by |from |)(.+), (.+) and (.+) in (.+)$' },
-    { 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+) and (.+)$' },
+    { 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+),? and (.+)$' },
     # note: ignore email addr here as we don't know which person it's for
     { 'fmt': '(n)(n)', 'pat': '(?:by |from |)(.+) and (\S+ \S+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})$' },
     { 'fmt': '(n)(nl)', 'pat': '(?:by |from |)(.+) and (.+) in (.+)$' },
@@ -27,6 +27,9 @@ bylinecrackers = [
     
     # Sky News Online's Alison Chung
     { 'fmt': '(an)', 'pat': '(.+)(?:\'s|\') (.+)$' },   # 
+
+    # "By Leah Simpson for Express.co.uk"
+    { 'fmt': '(na)', 'pat': r"(?:by\s+|from\s+|\s*)(.+)\s+for\s+(.+)$" },
 
     { 'fmt': '(nal)', 'pat': '(?:by |from |)(.+), of (.+), in (.+)$' },
 
