@@ -29,7 +29,8 @@ def FindRSSFeeds():
     """
 
     # miriam blacklisted for now, as her column is redirected to blogs (and picked up by our blog rss list)
-    url_blacklist = ( '/fun-games/', '/pictures/', '/video/', '/miriam/' )
+    url_blacklist = ( '/fun-games/', '/pictures/', '/video/', '/miriam/', '/celebs/topics/',
+        '/news/topics/', '/tv-entertainment/topics/' )
 
     ukmedia.DBUG2( "Fetching list of rss feeds\n" );
 
@@ -50,12 +51,13 @@ def FindRSSFeeds():
         skip = False
         for banned in url_blacklist:
             if banned in url:
-                ukmedia.DBUG2( " ignore feed '%s' [%s]\n" % (title,url) )
+#                ukmedia.DBUG2( " ignore feed '%s' [%s]\n" % (title,url) )
                 skip = True
 
         if not skip:
             feeds.append( (title,url) )
 
+    ukmedia.DBUG2( "found %d feeds\n" % ( len(feeds) ) );
     return feeds
 
 
@@ -373,11 +375,11 @@ def ContextFromURL( url ):
 def FindArticles():
     feeds = FindRSSFeeds()          # scrape the list of feeds for the main site
     feeds = feeds + blog_rssfeeds   # add the blog feeds
-    # feedsportal.com has lots of HTTP Error 503:
+    # feedsportal.com has _lots_ of HTTP Error 503:
     # "Feed is currently being prepared; try again real soon"
     # The muppets.
     # hence the large maxerrors
-    found = ScraperUtils.FindArticlesFromRSS( feeds, u'mirror', ScrubFunc, maxerrors=30 )
+    found = ScraperUtils.FindArticlesFromRSS( feeds, u'mirror', ScrubFunc, maxerrors=100 )
     return found
 
 
