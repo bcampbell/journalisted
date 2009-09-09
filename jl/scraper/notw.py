@@ -321,7 +321,8 @@ def Extract_notw( html, context ):
 
 
     # main text is inside a bare <div>, near the byline para
-    contentdiv = bylinep.findNextSibling('div', {'class':'clear-left'}).div
+#    contentdiv = bylinep.findNextSibling('div', {'class':'clear-left'}).div
+    contentdiv = bylinep.findNextSibling('div')
 
     #strip out cruft from text
     for cruft in contentdiv.findAll('div'):
