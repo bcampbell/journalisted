@@ -108,7 +108,7 @@ def Extract( html, context ):
 
     firstparadiv = artdiv.find( 'div', {'id':'ds-firstpara'} )
     desc = firstparadiv.renderContents( None )
-    desc = ukmedia.FromHTMLOneline( desc )
+    desc = ukmedia.FromHTMLOneLine( desc )
     art['description'] = desc
 
     byline = u''
