@@ -21,127 +21,11 @@ import site
 site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
-from SpiderPig import SpiderPig
+#from SpiderPig import SpiderPig
 
 
 
-# pattern to extract unique id from urls
-# main news site urls:
-# "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
-# blog urls:
-# "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
-idpat = re.compile( "/((display|index)[.]var[.].*[.]php)" )
-
-def CalcSrcID( url ):
-    """ extract unique srcid from url """
-    url = url.lower()
-    o = urlparse.urlparse( url )
-    if not o[1].endswith( 'theherald.co.uk' ):
-        return None
-
-    m = idpat.search( o[2] )
-    if m:
-        return 'herald_' + m.group(1)
-    else:
-        return None
-
-# pattern to find blog rss feeds on the blog index pages
-blogrsspat = re.compile( "http://www.theherald.co.uk/(.*)/rss.xml" )
-
-
-
-def FindArticles():
-    """Gather articles to scrape from the herald website.
-
-    Returns a list of scrape contexts, one for each article.
-    """
-    ukmedia.DBUG2( "*** herald ***: spidering for blog rss feeds...\n" )
-    found = FindBlogEntries()
-    ukmedia.DBUG2( "*** herald ***: spidering for article links...\n" )
-    found = found + FindArticlesBySpidering()
-
-    ukmedia.DBUG2( "found %d articles in total\n" % (len(found)) )
-    return found
-
-
-def blog_url_handler( feedlist, url, depth, a ):
-    """ SpiderPig callback for searching out links of blog rss feeds """
-    if depth>2:
-        return None
-
-    if a.find( text=re.compile( 'LINK' ) ):
-        #print "%d BLOGINDEX: %s" %(depth, url)
-        return url
-
-    m = blogrsspat.search( url )
-    if m:
-        blogname = m.group(1)
-        if not blogname in feedlist:
-        #   print "%d RSS '%s': %s" %(depth,blogname,url)
-            feedlist[blogname] = url
-
-def FindBlogEntries():
-    """spider to find blog RSS feeds, then use the articles from the feeds"""
-    feeds = {}
-    pig = SpiderPig( blog_url_handler, userdata=feeds, logfunc=ukmedia.DBUG2 )
-    pig.AddSeed( 'http://www.theherald.co.uk/heraldblogs' )
-    pig.Go()
-
-    found = ScraperUtils.FindArticlesFromRSS( feeds, u'herald', ScrubFunc );
-
-    return found
-
-
-def art_url_handler( arturls, url, depth, a ):
-    """ SpiderPig callback for searching out article links """
-
-    # follow up to three links in
-    if depth > 3:
-        return None
-
-    # we use the class attribute to decide what sort of link it is
-    if not a.has_key('class'):
-        return None
-
-    classes = a['class'].split()
-
-    # links to articles...
-    # We record them but don't follow them.
-    if ('headlineLink' in classes) or ('sectTopHeadline' in classes):
-        if idpat.search( url ):
-            # Might actually be a link to a page listing more articles...
-            if re.match( u'\\s*More\\s*...\\s*', a.renderContents(None) ):
-                return url
-            # OK we think it's an article!
-            arturls.add(url)
-        return None
-
-    # links to other lists of articles
-    if ('channelLink' in classes) or ('navLink' in classes):
-        return url
-
-    return None
-
-
-def FindArticlesBySpidering():
-    """ spider through the site looking for articles """
-    urls = set()
-    pig = SpiderPig( art_url_handler, userdata=urls, logfunc=ukmedia.DBUG2 )
-    pig.AddSeed( 'http://www.theherald.co.uk' )
-    pig.Go()
-
-    found = []
-    for url in urls:
-        found.append( ContextFromURL( url ) )
-
-    ukmedia.DBUG( "spidering found %d articles\n" %(len(found)) )
-    return found
-
-
-
-
-
-def Extract( html, context ):
+def old_Extract( html, context ):
     url = context['srcurl']
 
     if re.search( 'Copyright Press Association Ltd \\d{4}, All Rights Reserved', html ):
@@ -166,21 +50,14 @@ def Extract( html, context ):
 
     # blog or article?
     if html.find( "<div class=\"entry2\">" ) != -1:
-        return blog_Extract( html,context )
+        return old_blog_Extract( html,context )
     else:
-        return news_Extract( html,context )
-
-#   if re.search( '/display[.]var[.]\\d+', url ):
-#       return news_Extract( html,context )
-
-#   if re.search( '/index[.]var[.]\\d+', url ):
-#       return blog_Extract( html,context )
-
+        return old_news_Extract( html,context )
     raise Exception, "can't determine type (news or blog) of article (%s)" % (url)
 
 
-def news_Extract( html, context ):
-    """extract function for handling main news site articles"""
+def old_news_Extract( html, context ):
+    """extract function for handling main news site articles, OLD cms"""
     art = context
     soup = BeautifulSoup.BeautifulSoup( html )
 
@@ -280,8 +157,8 @@ def news_Extract( html, context ):
     return art
 
 
-def blog_Extract( html, context ):
-    """extract function for handling blog entries"""
+def old_blog_Extract( html, context ):
+    """extract function for handling blog entries, OLD cms"""
 
     if html.find( "No blog entries found." ) != -1: 
         ukmedia.DBUG2( "IGNORE missing blog entry (%s)\n" % (context[srcurl]) )
@@ -320,26 +197,141 @@ def blog_Extract( html, context ):
     return art
 
 
-def ScrubFunc( context, entry ):
-    context['srcid'] = CalcSrcID( context['srcurl'] )
-    return context
+def Extract( html, context ):
+    art = context
+    soup = BeautifulSoup.BeautifulSoup( html )
+
+    article_div = soup.find('div',{'class':re.compile(r'\barticle\b')})
+    artbody_div = article_div.find( 'div',{'class':re.compile( r"\barticle-body\b")} )
+
+    bylinetxt = u''
+    pubdatetxt = u''
+    byline_p = article_div.find( 'p', {'class':'byline'} )
+    if byline_p is not None:
+        bylinetxt = ukmedia.FromHTMLOneLine( byline_p.renderContents( None ) )
+        # sometimes date is in byline (for blogs, I think)
+        # "Michael Settle, 9 Sep 2009 12.33"
+        m = re.compile( '\s*(.*)\s*,\s*(\d+\s+\w+\s+\d{4}\s+\d\d[.]\d\d)' ).match( bylinetxt )
+        if m:
+            # it's a combined byline/date
+            bylinetxt = m.group(1)
+            pubdatetxt = m.group(2)
+    else:
+        # no byline. might be a columnist - try the url for names
+        m = re.compile( r'/comment/([-\w]+?)(?:s-diary)?/' ).search( art['srcurl'] )
+        if m:
+            bylinetxt = unicode( m.group(1).replace( '-', ' ' ) )
+    art['byline'] = bylinetxt
+
+    # if no pubdate in byline, look for a proper pubdate para
+    if pubdatetxt == u'':
+        pubdate_p = article_div.find( 'p', {'class':'pubdate'} )
+        pubdatetxt = ukmedia.FromHTMLOneLine( pubdate_p.renderContents( None ) )
+
+    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
+
+    h1 = article_div.h1
+    art['title'] = ukmedia.FromHTMLOneLine( h1.renderContents( None ) )
+    art['content'] = artbody_div.renderContents( None )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    # TODO: comments (not working on herald site at time of writing)
+
+    #images
+    art['images'] = []
+    for pic_div in article_div.findAll( 'div', {'class':'pic-onecol'} ):
+        img = pic_div.img
+        im_url = urlparse.urljoin( art['srcurl'], img['src'] )
+        im_credit = img['title']
+        cap = pic_div.find('div',{'class':"pic-caption"} )
+        im_caption = ukmedia.FromHTMLOneLine( cap.li.renderContents(None) )
+        art['images'].append( { 'url': im_url, 'caption': im_caption, 'credit': im_credit } )
 
 
+    return art
 
 
+# OLD-style URLS:
+#  main news site:
+#   "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
+#  blogs:
+#   "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
+old_idpat = re.compile( "/((display|index)[.]var[.].*[.]php)" )
+
+# NEW URLS (as of sept 2009):
+#  http://www.heraldscotland.com/news/politics/macaskill-denies-brother-s-role-in-libya-oil-interests-1.918391
+#  http://www.heraldscotland.com/comment/iain-macwhirter/how-do-we-prevent-google-from-turning-into-hal-1.918020
+#  http://www.heraldscotland.com/sport/more-scottish-football/fletcher-desperate-to-make-world-cup-dream-come-true-1.918563?localLinksEnabled=false
+
+
+def CalcSrcID( url ):
+    """ extract unique srcid from url """
+    url = TidyURL( url.lower() )
+    o = urlparse.urlparse( url )
+    if o[1].endswith( 'theherald.co.uk' ):
+        # OLD url
+        m = old_idpat.search( o[2] )
+        if m:
+            return 'herald_' + m.group(1)
+    elif o[1].endswith( 'heraldscotland.com' ):
+        # NEW url
+        new_idpat = re.compile( r"(?:.*?)(\d+)$" )
+        m = new_idpat.match( o[2] )
+        if m:
+            return 'heraldscotland_' + m.group(1)
+    return None
+
+
+def TidyURL( url ):
+    """ Tidy up URL - trim off params, query, fragment... """
+    o = urlparse.urlparse( url )
+    url = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+    return url
 
 
 
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
+    url = TidyURL( url )
     context = {}
     context['srcurl'] = url
     context['permalink'] = url
     context['srcid'] = CalcSrcID( url )
+    if context['srcid'] == None:
+        return None
     context['srcorgname'] = u'herald'
     context['lastseen'] = datetime.now()
     return context
 
+
+def ScrubFunc( context, entry ):
+    url = TidyURL( context['srcurl'] )
+    context['permalink'] = url
+    context['srcurl'] = url
+    context['srcid'] = CalcSrcID( url )
+    return context
+
+def FindArticles():
+    """Gather articles to scrape from the herald website. """
+    feeds = FindRSSFeeds()
+    found = ScraperUtils.FindArticlesFromRSS( feeds, u'herald', ScrubFunc, maxerrors=10 )
+    return found
+
+
+
+def FindRSSFeeds():
+    rss_page = 'http://www.heraldscotland.com/services/rss' 
+    html = ukmedia.FetchURL( rss_page )
+    soup = BeautifulSoup.BeautifulSoup( html )
+    feeds = []
+    for a in soup.findAll( 'a', {'class':'rss-link'} ):
+        a.img.extract() # kill the rss icon
+        feed_name = a.renderContents( None )
+        feed_url = urlparse.urljoin( rss_page, a['href'] )
+        feeds.append( (feed_name,feed_url) )
+
+    ukmedia.DBUG2( "Scanned '%s', found %d RSS feeds\n" %( rss_page, len(feeds) ) )
+    return feeds
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
