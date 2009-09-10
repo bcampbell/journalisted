@@ -72,7 +72,8 @@ def MonthNumber( name ):
 datecrackers = [
     # "2008-03-10 13:21:36 GMT" (technorati api)
     re.compile( """(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)\s+(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
-
+    # "9 Sep 2009 12.33" (heraldscotland blogs)
+    re.compile( r"(?P<day>\d{1,2})\s+(?P<month>\w+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2})[.:](?P<min>\d\d)", re.UNICODE ),
     # "Thursday August 21 2008 10:42 am" (guardian blogs in their new cms)
     re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>am)|(?P<pm>pm))', re.UNICODE|re.IGNORECASE ),
     # 'Tuesday October 14 2008 00.01 BST' (Guardian blogs in their new cms)

@@ -115,10 +115,10 @@ class ArticleDB:
             self.conn.commit()
 
 
-        ukmedia.DBUG2( u"%s: [a%s '%s'] ('%s' %s)\n" % (
+        ukmedia.DBUG2( u"%s: [a%s %s ] ('%s' %s)\n" % (
             art['srcorgname'],
             id,
-            art['title'],
+            art['srcurl'],
             art['byline'],
             ','.join( [ '[j%s]'%(j) for j in journos ] )
             ))

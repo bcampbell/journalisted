@@ -55,6 +55,7 @@ bylinecrackers = [
     { 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?)[:,] our man in (.+)$' },
     { 'fmt': '(n)(nl)', 'pat': '(?:by |from |)(.+?) and (.+?), (.+)$' },
     { 'fmt': '(a)', 'pat': '(?:by |from |)(.+)$' },
+    { 'fmt': '(a)', 'pat': '(?:by |from |)(.+)$ (staff|view)' },
     { 'fmt': '(t)', 'pat': '(?:by |from |)(.+)$' },
     { 'fmt': '(n)', 'pat': """(?:by |from |)(.+)$""" },
     { 'fmt': '(n)', 'pat': """.*?\s+(?:by|from)\s+(.+)$""" },
@@ -105,6 +106,7 @@ agencypats = [
     re.compile( """sky news online""", re.IGNORECASE|re.UNICODE ),  # gtb
     re.compile( """sky news""", re.IGNORECASE|re.UNICODE ), # gtb
     re.compile( """sky""", re.IGNORECASE|re.UNICODE ),  # gtb
+    re.compile( r"\bheraldscotland\b", re.IGNORECASE|re.UNICODE ),
     ]
 
 jobtitlepats = [
@@ -135,7 +137,11 @@ def CrackByline( byline ):
         raise Exception, "byline not unicode"
 
     byline = byline.strip()
-    
+
+    # some special-case ignores.
+    if byline.lower() in ( u'obituaries' ):
+        return None
+
     # gtb:
     # Discard text after "is" to deal with e.g.
     #     Sky News Online's Alison Chung is heading home from Portugal
