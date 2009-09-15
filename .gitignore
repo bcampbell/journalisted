@@ -1,0 +1,6 @@
+*.pyc
+*.swp
+jl/conf/general
+jl/web/.htaccess
+phplib/
+pylib/
