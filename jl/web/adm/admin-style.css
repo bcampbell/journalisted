@@ -10,7 +10,21 @@
 .action_summary {
     border: thin dashed blue;
     background-color: silver;
-    padding: 1em; }
+    font-weight: bold;
+    font-size: larger;
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+.action_error {
+    border: thin dashed red;
+    padding: 0.5em;
+    margin: 0.5em;
+    font-weight: bold;
+    font-size: larger;
+    color: red;
+}
+
 
 .widget-container {
     margin: 0.5em;

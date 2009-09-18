@@ -22,6 +22,8 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
 <script type="text/javascript" src="/adm/jquery.js"></script>
 <script type="text/javascript" src="/adm/jquery.form.js"></script>
+<script type="text/javascript" src="/adm/jquery.autocomplete.js"></script>
+<style type="text/css" media="all">@import "/adm/jquery.autocomplete.css";</style>
 <!-- <script type="text/javascript" src="/adm/jquery.tablesorter.js"></script> -->
 <?php
     if( !is_null( $extra_head_fn ) ) {
@@ -46,7 +48,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
  <a href="journo-create">Create</a>
  </small>) |
 <a href="canned">Canned Queries</a> |
-<a href="alerts">Alerts</a>
+<a href="useraccounts">User Accounts</a>
 <hr>
 <?php
 
@@ -120,3 +122,12 @@ function admMarkupPlainText( $txt )
 	return $html;
 }
 
+
+// return a link to a journo page, with a little [admin] link beside it
+function admJournoLink( $ref, $prettyname=null )
+{
+    return sprintf( "<a href=\"/%s\">%s</a> <small>(<a href=\"/adm/%s\">admin</a>)</small>",
+        $ref,
+        $prettyname?$prettyname:$ref,
+        $ref );
+}
