@@ -35,6 +35,10 @@ org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday','time
 def UpdateArticle( conn, options, article_id, srcurl ):
     scraper = scrapefront.PickScraper( srcurl )
 
+    if scraper is None:
+        print >>sys.stderr, "WARNING: couldn't determine scraper for [a%d] %s" %(article_id,srcurl)
+    return
+
     # Assumes that comments are always scraped using as part of the main
     # article scraping... (ie comment info always on same page as article)
     # May need to change this assumption in future, but for now seems
@@ -47,6 +51,10 @@ def UpdateArticle( conn, options, article_id, srcurl ):
 
     # rescrape the whole article...
     context = scraper.ContextFromURL( srcurl )
+    if context is None or context['srcid'] is None:
+        print >>sys.stderr, "WARNING: no srcid for [a%d] %s" %(article_id,srcurl)
+    return
+
     html = ukmedia.FetchURL( srcurl )
     art = scraper.Extract( html,context )
 
@@ -149,7 +157,7 @@ SELECT id,srcurl,title,pubdate FROM article WHERE status='a'
                     raise
 
     if options.verbose:
-    	print "%d ok, %d errors, %d 404s" %(cnt_ok,err_cnt,pagenotfound_cnt)
+        print "%d ok, %d errors, %d 404s" %(cnt_ok,err_cnt,pagenotfound_cnt)
 
 
 def DoSingleArticle( conn,options ):
