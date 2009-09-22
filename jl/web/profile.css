@@ -49,6 +49,26 @@ ul.tabs a:hover { /* settings for hover effect */
 /* end of tabs */
 
 
+/* pipeline bar */
+div.pipeline {
+}
+
+div.pipeline span{
+    display: inline-block;
+    margin: 1em;
+    padding: 1em;
+    font-size: larger;
+    border: 1px solid white;
+}
+   
+
+div.pipeline span.active {
+    border: 1px solid black;
+}
+   
+
+
+
 /* form styles */
 
 form .field {
@@ -67,7 +87,18 @@ th {
     text-align: right;
 }
 
-fieldset a {
+/*
+  fieldset a {
     float:right;
 }
+*/
 
+/* the "now give us more info!" box */
+.exhort {
+    font-family: sans-serif;
+    font-weight: normal;
+}
+ .exhort a {
+    float: right;
+    text-decoration: underline;
+}

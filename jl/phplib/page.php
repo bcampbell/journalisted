@@ -52,6 +52,10 @@ function page_header( $title, $params=array() )
     if (array_key_exists('head_extra', $params)) {
         print $params['head_extra'];
     }
+
+    if (array_key_exists('head_extra_fn', $params)) {
+    	call_user_func( $params['head_extra_fn'] );
+    }
 /*
     <script type="text/javascript" language="JavaScript">
       window.onload=function() {
