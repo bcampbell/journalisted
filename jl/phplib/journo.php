@@ -9,6 +9,21 @@ require_once '../phplib/gatso.php';
 
 define( 'OPTION_JL_NUM_SITES_COVERED', '14' );
 
+
+/* returns a link to journos page, with oneliner (if present)... */
+function journo_link( $j )
+{
+    $a = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
+    if( array_key_exists( 'oneliner', $j ) ) {
+        $a .= " <em>({$j['oneliner']})</em>";
+    }
+
+    return $a; 
+}
+
+
+
+
 function journo_emitPageQuick( &$journo )
 {
 
@@ -737,7 +752,7 @@ EOT;
  <div class="box-content">
   <ul>
 <?php foreach( $similar_journos as $j ) { ?>
-   <li><a href="<?php echo '/'.$j['ref']; ?>"><?php echo $j['prettyname']; ?></a> (<?php echo $j['oneliner']; ?>)</li>
+   <li><?=journo_link($j) ?></li>
 <?php } ?>
   </ul>
  </div>
