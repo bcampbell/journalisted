@@ -314,6 +314,7 @@ function donatebutton_emit( $txt='Donate', $href='/donate' )
 
 // htmlentities()-encode any strings in the array, adding them under
 // new values with an "h_"-prefixed key
+// DEPRECATED - use h() instead...
 function h_array( $a )
 {
     $out = array();
@@ -328,6 +329,14 @@ function h_array( $a )
     }
 
     return $out;
+}
+
+
+
+//
+function h( $s, $enc='UTF-8' )
+{
+    return htmlentities( $s, ENT_QUOTES, $enc='UTF-8' );
 }
 
 

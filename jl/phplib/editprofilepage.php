@@ -55,19 +55,70 @@ class EditProfilePage
             return;
         }
 
-        // show the navbar for profile editing
+
+        $this->showNavigation();
+
+
+
+        $this->displayMain();
+        page_footer();
+    }
+
+
+    function showNavigation()
+    {
+        $tabs = array(
+            'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
+            'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
+            'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
+            'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
+        );
+
+        // show the main nav bar
+
+        if( array_key_exists( $this->pageName, $tabs ) ) {
+            $default_url = $tabs[$this->pageName]['url'];
+        } else {
+            $default_url = $tabs['employment']['url'];
+        }
+
 ?>
-<h2>Welcome, <em>Phil Notebook</em></h2>
+<h2>Welcome, <em><?=$this->journo['prettyname'];?></em></h2>
 
 <div class="pipeline">
  <span class="<?=$this->pageName=='admired'?'active':'';?>">1. <a href="/profile_admired?ref=<?=$this->journo['ref'];?>">Journalists you admire</a></span>
- <span class="<?=$this->pageName=='profile'?'active':'';?>">2. <a href="">Add to your profile</a></span>
+ <span class="<?=array_key_exists($this->pageName,$tabs)?'active':'';?>">2. <a href="<?=$default_url;?>?ref=<?=$this->journo['ref'];?>">Add to your profile</a></span>
  <span class="<?=$this->pageName=='missing'?'active':'';?>">3. <a href="">Tell us anything we've missed/got wrong</a></span>
 </div>
 <?php
 
-        $this->displayMain();
-        page_footer();
+        // secondary tab bar
+
+        if( $this->pageName != 'admired' ) {
+            // show the tabs
+
+            $tabs = array(
+                'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
+                'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
+                'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
+                'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
+            );
+
+?>
+<ul class="tabs">
+<?php foreach( $tabs as $tabname=>$tab ) {
+ ?>
+<?php  if($tabname==$this->pageName) { ?>
+<li class="current"><a href="<?= "{$tab['url']}?ref={$this->journo['ref']}"; ?>"><?= $tab['title']; ?></a></li>
+<?php  } else{ ?>
+<li><a href="<?= "{$tab['url']}?ref={$this->journo['ref']}"; ?>"><?= $tab['title']; ?></a></li>
+<?php  } ?>
+<?php } ?>
+</ul>
+
+<?php
+
+        }
     }
 
     // derived pages override this.

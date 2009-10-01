@@ -4,12 +4,8 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
-//require_once '../phplib/misc.php';
-//require_once '../phplib/gatso.php';
-//require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
-
 
 
 
@@ -20,41 +16,25 @@ class AdmiredJournosPage extends EditProfilePage
     function __construct() {
         $this->pageName = "admired";
         $this->pageTitle = "Journalists you admire";
-        $this->pageParams = array();
+        $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
     }
 
 
-
     function extra_head()
     {
-
         // TODO: use compressed jquery.autocompete
-?>
-<!--    <link type="text/css" href="http://jqueryui.com/themes/base/ui.all.css" rel="stylesheet" /> -->
-    <link type="text/css" rel="stylesheet" href="/profile.css" /> 
-    <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-    <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-    <script type="text/javascript" src="/js/jquery.protect-data.min.js"></script>
-    <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-    <script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 
-    <script type="text/javascript">
+?>
+<link type="text/css" rel="stylesheet" href="/profile.css" /> 
+<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
+<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
+
+<script type="text/javascript">
     $(document).ready(
         function() {
-            $('#emp_addnew').click( function() {
-                var c = $('#emp_template').clone();
-                c.removeAttr('id');
-                $(this).before( c );
-                return false;
-                });
-            $('#emp_curr').live( "click", function() {
-                var checked = $(this).attr( 'checked' )
-                $(this).parent().closest( 'fieldset' ).find('.emp_to_field').toggle( !checked );
-                });
-            $.protectData.message = "There are unsaved changes.";
-            $('form').protectData();
-
             $(".admired-journo").autocomplete("ajax_journo_lookup.php", {
 //                width: 300,
 //        		multiple: true,
@@ -66,26 +46,11 @@ class AdmiredJournosPage extends EditProfilePage
             });
 
             $("#admired-journo").dynamicForm( '#admired-journo-plus', '#admired-journo-minus', {limit:10} );
-            
-
-            $("#awards").dynamicForm( '#awards-plus', '#awards-minus', {limit:10} );
-            $("#books").dynamicForm( '#books-plus', '#books-minus', {limit:10} );
-            $("#websites").dynamicForm( '#websites-plus', '#websites-minus', {limit:10} );
-            $("#microblogs").dynamicForm( '#microblogs-plus', '#microblogs-minus', {limit:10} );
-            $("#otherorgs").dynamicForm( '#otherorgs-plus', '#otherorgs-minus', {limit:10} );
-            $("#education").dynamicForm( '#education-plus', '#education-minus', {limit:10} );
-//            $(".admired-journo").result(function(event, data, formatted) {
-//        		var hidden = $(this).parent().next().find(">:input");
-//        		hidden.val( (hidden.val() ? hidden.val() + ";" : hidden.val()) + data[1]);
-//        	});
-
-        } );
-    </script>
-    <?php
-
+    });
+</script>
+<?php
     }
 
-//profilePageBegin( "profile - journalisted you admire", array('head_extra_fn' => "extra_head" ) );
 
 
 
@@ -142,8 +107,8 @@ EOT;
       <div class="donate-box_content exhort">
 
         Would you like to add to your profile page on Journalisted?<br/>
-    <a href="/journo_test3?page=profile">Add to my profile</a><br/>
-    <a href="">View my Journalisted page</a><br/>
+    <a href="/profile_employment?ref=<?=$this->journo['ref'];?>">Add to my profile</a><br/>
+    <a href="/<?=$this->journo['ref'];?>">View my Journalisted page</a><br/>
 
       </div>
      <div class="donate-box_bottom"><div></div></div>
