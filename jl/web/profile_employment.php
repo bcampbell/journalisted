@@ -50,11 +50,39 @@ class EmploymentPage extends EditProfilePage
         if( $action == "submit" ) {
             $added = $this->handleSubmit();
         }
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
+        }
 
         $this->showEmployment();
         $this->showForm();
 
     }
+
+
+
+    function showEmployment()
+    {
+
+        $employment = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
+
+?>
+<ul>
+<?php foreach( $employment as $e ) { ?>
+<li>
+<?php if( $e['job_title'] ) { ?><em><?=$e['job_title'];?></em> at <?php } ?>
+<strong><?=h($e['employer']);?></strong>
+[<a href="/profile_employment?ref=<?=$this->journo['ref'];?>&remove_id=<?=$e['id'];?>">remove</a>]
+<br/>
+<?=h($e['year_from']);?>-<?=h($e['year_to']);?></em>
+</li>
+<?php } ?>
+</ul>
+<?php
+    }
+
+
+
 
     function showForm()
     {
@@ -110,20 +138,13 @@ class EmploymentPage extends EditProfilePage
     }
 
 
-    function showEmployment()
-    {
+    function handleRemove() {
+        $id = get_http_var("remove_id");
 
-        $employment = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=?", $this->journo['id'] );
-
-?>
-<ul>
-<?php foreach( $employment as $e ) { ?>
-<li><?=h($e['employer']);?><br/> <em><?=h($e['job_title']);?>, <?=h($e['year_from']);?>-<?=h($e['year_to']);?></em></li>
-<?php } ?>
-</ul>
-<?php
+        // include journo id, to stop people zapping other journos entries!
+        db_do( "DELETE FROM journo_employment WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_commit();
     }
-
 }
 
 

@@ -51,6 +51,10 @@ class AwardsPage extends EditProfilePage
             $added = $this->handleSubmit();
         }
 
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
+        }
+
         $this->showAwards();
         $this->showForm();
 
@@ -103,10 +107,23 @@ class AwardsPage extends EditProfilePage
 ?>
 <ul>
 <?php foreach( $awards as $a ) { ?>
-<li><?=h($a['award']);?></li>
+<li>
+<?=h($a['award']);?>
+ [<a href="/profile_awards?ref=<?=$this->journo['ref'];?>&remove_id=<?=$a['id'];?>">remove</a>]
+</li>
 <?php } ?>
 </ul>
 <?php
+    }
+
+
+
+    function handleRemove() {
+        $id = get_http_var("remove_id");
+
+        // include journo id, to stop people zapping other journos entries!
+        db_do( "DELETE FROM journo_awards WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_commit();
     }
 
 }

@@ -51,6 +51,10 @@ class EducationPage extends EditProfilePage
             $added = $this->handleSubmit();
         }
 
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
+        }
+
         $this->showEducation();
         $this->showForm();
 
@@ -143,11 +147,21 @@ school: <?=h($e['school']);?><br />
 field: <?=h($e['field']);?><br />
 qualification: <?=h($e['qualification']);?><br />
 when: <?=h($e['year_from']);?>-<?=h($e['year_to']);?><br />
+[<a href="/profile_education?ref=<?=$this->journo['ref'];?>&remove_id=<?=$e['id'];?>">remove</a>]
 </li>
 <?php } ?>
 </ul>
 <?php
     }
+
+    function handleRemove() {
+        $id = get_http_var("remove_id");
+
+        // include journo id, to stop people zapping other journos entries!
+        db_do( "DELETE FROM journo_education WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_commit();
+    }
+
 
 }
 

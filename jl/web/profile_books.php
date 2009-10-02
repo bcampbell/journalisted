@@ -50,6 +50,9 @@ class BooksPage extends EditProfilePage
         if( $action == "submit" ) {
             $added = $this->handleSubmit();
         }
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
+        }
 
         $this->showBooks();
         $this->showForm();
@@ -113,11 +116,23 @@ class BooksPage extends EditProfilePage
 ?>
 <ul>
 <?php foreach( $books as $b ) { ?>
-<li><?=h($b['title']);?><br/> <em><?=h($b['publisher']);?>, <?=h($b['year_published']);?></em></li>
+<li>
+<?=h($b['title']);?><br/> <em><?=h($b['publisher']);?>, <?=h($b['year_published']);?></em>
+ [<a href="/profile_books?ref=<?=$this->journo['ref'];?>&remove_id=<?=$b['id'];?>">remove</a>]
+</li>
 <?php } ?>
 </ul>
 <?php
     }
+
+    function handleRemove() {
+        $id = get_http_var("remove_id");
+
+        // include journo id, to stop people zapping other journos entries!
+        db_do( "DELETE FROM journo_books WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_commit();
+    }
+
 
 }
 

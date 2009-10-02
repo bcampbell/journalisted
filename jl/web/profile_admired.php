@@ -35,17 +35,38 @@ class AdmiredJournosPage extends EditProfilePage
 <script type="text/javascript">
     $(document).ready(
         function() {
-            $(".admired-journo").autocomplete("ajax_journo_lookup.php", {
+            
+            var el = $("#admired-name");
+            el.keypress( function (e) {
+                var ignore = new Array( 9,10,13, 37,38,39,40, 33,34, 27 )
+                if($.inArray(e.keyCode, ignore) == -1 ) {
+                    $("#admired-oneliner").text("");
+                    $("#admired-ref").val("");
+                }
+            });
+            el.autocomplete("ajax_journo_lookup.php", {
 //                width: 300,
-//        		multiple: true,
-//        		matchContains: true,
-                formatItem: function(row) { return row[0] + " (<em>" + row[1] + "</em>)"; },
+//              multiple: true,
+//              matchContains: true,
+                formatItem: function(row) { return row[0] + "<br/>&nbsp&nbsp<em>(" + row[1] + ")</em>"; },
 
-//        		formatItem: function( formatItem,
-//        		formatResult: formatResult
+//              formatItem: function( formatItem,
+//              formatResult: formatResult
+            });
+            el.result(function(event, data, formatted) {
+                var ref = '';
+                var oneliner =''
+                if (data) {
+                    oneliner = data[1];
+                    ref = data[2];
+                }
+                $("#admired-oneliner").text( '(' + oneliner + ')' );
+                $("#admired-ref").val(ref);
             });
 
-            $("#admired-journo").dynamicForm( '#admired-journo-plus', '#admired-journo-minus', {limit:10} );
+
+//            $("#admired-journo").dynamicForm( '#admired-journo-plus', '#admired-journo-minus', {limit:10} );
+
     });
 </script>
 <?php
@@ -59,48 +80,23 @@ class AdmiredJournosPage extends EditProfilePage
         // submitting new entries?
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
-            $added = $this->handleSubmit();
+            $this->handleSubmit();
+        }
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
         }
 
-        // show list journos already listed as admired
-
-        $sql = <<<EOT
-SELECT a.admired_id, a.admired_name, j.prettyname, j.ref, j.oneliner
-    FROM (journo_admired a LEFT JOIN journo j ON a.admired_id=j.id)
-    WHERE a.journo_id=?
-EOT;
-
-        $admired = db_getAll( $sql, $this->journo['id'] );
-
-?>
-<?php if( $admired ) { ?>
-<h2>Thanks for telling us which journalists do you most admire</h2>
-<?php } else { ?>
-<h2>Which journalists do you most admire?</h2>
-<?php } ?>
-
-<ul>
-<?php foreach( $admired as $a ) { ?>
-<?php if( $a['admired_id'] ) { ?>
- <li><?=journo_link($a)?></li>
-<?php } else { ?>
- <li><?=$a['admired_name']?></li>
-<?php } ?>
-<?php } ?>
-</ul>
-<?php
-
-        if($admired ) {
+        $n = $this->showAdmired();
+        if( $n > 0 ) {
 ?><p>You can add more if you'd like:</p><?php
         }
-
 
         // form for adding new ones:
         $this->showForm();
 
 
         // if they've entered any journos already, encourage them to add more to their profile */
-        if( $admired ) {
+        if( $n > 0 ) {
     ?>
     <div class="donate-box">
      <div class="donate-box_top"><div></div></div>
@@ -120,6 +116,44 @@ EOT;
 
 
 
+    function showAdmired()
+    {
+        // show list journos already listed as admired
+
+        $sql = <<<EOT
+SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref, j.oneliner
+    FROM (journo_admired a LEFT JOIN journo j ON a.admired_id=j.id)
+    WHERE a.journo_id=?
+EOT;
+
+        $admired = db_getAll( $sql, $this->journo['id'] );
+
+?>
+<?php if( $admired ) { ?>
+<h2>Thanks for telling us which journalists do you most admire</h2>
+<?php } else { ?>
+<h2>Which journalists do you most admire?</h2>
+<?php } ?>
+
+<ul>
+<?php foreach( $admired as $a ) { ?>
+<li>
+<?php if( $a['admired_id'] ) { ?>
+<?=journo_link($a)?>
+<?php } else { ?>
+<?=$a['admired_name']?>
+<?php } ?>
+ [<a href="/profile_admired?ref=<?=$this->journo['ref'];?>&remove_id=<?=$a['id'];?>">remove</a>]
+</li>
+<?php } ?>
+</ul>
+<?php
+
+        return sizeof( $admired );
+    }
+
+
+
     function showForm()
     {
 
@@ -130,12 +164,16 @@ EOT;
  <tbody>
  <tr id="admired-journo">
   <td>
-   <label for="admired_name">Journalist's name</label>
+   <label for="admired-name">Journalist's name</label>
   </td>
   <td>
-   <input class="admired-journo" type="text" name="admired_name[]" id="admired_name" value="" />
-   <a id="admired-journo-minus" href="">[-]</a>
-   <a id="admired-journo-plus" href="">[+]</a>
+   <input type="text" name="admired-name" id="admired-name" value="" />
+<?php
+//   <a id="admired-journo-minus" href="">[-]</a>
+//   <a id="admired-journo-plus" href="">[+]</a>
+?>
+   <span id="admired-oneliner"></span>
+   <input type="hidden" name="admired-ref" id="admired-ref" value="" />
   </td>
  </tr>
  </tbody>
@@ -150,20 +188,33 @@ EOT;
 
     function handleSubmit()
     {
-        $cnt = 0;
-        $names = get_http_var( 'admired_name' );
-        foreach( $names as $n ) {
-            if( db_getOne( "SELECT id FROM journo_admired WHERE journo_id=? AND admired_name=?", $this->journo['id'], $n ) ) {
-                continue;
-            }
+        $admired_name = get_http_var( 'admired-name' );
+        $admired_ref = get_http_var( 'admired-ref' );
 
+        if( $admired_ref ) {
+            // it's a journo in the database
+            $admired_id = db_getOne( "SELECT id FROM journo WHERE ref=?",$admired_ref );
+            db_do( "DELETE FROM journo_admired WHERE journo_id=? and admired_id=?",
+                $this->journo['id'], $admired_id );
             db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,?)",
-                $this->journo['id'], $n, NULL );
-            $cnt += 1;
+                 $this->journo['id'], $admired_name, $admired_id );
+        } else {
+            // a journo not in the DB - leave admired_id NULL
+            db_do( "DELETE FROM journo_admired WHERE journo_id=? and admired_name=?",
+                $this->journo['id'], $admired_name );
+            db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,NULL)",
+                 $this->journo['id'], $admired_name );
         }
         db_commit();
+    }
 
-        return $cnt;
+
+    function handleRemove() {
+        $id = get_http_var("remove_id");
+
+        // include journo id, to stop people zapping other journos entries!
+        db_do( "DELETE FROM journo_admired WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_commit();
     }
 }
 
