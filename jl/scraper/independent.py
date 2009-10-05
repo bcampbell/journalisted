@@ -58,9 +58,13 @@ def FindRSSFeeds():
     soup = BeautifulSoup(html)
 
     feeds = []
-    bodydiv = soup.find( 'div', {'class':'body'} )
+
+    # ".body" div is better container, but beautiful soup doesn't seem to parse it as expected
+#    bodydiv = soup.find( 'div', {'class':'body'} )
+    foo = soup.find('div', {'id':'content'} )
+
     # two kinds of link "/rss" for main paper, ".xml" for blogs
-    for a in bodydiv.findAll( 'a', {'href':re.compile( '(/rss)|([.]xml)$' ) } ):
+    for a in foo.findAll( 'a', {'href':re.compile( '(/rss$)|([.]xml$)' ) } ):
         url = a['href']
         # the page has some borked urls...
         url = url.replace( "http://http://", "http://" )
@@ -341,4 +345,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
+
 
