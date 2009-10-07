@@ -45,6 +45,9 @@ if( $action=='view' ) {
 } elseif( $action == 'reallycreate' ) {
     // actually create a new account
     do_reallycreate();
+} elseif( $action == 'generate_token' ) {
+    // generate a login token
+    do_generate_token();
 } else {    // $action=='find'
     $email = get_http_var( 'email','' );
     if( $email ) {
@@ -194,6 +197,22 @@ Can <em><?php echo $perm['permission']; ?></em>
 <?php
     }
 emit_addperm_form( $person_id );
+?>
+<h4>Generate a login link</h4>
+<p>This creates a link to allow a user to log in directly</p>
+<form method="POST" action="/adm/useraccounts">
+<input type="hidden" name="person_id" value="<?php echo $person_id; ?>" />
+<label for="login_dest">Login destination:</label>
+<select id="login_dest" name="login_dest">
+  <option selected value="/profile">/profile</option>
+  <option value="/alert">/alert</option>
+</select>
+<button name="action" value="generate_token">Generate</button>
+</form>
+<?php
+
+
+
 }
 
 
@@ -315,5 +334,32 @@ Changed email address<br/>from: <code><?php echo $old_email; ?><br/></code> to: 
 
     emit_details( $person_id );
 }
+
+
+
+// generate a login token link
+function do_generate_token()
+{
+    $person_id = get_http_var( "person_id" );
+    $login_dest = get_http_var( "login_dest" );
+
+    $person = db_getRow( "SELECT * FROM person WHERE id=?", get_http_var('person_id') );
+
+    $template_data = array();
+    $url = person_make_signon_url(
+        rabx_serialise($template_data),
+        $person['email'],
+        "GET",
+        $login_dest,
+        null );
+    db_commit();
+?>
+<p><a href="<?=$url;?>"><?=$url;?></a></p>
+<p>(This will log in as <code><?=$person['email'];?></code> and go the <code><?=$login_dest;?></code> page)</p>
+<?php
+
+
+}
+
 
 ?>
