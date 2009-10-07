@@ -354,6 +354,7 @@ function do_generate_token()
         null );
     db_commit();
 ?>
+<p>Here is your login link:</p>
 <p><a href="<?=$url;?>"><?=$url;?></a></p>
 <p>(This will log in as <code><?=$person['email'];?></code> and go the <code><?=$login_dest;?></code> page)</p>
 <?php
