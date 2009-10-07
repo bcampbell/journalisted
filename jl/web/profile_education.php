@@ -138,10 +138,10 @@ EOT;
 <ul>
 <?php foreach( $edus as $e ) { ?>
 <li>
-school: <?=h($e['school']);?><br />
+<em><?=h($e['school']);?></em>
+<?php if( $e['year_from'] || $e['year_to'] ) { ?>(<?=h($e['year_from']);?>-<?=h($e['year_to']);?>)<?php } ?><br />
 field: <?=h($e['field']);?><br />
 qualification: <?=h($e['qualification']);?><br />
-when: <?=h($e['year_from']);?>-<?=h($e['year_to']);?><br />
 [<a href="/profile_education?ref=<?=$this->journo['ref'];?>&remove_id=<?=$e['id'];?>">remove</a>]
 </li>
 <?php } ?>
