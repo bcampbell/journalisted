@@ -30,7 +30,6 @@ class AdmiredJournosPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 
 <script type="text/javascript">
     $(document).ready(
@@ -86,17 +85,31 @@ class AdmiredJournosPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        $n = $this->showAdmired();
-        if( $n > 0 ) {
-?><p>You can add more if you'd like:</p><?php
+        $sql = <<<EOT
+SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref, j.oneliner
+    FROM (journo_admired a LEFT JOIN journo j ON a.admired_id=j.id)
+    WHERE a.journo_id=?
+EOT;
+        $admired = db_getAll( $sql, $this->journo['id'] );
+
+//        if( sizeof( $admired ) ) {
+/* ?> <h2>Thanks for telling us which journalists do you most admire</h2> <?php */
+//        } else {
+?> <h2>Which journalists do you most admire?</h2> <?php
+//        }
+
+        if( sizeof( $admired ) > 0 ) {
+            $this->showAdmired( $admired );
+?><p>You can add another if you'd like:</p><?php
+        } else {
+?><p>add one now...</p><?php
         }
 
         // form for adding new ones:
         $this->showForm();
 
-
         // if they've entered any journos already, encourage them to add more to their profile */
-        if( $n > 0 ) {
+        if( sizeof( $admired) > 0 ) {
     ?>
     <div class="donate-box">
      <div class="donate-box_top"><div></div></div>
@@ -116,25 +129,10 @@ class AdmiredJournosPage extends EditProfilePage
 
 
 
-    function showAdmired()
+    function showAdmired( &$admired )
     {
         // show list journos already listed as admired
-
-        $sql = <<<EOT
-SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref, j.oneliner
-    FROM (journo_admired a LEFT JOIN journo j ON a.admired_id=j.id)
-    WHERE a.journo_id=?
-EOT;
-
-        $admired = db_getAll( $sql, $this->journo['id'] );
-
 ?>
-<?php if( $admired ) { ?>
-<h2>Thanks for telling us which journalists do you most admire</h2>
-<?php } else { ?>
-<h2>Which journalists do you most admire?</h2>
-<?php } ?>
-
 <ul>
 <?php foreach( $admired as $a ) { ?>
 <li>

@@ -32,10 +32,6 @@ class BooksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 
 <script type="text/javascript">
-    $(document).ready(
-        function() {
-            $("#books").dynamicForm( '#books-plus', '#books-minus', {limit:10} );
-    });
 </script>
 <?php
     }
@@ -53,6 +49,7 @@ class BooksPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+?><h2>Have you published any books?</h2><?php
 
         $this->showBooks();
         $this->showForm();
@@ -71,8 +68,6 @@ class BooksPage extends EditProfilePage
  <tr><th><label for="publisher">Publisher</label></td><td><input type="text" size="60" name="publisher[]" id="publisher"/></td></tr>
  <tr><th><label for="year">Year Published</label></td><td><input type="text" size="60" name="year[]" id="year"/></td></tr>
 </table>
-<a id="books-minus" href="">[-]</a>
-<a id="books-plus" href="">[+]</a>
 </fieldset>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>

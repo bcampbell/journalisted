@@ -9,12 +9,12 @@ require_once '../../phplib/utility.php';
 
 
 
-class AwardsPage extends EditProfilePage
+class WeblinksPage extends EditProfilePage
 {
 
     function __construct() {
-        $this->pageName = "awards";
-        $this->pageTitle = "Awards";
+        $this->pageName = "weblinks";
+        $this->pageTitle = "Weblinks";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
     }
@@ -49,10 +49,9 @@ class AwardsPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
-?><h2>Have you won any awards?</h2><?php
-        $this->showAwards();
+?><h2>Where else are you on the web?</h2><?php
+        $this->showWeblinks();
         $this->showForm();
-
     }
 
     function showForm()
@@ -60,12 +59,18 @@ class AwardsPage extends EditProfilePage
 
 ?>
 
-<form method="POST" action="/profile_awards">
-<fieldset id="awards">
-<table border="0">
- <tr><th><label for="award">Award</label></td><td><input type="text" size="60" name="award[]" id="award"/></td></tr>
-</table>
-</fieldset>
+<form method="POST" action="/profile_weblinks">
+<div id="weblinks">
+
+<h3>I have a personal website / blog at</h3>
+  <label for="homepage">website/blog URL</label> <input type="text" size="60" name="homepage[]" id="homepage"/>
+<h3>I micro-blog (e.g. Twitter) at</h3>
+  <label for="blog">URL</label> <input type="text" size="60" name="blog[]" id="blog"/>
+<h3>I have pages on facebook/linkedin/myspace/wherever</h3>
+  <label for="social">URLs</label> <textarea name="social" id="social" cols="60" rows="5"></textarea>
+</div>
+<p>(<small>TODO: profile pages - wikipedia/cif/nuj freelance directory/whereever</small>)</p>
+<br/>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>
 </form>
@@ -77,33 +82,18 @@ class AwardsPage extends EditProfilePage
 
     function handleSubmit()
     {
-        $award_names = get_http_var('award');
-        $awards = array();
-        foreach( $award_names as $n ) {
-            $awards[] = array('award'=>$n);
-        }
-
-        foreach( $awards as $a )
-        {
-            $sql = "INSERT INTO journo_awards (journo_id,award) VALUES (?,?)";
-            db_do( $sql, $this->journo['id'], $a['award'] );
-        }
-        db_commit();
     }
 
 
-    function showAwards()
+    function showWeblinks()
     {
 
-        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $this->journo['id'] );
+        $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
 
 ?>
 <ul>
-<?php foreach( $awards as $a ) { ?>
-<li>
-<?=h($a['award']);?>
- [<a href="/profile_awards?ref=<?=$this->journo['ref'];?>&remove_id=<?=$a['id'];?>">remove</a>]
-</li>
+<?php foreach( $weblinks as $a ) { ?>
+<li><?=h($a['description']);?> (<a class="extlink" href="<?=$a['url'];?>"><?=$a['url'];?></a>)</li>
 <?php } ?>
 </ul>
 <?php
@@ -115,7 +105,7 @@ class AwardsPage extends EditProfilePage
         $id = get_http_var("remove_id");
 
         // include journo id, to stop people zapping other journos entries!
-        db_do( "DELETE FROM journo_awards WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_do( "DELETE FROM journo_weblink WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
     }
 
@@ -124,7 +114,7 @@ class AwardsPage extends EditProfilePage
 
 
 
-$page = new AwardsPage();
+$page = new WeblinksPage();
 $page->display();
 
 

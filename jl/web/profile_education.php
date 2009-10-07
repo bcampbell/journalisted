@@ -29,13 +29,8 @@ class EducationPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 
 <script type="text/javascript">
-    $(document).ready(
-        function() {
-            $("#education").dynamicForm( '#education-plus', '#education-minus', {limit:10} );
-    });
 </script>
 <?php
     }
@@ -55,7 +50,11 @@ class EducationPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        $this->showEducation();
+        $edus = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_from ASC", $this->journo['id'] );
+?>
+<h2>Tell us about your education</h2>
+<?php
+        $this->showEducation( $edus );
         $this->showForm();
 
     }
@@ -64,7 +63,6 @@ class EducationPage extends EditProfilePage
     {
 
 ?>
-<h3>Tell us about your education</h3>
 
 
 <form method="POST" action="/profile_education">
@@ -84,8 +82,6 @@ class EducationPage extends EditProfilePage
  </tr>
 
 </table>
-<a id="education-minus" href="">[-]</a>
-<a id="education-plus" href="">[+]</a>
 </fieldset>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>
@@ -134,10 +130,9 @@ EOT;
     }
 
 
-    function showEducation()
+    function showEducation( &$edus )
     {
 
-        $edus = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_from ASC", $this->journo['id'] );
 
 ?>
 <ul>

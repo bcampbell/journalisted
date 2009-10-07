@@ -23,9 +23,16 @@ class EditProfilePage
 
     function __construct()
     {
-        $this->P = person_if_signed_on();
+//        $this->P = person_if_signed_on();
         $ref = get_http_var( 'ref' );
         $this->journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
+        $r = array(
+            'reason_web' => "Edit Journalisted profile for {$this->journo['prettyname']}",
+            'reason_email' => "Edit Journalisted profile for {$this->journo['prettyname']}",
+            'reason_email_subject' => "Edit {$this->journo['prettyname']} on Journalisted"
+        );
+        // rediect to login screen if not logged in (so this may never return)
+        $this->P = person_signon($r);
     }
 
 
@@ -72,6 +79,7 @@ class EditProfilePage
             'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
             'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
             'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
+            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ),
         );
 
         // show the main nav bar
@@ -83,26 +91,27 @@ class EditProfilePage
         }
 
 ?>
-<h2>Welcome, <em><?=$this->journo['prettyname'];?></em></h2>
+<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
 
 <div class="pipeline">
  <span class="<?=$this->pageName=='admired'?'active':'';?>">1. <a href="/profile_admired?ref=<?=$this->journo['ref'];?>">Journalists you admire</a></span>
  <span class="<?=array_key_exists($this->pageName,$tabs)?'active':'';?>">2. <a href="<?=$default_url;?>?ref=<?=$this->journo['ref'];?>">Add to your profile</a></span>
- <span class="<?=$this->pageName=='missing'?'active':'';?>">3. <a href="">Tell us anything we've missed/got wrong</a></span>
+ <span class="<?=$this->pageName=='missing'?'active':'';?>">3. <a href="/profile_missing?ref=<?=$this->journo['ref'];?>">Tell us anything we've missed/got wrong</a></span>
 </div>
 <?php
 
         // secondary tab bar
 
-        if( $this->pageName != 'admired' ) {
+        if( $this->pageName != 'admired' && $this->pageName != 'missing' ) {
             // show the tabs
-
+/*
             $tabs = array(
                 'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
                 'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
                 'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
                 'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
             );
+*/
 
 ?>
 <ul class="tabs">

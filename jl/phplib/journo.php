@@ -102,11 +102,16 @@ gatso_start("smallcolumn");
 <div class="action-box">
  <div class="action-box_top"><div></div></div>
   <div class="action-box_content">
-
+<?php
+/*
  <h3>Something wrong/missing?</h3>
   <p>Have we got the wrong information about this journalist?
    <a href="/forjournos?j=<?=$journo['ref'];?>">Let us know</a></p>
-
+*/
+?>
+ <h3>Are you <?=$journo['prettyname'];?>?</h3>
+  <p>Then this is <em>your</em> page!</p>
+  <p>You can edit it <a href="/profile?ref=<?=$journo['ref'];?>">here</a>.</p>
   </div>
  <div class="action-box_bottom"><div></div></div>
 </div>

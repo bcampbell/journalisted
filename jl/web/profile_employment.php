@@ -29,12 +29,20 @@ class EmploymentPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 
 <script type="text/javascript">
     $(document).ready(
         function() {
-            $("#employment").dynamicForm( '#employment-plus', '#employment-minus', {limit:10} );
+            $("#employer").autocomplete("ajax_employer_lookup.php", {
+//              matchContains: true,
+            });
+            $('#current').click( function() {
+                var checked = $(this).attr( 'checked' )
+                $( '#year_to' ).parent().parent().toggle( !checked );
+                });
+
+
+
     });
 </script>
 <?php
@@ -54,24 +62,31 @@ class EmploymentPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        $this->showEmployment();
+?>
+<h2>Add Employment Information</h2>
+<?php
+        $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
+        if( sizeof( $employers) > 0 ) {
+            $this->showEmployers( $employers );
+?><h3>Add another employer</h3><?php
+        } else {
+?><h3>Add an employer</h3><?php
+        }
         $this->showForm();
 
     }
 
 
-
-    function showEmployment()
+    function showEmployers( &$employers)
     {
 
-        $employment = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
 
 ?>
 <ul>
-<?php foreach( $employment as $e ) { ?>
+<?php foreach( $employers as $e ) { ?>
 <li>
 <?php if( $e['job_title'] ) { ?><em><?=$e['job_title'];?></em> at <?php } ?>
-<strong><?=h($e['employer']);?></strong>
+<em><?=h($e['employer']);?></em>
 [<a href="/profile_employment?ref=<?=$this->journo['ref'];?>&remove_id=<?=$e['id'];?>">remove</a>]
 <br/>
 <?=h($e['year_from']);?>-<?=h($e['year_to']);?></em>
@@ -94,11 +109,10 @@ class EmploymentPage extends EditProfilePage
 <table border="0">
  <tr><th><label for="employer">Employer</label></td><td><input type="text" size="60" name="employer[]" id="employer"/></td></tr>
  <tr><th><label for="job_title">Job Title</label></td><td><input type="text" size="60" name="job_title[]" id="job_title"/></td></tr>
- <tr><th><label for="year_from">from</label></td><td><input type="text" size="4" name="year_from[]" id="year_from"/></td></tr>
- <tr><th><label for="year_to">to</label></td><td><input type="text" size="4" name="year_to[]" id="year_to"/></td></tr>
+ <tr><th><label for="year_from">Year from</label></td><td><input type="text" size="4" name="year_from[]" id="year_from"/></td></tr>
+ <tr><th><label for="year_to">Year to</label></td><td><input type="text" size="4" name="year_to[]" id="year_to"/></td></tr>
+ <tr><th></th><td><input type="checkbox" name="current" id="current"/><label for="current">I currently work here</label></td></tr>
 </table>
-<a id="employment-minus" href="">[-]</a>
-<a id="employment-plus" href="">[+]</a>
 </fieldset>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>
@@ -146,6 +160,7 @@ class EmploymentPage extends EditProfilePage
         db_commit();
     }
 }
+
 
 
 
