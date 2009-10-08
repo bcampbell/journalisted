@@ -31,17 +31,49 @@ class EmploymentPage extends EditProfilePage
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
 
 <script type="text/javascript">
+
+    function unlockform() {
+    };
+
+
     $(document).ready(
         function() {
-            $("#employer").autocomplete("ajax_employer_lookup.php", {
+            $(".employer input").autocomplete("ajax_employer_lookup.php", {
 //              matchContains: true,
             });
-            $('#current').click( function() {
+            $('.employer .current').click( function() {
                 var checked = $(this).attr( 'checked' )
                 $( '#year_to' ).parent().parent().toggle( !checked );
                 });
 
+//            $('.employer input').attr("readOnly", true);
+            $('.employer').addClass('locked');
+            $('.employer input').attr("disabled", true);
+            $('.employer button').hide();
+            $('.employer .cancel').hide();
 
+            $('.employer .unlock').click( function( ) {
+                // unlock the form for editing
+                var f = $(this).closest( 'form' );
+                f.removeClass( 'locked' );
+                f.find( 'input' ).removeAttr('disabled');
+                f.find( 'button' ).show();
+                f.find( '.cancel' ).show();
+                $(this).hide();
+                return false;
+            });
+
+            $('.employer .cancel').click( function( ) {
+                // stop editing, lock the form
+                var f = $(this).closest( 'form' );
+                f.find( 'input' ).attr('disabled', true );
+                f.find( 'button' ).hide();
+                f.find( '.unlock' ).show();
+                f.addClass( 'locked' );
+                f.reset();
+                $(this).hide();
+                return false;
+            });
 
     });
 </script>
@@ -66,56 +98,45 @@ class EmploymentPage extends EditProfilePage
 <h2>Add Employment Information</h2>
 <?php
         $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
-        if( sizeof( $employers) > 0 ) {
-            $this->showEmployers( $employers );
-?><h3>Add another employer</h3><?php
-        } else {
-?><h3>Add an employer</h3><?php
-        }
-        $this->showForm();
+        $this->showEmployers( $employers );
 
+?><h3>Add another:</h3><?php
+            $this->showForm( NULL );
     }
 
 
     function showEmployers( &$employers)
     {
+        foreach( $employers as $e ) {
+            $this->showForm( $e );
+        }
 
-
-?>
-<ul>
-<?php foreach( $employers as $e ) { ?>
-<li>
-<?php if( $e['job_title'] ) { ?><em><?=$e['job_title'];?></em> at <?php } ?>
-<em><?=h($e['employer']);?></em>
-[<a href="/profile_employment?ref=<?=$this->journo['ref'];?>&remove_id=<?=$e['id'];?>">remove</a>]
-<br/>
-<?=h($e['year_from']);?>-<?=h($e['year_to']);?></em>
-</li>
-<?php } ?>
-</ul>
-<?php
     }
 
 
-
-
-    function showForm()
+    function showForm( $emp )
     {
+        if( !$emp ) {
+            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'', 'id'=>NULL );
+        }
 
+        $id = $emp['id'] ? $emp['id'] : '';
 ?>
 
-<form method="POST" action="/profile_employment">
-<fieldset id="employment">
+<form class="employer" method="POST" action="/profile_employment">
 <table border="0">
- <tr><th><label for="employer">Employer</label></td><td><input type="text" size="60" name="employer[]" id="employer"/></td></tr>
- <tr><th><label for="job_title">Job Title</label></td><td><input type="text" size="60" name="job_title[]" id="job_title"/></td></tr>
- <tr><th><label for="year_from">Year from</label></td><td><input type="text" size="4" name="year_from[]" id="year_from"/></td></tr>
- <tr><th><label for="year_to">Year to</label></td><td><input type="text" size="4" name="year_to[]" id="year_to"/></td></tr>
- <tr><th></th><td><input type="checkbox" name="current" id="current"/><label for="current">I currently work here</label></td></tr>
+ <tr><th><label for="employer_<?= $id; ?>">Employer</label></td><td><input type="text" size="60" name="employer" id="employer<?= $id; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
+ <tr><th><label for="job_title<?= $id; ?>">Job Title</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $id; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
+ <tr><th><label for="year_from<?= $id; ?>">Year from</label></td><td><input type="text" size="4" name="year_from" id="year_from<?= $id; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
+ <tr><th><label for="year_to<?= $id; ?>">Year to</label></td><td><input type="text" size="4" name="year_to" id="year_to<?= $id; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
+ <tr><th></th><td><input type="checkbox" name="current" id="current<?= $id; ?>"/><label for="current<?= $id; ?>">I currently work here</label></td></tr>
 </table>
-</fieldset>
-<input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-<button name="action" value="submit">Submit</button>
+<input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
+<input type="hidden" name="id" value="<?= $id; ?>" />
+<button type="submit" name="action" value="submit">Save</button>
+<button type="reset" class="cancel">Cancel</button>
+<a class="unlock" href="">edit</a>
+<a href="/profile_employment?ref=<?= $this->journo['ref']; ?>&remove_id=<?= $id; ?>">remove</a>
 </form>
 <?php
 
@@ -125,26 +146,17 @@ class EmploymentPage extends EditProfilePage
 
     function handleSubmit()
     {
-        $employers = get_http_var('employer');
-        $job_titles = get_http_var('job_title');
-        $year_froms = get_http_var('year_from');
-        $year_tos = get_http_var('year_to');
-        $employment = array();
-        while( !empty($employers) ) {
-            $from = array_shift($year_froms);
-            $from = ($from=='') ? NULL : intval($from);
-            $to = array_shift($year_tos);
-            $to = ($to=='') ? NULL : intval($to);
-            $employment[] = array(
-                'employer'=>array_shift($employers),
-                'job_title'=>array_shift($job_titles),
-                'year_from'=>$from,
-                'year_to'=>$to,
-            );
-        }
+        $b = array(
+            'employer' => get_http_var('employer'),
+            'job_title' => get_http_var('job_title'),
+            'year_from' => intval( get_http_var('year_from') ),
+            'year_to' => intval( get_http_var('year_to') ),
+            'id'=> get_http_var('id') );
 
-        foreach( $employment as $b )
-        {
+        if( $b['id'] ) {
+            $sql = "UPDATE journo_employment SET journo_id=?,employer=?,job_title=?,year_from=?,year_to=? WHERE id=?";
+            db_do( $sql, $this->journo['id'], $b['employer'], $b['job_title'], $b['year_from'], $b['year_to'], $b['id'] );
+        } else {
             $sql = "INSERT INTO journo_employment (journo_id,employer,job_title,year_from,year_to) VALUES (?,?,?,?,?)";
             db_do( $sql, $this->journo['id'], $b['employer'], $b['job_title'], $b['year_from'], $b['year_to'] );
         }

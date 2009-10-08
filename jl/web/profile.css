@@ -71,6 +71,22 @@ div.pipeline span.active {
 
 /* form styles */
 
+form input {
+    border: 1px solid black;
+}
+
+
+form.locked {
+    background-color: white;
+    border-style: none;
+}
+
+form.locked input {
+    border: 1px solid #888888;
+    background-color: white;
+}
+
+
 form .field {
 clear:both;
 list-style:none;
