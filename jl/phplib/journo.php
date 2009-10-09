@@ -51,6 +51,7 @@ gatso_start("maincolumn");
     gatso_start('overview');
     journo_emitOverviewBlock( $journo, $slowdata );
     gatso_stop('overview');
+    journo_emitEmploymentBlock( $journo );
     gatso_start('article_list');
     journo_emitArticleBlocks( $journo, $slowdata );
     gatso_stop('article_list');
@@ -94,6 +95,9 @@ gatso_start("smallcolumn");
 <?php
     journo_emitLinksBlock( $journo );
     journo_emitTagsBlock( $journo, $slowdata );
+    journo_emitAdmiredJournosBlock( $journo );
+    journo_emitBooksBlock( $journo );
+    journo_emitAwardsBlock( $journo );
     journo_emitSimilarJournosBlock( $journo );
     journo_emitOtherArticlesBlock($journo);
     journo_emitSearchboxBlock( $journo );
@@ -766,6 +770,102 @@ EOT;
     gatso_stop( "similar_journos" );
 
 }
+
+
+
+function journo_emitAdmiredJournosBlock( &$journo )
+{
+    gatso_start( "admired_journos" );
+    $sql = <<<EOT
+SELECT j.prettyname, j.ref, j.oneliner
+    FROM (journo_admired a INNER JOIN journo j ON j.id=a.admired_id)
+    WHERE a.journo_id=?
+EOT;
+    $admired = db_getAll( $sql, $journo['id'] );
+
+?>
+<div class="box">
+ <h3>Journalists admired by <?= $journo['prettyname']; ?></h3>
+ <div class="box-content">
+  <ul>
+<?php foreach( $admired as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+    gatso_stop( "admired_journos" );
+
+}
+
+function journo_emitBooksBlock( &$journo )
+{
+    $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $journo['id'] );
+
+?>
+<div class="box">
+ <h3>Books by <?= $journo['prettyname']; ?></h3>
+ <div class="box-content">
+  <ul>
+<?php foreach( $books as $b ) { ?>
+  <li><?= $b['title']; ?> (<?= $b['year']; ?>, <?= $b['publisher']; ?>)</li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+
+}
+
+
+function journo_emitAwardsBlock( &$journo )
+{
+    $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $journo['id'] );
+?>
+<div class="box">
+ <h3>Awards awarded to <?= $journo['prettyname']; ?></h3>
+ <div class="box-content">
+  <ul>
+<?php foreach( $awards as $a ) { ?>
+  <li><?= $a['award']; ?></li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+
+
+}
+
+
+
+
+function journo_emitEmploymentBlock( &$journo )
+{
+    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=?", $journo['id'] );
+?>
+<div class="box">
+ <h3>Employment</h3>
+ <div class="box-content">
+  <ul>
+<?php
+    foreach( $employers as $e ) {
+        $to = $e['year_to'];
+        if( !$to )
+            $to='present';
+?>
+   <li><em><?= $e['employer']; ?></em>, <?= $e['job_title']; ?>, <?= $e['year_from']; ?>-<?= $to; ?></li>
+<?php } ?>
+  <ul>
+ </div>
+</div>
+<?php
+
+
+}
+
+
 
 /* return the url of the RSS feed for this journo */
 function journoRSS( $journo ) {
