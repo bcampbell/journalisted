@@ -41,11 +41,13 @@ class EmploymentPage extends EditProfilePage
             $(".employer input").autocomplete("ajax_employer_lookup.php", {
 //              matchContains: true,
             });
+
             $('.employer .current').click( function() {
                 var checked = $(this).attr( 'checked' )
                 $( '#year_to' ).parent().parent().toggle( !checked );
                 });
 
+            // freeze the form
 //            $('.employer input').attr("readOnly", true);
             $('.employer').addClass('locked');
             $('.employer input').attr("disabled", true);
@@ -53,7 +55,7 @@ class EmploymentPage extends EditProfilePage
             $('.employer .cancel').hide();
 
             $('.employer .unlock').click( function( ) {
-                // unlock the form for editing
+                // thaw the form for editing
                 var f = $(this).closest( 'form' );
                 f.removeClass( 'locked' );
                 f.find( 'input' ).removeAttr('disabled');
@@ -64,7 +66,7 @@ class EmploymentPage extends EditProfilePage
             });
 
             $('.employer .cancel').click( function( ) {
-                // stop editing, lock the form
+                // stop editing, freeze the form
                 var f = $(this).closest( 'form' );
                 f.find( 'input' ).attr('disabled', true );
                 f.find( 'button' ).hide();
