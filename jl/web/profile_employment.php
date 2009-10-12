@@ -29,15 +29,54 @@ class EmploymentPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
 
 <script type="text/javascript">
-
-    function unlockform() {
-    };
 
 
     $(document).ready(
         function() {
+
+            function initForm() {
+                var f = $(this);
+                if( f.hasClass('existing') ) {
+                    // add "edit" link
+                    f.append( '<a class="thaw" href="">edit</a>')
+
+                    f.find('.thaw').click( function() { var f = $(this).closest('form'); thawForm(f); return false; } );
+                    f.find('.cancel').click( function() { var f = $(this).closest('form'); f.resetForm(); freezeForm(f); return false; } );
+                    freezeForm(f);
+                } else {
+                }
+
+            }
+
+            function freezeForm(f) {
+                f.addClass('frozen');
+                f.find('input').attr("disabled", true);
+                f.find('button').hide();
+                f.find('.cancel').hide();
+                f.find('.remove').show();
+                f.find('.thaw').show();
+            }
+
+            function thawForm(f) {
+                f.removeClass('frozen');
+                f.find('input').removeAttr("disabled");
+                f.find('button').show();
+                f.find('.cancel').show();
+                f.find('.thaw').hide();
+                f.find('.remove').hide();
+            }
+
+            $(".employer").each( initForm );
+
+            $(".employer.new").each( function() {
+                $(this).hide();
+                $(this).after( '<a href="" class="add_new">[+] Add new</a>' );
+            });
+
+/*
             $(".employer input").autocomplete("ajax_employer_lookup.php", {
 //              matchContains: true,
             });
@@ -47,17 +86,17 @@ class EmploymentPage extends EditProfilePage
                 $( '#year_to' ).parent().parent().toggle( !checked );
                 });
 
-            // freeze the form
+            // freeze the forms showing existing entries
 //            $('.employer input').attr("readOnly", true);
-            $('.employer').addClass('locked');
-            $('.employer input').attr("disabled", true);
-            $('.employer button').hide();
-            $('.employer .cancel').hide();
+            $('.employer.existing').addClass('frozen');
+            $('.employer.existing input').attr("disabled", true);
+            $('.employer.existing button').hide();
+            $('.employer.existing .cancel').hide();
 
-            $('.employer .unlock').click( function( ) {
+            $('.employer.existing .unlock').click( function( ) {
                 // thaw the form for editing
                 var f = $(this).closest( 'form' );
-                f.removeClass( 'locked' );
+                f.removeClass( 'frozen' );
                 f.find( 'input' ).removeAttr('disabled');
                 f.find( 'button' ).show();
                 f.find( '.cancel' ).show();
@@ -65,18 +104,32 @@ class EmploymentPage extends EditProfilePage
                 return false;
             });
 
-            $('.employer .cancel').click( function( ) {
+            $('.employer.existing .cancel').click( function( ) {
                 // stop editing, freeze the form
                 var f = $(this).closest( 'form' );
                 f.find( 'input' ).attr('disabled', true );
                 f.find( 'button' ).hide();
                 f.find( '.unlock' ).show();
-                f.addClass( 'locked' );
+                f.addClass( 'frozen' );
                 f.reset();
                 $(this).hide();
                 return false;
             });
+            $('.employer.new .cancel').click( function( ) {
+                $('#add_new').show();
+                var f = $(this).closest( 'form' );
+                f.delete();
+                return false;
+            });
 
+
+            $('.employer.new').hide();
+            $('#add_new').click( function() {
+                $('.employer.new:first').show("fast");
+                $(this).hide();
+                return false;
+            });
+*/
     });
 </script>
 <?php
@@ -102,8 +155,9 @@ class EmploymentPage extends EditProfilePage
         $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
         $this->showEmployers( $employers );
 
-?><h3>Add another:</h3><?php
-            $this->showForm( NULL );
+        $this->showForm( NULL );
+?>
+<?php
     }
 
 
@@ -116,34 +170,53 @@ class EmploymentPage extends EditProfilePage
     }
 
 
+    /* if $emp is null, then display a fresh form for entering a new entry */
     function showForm( $emp )
     {
-        if( !$emp ) {
-            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'', 'id'=>NULL );
+        static $uniqID=0;
+
+        $uniq = "_{$uniqID}";
+        $uniqID++;
+
+        $classes = 'employer';
+        if( is_null( $emp ) ) {
+            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
+            $classes .= " new";
+        } else {
+            $classes .= " existing";
         }
 
-        $id = $emp['id'] ? $emp['id'] : '';
+
+
 ?>
 
-<form class="employer" method="POST" action="/profile_employment">
+<form class="<?= $classes; ?>" method="POST" action="/profile_employment">
 <table border="0">
- <tr><th><label for="employer_<?= $id; ?>">Employer</label></td><td><input type="text" size="60" name="employer" id="employer<?= $id; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
- <tr><th><label for="job_title<?= $id; ?>">Job Title</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $id; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
- <tr><th><label for="year_from<?= $id; ?>">Year from</label></td><td><input type="text" size="4" name="year_from" id="year_from<?= $id; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
- <tr><th><label for="year_to<?= $id; ?>">Year to</label></td><td><input type="text" size="4" name="year_to" id="year_to<?= $id; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
- <tr><th></th><td><input type="checkbox" name="current" id="current<?= $id; ?>"/><label for="current<?= $id; ?>">I currently work here</label></td></tr>
+ <tr><th><label for="employer<?= $uniq; ?>">Employer</label></td><td><input type="text" size="60" name="employer" id="employer<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
+ <tr><th><label for="job_title<?= $uniq; ?>">Job Title</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
+ <tr><th><label for="year_from<?= $uniq; ?>">Year from</label></td><td><input type="text" size="4" name="year_from" id="year_from<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
+ <tr><th><label for="year_to<?= $uniq; ?>">Year to</label></td><td><input type="text" size="4" name="year_to" id="year_to<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
+ <tr><th></th><td><input type="checkbox" name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
 </table>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
-<input type="hidden" name="id" value="<?= $id; ?>" />
+<?php
+        if( array_key_exists( 'id', $emp ) ) {
+?>
+<input type="hidden" name="id" value="<?= $emp['id']; ?>" />
+<button class="submit" type="submit" name="action" value="submit">Update</button>
+<button class="cancel" type="reset">cancel</button>
+<a class="remove" href="/profile_employment?ref=<?= $this->journo['ref']; ?>&remove_id=<?= $emp['id']; ?>">remove</a>
+<?php
+        } else {
+?>
 <button type="submit" name="action" value="submit">Save</button>
-<button type="reset" class="cancel">Cancel</button>
-<a class="unlock" href="">edit</a>
-<a href="/profile_employment?ref=<?= $this->journo['ref']; ?>&remove_id=<?= $id; ?>">remove</a>
+<?php
+        }
+?>
 </form>
 <?php
 
     }
-
 
 
     function handleSubmit()

@@ -25,7 +25,8 @@ if(!$journo)
 
 
 $pageparams = array(
-    'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) )
+    'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
+    'head_extra_fn'=>'extra_head',
 );
 
 
@@ -103,4 +104,47 @@ page_footer();
 /*
  * HELPERS
  */
+
+function extra_head()
+{
+
+?>
+<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+<link type="text/css" rel="stylesheet" href="/profile.css" /> 
+
+<script type="text/javascript">
+$(document).ready(
+    function() {
+        $('#tab-bio').hide();
+        $('#tab-contact').hide();
+        $(".tabs a[href='#tab-work']").click( function() {
+            $('ul.tabs li').removeClass('current');
+            $(this).closest('li').addClass('current');
+            $('#tab-bio').hide();
+            $('#tab-contact').hide();
+            $('#tab-work').fadeIn('fast');
+            return false;
+        });
+        $(".tabs a[href='#tab-bio']").click( function() {
+            $('ul.tabs li').removeClass('current');
+            $(this).closest('li').addClass('current');
+            $('#tab-work').hide();
+            $('#tab-contact').hide();
+            $('#tab-bio').fadeIn('fast');
+            return false;
+        });
+        $(".tabs a[href='#tab-contact']").click( function() {
+            $('ul.tabs li').removeClass('current');
+            $(this).closest('li').addClass('current');
+            $('#tab-work').hide();
+            $('#tab-bio').hide();
+            $('#tab-contact').fadeIn('fast');
+            return false;
+        });
+});
+</script>
+<?php
+
+}
+
 

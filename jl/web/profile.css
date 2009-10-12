@@ -76,12 +76,12 @@ form input {
 }
 
 
-form.locked {
+form.frozen {
     background-color: white;
     border-style: none;
 }
 
-form.locked input {
+form.frozen input {
     border: 1px solid #888888;
     background-color: white;
 }

@@ -39,25 +39,82 @@ function journo_emitPageFull( &$journo )
     journo_emitPage( $journo, $slowdata );
 }
 
+
+
+
+
 function journo_emitPage( &$journo, &$slowdata = array() )
 {
 //  printf( "<h2>%s</h2>\n", $journo['prettyname'] );
 
-    /* main pane */
 
-gatso_start("maincolumn");
-    print "<div id=\"maincolumn\">\n";
+    /********* main column **********/
 
-    gatso_start('overview');
+?>
+<div style="border: 1px solid black;">
+<?php
+
     journo_emitOverviewBlock( $journo, $slowdata );
-    gatso_stop('overview');
     journo_emitEmploymentBlock( $journo );
+?>
+</div>
+<ul class="tabs">
+<li><a href="#tab-work"><?= $journo['prettyname']; ?>'s work</a></li>
+<li><a href="#tab-bio">Biography</a></li>
+<li><a href="#tab-contact">Contact</a></li>
+</ul>
+
+<div id="maincolumn">
+<div id="tab-work">
+<?php
     gatso_start('article_list');
     journo_emitArticleBlocks( $journo, $slowdata );
     gatso_stop('article_list');
-    journo_emitFriendlyStatsBlock( $journo, $slowdata );
     journo_emitByNumbersBlock( $journo, $slowdata );
+    journo_emitCaution( $journo );
+?>
+</div>
+<div id="tab-bio">
+<?php
+    journo_emitFriendlyStatsBlock( $journo, $slowdata );
+    journo_emitEducationBlock( $journo );
+    journo_emitBooksBlock( $journo );
+    journo_emitAwardsBlock( $journo );
+?>
+</div>
+<div id="tab-contact">
+</div>
+<?php
 
+?>
+</div> <!-- end maincolumn -->
+<?php
+
+
+
+    /********* small column **********/
+
+?>
+<div id="smallcolumn">
+<?php
+    donatebutton_emit();
+    journo_emitSetupAlertActionBox( $journo );
+    journo_emitLinksBlock( $journo );
+    journo_emitTagsBlock( $journo, $slowdata );
+    journo_emitAdmiredJournosBlock( $journo );
+    journo_emitSimilarJournosBlock( $journo );
+    journo_emitOtherArticlesBlock($journo);
+    journo_emitSearchboxBlock( $journo );
+    journo_emitIsThisYouActionBox( $journo );
+?>
+</div> <!-- end smallcolumn -->
+
+<?php
+}
+
+
+function journo_emitCaution( $journo )
+{
 ?>
     <div class="caution">
         Caution: this list is not comprehensive but based on articles published in
@@ -67,20 +124,14 @@ gatso_start("maincolumn");
         <a href="/forjournos?j=<?=$journo['ref'];?>">let us know</a>
         when you find one so we can correct it.
     </div>
-<?
-
-    print "</div> <!-- end maincolumn -->\n";
-gatso_stop("maincolumn");
+<?php
+}
 
 
-    /* small column */
+function journo_emitSetupAlertActionBox( $journo )
+{
 
-gatso_start("smallcolumn");
 ?>
-<div id="smallcolumn">
-
-<?php donatebutton_emit(); ?>
-
 <div class="action-box">
  <div class="action-box_top"><div></div></div>
   <div class="action-box_content">
@@ -91,40 +142,34 @@ gatso_start("smallcolumn");
   </div>
  <div class="action-box_bottom"><div></div></div>
 </div>
-
 <?php
-    journo_emitLinksBlock( $journo );
-    journo_emitTagsBlock( $journo, $slowdata );
-    journo_emitAdmiredJournosBlock( $journo );
-    journo_emitBooksBlock( $journo );
-    journo_emitAwardsBlock( $journo );
-    journo_emitSimilarJournosBlock( $journo );
-    journo_emitOtherArticlesBlock($journo);
-    journo_emitSearchboxBlock( $journo );
-?>
 
+}
+
+
+
+function journo_emitIsThisYouActionBox( &$journo )
+{
+?>
 <div class="action-box">
  <div class="action-box_top"><div></div></div>
   <div class="action-box_content">
 <?php
 /*
- <h3>Something wrong/missing?</h3>
-  <p>Have we got the wrong information about this journalist?
+   <h3>Something wrong/missing?</h3>
+   <p>Have we got the wrong information about this journalist?
    <a href="/forjournos?j=<?=$journo['ref'];?>">Let us know</a></p>
 */
 ?>
- <h3>Are you <?=$journo['prettyname'];?>?</h3>
-  <p>Then this is <em>your</em> page!</p>
-  <p>You can edit it <a href="/profile?ref=<?=$journo['ref'];?>">here</a>.</p>
+   <h3>Are you <?=$journo['prettyname'];?>?</h3>
+   <p>Then this is <em>your</em> page!</p>
+   <p>You can edit it <a href="/profile?ref=<?=$journo['ref'];?>">here</a>.</p>
   </div>
  <div class="action-box_bottom"><div></div></div>
 </div>
-
-</div> <!-- end smallcolumn -->
-
 <?php
-gatso_stop("smallcolumn");
 }
+
 
 
 
@@ -799,6 +844,29 @@ EOT;
 
 }
 
+
+
+function journo_emitEducationBlock( &$journo )
+{
+    $edus = db_getAll( "SELECT * FROM journo_education WHERE journo_id=?", $journo['id'] );
+
+?>
+<div class="box">
+ <h3>Education</h3>
+ <div class="box-content">
+  <ul>
+<?php foreach( $edus as $e ) { ?>
+  <li>studied <?= $e['field']; ?> at <?= $e['school']; ?>, (<?= $e['year_from']; ?>-<?= $e['year_to']; ?>)<br/>
+    attained <?= $e['qualification']; ?>
+    </li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
+<?php
+
+}
+
 function journo_emitBooksBlock( &$journo )
 {
     $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $journo['id'] );
@@ -809,7 +877,7 @@ function journo_emitBooksBlock( &$journo )
  <div class="box-content">
   <ul>
 <?php foreach( $books as $b ) { ?>
-  <li><?= $b['title']; ?> (<?= $b['year']; ?>, <?= $b['publisher']; ?>)</li>
+  <li><?= $b['title']; ?> (<?= $b['year_published']; ?>, <?= $b['publisher']; ?>)</li>
 <?php } ?>
   </ul>
  </div>
