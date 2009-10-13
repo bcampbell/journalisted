@@ -13,7 +13,8 @@ jQuery.fn.dynamicForm = function (plusElmnt, minusElmnt, options){
 	insertBefore = source.next(),
 	clones = [],
 	defaults = {
-		duration:1000
+		duration:1000,
+        postPlusFn: function(){},
   	};
 	
   	// Extend default options with those provided
@@ -95,6 +96,7 @@ jQuery.fn.dynamicForm = function (plusElmnt, minusElmnt, options){
 			}
 			
 			clones.push(clone);
+            clone.each( options.postPlusFn );
 		}
 		
 		function clickOnMinus(event){
@@ -154,6 +156,8 @@ jQuery.fn.dynamicForm = function (plusElmnt, minusElmnt, options){
 				plus.hide();
 			}
 			clones.push(clone);
+
+            clone.each( options.postPlusFn );
 		});
 		
 		/* Handle click on minus */
