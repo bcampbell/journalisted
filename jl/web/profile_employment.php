@@ -38,9 +38,12 @@ class EmploymentPage extends EditProfilePage
     $(document).ready(
         function() {
 
+	var fieldId = 0;
+	var formFields = "input, checkbox, select, textarea";
+
+
             function initForm() {
                 var f = $(this);
-                f.find('input:first').click( function() { alert("bing"); } );
 
                 if( f.hasClass('existing') ) {
                     // add "edit" link
@@ -51,6 +54,10 @@ class EmploymentPage extends EditProfilePage
                     freezeForm(f);
                 } else {
                 }
+
+                /* set up for ajax submission of form to avoid page reload */
+                f.ajaxForm();
+                f.append( '<input type="hidden" name="ajax" value="1" />');
             }
 
             function freezeForm(f) {
@@ -71,10 +78,41 @@ class EmploymentPage extends EditProfilePage
                 f.find('.remove').hide();
             }
 
+    /* based on fn from jquery-dynamic-form */	
+    function normalizeElmnt(elmnt){
+        elmnt.find(formFields).each(function(){
+            var nameAttr = jQuery(this).attr("name"), 
+			idAttr = jQuery(this).attr("id");
+
+            /* Normalize field id attributes */
+            if (idAttr) {
+				/* Normalize attached label */
+				jQuery("label[for='"+idAttr+"']").each(function(){
+					jQuery(this).attr("for", idAttr + fieldId);
+				});
+				
+                jQuery(this).attr("id", idAttr + fieldId);
+            }
+            fieldId++;
+        });
+    };
+
             $(".employer").each( initForm );
 
             $(".employer.new").hide().after( '<a href="" class="plus">[+] Add new</a>' );
-            $(".employer.new").dynamicForm( '.plus', '.minus', { postPlusFn: function() { $(this).show().initForm() } } );
+
+            // TODO: just use clone() and make up a uniqify-id fn.
+            //$(".employer.new").dynamicForm( '.plus', '.minus', { postPlusFn: function() { $(this).show().initForm() } } );
+            $(".plus").click( function() {
+                alert("bing");
+                var f = $(".employer.new:first");
+                var c = f.clone();
+                normalizeElmnt(c);
+                c.show();
+                c.each( initForm );
+                c.insertBefore( this );
+                return false;
+            });
 
     });
 </script>
@@ -105,6 +143,17 @@ class EmploymentPage extends EditProfilePage
 ?>
 <?php
     }
+
+
+
+    function ajax()
+    {
+        $action = get_http_var( "action" );
+        if( $action == "submit" ) {
+            $added = $this->handleSubmit();
+        }
+    }
+
 
 
     function showEmployers( &$employers)
@@ -199,6 +248,6 @@ class EmploymentPage extends EditProfilePage
 
 
 $page = new EmploymentPage();
-$page->display();
+$page->run();
 
 

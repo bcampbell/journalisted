@@ -36,6 +36,22 @@ class EditProfilePage
     }
 
 
+    function run()
+    {
+        if( get_http_var('ajax') ) {
+            $this->ajax();
+        } else {
+            $this->display();
+        }
+    }
+
+
+    /* to be overriden */
+    function ajax() {
+    }
+
+
+    /* normal, non-ajax display */
     function display()
     {
         page_header( $this->pageTitle, $this->pageParams );

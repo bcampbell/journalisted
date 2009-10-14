@@ -125,6 +125,6 @@ class AwardsPage extends EditProfilePage
 
 
 $page = new AwardsPage();
-$page->display();
+$page->run();
 
 

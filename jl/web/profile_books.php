@@ -135,6 +135,6 @@ class BooksPage extends EditProfilePage
 
 
 $page = new BooksPage();
-$page->display();
+$page->run();
 
 

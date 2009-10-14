@@ -60,5 +60,5 @@ class MissingInfoPage extends EditProfilePage
 
 
 $page = new MissingInfoPage();
-$page->display();
+$page->run();
 

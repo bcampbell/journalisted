@@ -115,6 +115,6 @@ class WeblinksPage extends EditProfilePage
 
 
 $page = new WeblinksPage();
-$page->display();
+$page->run();
 
 

@@ -164,6 +164,6 @@ qualification: <?=h($e['qualification']);?><br />
 
 
 $page = new EducationPage();
-$page->display();
+$page->run();
 
 

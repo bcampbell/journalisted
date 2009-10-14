@@ -219,5 +219,5 @@ EOT;
 
 
 $page = new AdmiredJournosPage();
-$page->display();
+$page->run();
 
