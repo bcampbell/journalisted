@@ -29,6 +29,7 @@ class EmploymentPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 
 <script type="text/javascript">
@@ -39,6 +40,8 @@ class EmploymentPage extends EditProfilePage
 
             function initForm() {
                 var f = $(this);
+                f.find('input:first').click( function() { alert("bing"); } );
+
                 if( f.hasClass('existing') ) {
                     // add "edit" link
                     f.append( '<a class="thaw" href="">edit</a>')
@@ -48,7 +51,6 @@ class EmploymentPage extends EditProfilePage
                     freezeForm(f);
                 } else {
                 }
-
             }
 
             function freezeForm(f) {
@@ -71,65 +73,9 @@ class EmploymentPage extends EditProfilePage
 
             $(".employer").each( initForm );
 
-            $(".employer.new").each( function() {
-                $(this).hide();
-                $(this).after( '<a href="" class="add_new">[+] Add new</a>' );
-            });
+            $(".employer.new").hide().after( '<a href="" class="plus">[+] Add new</a>' );
+            $(".employer.new").dynamicForm( '.plus', '.minus', { postPlusFn: function() { $(this).show().initForm() } } );
 
-/*
-            $(".employer input").autocomplete("ajax_employer_lookup.php", {
-//              matchContains: true,
-            });
-
-            $('.employer .current').click( function() {
-                var checked = $(this).attr( 'checked' )
-                $( '#year_to' ).parent().parent().toggle( !checked );
-                });
-
-            // freeze the forms showing existing entries
-//            $('.employer input').attr("readOnly", true);
-            $('.employer.existing').addClass('frozen');
-            $('.employer.existing input').attr("disabled", true);
-            $('.employer.existing button').hide();
-            $('.employer.existing .cancel').hide();
-
-            $('.employer.existing .unlock').click( function( ) {
-                // thaw the form for editing
-                var f = $(this).closest( 'form' );
-                f.removeClass( 'frozen' );
-                f.find( 'input' ).removeAttr('disabled');
-                f.find( 'button' ).show();
-                f.find( '.cancel' ).show();
-                $(this).hide();
-                return false;
-            });
-
-            $('.employer.existing .cancel').click( function( ) {
-                // stop editing, freeze the form
-                var f = $(this).closest( 'form' );
-                f.find( 'input' ).attr('disabled', true );
-                f.find( 'button' ).hide();
-                f.find( '.unlock' ).show();
-                f.addClass( 'frozen' );
-                f.reset();
-                $(this).hide();
-                return false;
-            });
-            $('.employer.new .cancel').click( function( ) {
-                $('#add_new').show();
-                var f = $(this).closest( 'form' );
-                f.delete();
-                return false;
-            });
-
-
-            $('.employer.new').hide();
-            $('#add_new').click( function() {
-                $('.employer.new:first').show("fast");
-                $(this).hide();
-                return false;
-            });
-*/
     });
 </script>
 <?php
