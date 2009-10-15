@@ -22,169 +22,30 @@ class EmploymentPage extends EditProfilePage
 
     function extra_head()
     {
-        // TODO: use compressed jquery.autocompete
+        // TODO: use compressed jquery.autocomplete
 
 ?>
 <link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
+<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 
 <script type="text/javascript">
+    $(document).ready( function() {
+        fancyForms( '.employer', function() {
+            var f = $(this);
 
+            f.find("input[name=employer]").autocomplete( "/ajax_employer_lookup" );
 
-    $(document).ready(
-        function() {
-
-        	var fieldId = 0;
-        	var formFields = "input, checkbox, select, textarea";
-
-            function initForm() {
-
-                var f = $(this);
-
-                function addEditButton( f ) {
-                    f.append( '<a class="edit" href="">edit</a>')
-                    f.find('.edit').click( function() {
-                        var f = $(this).closest('form');
-                        thawForm(f);
-                        return false;
-                    });
-                }
-
-                function ajaxifyRemoveLink( a ) {
-                    a.click( function() {
-                        $.ajax( { url: $(this).attr('href'),
-                            success: function() {
-                                var f=a.closest("form");
-                                f.css("background-color","#ffcccc")
-                                f.fadeOut(500, function() { $(this).remove(); });
-                            },
-                        } );
-                        return false;
-                    });
-
-                }
-
-
-                f.append( '<input type="hidden" name="ajax" value="1" />'); // so server know's it's ajax
-                f.append( '<span class="ajax-msg"></span>');    // add a place to plonk messages
-
-                /* add some extra elements, but only if it's an editing form rather than a creation form */
-                if( !f.hasClass( 'creator' )) {
-                    addEditButton( f );
-                    ajaxifyRemoveLink( f.find('.remove') );
-                    freezeForm(f);
-                }
-
-                f.find('.cancel').click( function() {
-                    var f = $(this).closest('form');
-                    if( f.hasClass( 'creator' ) ) {
-                        f.css("background-color","#ffcccc")
-                        f.fadeOut(500, function() { $(this).remove(); });
-                    } else {
-                        /* go back to read-only */
-                        f.resetForm();
-                        freezeForm(f);
-                    }
-                    return false;
-                });
-
-
-                /* set up for ajax submission of form to avoid page reload */
-                f.ajaxForm( {
-                    dataType: "json",
-                    beforeSend: function() {
-                        f.find('button').attr("disabled", true);
-                        f.find('.ajax-msg').html( '<img src="/css/indicator.gif" /><em>working...</em>' );
-                    },
-                    success: function(result) {
-                        f.find('button').removeAttr("disabled");
-                        f.find('.ajax-msg').html( '' );
-
-                        if( result.status=='success' ) {
-                            // if a creator form, turn it into a full editing form
-                            if( f.hasClass("creator") ) {
-                                f.removeClass("creator");
-                                f.append( ' ' + result.remove_link_html );
-                                ajaxifyRemoveLink( f.find('.remove') );
-                                addEditButton(f);
-                                f.append( '<input type="hidden" name="id" value="' + result.id + '" />' );
-                                // TODO: add remove button
-                            }
-
-                            freezeForm(f);
-                        }
-                    },
-                    error: function() {
-                        f.find('button').removeAttr("disabled");
-                        // hmm... could show an error message... but... well...
-                        f.find('.ajax-msg').html( '' );
-                        freezeForm(f);
-                    },
-                } );
-            }
-
-            function freezeForm(f) {
-                f.addClass('frozen');
-                f.find('input').attr("disabled", true);
-                f.find('button').hide();
-                f.find('.cancel').hide();
-                f.find('.remove').hide();
-                f.find('.edit').show();
-            }
-
-            function thawForm(f) {
-                f.removeClass('frozen');
-                f.find('input').removeAttr("disabled");
-                f.find('button').show();
-                f.find('.cancel').show();
-                f.find('.edit').hide();
-                f.find('.remove').show();
-            }
-
-            /* based on fn from jquery-dynamic-form */	
-            function normalizeElmnt(elmnt){
-                elmnt.find(formFields).each(function(){
-                    var nameAttr = jQuery(this).attr("name"), 
-        			idAttr = jQuery(this).attr("id");
-
-                    /* Normalize field id attributes */
-                    if (idAttr) {
-        				/* Normalize attached label */
-        				jQuery("label[for='"+idAttr+"']").each(function(){
-        					jQuery(this).attr("for", idAttr + fieldId);
-        				});
-
-                        jQuery(this).attr("id", idAttr + fieldId);
-                    }
-                    fieldId++;
-                });
-            };
-
-            /* hide the new-entry template form, add the "Add new" link */
-            /* (could use jquery-dynamic-form plugin but it turns field names into arrays [], which
-               we don't want in this case) */
-            $(".employer.template").hide().after( '<a href="" class="plus">Add one</a>' );
-            $(".plus").click( function() {
-                /* add a creator form by cloning the template */
-                var f = $(".employer.template:first");
-                var c = f.clone();
-                normalizeElmnt(c);
-                c.removeClass('template');
-                c.addClass('creator');
-                c.insertBefore( this );
-
-                c.each( initForm );
-                c.fadeIn();
-                return false;
+            var current = f.find("input[name=current]")
+            var year_to = f.find("input[name=year_to]").closest('tr')
+            year_to.toggle( ! current.attr('checked') );
+            current.click( function() {
+                year_to.toggle( ! current.attr('checked') );
             });
-
-            /* set up fanciness on all forms except the hidden template */
-            $(".employer").not('.template').each( initForm );
-
+        });
     });
 </script>
 <?php
@@ -275,7 +136,7 @@ class EmploymentPage extends EditProfilePage
  <tr><th><label for="job_title<?= $uniq; ?>">Job Title</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
  <tr><th><label for="year_from<?= $uniq; ?>">Year from</label></td><td><input type="text" size="4" name="year_from" id="year_from<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
  <tr><th><label for="year_to<?= $uniq; ?>">Year to</label></td><td><input type="text" size="4" name="year_to" id="year_to<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
- <tr><th></th><td><input type="checkbox" name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
+ <tr><th></th><td><input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
 </table>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <button class="submit" type="submit" name="action" value="submit">Save</button>
@@ -299,6 +160,9 @@ class EmploymentPage extends EditProfilePage
             'year_from' => intval( get_http_var('year_from') ),
             'year_to' => intval( get_http_var('year_to') ),
             'id'=> get_http_var('id') );
+
+        if( get_http_var( 'current' ) )
+            $b['year_to'] = NULL;
 
         if( $b['id'] ) {
             $sql = "UPDATE journo_employment SET journo_id=?,employer=?,job_title=?,year_from=?,year_to=? WHERE id=?";
