@@ -82,6 +82,7 @@ class EmploymentPage extends EditProfilePage
                 f.find('.cancel').click( function() {
                     var f = $(this).closest('form');
                     if( f.hasClass( 'creator' ) ) {
+                        f.css("background-color","#ffcccc")
                         f.fadeOut(500, function() { $(this).remove(); });
                     } else {
                         /* go back to read-only */
@@ -131,7 +132,7 @@ class EmploymentPage extends EditProfilePage
                 f.find('input').attr("disabled", true);
                 f.find('button').hide();
                 f.find('.cancel').hide();
-                f.find('.remove').show();
+                f.find('.remove').hide();
                 f.find('.edit').show();
             }
 
@@ -141,7 +142,7 @@ class EmploymentPage extends EditProfilePage
                 f.find('button').show();
                 f.find('.cancel').show();
                 f.find('.edit').hide();
-                f.find('.remove').hide();
+                f.find('.remove').show();
             }
 
             /* based on fn from jquery-dynamic-form */	
@@ -166,7 +167,7 @@ class EmploymentPage extends EditProfilePage
             /* hide the new-entry template form, add the "Add new" link */
             /* (could use jquery-dynamic-form plugin but it turns field names into arrays [], which
                we don't want in this case) */
-            $(".employer.template").hide().after( '<a href="" class="plus">[+] Add new</a>' );
+            $(".employer.template").hide().after( '<a href="" class="plus">Add one</a>' );
             $(".plus").click( function() {
                 /* add a creator form by cloning the template */
                 var f = $(".employer.template:first");
@@ -218,10 +219,7 @@ class EmploymentPage extends EditProfilePage
 
     function ajax()
     {
-//        header( "Cache-Control: no-cache" );
-//        header( "HTTP/1.0 500 Internal Server Error" );
-//        return;
-
+        header( "Cache-Control: no-cache" );
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
@@ -280,12 +278,12 @@ class EmploymentPage extends EditProfilePage
  <tr><th></th><td><input type="checkbox" name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
 </table>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
+<button class="submit" type="submit" name="action" value="submit">Save</button>
+<button class="cancel" type="reset">Cancel</button>
 <?php if( !$is_template ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />
 <a class="remove" href="/profile_employment?ref=<?= $this->journo['ref']; ?>&remove_id=<?= $emp['id']; ?>">remove</a>
 <?php } ?>
-<button class="submit" type="submit" name="action" value="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 </form>
 <?php
 

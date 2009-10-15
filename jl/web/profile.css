@@ -75,15 +75,20 @@ form input {
     border: 1px solid black;
 }
 
+form {
+    border: 1px solid #cccccc;
+    margin: 0.5em;
+}
 
 form.frozen {
     background-color: white;
-    border-style: none;
+    border: 1px solid #cccccc;
 }
 
 form.frozen input {
-    border: 1px solid #888888;
+    border: 1px solid #eeeeee;
     background-color: white;
+    color: black;
 }
 
 
@@ -118,3 +123,27 @@ th {
     float: right;
     text-decoration: underline;
 }
+
+
+
+
+/* add icons to various profile-page buttons */
+a.edit {
+    padding-left: 18px;
+    background: transparent url(images/edit_16x16.png) no-repeat center left;
+}
+
+a.remove {
+    padding-left: 18px;
+    background: transparent url(images/delete_16x16.gif) no-repeat center left;
+}
+
+a.plus {
+    display:block;
+    margin: 1em;
+    padding-left: 18px;
+    background: transparent url(images/add_16x16.gif) no-repeat center left;
+}
+
+
+
