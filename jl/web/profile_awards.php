@@ -14,6 +14,7 @@ class AwardsPage extends EditProfilePage
 
     function __construct() {
         $this->pageName = "awards";
+        $this->pagePath = "/profile_awards";
         $this->pageTitle = "Awards";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
@@ -26,11 +27,19 @@ class AwardsPage extends EditProfilePage
 
 ?>
 <link type="text/css" rel="stylesheet" href="/profile.css" /> 
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-
+<? /*
+<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
+*/
+?>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
+    $(document).ready( function() {
+        fancyForms( '.award' );
+    });
 </script>
 <?php
     }
@@ -50,66 +59,66 @@ class AwardsPage extends EditProfilePage
             $this->handleRemove();
         }
 ?><h2>Have you won any awards?</h2><?php
-        $this->showAwards();
-        $this->showForm();
+        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $this->journo['id'] );
+        foreach( $awards as $a ) {
+            $this->showForm( $a );
+        }
+        $this->showForm( NULL );
 
     }
 
-    function showForm()
+    function ajax()
     {
+        header( "Cache-Control: no-cache" );
+        $action = get_http_var( "action" );
+        if( $action == "submit" ) {
+            $entry_id = $this->handleSubmit();
+            $result = array( 'status'=>'success',
+                'id'=>$entry_id,
+                'remove_link_html'=>$this->genRemoveLink($entry_id),
+            );
+            print json_encode( $result );
+        }
+    }
+
+    function showForm( $award )
+    {
+        static $uniq=0;
+        ++$uniq;
+        $is_template = is_null( $award );
+        if( $is_template )
+            $award = array( 'award'=>'' );
+
 
 ?>
-
-<form method="POST" action="/profile_awards">
-<fieldset id="awards">
+<form class="award<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
- <tr><th><label for="award">Award</label></td><td><input type="text" size="60" name="award[]" id="award"/></td></tr>
+ <tr>
+  <th><label for="award_<?= $uniq; ?>">Award</label></th>
+  <td><input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" /></td>
+ </tr>
 </table>
-</fieldset>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>
+<button class="cancel" type="reset">Cancel</button>
+<?php if( !$is_template ) { ?>
+<input type="hidden" name="id" value="<?= $award['id']; ?>" />
+<?= $this->genRemoveLink($award['id']); ?>
+<?php } ?>
 </form>
+
 <?php
 
     }
-
 
 
     function handleSubmit()
     {
-        $award_names = get_http_var('award');
-        $awards = array();
-        foreach( $award_names as $n ) {
-            $awards[] = array('award'=>$n);
-        }
-
-        foreach( $awards as $a )
-        {
-            $sql = "INSERT INTO journo_awards (journo_id,award) VALUES (?,?)";
-            db_do( $sql, $this->journo['id'], $a['award'] );
-        }
-        db_commit();
+        $fieldnames = array( 'award' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        $this->genericStoreItem( "journo_awards", $fieldnames, $item );
+        return $item['id'];
     }
-
-
-    function showAwards()
-    {
-
-        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $this->journo['id'] );
-
-?>
-<ul>
-<?php foreach( $awards as $a ) { ?>
-<li>
-<?=h($a['award']);?>
- [<a href="/profile_awards?ref=<?=$this->journo['ref'];?>&remove_id=<?=$a['id'];?>">remove</a>]
-</li>
-<?php } ?>
-</ul>
-<?php
-    }
-
-
 
     function handleRemove() {
         $id = get_http_var("remove_id");
@@ -118,9 +127,7 @@ class AwardsPage extends EditProfilePage
         db_do( "DELETE FROM journo_awards WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
     }
-
 }
-
 
 
 

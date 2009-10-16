@@ -15,6 +15,7 @@ class EmploymentPage extends EditProfilePage
     function __construct() {
         $this->pageName = "employment";
         $this->pageTitle = "Employment";
+        $this->pagePath = "/profile_employment";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
     }
@@ -69,11 +70,11 @@ class EmploymentPage extends EditProfilePage
 <h2>Add Employment Information</h2>
 <?php
         $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
-        $this->showEmployers( $employers );
+        foreach( $employers as $e ) {
+            $this->showForm( $e );
+        }
 
         $this->showForm( NULL );
-?>
-<?php
     }
 
 
@@ -85,25 +86,21 @@ class EmploymentPage extends EditProfilePage
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
 
-
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>"<a class=\"remove\" href=\"/profile_employment?ref={$this->journo['ref']}&remove_id={$entry_id}\">remove</a>",
+                'remove_link_html'=>$this->genRemoveLink( $entry_id ),
             );
             print json_encode( $result );
         }
     }
 
 
-
-    function showEmployers( &$employers)
-    {
-        foreach( $employers as $e ) {
-            $this->showForm( $e );
-        }
-
+    /* return a "remove" link for the given item */
+    function genRemoveLink( $entry_id ) {
+        return <<<EOT
+<a class="remove" href="{$this->pagePath}?ref={$this->journo['ref']}&remove_id={$entry_id}">remove</a>
+EOT;
     }
-
 
     /* if $emp is null, then display a fresh form for entering a new entry */
     function showForm( $emp )
@@ -130,7 +127,7 @@ class EmploymentPage extends EditProfilePage
 
 ?>
 
-<form class="<?= $classes; ?>" method="POST" action="/profile_employment">
+<form class="<?= $classes; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr><th><label for="employer<?= $uniq; ?>">Employer</label></td><td><input type="text" size="60" name="employer" id="employer<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
  <tr><th><label for="job_title<?= $uniq; ?>">Job Title</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
@@ -143,7 +140,7 @@ class EmploymentPage extends EditProfilePage
 <button class="cancel" type="reset">Cancel</button>
 <?php if( !$is_template ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />
-<a class="remove" href="/profile_employment?ref=<?= $this->journo['ref']; ?>&remove_id=<?= $emp['id']; ?>">remove</a>
+<?= $this->genRemoveLink($emp['id']); ?>
 <?php } ?>
 </form>
 <?php
@@ -151,32 +148,16 @@ class EmploymentPage extends EditProfilePage
     }
 
 
-    // returns id of entry (either new or existing)
+
     function handleSubmit()
     {
-        $b = array(
-            'employer' => get_http_var('employer'),
-            'job_title' => get_http_var('job_title'),
-            'year_from' => intval( get_http_var('year_from') ),
-            'year_to' => intval( get_http_var('year_to') ),
-            'id'=> get_http_var('id') );
-
+        $fieldnames = array( 'employer', 'job_title', 'year_from', 'year_to' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
         if( get_http_var( 'current' ) )
-            $b['year_to'] = NULL;
-
-        if( $b['id'] ) {
-            $sql = "UPDATE journo_employment SET journo_id=?,employer=?,job_title=?,year_from=?,year_to=? WHERE id=?";
-            db_do( $sql, $this->journo['id'], $b['employer'], $b['job_title'], $b['year_from'], $b['year_to'], $b['id'] );
-        } else {
-            $sql = "INSERT INTO journo_employment (journo_id,employer,job_title,year_from,year_to) VALUES (?,?,?,?,?)";
-            db_do( $sql, $this->journo['id'], $b['employer'], $b['job_title'], $b['year_from'], $b['year_to'] );
-            $b['id'] = db_getOne( "SELECT lastval()" );
-        }
-        db_commit();
-
-        return $b['id'];
+            $item['year_to'] = NULL;
+        $this->genericStoreItem( "journo_employment", $fieldnames, $item );
+        return $item['id'];
     }
-
 
     function handleRemove() {
         $id = get_http_var("remove_id");

@@ -16,6 +16,7 @@ class EditProfilePage
 {
 
     public $pageName = '';
+    public $pagePath = '';  // eg "/profile_hobbies"
     public $P = null;   // currently logged-on user
     public $journo = null;
     public $pageTitle = '';
@@ -149,6 +150,67 @@ class EditProfilePage
     // derived pages override this.
     function displayMain()
     {
+    }
+
+
+
+
+    /* helper for submitting items */
+    function genericFetchItemFromHTTPVars( $fieldnames ) {
+        $item = array();
+        foreach( $fieldnames as $f )
+            $item[$f] = get_http_var($f);
+        $item['id'] = get_http_var('id');
+        return $item;
+    }
+
+
+    /* return a "remove" link for the given item */
+    function genRemoveLink( $entry ) {
+        return <<<EOT
+<a class="remove" href="{$this->pagePath}?ref={$this->journo['ref']}&remove_id={$entry['id']}">remove</a>
+EOT;
+    }
+
+
+    /* helper for submitting items */
+    /* for new items, adds the id field upon insert */
+    function genericStoreItem( $tablename, $fieldnames, &$item )
+    {
+
+        if( $item['id'] ) {
+            /* update existing entry */
+            
+            $frags = array();
+            $params = array();
+            foreach( $fieldnames as $f ) {
+                $frags[] = "$f=?";
+                $params[] = $item[$f];
+            }
+
+            /* note, restrict by journo id to stop people hijacking others entries! */
+            $sql = "UPDATE {$tablename} SET " . implode( ',', $frags ) . "WHERE id=? AND journo_id=?";
+            $params[] = $item['id'];
+            $params[] = $this->journo['id'];
+
+            db_do( $sql, $params );
+        } else {
+            /* insert new entry */
+
+            $frags = array( '?' );
+            $params = array( $this->journo['id'] );
+            foreach( $fieldnames as $f ) {
+                $frags[] = "?";
+                $params[] = $item[$f];
+            }
+            $sql = "INSERT INTO {$tablename} (journo_id," . implode( ",", $fieldnames) . ") ".
+                "VALUES (" . implode(',',$frags) . ")";
+            db_do( $sql, $params );
+            $item['id'] = db_getOne( "SELECT lastval()" );
+        }
+        db_commit();
+
+        return $item['id'];
     }
 
 }

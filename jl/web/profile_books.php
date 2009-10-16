@@ -14,6 +14,7 @@ class BooksPage extends EditProfilePage
 
     function __construct() {
         $this->pageName = "books";
+        $this->pagePath = "/profile_books";
         $this->pageTitle = "Books";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
@@ -22,16 +23,20 @@ class BooksPage extends EditProfilePage
 
     function extra_head()
     {
-        // TODO: use compressed jquery.autocompete
-
 ?>
 <link type="text/css" rel="stylesheet" href="/profile.css" /> 
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+<? /*
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jquery-dynamic-form.js"></script>
-
+<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
+*/
+?>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
+    $(document).ready( function() {
+        fancyForms( '.book' );
+    });
 </script>
 <?php
     }
@@ -51,26 +56,63 @@ class BooksPage extends EditProfilePage
         }
 ?><h2>Have you published any books?</h2><?php
 
-        $this->showBooks();
-        $this->showForm();
-
+        $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
+        foreach( $books as &$book ) {
+            $this->showForm($book);
+        }
+        /* template form for adding new ones */
+        $this->showForm( NULL );
     }
 
-    function showForm()
+
+    function ajax()
     {
+        header( "Cache-Control: no-cache" );
+        $action = get_http_var( "action" );
+        if( $action == "submit" ) {
+            $entry_id = $this->handleSubmit();
+            $result = array( 'status'=>'success',
+                'id'=>$entry_id,
+                'remove_link_html'=>$this->genRemoveLink($entry_id),
+            );
+            print json_encode( $result );
+        }
+    }
+
+
+
+    function showForm( $book )
+    {
+        static $uniq=0;
+        ++$uniq;
+        $is_template = is_null( $book );
+        if( $is_template )
+            $book = array( 'title'=>'', 'publisher'=>'', 'year_published'=>'' );
 
 ?>
 
-<form method="POST" action="/profile_books">
-<fieldset id="books">
+<form class="book<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
- <tr><th><label for="title">Title</label></td><td><input type="text" size="60" name="title[]" id="title"/></td></tr>
- <tr><th><label for="publisher">Publisher</label></td><td><input type="text" size="60" name="publisher[]" id="publisher"/></td></tr>
- <tr><th><label for="year">Year Published</label></td><td><input type="text" size="60" name="year[]" id="year"/></td></tr>
+ <tr>
+  <th><label for="title_<?= $uniq; ?>">Title</label></th>
+  <td><input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" /></td>
+ </tr>
+ <tr>
+  <th><label for="publisher_<?= $uniq; ?>">Publisher</label></th>
+  <td><input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" /></td>
+ </tr>
+ <tr>
+  <th><label for="year_published<?= $uniq; ?>">Year Published</label></th>
+  <td><input type="text" size="60" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" /></td>
+ </tr>
 </table>
-</fieldset>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <button name="action" value="submit">Submit</button>
+<button class="cancel" type="reset">Cancel</button>
+<?php if( !$is_template ) { ?>
+<input type="hidden" name="id" value="<?= $book['id']; ?>" />
+<?= $this->genRemoveLink($book['id']); ?>
+<?php } ?>
 </form>
 <?php
 
@@ -78,46 +120,13 @@ class BooksPage extends EditProfilePage
 
 
 
+
     function handleSubmit()
     {
-        $titles = get_http_var('title');
-        $publishers = get_http_var('publisher');
-        $years = get_http_var('year');
-        $books = array();
-        while( !empty($titles) ) {
-            $y = array_shift($years);
-            $y = ($y=='') ? NULL : intval($y);
-            $books[] = array(
-                'title'=>array_shift($titles),
-                'publisher'=>array_shift($publishers),
-                'year_published'=>$y,
-            );
-        }
-
-        foreach( $books as $b )
-        {
-            $sql = "INSERT INTO journo_books (journo_id,title,publisher,year_published) VALUES (?,?,?,?)";
-            db_do( $sql, $this->journo['id'], $b['title'], $b['publisher'], $b['year_published'] );
-        }
-        db_commit();
-    }
-
-
-    function showBooks()
-    {
-
-        $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
-
-?>
-<ul>
-<?php foreach( $books as $b ) { ?>
-<li>
-<?=h($b['title']);?><br/> <em><?=h($b['publisher']);?>, <?=h($b['year_published']);?></em>
- [<a href="/profile_books?ref=<?=$this->journo['ref'];?>&remove_id=<?=$b['id'];?>">remove</a>]
-</li>
-<?php } ?>
-</ul>
-<?php
+        $fieldnames = array( 'title', 'publisher', 'year_published' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        $this->genericStoreItem( "journo_books", $fieldnames, $item );
+        return $item['id'];
     }
 
     function handleRemove() {
