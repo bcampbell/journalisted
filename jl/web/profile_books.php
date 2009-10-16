@@ -107,7 +107,7 @@ class BooksPage extends EditProfilePage
  </tr>
 </table>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-<button name="action" value="submit">Submit</button>
+<button name="action" value="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
 <?php if( !$is_template ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />

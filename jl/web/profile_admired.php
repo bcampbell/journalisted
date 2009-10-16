@@ -15,6 +15,7 @@ class AdmiredJournosPage extends EditProfilePage
 
     function __construct() {
         $this->pageName = "admired";
+        $this->pagePath = "/profile_admired";
         $this->pageTitle = "Journalists you admire";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
@@ -30,17 +31,19 @@ class AdmiredJournosPage extends EditProfilePage
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
-    $(document).ready(
-        function() {
-            
-            var el = $("#admired-name");
+    $(document).ready( function() {
+        fancyForms( '.admired', function() {
+            var f = $(this);
+
+            var el = f.find(".admired_name");
             el.keypress( function (e) {
                 var ignore = new Array( 9,10,13, 37,38,39,40, 33,34, 27 )
                 if($.inArray(e.keyCode, ignore) == -1 ) {
-                    $("#admired-oneliner").text("");
-                    $("#admired-ref").val("");
+                    f.find(".admired_oneliner").text("");
+                    f.find(".admired_ref").val("");
                 }
             });
             el.autocomplete("ajax_journo_lookup.php", {
@@ -59,13 +62,10 @@ class AdmiredJournosPage extends EditProfilePage
                     oneliner = data[1];
                     ref = data[2];
                 }
-                $("#admired-oneliner").text( '(' + oneliner + ')' );
-                $("#admired-ref").val(ref);
+                f.find(".admired_oneliner").text( '(' + oneliner + ')' );
+                f.find(".admired_ref").val(ref);
             });
-
-
-//            $("#admired-journo").dynamicForm( '#admired-journo-plus', '#admired-journo-minus', {limit:10} );
-
+        });
     });
 </script>
 <?php
@@ -86,7 +86,7 @@ class AdmiredJournosPage extends EditProfilePage
         }
 
         $sql = <<<EOT
-SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref, j.oneliner
+SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref as admired_ref, j.oneliner
     FROM (journo_admired a LEFT JOIN journo j ON a.admired_id=j.id)
     WHERE a.journo_id=?
 EOT;
@@ -98,15 +98,13 @@ EOT;
 ?> <h2>Which journalists do you most admire?</h2> <?php
 //        }
 
-        if( sizeof( $admired ) > 0 ) {
-            $this->showAdmired( $admired );
-?><p>You can add another if you'd like:</p><?php
-        } else {
-?><p>add one now...</p><?php
+
+        foreach( $admired as $a ) {
+            $this->showForm($a);
         }
 
-        // form for adding new ones:
-        $this->showForm();
+        // template form for adding new ones:
+        $this->showForm(NULL);
 
         // if they've entered any journos already, encourage them to add more to their profile */
         if( sizeof( $admired) > 0 ) {
@@ -127,57 +125,48 @@ EOT;
     }
 
 
-
-
-    function showAdmired( &$admired )
+    function ajax()
     {
-        // show list journos already listed as admired
-?>
-<ul>
-<?php foreach( $admired as $a ) { ?>
-<li>
-<?php if( $a['admired_id'] ) { ?>
-<?=journo_link($a)?>
-<?php } else { ?>
-<?=$a['admired_name']?>
-<?php } ?>
- [<a href="/profile_admired?ref=<?=$this->journo['ref'];?>&remove_id=<?=$a['id'];?>">remove</a>]
-</li>
-<?php } ?>
-</ul>
-<?php
-
-        return sizeof( $admired );
+        header( "Cache-Control: no-cache" );
+        $action = get_http_var( "action" );
+        if( $action == "submit" ) {
+            $entry_id = $this->handleSubmit();
+            $result = array( 'status'=>'success',
+                'id'=>$entry_id,
+                'remove_link_html'=>$this->genRemoveLink($entry_id),
+            );
+            print json_encode( $result );
+        }
+        if( get_http_var('remove_id') ) {
+            $this->handleRemove();
+        }
     }
 
 
 
-    function showForm()
+    function showForm( $admired )
     {
 
+        static $uniq=0;
+        ++$uniq;
+        $is_template = is_null( $admired );
+        if( $is_template )
+            $award = array( 'admired_name'=>'', 'admired_ref' );
 ?>
 
-<form method="POST" action="/profile_admired">
- <table border="0">
- <tbody>
- <tr id="admired-journo">
-  <td>
-   <label for="admired-name">Journalist's name</label>
-  </td>
-  <td>
-   <input type="text" name="admired-name" id="admired-name" value="" />
-<?php
-//   <a id="admired-journo-minus" href="">[-]</a>
-//   <a id="admired-journo-plus" href="">[+]</a>
-?>
-   <span id="admired-oneliner"></span>
-   <input type="hidden" name="admired-ref" id="admired-ref" value="" />
-  </td>
- </tr>
- </tbody>
- </table>
+<form class="admired<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<!-- <label for="admired_name_<?= $uniq; ?>">Journalist's name</label> -->
+ <input type="text" name="admired_name" class="admired_name" id="admired_name_<?= $uniq; ?>" value="<?= h($admired['admired_name']); ?>" />
+ <span class="admired_oneliner"><?= h(is_null($admired['oneliner']) ? '':"({$admired['oneliner']})" ); ?></span>
+ <input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
  <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
- <button name="action" value="submit">Submit</button>
+ <br />
+ <button name="action" value="submit">Save</button>
+<button class="cancel" type="reset">Cancel</button>
+<?php if( !$is_template ) { ?>
+<input type="hidden" name="id" value="<?= $admired['id']; ?>" />
+<?= $this->genRemoveLink($admired['id']); ?>
+<?php } ?>
 </form>
 <?php
 
@@ -186,24 +175,30 @@ EOT;
 
     function handleSubmit()
     {
-        $admired_name = get_http_var( 'admired-name' );
-        $admired_ref = get_http_var( 'admired-ref' );
-
+        $id = get_http_var( 'id' );
+        $admired_name = get_http_var( 'admired_name' );
+        $admired_ref = get_http_var( 'admired_ref' );
+        $admired_id = NULL;
         if( $admired_ref ) {
-            // it's a journo in the database
-            $admired_id = db_getOne( "SELECT id FROM journo WHERE ref=?",$admired_ref );
-            db_do( "DELETE FROM journo_admired WHERE journo_id=? and admired_id=?",
-                $this->journo['id'], $admired_id );
-            db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,?)",
-                 $this->journo['id'], $admired_name, $admired_id );
+            $foo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $admired_ref );
+            if( $foo ) {
+                $admired_id = $foo['id'];
+                $admired_name = $foo['prettyname'];
+            }
+        }
+
+        if( $id ) {
+            // it's already in the DB - update it
+            db_do( "UPDATE journo_admired SET admired_name=?, admired_id=? WHERE id=? and journo_id=?",
+                $admired_name, $admired_id, $id, $this->journo['id'] );
         } else {
-            // a journo not in the DB - leave admired_id NULL
-            db_do( "DELETE FROM journo_admired WHERE journo_id=? and admired_name=?",
-                $this->journo['id'], $admired_name );
-            db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,NULL)",
-                 $this->journo['id'], $admired_name );
+            // it's new
+            db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,?)",
+                $this->journo['id'], $admired_name, $admired_id  );
+            $id = db_getOne( "SELECT lastval()" );
         }
         db_commit();
+        return $id;
     }
 
 
@@ -213,6 +208,7 @@ EOT;
         // include journo id, to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_admired WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
+        print"REMOVED $id {$this->journo['id']}";
     }
 }
 

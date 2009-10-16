@@ -166,9 +166,9 @@ class EditProfilePage
 
 
     /* return a "remove" link for the given item */
-    function genRemoveLink( $entry ) {
+    function genRemoveLink( $entry_id ) {
         return <<<EOT
-<a class="remove" href="{$this->pagePath}?ref={$this->journo['ref']}&remove_id={$entry['id']}">remove</a>
+<a class="remove" href="{$this->pagePath}?ref={$this->journo['ref']}&remove_id={$entry_id}">remove</a>
 EOT;
     }
 
