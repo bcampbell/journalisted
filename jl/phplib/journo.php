@@ -55,7 +55,7 @@ function journo_emitPage( &$journo, &$slowdata = array() )
 <?php
 
     journo_emitOverviewBlock( $journo, $slowdata );
-    journo_emitEmploymentBlock( $journo );
+//    journo_emitEmploymentBlock( $journo );
 ?>
 </div>
 <ul class="tabs">
@@ -598,6 +598,9 @@ function journo_emitOverviewBlock( &$journo, &$slowdata )
 
   <h2><a href="<?php echo $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?php echo $journo['prettyname']; ?></h2>
   <div class="box-content">
+
+    <img style="float:right; margin: 0.5em; border: 1px solid #cccccc; padding: 0.1em;" src="/images/rupe.gif" />
+
     <ul>
 <?php
     foreach($bios as $bio ) {
@@ -606,7 +609,7 @@ function journo_emitOverviewBlock( &$journo, &$slowdata )
       <div class="disclaimer">
         (source: <a class="extlink" href="<?php echo $bio['srcurl'];?>"><?php echo $bio['srcname'];?></a>)
       </div>
-      <div style="clear: both;"></div>
+<!--      <div style="clear: both;"></div> -->
     </li>
 <?php
     }
@@ -665,6 +668,21 @@ function journo_emitOverviewBlock( &$journo, &$slowdata )
 ?>
     </ul>
 
+<?php
+    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=?", $journo['id'] );
+?>
+ <h3>Employment</h3>
+  <ul>
+<?php
+    foreach( $employers as $e ) {
+        $to = $e['year_to'];
+        if( !$to )
+            $to='present';
+?>
+   <li><em><?= $e['employer']; ?></em>, <?= $e['job_title']; ?>, <?= $e['year_from']; ?>-<?= $to; ?></li>
+<?php } ?>
+  <ul>
+      <div style="clear: both;"></div>
   </div>
 </div>
 <?php
@@ -913,9 +931,9 @@ function journo_emitEmploymentBlock( &$journo )
 {
     $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=?", $journo['id'] );
 ?>
-<div class="box">
+<!--<div class="box"> -->
  <h3>Employment</h3>
- <div class="box-content">
+<!-- <div class="box-content"> -->
   <ul>
 <?php
     foreach( $employers as $e ) {
@@ -926,8 +944,8 @@ function journo_emitEmploymentBlock( &$journo )
    <li><em><?= $e['employer']; ?></em>, <?= $e['job_title']; ?>, <?= $e['year_from']; ?>-<?= $to; ?></li>
 <?php } ?>
   <ul>
- </div>
-</div>
+<!-- </div>
+</div> -->
 <?php
 
 
