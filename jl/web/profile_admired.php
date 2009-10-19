@@ -161,7 +161,8 @@ EOT;
  <input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
  <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
  <br />
- <button name="action" value="submit">Save</button>
+<input type="hidden" name="action" value="submit" />
+<button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
 <?php if( !$is_template ) { ?>
 <input type="hidden" name="id" value="<?= $admired['id']; ?>" />

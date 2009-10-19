@@ -34,7 +34,9 @@ class EmploymentPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 
 <script type="text/javascript">
+
     $(document).ready( function() {
+
         fancyForms( '.employer', function() {
             var f = $(this);
 
@@ -45,9 +47,9 @@ class EmploymentPage extends EditProfilePage
             year_to.toggle( ! current.attr('checked') );
             current.click( function() {
                 year_to.toggle( ! current.attr('checked') );
-            });
-        });
-    });
+            } );
+        } );
+    } );
 </script>
 <?php
     }
@@ -82,6 +84,12 @@ class EmploymentPage extends EditProfilePage
     function ajax()
     {
         header( "Cache-Control: no-cache" );
+
+        $parms = print_r( $_POST, TRUE );
+
+
+        $result=array();
+
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
@@ -89,9 +97,12 @@ class EmploymentPage extends EditProfilePage
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
                 'remove_link_html'=>$this->genRemoveLink( $entry_id ),
+                'parms'=>$parms
             );
-            print json_encode( $result );
+        } else {
+            $result = array( 'status'=>'grrr.', 'parms'=>$parms );
         }
+        print json_encode( $result );
     }
 
 
@@ -136,7 +147,8 @@ EOT;
  <tr><th></th><td><input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
 </table>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
-<button class="submit" type="submit" name="action" value="submit">Save</button>
+<input type="hidden" name="action" value="submit" />
+<button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
 <?php if( !$is_template ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />

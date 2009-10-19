@@ -107,10 +107,10 @@ function fancyForms( formClass, extraSetupFn ) {
                 }
             },
             error: function() {
+                /* this gets called on IE in _addition_ to success callback... */
                 f.find('button').removeAttr("disabled");
                 // hmm... could show an error message... but... well...
-                f.find('.ajax-msg').html( '' );
-                freezeForm(f);
+/*                freezeForm(f); */
             }
         } );
 
