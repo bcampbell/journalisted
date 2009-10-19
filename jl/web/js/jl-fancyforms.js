@@ -23,6 +23,7 @@
  *
  */
 
+
 function fancyForms( formClass, extraSetupFn ) {
 
     var fieldId = 0;
@@ -49,7 +50,7 @@ function fancyForms( formClass, extraSetupFn ) {
                         var f=a.closest("form");
                         f.css("background-color","#ffcccc")
                         f.fadeOut(500, function() { $(this).remove(); });
-                    },
+                    }
                 } );
                 return false;
             });
@@ -110,7 +111,7 @@ function fancyForms( formClass, extraSetupFn ) {
                 // hmm... could show an error message... but... well...
                 f.find('.ajax-msg').html( '' );
                 freezeForm(f);
-            },
+            }
         } );
 
         if (typeof extraSetupFn != 'undefined') {
