@@ -4,6 +4,7 @@
 
 require_once '../conf/general';
 require_once 'misc.php';
+require_once 'image.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/gatso.php';
 
@@ -599,7 +600,7 @@ function journo_emitOverviewBlock( &$journo, &$slowdata )
   <h2><a href="<?php echo $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?php echo $journo['prettyname']; ?></h2>
   <div class="box-content">
 
-    <img style="float:right; margin: 0.5em; border: 1px solid #cccccc; padding: 0.1em;" src="/images/rupe.gif" />
+<?php journo_emitPicture( $journo ); ?>
 
     <ul>
 <?php
@@ -689,6 +690,28 @@ function journo_emitOverviewBlock( &$journo, &$slowdata )
 
 }
 
+
+
+function journo_emitPicture( &$journo )
+{
+    $sql = <<<EOT
+SELECT i.filename,i.width,i.height
+    FROM ( image i INNER JOIN journo_picture jp ON jp.image_id=i.id )
+    WHERE jp.journo_id=?
+    LIMIT 1
+EOT;
+
+    $img = db_getRow( $sql, $journo['id'] );
+
+    $imgsrc = "/images/rupe.gif";
+    if( $img )
+        $imgsrc = imageUrl( $img['filename'] );
+
+?>
+    <img style="float:right; margin: 0.5em; border: 1px solid #cccccc; padding: 0.1em;" src="<?= $imgsrc; ?>" />
+<?php
+
+}
 
 
 

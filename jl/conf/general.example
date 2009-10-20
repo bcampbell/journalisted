@@ -20,7 +20,8 @@ define('OPTION_TEAM_EMAIL', 'team@' . OPTION_WEB_DOMAIN );
 define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
 
 // root dir on filesystem (use to run scripts), without trailing /
-define('OPTION_JL_FSROOT', '/home/ben/proj/journa-list/jl');
+define('OPTION_JL_FSROOT', '/home/ben/proj/journalisted/jl');
+define('OPTION_JL_IMG_UPLOAD', OPTION_JL_FSROOT . '/web/img');
 
 define('OPTION_JL_DISABLE_CACHE', '1');
 
