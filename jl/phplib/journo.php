@@ -276,7 +276,7 @@ EOT;
       <?php $img=$newest_art['image']; if( $img ) { ?>
       <img class="thumb" src="<?php echo $img['thumb_url']; ?>" />
       <?php } ?>
-      <h4 class="entry-title"><a href="<?php echo article_url($newest_art['id']);?>"><?php echo $newest_art['title']; ?></a></h4>
+      <h4 class="entry-title"><a class="extlink" href="<?php echo $newest_art['permalink']; ?>"><?php echo $newest_art['title']; ?></a></h4>
       <span class="publication"><?php echo $newest_art['srcorgname']; ?>,</span>
       <abbr class="published" title="<?php echo $newest_art['iso_pubdate']; ?>"><?php echo $newest_art['pretty_pubdate']; ?></abbr>
       <?php if( $newest_art['buzz'] ) { ?> (<?php echo $newest_art['buzz']; ?>)<br /> <?php } ?><br/>
@@ -287,7 +287,7 @@ EOT;
       <div style="clear:both;"></div>
 
       <div class="art-info">
-        <a class="extlink" href="<?php echo $newest_art['permalink'];?>" >Original article at <?php echo $newest_art['srcorgname']; ?></a><br/>
+        <a href="<?php echo article_url($newest_art['id']);?>">See similar articles</a><br/>
       </div>
     </div>
 <?php } else { ?>
@@ -303,12 +303,12 @@ EOT;
 
 <?php unset($a); foreach( $arts as $a ) { ?>
     <li class="hentry">
-        <h4 class="entry-title"><a href="<?php echo article_url($a['id']);?>"><?php echo $a['title']; ?></a></h4>
+        <h4 class="entry-title"><a class="extlink" href="<?php echo $a['permalink']; ?>"><?php echo $a['title']; ?></a></h4>
         <span class="publication"><?php echo $a['srcorgname']; ?>,</span>
         <abbr class="published" title="<?php echo $a['iso_pubdate']; ?>"><?php echo $a['pretty_pubdate']; ?></abbr>
         <?php if( $a['buzz'] ) { ?> (<?php echo $a['buzz']; ?>)<?php } ?><br/>
         <div class="art-info">
-          <a class="extlink" href="<?php echo $a['permalink'];?>" >Original article at <?php echo $a['srcorgname']?></a><br/>
+          <a href="<?php echo article_url($a['id']);?>">See similar articles</a><br/>
         </div>
     </li>
 <?php } ?>
