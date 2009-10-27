@@ -180,7 +180,8 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 #head .inner {
     position: relative;
     width: 70%;
-    height: 116px;  /* gradient height */
+/*    height: 116px;*/  /* gradient height */
+    height: 46px;  /* gradient height */
     margin: 0 auto;
 }
 

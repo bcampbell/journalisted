@@ -113,21 +113,14 @@ function Process( &$journo )
 {
     global $settings;
 
-    // build full version of page
-    ob_start();
-    if( $settings['quick'] )
-        journo_emitPageQuick( $journo );
-    else
-        journo_emitPageFull( $journo );
-    $content = ob_get_contents();
-    ob_end_clean();
+    $data = journo_collectData( $journo );
+    $json = json_encode($data);
 
     // save it in the cache and clear the modified flag
-    $cacheid = $journo['id'];
+    $cacheid = 'json_' . $journo['id'];
     db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
-	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $content );
-    if( !$settings['quick'] )
-        db_do("UPDATE journo SET modified=false WHERE id=?", $journo['id'] );
+	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json );
+    db_do( "UPDATE journo SET modified=false WHERE id=?", $journo['id'] );
 	db_commit();
 
     if( $settings['verbose'] )

@@ -81,9 +81,9 @@ function page_header( $title, $params=array() )
       <div id="mst"><a href="http://www.mediastandardstrust.org">Media Standards Trust</a></div> -->
       <div id="menu">
         <ul>
-          <li class="cover<?php echo $mnpage=='cover' ? ' active' :''; ?>"> <a href="/">Home</a> </li>
-          <li class="all<?php echo $mnpage=='all' ? ' active' :''; ?>"> <a href="/list">Journalists A-Z</a> </li>
-          <li class="subject<?php echo $mnpage=='subject' ? ' active' :''; ?>"> <a href="/tags">Subject Index</a> </li>
+<!--          <li class="cover<?php echo $mnpage=='cover' ? ' active' :''; ?>"> <a href="/">Home</a> </li> -->
+<!--          <li class="all<?php echo $mnpage=='all' ? ' active' :''; ?>"> <a href="/list">Journalists A-Z</a> </li>-->
+<!--          <li class="subject<?php echo $mnpage=='subject' ? ' active' :''; ?>"> <a href="/tags">Subject Index</a> </li> -->
           <li class="my<?php echo $mnpage=='my' ? ' active' :''; ?>"> <a href="/alert">Alerts</a> </li>
           <li class="about<?php echo $mnpage=='about' ? ' active' :''; ?>"> <a href="/about">About</a> </li>
 <!--

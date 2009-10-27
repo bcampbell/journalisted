@@ -51,24 +51,22 @@ $title = $journo['prettyname'];
 page_header( $title, $pageparams );
 
 // just use journo id to index cache... other pages won't clash.
-$cacheid = $journo['id'];
+$cacheid = 'json_' . $journo['id'];
 
 if( strtolower( get_http_var('full') == 'yes' ) ) {
     /* force a full page rebuild (slow) */
-    ob_start();
-    journo_emitPageFull( $journo );
-    $content = ob_get_contents();
-	ob_end_clean();
+    $data = journo_collectData( $journo );
+    $json = json_encode($data);
 
     db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
-	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $content );
+	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json );
     db_do( "UPDATE journo SET modified=false WHERE id=?", $journo['id'] );
 	db_commit();
 }
 
 
-$cached_content = db_getOne( "SELECT content FROM htmlcache WHERE name=?", $cacheid );
-if( !is_null( $cached_content ) ){
+$cached_json = db_getOne( "SELECT content FROM htmlcache WHERE name=?", $cacheid );
+if( !is_null( $cached_json ) ) {
     /* yay! it's there! */
 
     if( $journo['modified'] == 't' ) {
@@ -77,24 +75,34 @@ if( !is_null( $cached_content ) ){
 <?php
     }
 
-    print $cached_content;
+    $data = json_decode( $cached_json,true );
+    {
+        extract( $data );
+        include "../templates/journo.tpl.php";
+    }
+
 } else {
-    /* uh-oh... page is missing from cache... */
+    /* uh-oh... page is missing from the cache...  generate a quick n nasty version on the fly! */
+    
+    $data = journo_collectData( $journo, true );
+    $json_quick = json_encode($data);
 
     /* mark journo as needing their page sorted out! */
     db_do("UPDATE journo SET modified=true WHERE id=?", $journo['id'] );
     db_commit();
 
     /* output the quick version of page (no stats or tags etc) */
-    ob_start();
-    journo_emitPageQuick( $journo );
-    $content = ob_get_contents();
-	ob_flush();
 
     /* save it in the cache for next time, but don't clear the modified flag */
-//    db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
-	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $content );
+////    db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
+	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json_quick );
 	db_commit();
+
+    /* run with it */
+    {
+        extract( $data );
+        include "../templates/journo.tpl.php";
+    }
 }
 
 page_footer();
@@ -146,5 +154,10 @@ $(document).ready(
 <?php
 
 }
+
+
+
+
+
 
 
