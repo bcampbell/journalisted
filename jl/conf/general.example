@@ -25,6 +25,6 @@ define('OPTION_JL_IMG_UPLOAD', OPTION_JL_FSROOT . '/web/img');
 
 define('OPTION_JL_DISABLE_CACHE', '1');
 
-// set to 1 to enable piwik analytics (see phplib/page.php)
-define('OPTION_JL_PIWIK_ENABLE', '0');
+// set to 1 to enable google analytics (see phplib/page.php)
+define('OPTION_JL_GOOGLE_ANALYTICS_ENABLE', '0');
 ?>

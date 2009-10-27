@@ -289,7 +289,7 @@
 <?php if( !$quick_n_nasty && $toptag_alltime ) { ?>
       <li>More about '<a href ="<?= tag_gen_link( $toptag_alltime, $ref ) ?>"><?= $toptag_alltime ?></a>' than anything else</li>
 <?php } ?>
-<?php if( !$quick_n_nasty && toptag_month ) { ?>
+<?php if( !$quick_n_nasty && $toptag_month ) { ?>
       <li>A lot about '<a href ="<?= tag_gen_link( $toptag_month, $ref ) ?>"><?= $toptag_month ?></a>' in the last month</li>
 <?php } ?>
     </ul>
