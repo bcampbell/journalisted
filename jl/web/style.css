@@ -181,7 +181,7 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
     position: relative;
     width: 70%;
 /*    height: 116px;*/  /* gradient height */
-    height: 46px;  /* gradient height */
+    height: 70px;
     margin: 0 auto;
 }
 
@@ -215,8 +215,9 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 
 #head #tagline {
   position: absolute;   /* within head */
-  bottom: 1em;
-  left: 0;
+/*  bottom: 1em; */
+  top: 55px;
+  left: 50px;
   padding: 0;
   margin: 0;
   text-transform: uppercase;
@@ -249,7 +250,7 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 
 #head #headsearch {
     position: absolute;
-	top: 2.2em;
+	top: 1.2em;
 	right: 0;
     background-color: inherit;
     padding: 0;
