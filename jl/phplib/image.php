@@ -57,12 +57,14 @@ function imageURL( $filename ) {
     return "/img/" . $filename;
 }
 
-
+// delete an uploaded image. commits the db change before deleting image file.
 function imageZap( $image_id )
 {
     $filename = db_getOne( "SELECT filename FROM image WHERE id=?", $image_id );
+    db_do( "DELETE FROM image WHERE id=?", $image_id );
+    db_commit();
 
-
+    unlink( OPTION_JL_IMG_UPLOAD . '/' . $filename );
 }
 
 

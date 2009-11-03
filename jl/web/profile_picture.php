@@ -43,7 +43,7 @@ class PicturePage extends EditProfilePage
         }
 
         $sql = <<<EOT
-SELECT i.filename,i.width,i.height
+SELECT i.id,i.filename,i.width,i.height
     FROM ( image i INNER JOIN journo_picture jp ON jp.image_id=i.id )
     WHERE jp.journo_id=?
 EOT;
@@ -57,7 +57,7 @@ EOT;
 
 ?>
 <img src="<?= imageUrl($img['filename']); ?>" />
-<a class="remove" href="">Remove</a>
+<a class="remove" href="/profile_picture?ref=<?= $this->journo['ref']; ?>&action=remove_pic&id=<?= $img['id']; ?>">Remove</a>
 <br/>
 <?php
 
@@ -98,16 +98,16 @@ EOT;
                     $this->journo['id'], $img['id'] );
                 db_commit();
 
-                print "<p>image uploaded.</p>\n";
+/*                print "<p>image uploaded.</p>\n"; */
 /*                print "<img src=\"/img/{$img['filename']}\" />\n";
                 print "<p>{$img['width']}x{$img['height']}</p>\n"; */
 
                 /* delete any other images */
-                $others = db_getAll( "SELECT FROM journo_picture WHERE journo_id=? AND image_id<>?", $this->journo['id'], $img['id'] );
+                $others = db_getAll( "SELECT image_id FROM journo_picture WHERE journo_id=? AND image_id<>?", $this->journo['id'], $img['id'] );
                 db_do( "DELETE FROM journo_picture WHERE journo_id=? AND image_id<>?", $this->journo['id'], $img['id'] );
                 db_commit();
                 foreach( $others as $other )
-                    imageZap( $other['id'] );
+                    imageZap( $other['image_id'] );
 
             } else {
                 print "<p>ERROR: failed to store image</p>\n";
@@ -120,6 +120,10 @@ EOT;
 
 
     function handleRemove() {
+        $image_id = get_http_var('id');
+        db_do( "DELETE FROM journo_picture WHERE journo_id=? AND image_id=?", $this->journo['id'], $image_id );
+        db_commit();
+        imageZap( $image_id );
     }
 
 
