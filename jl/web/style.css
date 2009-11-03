@@ -6,8 +6,10 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 80%;
+/*    font-size: 80%; */
 }
+
+h1,h2,h3,h4,h5 { font-family: Times,serif; }
 
 /* internal links */
 a { color: #0000FF; }
@@ -78,20 +80,6 @@ form .errhint { color: red; }
 .faq { padding: 0.5em; }
 .focused { background-color: #ffffff; border: solid 0.5em #FFFF00; -moz-border-radius: 1em; -webkit-border-radius: 1em; }
 
-/* tooltips - popup on hover (based on: http://www.kollermedia.at/archive/2008/03/24/easy-css-tooltip/) */
-a.tooltip:hover {font-size: 100%;} /* IE kludge - needs some kind of link change on hover */
-a.tooltip span {display:none; padding:2px 3px; margin-left:0px; width:24em; /*130px;*/ }
-a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; border:1px solid #000000; color:#000000;}
-
-/* action link in bottom right of some boxes (eg to submit links) */
-.box-action { /*float: right; margin: 0;*/}
-
-
-/* not used? */
-.overview li,
-.featured-journo li {
-    margin: 1.5em 0;
-}
 
 .greenbox {
     font-family: georgia, serif;
@@ -111,10 +99,10 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
     margin: 0.5em 0 0.5em 2em;
 }
 
-.publication {
-    font-style: italic;
-}
-
+.publication { font-style: italic; }
+.jobtitle { font-style: italic; }
+.daterange { font-style: italic; }
+.current-employer { font-weight: bolder; }
 
 
 /* front page: "for journos, developers, press officers" */
@@ -152,21 +140,18 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 .art-list .publication {
     color: #888888;
 }
-.art-list blockquote {
+
+blockquote {
     color: #444444;
 }
 
 .art-list .published    { color: #888888; }
 .art-list abbr          { border-bottom: none; } 
 
-/* KLUDGE! to deal with images embedded inside bios */
-.bio-para img {
-    float: left;
-    margin-right: 0.5em;
-}
 
-
-
+/* picture of journo */
+div.picture { float: right; margin: 0.5em; padding: 0.1em; }
+div.picture img { display:block; }
 
 /*
  * HEADER
@@ -179,9 +164,9 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 
 #head .inner {
     position: relative;
-    width: 70%;
+    width: 80%; /* was 70% */
 /*    height: 116px;*/  /* gradient height */
-    height: 70px;
+    height: 90px;
     margin: 0 auto;
 }
 
@@ -337,7 +322,7 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 
 #footer .inner
 {
-    width: 70%;
+    width: 80%;
     margin: 0 auto;
     color: #CCCCCC;
 }
@@ -361,7 +346,7 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
     color: #666666;
     height: 1em;
 
-    width: 70%;
+    width: 80%;
     margin: 0.5em auto;
     padding: 0.5em;
     clear: both; }
@@ -376,71 +361,49 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 /* CONTENT PART */
 
 #content {
-    width: 70%;
+    width: 80%;
     margin: 0 auto 1em auto;
     clear: both; }
 
 
-#maincolumn {
+.maincolumn {
   float:left;
   width:64%;
 }
 
-#smallcolumn {
+.smallcolumn {
   margin:0 0 0 10px;
   float:right;
   width:33%;
 }
 
 
-#maincolumn .box {
+.box {
     background-color: #ffffff;
-/*    border: solid #666666 1px; */
-    border-top: 0.5em solid #666666;
+    border: solid #4D4D4D 1px;
     padding: 0;
     margin-bottom: 1em;
 }
 
-#maincolumn .box-content { padding: 0.5em 0; }
+.box-content { padding: 0.5em; }
 
-#maincolumn .box h1,
-#maincolumn .box h2,
-#maincolumn .box h3 {
+.box > h1,
+.box > h2,
+.box > h3 {
     margin: 0;
-    padding: 0.2em 0.2em 0 0;
-    color: #CC0000;
-    background-color: #EEEEEE;
+    padding: 0.4em;
+    background-color: #eeeeee;
     font-weight: normal;
 }
 
 
-/* overrides #maincolumn .box */
-#maincolumn .strong-box {
+
+.strong-box {
 /*    border: solid #CC0000 1px; */
     border-top: 0.7em solid #CC0000;
 }
 
 
-
-#smallcolumn .box {
-    background-color: #EEEEEE;
-/*    border: solid #666666 1px; */
-    border-top: 0.5em solid #666666;
-    padding: 0;
-    margin-bottom: 1em;
-}
-
-
-#smallcolumn .box-content { padding: 0.5em 0; }
-
-#smallcolumn .box h2,
-#smallcolumn .box h3 {
-    margin: 0;
-    padding: 0.2em 0.2em 0 0;
-    color: #CC0000;
-    background-color: #FFFFFF;
-    font-weight: normal;
-}
 
 /* action-box - to indicate somehting to do.
  * note ugliness to get rounded corners. grr... only needed because more
@@ -449,7 +412,7 @@ a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; bord
 .action-box {
     background-color: #4D4D4D;
     color: #FFFFFF;
-    margin: 10px 0;
+    margin-bottom: 1em;
 }
 
 .action-box form {

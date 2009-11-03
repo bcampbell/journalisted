@@ -453,7 +453,7 @@ EOT;
     /* contact details */
     $guessed = null;
     $known = fetchJournoEmail( $journo );
-    if( is_null($known) ) {
+    if( !is_null($known) ) {
         /* if there is an email address, but it is blank, don't display _anything_ */
         if( $known['email'] == '' )
             $known = null;
@@ -466,16 +466,10 @@ EOT;
     $data['known_email'] = $known;
     $data['guessed'] = $guessed;
 
-    $data['employers'] = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=?", $journo['id'] );
-    foreach( $data['employers'] as &$e ) {
-        if( !$e['year_to'] )
-            $e['year_to']='present';
-    }
-
-
-    $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=?", $journo['id'] );
+    $data['employers'] = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
+    $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
     $data['awards'] = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $journo['id'] );
-    $data['books'] = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $journo['id'] );
+    $data['books'] = db_getAll( "SELECT * FROM journo_books WHERE journo_id=? ORDER BY year_published DESC", $journo['id'] );
 
     $sql = <<<EOT
 SELECT j.prettyname, j.ref, j.oneliner
@@ -524,10 +518,10 @@ EOT;
 
 
 
-function cmp_pubdate( $a, $b ) {
-    if( $a['pubdate'] == $b['pubdate'] )
+function cmp_isopubdate( $a, $b ) {
+    if( $a['iso_pubdate'] == $b['iso_pubdate'] )
         return 0;
-    if( $a['pubdate'] > $b['pubdate'] )
+    if( $a['iso_pubdate'] < $b['iso_pubdate'] )
         return 1;
     else
         return -1;
@@ -551,7 +545,7 @@ EOT;
 
 
     $sql = <<<EOT
-SELECT NULL as id, NULL as description, pubdate, url as permalink, publication as srcorgname, NULL as srcorg, 0 as total_bloglinks, 0 as total_comments
+SELECT NULL as id, title, NULL as description, pubdate, url as permalink, publication as srcorgname, NULL as srcorg, 0 as total_bloglinks, 0 as total_comments
     FROM journo_other_articles
     WHERE journo_id=? AND status='a'
     ORDER BY pubdate DESC
@@ -559,9 +553,7 @@ SELECT NULL as id, NULL as description, pubdate, url as permalink, publication a
 EOT;
     $others = db_getAll( $sql, $journo['id'], $limit );
 
-    $arts = $arts + $others;
-    usort( $arts, "cmp_pubdate" );
-
+    $arts = array_merge( $arts, $others );
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
@@ -573,6 +565,9 @@ EOT;
         else
             $a['buzz'] = '';
     }
+
+    usort( $arts, "cmp_isopubdate" );
+
     return $arts;
 
 }

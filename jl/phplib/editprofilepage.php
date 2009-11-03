@@ -190,7 +190,7 @@ EOT;
             }
 
             /* note, restrict by journo id to stop people hijacking others entries! */
-            $sql = "UPDATE {$tablename} SET " . implode( ',', $frags ) . "WHERE id=? AND journo_id=?";
+            $sql = "UPDATE {$tablename} SET " . implode( ',', $frags ) . " WHERE id=? AND journo_id=?";
             $params[] = $item['id'];
             $params[] = $this->journo['id'];
 

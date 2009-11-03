@@ -23,6 +23,17 @@ if(!$journo)
     exit(1);
 }
 
+// is logged in, and with edit rights to this journo?
+$can_edit_page = FALSE;
+$P = person_if_signed_on();
+if( !is_null($P) )
+{
+    if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
+        $P->id(), $journo['id'] ) ) {
+        $can_edit_page = TRUE;
+    }
+}
+
 
 $pageparams = array(
     'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
@@ -76,6 +87,7 @@ if( !is_null( $cached_json ) ) {
     }
 
     $data = json_decode( $cached_json,true );
+    $data['can_edit_page'] = $can_edit_page;
     {
         extract( $data );
         include "../templates/journo.tpl.php";
@@ -83,8 +95,9 @@ if( !is_null( $cached_json ) ) {
 
 } else {
     /* uh-oh... page is missing from the cache...  generate a quick n nasty version on the fly! */
-    
+
     $data = journo_collectData( $journo, true );
+    $data['can_edit_page'] = $can_edit_page;
     $json_quick = json_encode($data);
 
     /* mark journo as needing their page sorted out! */
@@ -112,6 +125,7 @@ page_footer();
 /*
  * HELPERS
  */
+
 
 function extra_head()
 {

@@ -101,6 +101,14 @@ EOT;
                 print "<p>image uploaded.</p>\n";
 /*                print "<img src=\"/img/{$img['filename']}\" />\n";
                 print "<p>{$img['width']}x{$img['height']}</p>\n"; */
+
+                /* delete any other images */
+                $others = db_getAll( "SELECT FROM journo_picture WHERE journo_id=? AND image_id<>?", $this->journo['id'], $img['id'] );
+                db_do( "DELETE FROM journo_picture WHERE journo_id=? AND image_id<>?", $this->journo['id'], $img['id'] );
+                db_commit();
+                foreach( $others as $other )
+                    imageZap( $other['id'] );
+
             } else {
                 print "<p>ERROR: failed to store image</p>\n";
             }
