@@ -45,12 +45,13 @@
 */
 ?>
 
-<div id="maincolumn"
+<div class="maincolumn">
 
-<div class="hentry">
-  <h2 class="entry-title"><?= $title; ?></h2>
+<div class="box clipping hentry">
+ <h2 class="entry-title"><?= $title; ?></h2>
+ <div class="box-content">
   <span class="publication"><?= $srcorgname ?>,</span>
-  <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr><br/>
+  <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr>,
   <?= $byline; ?><br/>
   <blockquote class="entry-summary">
     <?= $description ?>
@@ -62,29 +63,17 @@
   (This article was originally published by
   <span class="published-by vcard"><a class="fn org url extlink" href="<?= $srcorg_url ?>"><?= $srcorgname ?></a></span>,
   which adheres to the <a rel="statement-of-principles" class="extlink" href="<?= $sop_url;?>"><?= $sop_name ?></a>)<br/>
+ </div>
 </div>
 
 
 
-<div class="box">
-  <h2>Which blogs are linking to this article?</h2>
+<div class="box tags">
+  <h2>Subjects mentioned</h2>
   <div class="box-content">
-<?php if( $blog_links ) { ?>
-    <p><?= sizeof( $blog_links ) ?> blog posts link to this article:</p>
-    <ul>
-    <?php foreach( $blog_links as $bl ) { ?>
-        <li><?= gen_bloglink( $bl ) ?></li>
-    <?php } ?>
-    </ul>
-<?php } else { ?>
-    <p>None known</p>
-<?php } ?>
-    <p class="disclaimer">Based on blogs recorded by
-    <a class="extlink" href="http://technorati.com">Technorati</a> and
-    <a class="extlink" href="http://www.icerocket.com">IceRocket</a></p>
+<?php tag_display_cloud( $tags ); ?>
   </div>
 </div>
-
 
 
 
@@ -123,25 +112,14 @@
 </div> <!-- end maincolumn -->
 
 
-<div id="smallcolumn">
-
-
-<div class="box tags">
-  <h2>Subjects mentioned</h2>
-  <div class="box-content">
-<?php
-
-    tag_display_cloud( $tags );
-
-?>
-  </div>
-</div>
+<div class="smallcolumn">
 
 
 
 <div class="box">
-  <h2>Feedback on the article from the web</h2>
+  <h2>Feedback on the web</h2>
   <div class="box-content">
+    <h3>Comments about this article</h3>
 <?php if( $comment_links ) { ?>
     <ul>
       <?php foreach( $comment_links as $c ) { ?><li>
@@ -151,7 +129,23 @@
 <?php } else { ?>
     <p>None known</p>
 <?php } ?>
+    <h3>Blogs linking to this article</h3>
+<?php if( $blog_links ) { ?>
+    <p><?= sizeof( $blog_links ) ?> blog posts link to this article:</p>
+    <ul>
+    <?php foreach( $blog_links as $bl ) { ?>
+        <li><?= gen_bloglink( $bl ) ?></li>
+    <?php } ?>
+    </ul>
+<?php } else { ?>
+    <p>None known</p>
+<?php } ?>
+    <p class="disclaimer">Based on blogs recorded by
+    <a class="extlink" href="http://technorati.com">Technorati</a> and
+    <a class="extlink" href="http://www.icerocket.com">IceRocket</a></p>
   </div>
+</div>
+
 </div>
 
 </div> <!-- end smallcolumn -->

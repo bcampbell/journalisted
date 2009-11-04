@@ -94,7 +94,7 @@ class AwardsPage extends EditProfilePage
 <form class="award<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
-  <th><label for="award_<?= $uniq; ?>">Award</label></th>
+  <th><label for="award_<?= $uniq; ?>">Award:</label></th>
   <td><input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" /></td>
  </tr>
 </table>

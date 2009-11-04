@@ -50,6 +50,7 @@ EOT;
         $imgs = db_getAll( $sql, $this->journo['id'] );
 
 ?>
+<form action="<?= $this->pagePath; ?>" method="post" enctype="multipart/form-data">
 <h2>Set a picture</h2>
 <?php
 
@@ -72,10 +73,8 @@ EOT;
         }
 
 ?>
-<form action="<?= $this->pagePath; ?>" method="post" enctype="multipart/form-data">
 <label for="file">Filename:</label>
 <input type="file" name="file" id="file" />
-<br />
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="upload_pic" />
 <input type="submit" name="submit" value="Upload" />

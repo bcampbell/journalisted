@@ -94,15 +94,15 @@ class BooksPage extends EditProfilePage
 <form class="book<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
-  <th><label for="title_<?= $uniq; ?>">Title</label></th>
+  <th><label for="title_<?= $uniq; ?>">Title:</label></th>
   <td><input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" /></td>
  </tr>
  <tr>
-  <th><label for="publisher_<?= $uniq; ?>">Publisher</label></th>
+  <th><label for="publisher_<?= $uniq; ?>">Publisher:</label></th>
   <td><input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" /></td>
  </tr>
  <tr>
-  <th><label for="year_published<?= $uniq; ?>">Year Published</label></th>
+  <th><label for="year_published<?= $uniq; ?>">Year Published:</label></th>
   <td><input type="text" size="60" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" /></td>
  </tr>
 </table>

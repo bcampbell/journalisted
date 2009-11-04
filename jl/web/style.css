@@ -387,6 +387,7 @@ div.picture img { display:block; }
 
 .box-content { padding: 0.5em; }
 
+
 .box > h1,
 .box > h2,
 .box > h3 {
@@ -394,6 +395,20 @@ div.picture img { display:block; }
     padding: 0.4em;
     background-color: #eeeeee;
     font-weight: normal;
+}
+
+.box.clipping {
+    border-style: none;
+    background: url(images/clipping.png) no-repeat bottom right;
+    padding-bottom: 3em;
+    font-family: Times,serif;
+    margin: 1.5em;
+}
+
+.box.clipping > h1,
+.box.clipping > h2,
+.box.clipping > h3 {
+    background:none;
 }
 
 

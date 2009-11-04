@@ -87,7 +87,8 @@ form.frozen {
 }
 
 form.frozen input {
-    border: 1px solid #eeeeee;
+/*    border: 1px solid #eeeeee; */
+    border-style: none;
     background-color: white;
     color: black;
 }
@@ -120,7 +121,8 @@ th {
     font-family: sans-serif;
     font-weight: normal;
 }
- .exhort a {
+
+.exhort a {
     float: right;
     text-decoration: underline;
 }
