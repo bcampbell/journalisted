@@ -65,7 +65,9 @@
 <div id="dateline">
 <?php if( $logged_in_user ) { ?>
   <span id="hellouser">
-    Hello, <?php echo $logged_in_user; ?> [<a href="/logout">log out</a>]<br/>
+    Hello, <?php echo $logged_in_user; ?>
+<?php if( $can_edit_profile ) { ?> [<a href="/profile">edit my profile</a>] <?php } ?>
+[<a href="/logout">log out</a>] <br/>
   </span>
 <?php } else { ?>
   <span id="today"><?php echo date( 'l d F Y' ); ?></span>

@@ -58,10 +58,16 @@ class BooksPage extends EditProfilePage
 
         $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
         foreach( $books as &$book ) {
-            $this->showForm($book);
+            $this->showForm( 'edit', $book);
         }
+
+        if( !$books ) {
+            /* show a ready-to-go creation form */
+            $this->showForm( 'creator', null );
+        }
+
         /* template form for adding new ones */
-        $this->showForm( NULL );
+        $this->showForm( 'template', null );
     }
 
 
@@ -81,17 +87,22 @@ class BooksPage extends EditProfilePage
 
 
 
-    function showForm( $book )
+    function showForm( $formtype, $book )
     {
         static $uniq=0;
         ++$uniq;
-        $is_template = is_null( $book );
-        if( $is_template )
+        if( is_null( $book ) )
             $book = array( 'title'=>'', 'publisher'=>'', 'year_published'=>'' );
+ 
+        $formclasses = 'book';
+        if( $formtype == 'template' )
+            $formclasses .= " template";
+        if( $formtype == 'creator' )
+            $formclasses .= " creator";
 
 ?>
 
-<form class="book<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
   <th><label for="title_<?= $uniq; ?>">Title:</label></th>
@@ -110,7 +121,7 @@ class BooksPage extends EditProfilePage
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
-<?php if( !$is_template ) { ?>
+<?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />
 <?= $this->genRemoveLink($book['id']); ?>
 <?php } ?>

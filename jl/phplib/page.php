@@ -40,13 +40,18 @@ function page_header( $title, $params=array() )
     }
 
     $logged_in_user = null;
+    $can_edit_profile = FALSE;
     if( $P )
     {
         if ($P->name_or_blank())
             $logged_in_user = $P->name;
         else
             $logged_in_user = $P->email;
+
+        if( db_getOne( "SELECT * FROM person_permission WHERE person_id=? AND permission='edit'", $P->id() ) )
+            $can_edit_profile = TRUE;
     }
+
 
 
     include "../templates/header.tpl.php";

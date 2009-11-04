@@ -9,13 +9,13 @@ require_once '../../phplib/utility.php';
 
 
 
-class WeblinksPage extends EditProfilePage
+class ContactPage extends EditProfilePage
 {
 
     function __construct() {
-        $this->pageName = "weblinks";
-        $this->pagePath = "/profile_weblinks";
-        $this->pageTitle = "Weblinks";
+        $this->pageName = "contact";
+        $this->pagePath = "/profile_contact";
+        $this->pageTitle = "Contact";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
     }
@@ -35,7 +35,7 @@ class WeblinksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.weblink' );
+        fancyForms( '.contact' );
     });
 </script>
 <?php
@@ -54,14 +54,18 @@ class WeblinksPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
-?><h2>Web links</h2><?php
+?><h2>Contact Information</h2><?php
 
-        $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
-        foreach( $weblinks as &$weblink ) {
-            $this->showForm( 'edit', $weblink);
+        $contacts = array();
+        $email = db_getOne( "SELECT email FROM journo_email WHERE journo_id=?", $this->journo['id'] );
+        if( $email )
+            $contacts[] = array( 'email'=>$email );
+
+        foreach( $contacts as &$contact ) {
+            $this->showForm( 'edit', $contact);
         }
 
-        if( !$weblinks ) {
+        if( !$contacts ) {
             /* show a ready-to-go creation form */
             $this->showForm( 'creator', null );
         }
@@ -87,14 +91,14 @@ class WeblinksPage extends EditProfilePage
 
 
 
-    function showForm( $formtype, $weblink )
+    function showForm( $formtype, $contact )
     {
         static $uniq=0;
         ++$uniq;
-        if( is_null( $weblink ) )
-            $weblink = array( 'url'=>'', 'description'=>'' );
+        if( is_null( $contact ) )
+            $contact = array( 'email'=>'', 'phone'=>'', 'postal'=>'' );
  
-        $formclasses = 'weblink';
+        $formclasses = 'contact';
         if( $formtype == 'template' )
             $formclasses .= " template";
         if( $formtype == 'creator' )
@@ -105,12 +109,16 @@ class WeblinksPage extends EditProfilePage
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
-  <th><label for="url_<?= $uniq; ?>">URL:</label></th>
-  <td><input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" /></td>
+  <th><label for="email_<?= $uniq; ?>">Email:</label></th>
+  <td><input type="text" size="60" name="email" id="email_<?= $uniq; ?>" value="<?= h($contact['email']); ?>" /></td>
  </tr>
  <tr>
-  <th><label for="description_<?= $uniq; ?>">Description:</label></th>
-  <td><input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" /></td>
+  <th><label for="phone_<?= $uniq; ?>">Phone:</label></th>
+  <td><input type="text" size="60" name="phone" id="phone_<?= $uniq; ?>" value="<?= h($contact['phone']); ?>" /></td>
+ </tr>
+ <tr>
+  <th><label for="postal_<?= $uniq; ?>">Postal:</label></th>
+  <td><textarea cols="80" rows="5" name="postal" id="postal_<?= $uniq; ?>"><?= h($contact['postal']); ?></textarea></td>
  </tr>
 </table>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
@@ -118,8 +126,8 @@ class WeblinksPage extends EditProfilePage
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
-<input type="hidden" name="id" value="<?= $weblink['id']; ?>" />
-<?= $this->genRemoveLink($weblink['id']); ?>
+<input type="hidden" name="id" value="<?= $contact['id']; ?>" />
+<?= $this->genRemoveLink($contact['id']); ?>
 <?php } ?>
 </form>
 <?php
@@ -131,33 +139,20 @@ class WeblinksPage extends EditProfilePage
 
     function handleSubmit()
     {
-        $fieldnames = array( 'url', 'description' );
-        $weblink = $this->genericFetchItemFromHTTPVars( $fieldnames );
-
-        if( $weblink['id'] ) {
-            /* update existing */
-            db_do( "UPDATE journo_weblink SET url=?, description=? WHERE id=? AND journo_id=?",
-                $weblink['url'],
-                $weblink['description'],
-                $weblink['id'],
-                $this->journo['id'] );
-        } else {
-            db_do( "INSERT INTO journo_weblink (journo_id,url,description,approved) VALUES (?,?,?,true)",
-                $this->journo['id'],
-                $weblink['url'],
-                $weblink['description'] );
-            $weblink['id'] = db_getOne( "SELECT lastval()" );
-        }
-        db_commit();
-        return $weblink['id'];
+/*        $fieldnames = array( 'title', 'publisher', 'year_published' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        $this->genericStoreItem( "journo_books", $fieldnames, $item );
+        return $item['id'];
+*/
     }
 
     function handleRemove() {
-        $id = get_http_var("remove_id");
+/*        $id = get_http_var("remove_id");
 
         // include journo id, to stop people zapping other journos entries!
-        db_do( "DELETE FROM journo_weblink WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        db_do( "DELETE FROM journo_books WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
+*/
     }
 
 
@@ -166,7 +161,7 @@ class WeblinksPage extends EditProfilePage
 
 
 
-$page = new WeblinksPage();
+$page = new ContactPage();
 $page->run();
 
 

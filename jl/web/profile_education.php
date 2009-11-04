@@ -61,11 +61,13 @@ class EducationPage extends EditProfilePage
 <h2>Tell us about your education</h2>
 <?php
         foreach( $edus as &$edu ) {
-            $this->showForm( $edu );
+            $this->showForm( 'edit', $edu );
         }
+        if( !$edus )
+            $this->showForm('creator',null );
 
         /* output the template form */
-        $this->showForm( NULL );
+        $this->showForm( 'template', NULL );
 
     }
 
@@ -88,17 +90,22 @@ class EducationPage extends EditProfilePage
 
 
     /* if $edu is null, then display a fresh form for entering a new entry */
-    function showForm( $edu )
+    function showForm( $formtype, $edu )
     {
         static $uniq=0;
         ++$uniq;
-        $is_template = is_null( $edu );
-        if( $is_template )
+        if( is_null( $edu ) )
             $edu = array( 'school'=>'', 'field'=>'', 'qualification'=>'', 'year_from'=>'', 'year_to'=>'' );
+
+        $formclasses = 'education';
+        if( $formtype == 'template' )
+            $formclasses .= " template";
+        if( $formtype == 'creator' )
+            $formclasses .= " creator";
 
 ?>
 
-<form class="education<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
   <th><label for="school_<?= $uniq; ?>">School name:</label></th>
@@ -125,7 +132,7 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
-<?php if( !$is_template ) { ?>
+<?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
 <?= $this->genRemoveLink($edu['id']); ?>
 <?php } ?>

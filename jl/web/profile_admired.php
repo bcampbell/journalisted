@@ -100,11 +100,11 @@ EOT;
 
 
         foreach( $admired as $a ) {
-            $this->showForm($a);
+            $this->showForm('edit',$a);
         }
-
-        // template form for adding new ones:
-        $this->showForm(NULL);
+        if( !$admired )
+            $this->showForm('creator',null);
+        $this->showForm('template', null);
 
         // if they've entered any journos already, encourage them to add more to their profile */
         if( sizeof( $admired) > 0 ) {
@@ -144,27 +144,37 @@ EOT;
 
 
 
-    function showForm( $admired )
+    function showForm( $formtype, $admired )
     {
 
         static $uniq=0;
         ++$uniq;
-        $is_template = is_null( $admired );
-        if( $is_template )
+        if( is_null( $admired ) )
             $award = array( 'admired_name'=>'', 'admired_ref' );
+
+        $formclasses = 'admired';
+        if( $formtype == 'template' )
+            $formclasses .= " template";
+        if( $formtype == 'creator' )
+            $formclasses .= " creator";
 ?>
 
-<form class="admired<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<!-- <label for="admired_name_<?= $uniq; ?>">Journalist's name</label> -->
- <input type="text" name="admired_name" class="admired_name" id="admired_name_<?= $uniq; ?>" value="<?= h($admired['admired_name']); ?>" />
- <span class="admired_oneliner"><?= h(is_null($admired['oneliner']) ? '':"({$admired['oneliner']})" ); ?></span>
- <input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
- <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
- <br />
+<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<table border="0">
+ <tr>
+  <th><label for="admired_name_<?= $uniq; ?>">Journalist:</label></th>
+  <td>
+   <input type="text" name="admired_name" class="admired_name" id="admired_name_<?= $uniq; ?>" value="<?= h($admired['admired_name']); ?>" />
+   <span class="admired_oneliner"><?= h(is_null($admired['oneliner']) ? '':"({$admired['oneliner']})" ); ?></span>
+  </td>
+ </tr>
+</table>
+<input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
+<input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
-<?php if( !$is_template ) { ?>
+<?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $admired['id']; ?>" />
 <?= $this->genRemoveLink($admired['id']); ?>
 <?php } ?>

@@ -61,9 +61,11 @@ class AwardsPage extends EditProfilePage
 ?><h2>Have you won any awards?</h2><?php
         $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $this->journo['id'] );
         foreach( $awards as $a ) {
-            $this->showForm( $a );
+            $this->showForm( "edit", $a );
         }
-        $this->showForm( NULL );
+        if( !$awards )
+            $this->showForm( "creator", null );
+        $this->showForm( "template", null );
 
     }
 
@@ -81,17 +83,20 @@ class AwardsPage extends EditProfilePage
         }
     }
 
-    function showForm( $award )
+    function showForm( $formtype, $award )
     {
         static $uniq=0;
         ++$uniq;
-        $is_template = is_null( $award );
-        if( $is_template )
+        if( is_null( $award ) )
             $award = array( 'award'=>'' );
-
+        $formclasses = 'award';
+        if( $formtype == 'template' )
+            $formclasses .= " template";
+        if( $formtype == 'creator' )
+            $formclasses .= " creator";
 
 ?>
-<form class="award<?= $is_template?' template':''; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
   <th><label for="award_<?= $uniq; ?>">Award:</label></th>
@@ -102,7 +107,7 @@ class AwardsPage extends EditProfilePage
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
-<?php if( !$is_template ) { ?>
+<?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $award['id']; ?>" />
 <?= $this->genRemoveLink($award['id']); ?>
 <?php } ?>

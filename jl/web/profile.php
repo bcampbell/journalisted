@@ -13,19 +13,43 @@ require_once '../../phplib/utility.php';
 
 /* get journo identifier (eg 'fred-bloggs') */
 
-$P = person_if_signed_on();
 $ref = strtolower( get_http_var( 'ref' ) );
+$r = array(
+    'reason_web' => "Edit your page on Journalisted",
+    'reason_email' => "Edit your page on Journalisted",
+    'reason_email_subject' => "Edit your page on Journalisted"
+    );
+    // rediect to login screen if not logged in (so this may never return)
+$P = person_signon($r);
+
 
 $journo = NULL;
 if( $ref ) {
     $journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
 } else {
-    // no journo given - if person is logged on, see if they are associated with a journo
+    // no journo given - if person is logged on, see if they are associated with a journo (or journos)
     if( $P ) {
-        $journo_id = db_getOne( "SELECT journo_id FROM person_permission WHERE person_id=? AND permission='edit'", $P->id() );
-        if( $journo_id ) {
-            $journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND id=?", $journo_id );
+        $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit' AND j.status='a'", $P->id() );
+
+        if( sizeof( $editables > 1 ) ) {
+            /* let user pick which one... */
+            page_header("");
+
+?>
+<p>Which one do you want to edit?</p>
+<ul>
+<?php foreach( $editables as $j ) { ?>
+<li><a href="/profile?ref=<?= $j['ref'] ?>"><?= $j['prettyname'] ?></a></li>
+<?php } ?>
+</ul>
+<?php
+
+            page_footer();
+            exit;
         }
+
+        if( sizeof( $editables ) == 1 )
+            $journo = $editables[0];        // just one journo.
     }
 }
 

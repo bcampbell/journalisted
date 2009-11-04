@@ -163,7 +163,7 @@ function fancyForms( formClass, extraSetupFn ) {
     /* hide the new-entry template form, add the "Add new" link */
     /* (could use jquery-dynamic-form plugin but it turns field names into arrays [], which
        we don't want in this case) */
-    $( formClass + ".template").hide().after( '<a href="" class="plus">Add one</a>' );
+    $( formClass + ".template").hide().after( '<a href="" class="plus">Add another</a>' );
     $(".plus").click( function() {
         /* add a creator form by cloning the template */
         var f = $(formClass + ".template:first");

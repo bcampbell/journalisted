@@ -73,10 +73,12 @@ class EmploymentPage extends EditProfilePage
 <?php
         $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
         foreach( $employers as $e ) {
-            $this->showForm( $e );
+            $this->showForm( 'edit', $e );
         }
+        if( !$employers )
+            $this->showForm( 'creator', null );
 
-        $this->showForm( NULL );
+        $this->showForm( 'template', null );
     }
 
 
@@ -114,43 +116,34 @@ EOT;
     }
 
     /* if $emp is null, then display a fresh form for entering a new entry */
-    function showForm( $emp )
+    function showForm( $formtype, $emp )
     {
-        static $uniqID=0;
-
-        /* the way the template form is used depends on if javascript is in use:
-         * javascript on: template is hidden, and cloned to add new entries
-         * javascript off: template is used to submit a new entry
-         */
-
-        $is_template = is_null( $emp );
-
-        $uniq = "_{$uniqID}";
-        $uniqID++;
-
-        $classes = 'employer';
-        if( $is_template ) {
-            /* a dummy, blank entry */
+        static $uniq=0;
+        ++$uniq;
+        if( is_null( $emp ) )
             $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
-            $classes .= " template";
-        }
-
+ 
+        $formclasses = 'employer';
+        if( $formtype == 'template' )
+            $formclasses .= " template";
+        if( $formtype == 'creator' )
+            $formclasses .= " creator";
 
 ?>
 
-<form class="<?= $classes; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
- <tr><th><label for="employer<?= $uniq; ?>">Employer:</label></td><td><input type="text" size="60" name="employer" id="employer<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
- <tr><th><label for="job_title<?= $uniq; ?>">Job Title:</label></td><td><input type="text" size="60" name="job_title" id="job_title<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
- <tr><th><label for="year_from<?= $uniq; ?>">Year from:</label></td><td><input type="text" size="4" name="year_from" id="year_from<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
- <tr><th><label for="year_to<?= $uniq; ?>">Year to:</label></td><td><input type="text" size="4" name="year_to" id="year_to<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
- <tr><th></th><td><input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current<?= $uniq; ?>"/><label for="current<?= $uniq; ?>">I currently work here</label></td></tr>
+ <tr><th><label for="employer_<?= $uniq; ?>">Employer:</label></td><td><input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
+ <tr><th><label for="job_title_<?= $uniq; ?>">Job Title:</label></td><td><input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
+ <tr><th><label for="year_from_<?= $uniq; ?>">Year from:</label></td><td><input type="text" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
+ <tr><th><label for="year_to_<?= $uniq; ?>">Year to:</label></td><td><input type="text" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
+ <tr><th></th><td><input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label></td></tr>
 </table>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
 <button class="cancel" type="reset">Cancel</button>
-<?php if( !$is_template ) { ?>
+<?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />
 <?= $this->genRemoveLink($emp['id']); ?>
 <?php } ?>

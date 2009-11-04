@@ -96,7 +96,8 @@ class EditProfilePage
             'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
             'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
             'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
-//            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
+            'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
+            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
             'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ),
         );
 

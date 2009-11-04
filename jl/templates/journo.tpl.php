@@ -424,7 +424,11 @@ foreach( $employers as $emp ) {
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
     </ul>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
+    <?php } else { ?>
     <div class="box-action"><a href="/forjournos?j=<?= $ref ?>">Suggest a link for <?= $prettyname ?></a></div>
+    <?php } ?>
     <div style="clear: both;"></div>
   </div>
 </div>
