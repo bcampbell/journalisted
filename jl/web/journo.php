@@ -63,6 +63,7 @@ page_header( $title, $pageparams );
 
 // just use journo id to index cache... other pages won't clash.
 $cacheid = 'json_' . $journo['id'];
+$data = null;
 
 if( strtolower( get_http_var('full') == 'yes' ) ) {
     /* force a full page rebuild (slow) */
@@ -73,49 +74,54 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
 	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json );
     db_do( "UPDATE journo SET modified=false WHERE id=?", $journo['id'] );
 	db_commit();
+} else {
+
+    /* look for cached data to build the page with */
+    $cached_json = db_getOne( "SELECT content FROM htmlcache WHERE name=?", $cacheid );
+
+    if( is_null( $cached_json ) ) {
+        /* uh-oh... page is missing from the cache...  generate a quick n nasty version right now! */
+        $data = journo_collectData( $journo, true );
+        $json_quick = json_encode($data);
+
+        /* mark journo as needing their page sorted out! */
+        db_do( "UPDATE journo SET modified=true WHERE id=?", $journo['id'] );
+        /* save the quick-n-nasty data */
+        db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json_quick );
+        db_commit();
+    } else {
+        /* there is cached data - yay! */
+        $data = json_decode( $cached_json,true );
+
+        if( $can_edit_page && $journo['modified'] == 't' ) {
+            /* journo is logged in and the page is out of date...
+             * update the cached data with some fresh quick-n-nasty data
+             * (which covers most of what a journo might be editing via their profile page, say)
+             */
+
+            $old_quick_n_nasty = $data[ 'quick_n_nasty' ];
+            $newdata = journo_collectData( $journo, true );
+            $data = array_merge( $data, $newdata );
+            /* if there was non-quick-n-nasty data there, this makes sure it'll still be used in the template */
+            $data['quick_n_nasty'] = $old_quick_n_nasty;
+
+            /* store it in the cache for other users to enjoy too :-) */
+            $updated_json = json_encode($data);
+            db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
+            db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $updated_json );
+            db_commit();
+        }
+
+    }
 }
 
+/* all set - invoke the template to render the page! */
 
-$cached_json = db_getOne( "SELECT content FROM htmlcache WHERE name=?", $cacheid );
-if( !is_null( $cached_json ) ) {
-    /* yay! it's there! */
-
-    if( $journo['modified'] == 't' ) {
-?>
-<!-- NOTE: page is marked for rebuilding -->
-<?php
-    }
-
-    $data = json_decode( $cached_json,true );
-    $data['can_edit_page'] = $can_edit_page;
-    {
-        extract( $data );
-        include "../templates/journo.tpl.php";
-    }
-
-} else {
-    /* uh-oh... page is missing from the cache...  generate a quick n nasty version on the fly! */
-
-    $data = journo_collectData( $journo, true );
-    $data['can_edit_page'] = $can_edit_page;
-    $json_quick = json_encode($data);
-
-    /* mark journo as needing their page sorted out! */
-    db_do("UPDATE journo SET modified=true WHERE id=?", $journo['id'] );
-    db_commit();
-
-    /* output the quick version of page (no stats or tags etc) */
-
-    /* save it in the cache for next time, but don't clear the modified flag */
-////    db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
-	db_do( "INSERT INTO htmlcache (name,content) VALUES(?,?)", $cacheid, $json_quick );
-	db_commit();
-
-    /* run with it */
-    {
-        extract( $data );
-        include "../templates/journo.tpl.php";
-    }
+/* can_edit_page is never cached */
+$data['can_edit_page'] = $can_edit_page;
+{
+    extract( $data );
+    include "../templates/journo.tpl.php";
 }
 
 page_footer();
