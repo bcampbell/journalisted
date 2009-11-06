@@ -109,14 +109,24 @@ class EducationPage extends EditProfilePage
 <table border="0">
  <tr>
   <th><label for="school_<?= $uniq; ?>">School name:</label></th>
-  <td><input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" /></td>
+  <td>
+    <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
+    <span class="explain">eg: "St. Cedd's College, Cambridge"</span>
+  </td>
  </tr>
  <tr>
   <th><label for="field_<?= $uniq; ?>">Field(s) of study:</label></th>
-  <td><input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" /></td></tr>
+  <td>
+   <input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" />
+   <span class="explain">eg: "Rocket Surgery"</span>
+  </td>
+ </tr>
  <tr>
   <th><label for="qualification_<?= $uniq; ?>">Qualification:</label></th>
-  <td><input type="text" size="30" name="qualification" id="qualification_<?= $uniq; ?>" value="<?= h($edu['qualification']); ?>" /></td>
+  <td>
+   <input type="text" size="30" name="qualification" id="qualification_<?= $uniq; ?>" value="<?= h($edu['qualification']); ?>" />
+   <span class="explain">eg: "BA"</span>
+  </td>
  </tr>
  <tr>
   <th>Years attended:</th>

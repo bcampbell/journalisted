@@ -128,6 +128,7 @@ function fancyForms( formClass, extraSetupFn ) {
         f.find('.cancel').hide();
         f.find('.remove').hide();
         f.find('.edit').show();
+        f.find('span.explain').hide();
     }
 
     function thawForm(f) {
@@ -139,6 +140,7 @@ function fancyForms( formClass, extraSetupFn ) {
         f.find('.cancel').show();
         f.find('.edit').hide();
         f.find('.remove').show();
+        f.find('span.explain').show();
     }
 
     /* based on fn from jquery-dynamic-form */	

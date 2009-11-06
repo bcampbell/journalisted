@@ -100,6 +100,16 @@ list-style:none;
 padding-bottom:10px;
 }
 
+form .explain {
+/*    display: block; */
+    font-style: italic;
+    font-size: smaller;
+    font-weight: lighter;
+    margin-bottom: 0.2em;
+    color: #222222;
+}
+
+
 fieldset {
     padding: 0.5em;
     margin: 0.5em;
