@@ -9,5 +9,9 @@ set -e
 ./telegraph.py
 ./times.py
 ./bbcnews.py
+./notw.py
+./scotsman.py
+./herald.py
+./ft.py
 echo "DONE!"
 
