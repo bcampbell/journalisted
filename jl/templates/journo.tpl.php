@@ -161,7 +161,9 @@ foreach( $employers as $emp ) {
 <ul>
 <li><a href="/alert?Add=1&amp;j=<?= $ref ?>">Email me</a> when <?= $prettyname ?> writes an article</li>
 <li><a href="<?= $rssurl ?>">RSS Feed</a></li>
-<li><a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
+<?php if( !$can_edit_page ) { ?><li>
+<a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
+<?php } ?>
 <li><a href="#">Report any incorrect information</a></li>
 </ul>
 </div>
@@ -245,7 +247,6 @@ foreach( $employers as $emp ) {
 <?php } ?>
 
   </ul>
-  <p class="disclaimer">Published on one or more of <a href="/faq/what-news-outlets-does-journalisted-cover"><?= OPTION_JL_NUM_SITES_COVERED; ?> websites</a>.</p>
 
 <?php if($more_articles) { ?>
   (<a href="/<?= $ref ?>?allarticles=yes">Show all articles</a>)
@@ -290,7 +291,7 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>The topics <?= $prettyname; ?> mentions most:</h3>
+  <h3>Most mentioned topics</h3>
   <div class="box-content">
     <div class="tags">
 <?php
@@ -326,7 +327,7 @@ foreach( $employers as $emp ) {
 
 
 <div class="box similar-journos">
-  <h3>Journalists who write similar articles</h3>
+  <h3>Similar journalists</h3>
   <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
   <div class="box-content">
     <ul>
@@ -401,7 +402,7 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Awards awarded to <?= $prettyname ?></h3>
+  <h3>Awards Won</h3>
   <div class="box-content">
     <ul>
 <?php foreach( $awards as $a ) { ?>
