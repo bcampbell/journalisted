@@ -141,12 +141,15 @@ def ScrubFunc( context, entry ):
 
     url = context[ 'srcurl' ]
     o = urlparse.urlparse( url )
+
     if o[1] == 'feeds.timesonline.co.uk':
         # sigh... obsfucated url (presumably for tracking)
         # Luckily the guid has proper link, marked as non-permalink
         url = entry.guid
 
-    context['srcid'] = CalcSrcID( url )
+    context[ 'srcid' ] = CalcSrcID( url )
+    context[ 'srcurl' ] = url
+    context[ 'permalink'] = url
     return context
 
 
@@ -160,7 +163,7 @@ def FindArticles():
     blogfeeds = FindBlogFeeds()     # their main rss list isn't 100% complete. sigh.
     feeds = MergeFeedLists( (blogfeeds,mainfeeds) )
 
-    foundarticles = ScraperUtils.FindArticlesFromRSS( feeds, u'times', ScrubFunc )
+    foundarticles = ScraperUtils.FindArticlesFromRSS( feeds, u'times', ScrubFunc, maxerrors=15 )
 
     # part 2: get main paper articles from scraping pages (_should_ mirror what's in the print editions)
     ukmedia.DBUG2( "*** times ***: scraping newspaper article list...\n" )
@@ -268,6 +271,10 @@ def CalcSrcID( url ):
             return None
 
     # main paper?
+
+    if o[1].startswith('feeds.' ):
+        return None  # got wrong url from rss feed!
+
     if not o[1].endswith( 'timesonline.co.uk' ):
         return None
 
@@ -546,4 +553,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+
 
