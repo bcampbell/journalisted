@@ -37,7 +37,7 @@ if( is_null($journo) ) {
     if( $P ) {
         $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit' AND j.status='a'", $P->id() );
 
-        if( sizeof( $editables > 1 ) ) {
+        if( sizeof( $editables) > 1 ) {
             /* let user pick which one... */
             page_header("");
 
