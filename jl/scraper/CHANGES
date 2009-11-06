@@ -28,4 +28,6 @@ Log changes made due to website changes here!
 2009-09-09 dailymail: rss feed page changed, so updated FindRSSFeeds()
 2009-09-09 mirror: thier rss feeds got so bad that maxerrors had to be increased.
 2009-09-10 herald: new heraldscotland website
+2009-10-06 indy: new rss feeds
+2009-11-06 scotsman: minor rearrangement of h1 caused scraper to bail
 

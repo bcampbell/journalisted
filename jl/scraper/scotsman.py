@@ -75,10 +75,11 @@ def Extract( html, context ):
     else:
         ukmedia.DBUG2( "SKIPPING - unknown source org '%s' (%s)\n" % (source, context['srcurl']) )
         return None
-        
+ 
     # else throw exception?
 
-    h1 = artdiv.find('h1')
+    headline_div = soup.find('div', {'class':'headline'} )
+    h1 = headline_div.h1
     headline = h1.renderContents( None )
     headline = ukmedia.FromHTMLOneLine( headline )
     art['title'] = headline
