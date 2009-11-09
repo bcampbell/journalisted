@@ -149,36 +149,23 @@ function page_footer( $params=array() )
 <br />
 &copy; 2007 <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
 
-<?php
-    if( OPTION_JL_PIWIK_ENABLE )
-    {
-?>
-<!-- Piwik -->
-<a href="http://piwik.org" title="Web 2.0 analytics" onclick="window.open(this.href);return(false);">
+</div>
+</div>
+
+<?php if( OPTION_JL_GOOGLE_ANALYTICS_ENABLE ) { ?>
+
 <script type="text/javascript">
-var pkBaseURL = (("https:" == document.location.protocol) ? "https://mststats.dyndns.org/" : "http://mststats.dyndns.org/");
-document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 </script>
 <script type="text/javascript">
-<!--
-piwik_action_name = '';
-piwik_idsite = 1;
-piwik_url = pkBaseURL + "piwik.php";
-piwik_log(piwik_action_name, piwik_idsite, piwik_url);
-//-->
-</script><object>
-<noscript><p>Web 2.0 analytics <img src="http://mststats.dyndns.org/piwik.php" style="border:0" alt="piwik"/></p>
-</noscript></object></a>
-<!-- /Piwik --> 
+try {
+var pageTracker = _gat._getTracker("UA-10908611-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
 
-<?php
+<?php } ?>
 
-    }
-?>
-
-
-</div>
-</div>
 </body>
 </html>
 <?php
