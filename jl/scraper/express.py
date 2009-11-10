@@ -89,9 +89,9 @@ def Extract( html, context ):
 
     missing = soup.find( 'p', text=u"The article you are looking for does not exist.  It may have been deleted." )
     if missing:
-    if 'title' in art:
+        if 'title' in art:
             ukmedia.DBUG2( "IGNORE missing article '%s' (%s)\n" % (art['title'],art['srcurl'] ) )
-    else:
+        else:
             ukmedia.DBUG2( "IGNORE missing article (%s)\n" % ( art['srcurl'] ) )
         return None
 
