@@ -83,7 +83,7 @@ class ContactPage extends EditProfilePage
             $entry_id = $this->handleSubmit();
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink($entry_id),
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
             print json_encode( $result );
         }
@@ -124,10 +124,9 @@ class ContactPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $contact['id']; ?>" />
-<?= $this->genRemoveLink($contact['id']); ?>
+<?= $this->genEditLinks($contact['id']); ?>
 <?php } ?>
 </form>
 <?php

@@ -79,7 +79,7 @@ class BooksPage extends EditProfilePage
             $entry_id = $this->handleSubmit();
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink($entry_id),
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
             print json_encode( $result );
         }
@@ -120,10 +120,9 @@ class BooksPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />
-<?= $this->genRemoveLink($book['id']); ?>
+<?= $this->genEditLinks($book['id']); ?>
 <?php } ?>
 </form>
 <?php
@@ -137,6 +136,8 @@ class BooksPage extends EditProfilePage
     {
         $fieldnames = array( 'title', 'publisher', 'year_published' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year_published'] )
+            $item['year_published'] = NULL;
         $this->genericStoreItem( "journo_books", $fieldnames, $item );
         return $item['id'];
     }

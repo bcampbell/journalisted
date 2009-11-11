@@ -133,7 +133,7 @@ EOT;
             $entry_id = $this->handleSubmit();
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink($entry_id),
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
             print json_encode( $result );
         }
@@ -173,10 +173,9 @@ EOT;
 <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $admired['id']; ?>" />
-<?= $this->genRemoveLink($admired['id']); ?>
+<?= $this->genEditLinks($admired['id']); ?>
 <?php } ?>
 </form>
 <?php

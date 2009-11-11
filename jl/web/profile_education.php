@@ -81,7 +81,7 @@ class EducationPage extends EditProfilePage
             $entry_id = $this->handleSubmit();
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink($entry_id),
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
             print json_encode( $result );
         }
@@ -141,10 +141,9 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
-<?= $this->genRemoveLink($edu['id']); ?>
+<?= $this->genEditLinks($edu['id']); ?>
 <?php } ?>
 </form>
 <?php
@@ -157,6 +156,10 @@ class EducationPage extends EditProfilePage
     {
         $fieldnames = array( 'school', 'field', 'qualification', 'year_from', 'year_to' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year_from'] )
+            $item['year_from'] = NULL;
+        if( !$item['year_to'] )
+            $item['year_to'] = NULL;
         $this->genericStoreItem( "journo_education", $fieldnames, $item );
         return $item['id'];
     }

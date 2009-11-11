@@ -59,7 +59,7 @@ class AwardsPage extends EditProfilePage
             $this->handleRemove();
         }
 ?><h2>Have you won any awards?</h2><?php
-        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=?", $this->journo['id'] );
+        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY YEAR DESC", $this->journo['id'] );
         foreach( $awards as $a ) {
             $this->showForm( "edit", $a );
         }
@@ -77,7 +77,7 @@ class AwardsPage extends EditProfilePage
             $entry_id = $this->handleSubmit();
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink($entry_id),
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
             print json_encode( $result );
         }
@@ -88,7 +88,7 @@ class AwardsPage extends EditProfilePage
         static $uniq=0;
         ++$uniq;
         if( is_null( $award ) )
-            $award = array( 'award'=>'' );
+            $award = array( 'award'=>'', 'year'=>'' );
         $formclasses = 'award';
         if( $formtype == 'template' )
             $formclasses .= " template";
@@ -102,14 +102,17 @@ class AwardsPage extends EditProfilePage
   <th><label for="award_<?= $uniq; ?>">Award:</label></th>
   <td><input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" /></td>
  </tr>
+ <tr>
+  <th><label for="year_<?= $uniq; ?>">Year:</label></th>
+  <td><input type="text" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" /></td>
+ </tr>
 </table>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $award['id']; ?>" />
-<?= $this->genRemoveLink($award['id']); ?>
+<?= $this->genEditLinks($award['id']); ?>
 <?php } ?>
 </form>
 
@@ -120,8 +123,11 @@ class AwardsPage extends EditProfilePage
 
     function handleSubmit()
     {
-        $fieldnames = array( 'award' );
+        $fieldnames = array( 'award', 'year' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year'] )
+            $item['year'] = null;
+
         $this->genericStoreItem( "journo_awards", $fieldnames, $item );
         return $item['id'];
     }

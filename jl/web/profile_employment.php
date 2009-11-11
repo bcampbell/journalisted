@@ -98,7 +98,7 @@ class EmploymentPage extends EditProfilePage
 
             $result = array( 'status'=>'success',
                 'id'=>$entry_id,
-                'remove_link_html'=>$this->genRemoveLink( $entry_id ),
+                'editlinks_html'=>$this->genEditLinks( $entry_id ),
                 'parms'=>$parms
             );
         } else {
@@ -107,13 +107,6 @@ class EmploymentPage extends EditProfilePage
         print json_encode( $result );
     }
 
-
-    /* return a "remove" link for the given item */
-    function genRemoveLink( $entry_id ) {
-        return <<<EOT
-<a class="remove" href="{$this->pagePath}?ref={$this->journo['ref']}&remove_id={$entry_id}">remove</a>
-EOT;
-    }
 
     /* if $emp is null, then display a fresh form for entering a new entry */
     function showForm( $formtype, $emp )
@@ -142,10 +135,9 @@ EOT;
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<button class="cancel" type="reset">Cancel</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />
-<?= $this->genRemoveLink($emp['id']); ?>
+<?= $this->genEditLinks($emp['id']); ?>
 <?php } ?>
 </form>
 <?php
@@ -158,6 +150,10 @@ EOT;
     {
         $fieldnames = array( 'employer', 'job_title', 'year_from', 'year_to' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year_from'] )
+            $item['year_from'] = NULL;
+        if( !$item['year_to'] )
+            $item['year_to'] = NULL;
         if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
         $this->genericStoreItem( "journo_employment", $fieldnames, $item );

@@ -58,7 +58,8 @@
 
  $awards       - list of awards won by this journo
    for each one:
-    award          - description of the award (eg "2009 Nobel Prize for Chemistry")
+    award          - description of the award (eg "Nobel Prize for Chemistry")
+    year            - (eg "2009", or NULL)
 
  $articles     - list of the most recent articles the journo has written
    for each one:
@@ -406,7 +407,7 @@ foreach( $employers as $emp ) {
   <div class="box-content">
     <ul>
 <?php foreach( $awards as $a ) { ?>
-    <li><?= $a['award']; ?></li>
+    <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
 <?php } ?>
     </ul>
     <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
