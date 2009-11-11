@@ -53,9 +53,9 @@
         </ul>
 -->
       </div>
-      <form action="/search" method="get" id="headsearch">
+      <form action="/journo_search" method="get" id="headsearch">
 <!--        <label for="q">Search articles</label> -->
-        <input type="text" value="" title="search articles" id="q" name="q" class="text" placeholder="search articles"/>
+        <input type="text" value="" title="find journalist" id="q" name="q" class="text" placeholder="find journalist"/>
         <input type="submit" alt="find" value="Find" />
       </form>
       <div style="clear:both;"></div>

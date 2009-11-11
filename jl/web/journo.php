@@ -19,7 +19,7 @@ $ref = strtolower( get_http_var( 'ref' ) );
 $journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
 if(!$journo)
 {
-    header("HTTP/1.0 404 Not Found");
+    spew_404( $ref );
     exit(1);
 }
 
@@ -176,6 +176,42 @@ $(document).ready(
 }
 
 
+// show a fancy 404 page with suggested matching journos
+function spew_404( $ref )
+{
+    header("HTTP/1.0 404 Not Found");
+
+    $query = preg_replace( '/[^a-z]+/', ' ', trim($ref) );
+
+    $title = "Couldn't find \"" . h(ucwords($query)) . "\"";
+    page_header( $title );
+
+
+
+    $journos = journo_FuzzyFind( $query );
+
+?>
+<h2><?= $title ?></h2>
+<?php if( $query ) { ?>
+<p>Did you perhaps mean one of these?</p>
+
+<ul>
+<?php   foreach( $journos as $j ) { ?>
+  <li><?= journo_link($j); ?></li>
+<?php   } ?>
+</ul>
+<?php } ?>
+
+<form method="get" action="/journo_search">
+ <input type="text" size="40" name="q" value="<?= h($query) ?>" />
+ <input type="submit" name="action" value="Find Journalist" />
+</form>
+
+<?php
+
+
+    page_footer();
+}
 
 
 

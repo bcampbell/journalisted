@@ -573,4 +573,46 @@ EOT;
 }
 
 
+
+// return a list of journos which match the query text using metaphone
+// algorithm to do approximate matching.
+//
+// Tries to handle these cases:
+// - full firstname and full lastname, eg "Andrew Marr"
+// - single name eg "Andrew" (tries as firstname, then lastname)
+// - full firstname and partial lastname eg "Andrew M"
+//
+// TODO: some kind of prefix checking/handling?
+//
+function journo_FuzzyFind( $query )
+{
+    $parts = preg_split( '/\s+/', $query );
+
+    $matches = array();
+    if( sizeof( $parts ) == 1 ) {
+        /* single name - match as firstname, then lastname */
+        $mph = substr( metaphone( $parts[0] ), 0, 4 );
+        $matches =  array_merge(
+            db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? ORDER BY lastname,firstname", $mph ),
+            db_getAll( "SELECT * FROM journo WHERE status='a' AND lastname_metaphone=? ORDER BY lastname,firstname", $mph ) );
+    } else if( sizeof($parts) >= 2 ) {
+        /* try matching both first and last names */
+        $firstname_mph = substr( metaphone( $parts[0] ),0,4 );
+        $lastname_mph = substr( metaphone( end( $parts ) ),0,4 );
+        $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname_metaphone=? ORDER BY lastname,firstname",
+            $firstname_mph, $lastname_mph );
+        if( !$matches ) {
+            /* if no matches, treat the last name as partially entered and use it as wildcard */
+            $lastname = strtolower( end( $parts ) );
+            $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname LIKE ? ORDER BY lastname,firstname",
+            $firstname_mph,
+            $lastname . '%' );
+        }
+
+
+    }
+
+    return $matches;
+}
+
 ?>
