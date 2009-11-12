@@ -438,17 +438,7 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
     $data['bios'] = journo_fetchBios( $journo['id'] );
 
-    /* picture */
-    $sql = <<<EOT
-SELECT i.filename,i.width,i.height
-    FROM ( image i INNER JOIN journo_picture jp ON jp.image_id=i.id )
-    WHERE jp.journo_id=?
-    LIMIT 1
-EOT;
-    $picture = db_getRow( $sql, $journo['id'] );
-    if( $picture )
-        $picture['src'] = imageUrl( $picture['filename'] );
-    $data['picture'] = $picture;
+    $data['picture'] = journo_getPicture( $journo['id'] );
 
     /* contact details */
     $guessed = null;
@@ -614,5 +604,23 @@ function journo_FuzzyFind( $query )
 
     return $matches;
 }
+
+
+function journo_getPicture( $journo_id )
+{
+    $sql = <<<EOT
+SELECT i.id,i.filename,i.width,i.height
+        FROM ( image i INNER JOIN journo_picture jp ON jp.image_id=i.id )
+        WHERE jp.journo_id=?
+EOT;
+    $img = db_getRow( $sql, $journo_id );
+
+    if( $img ) {
+        $img['url'] = imageUrl( $img['filename'] );
+    }
+    return $img;
+}
+
+
 
 ?>

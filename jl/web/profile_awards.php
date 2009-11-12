@@ -47,7 +47,7 @@ class AwardsPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function handleActions()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -58,6 +58,12 @@ class AwardsPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+        return TRUE;
+    }
+
+
+    function displayMain()
+    {
 ?><h2>Have you won any awards?</h2><?php
         $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY YEAR DESC", $this->journo['id'] );
         foreach( $awards as $a ) {

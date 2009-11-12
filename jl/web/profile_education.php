@@ -44,7 +44,7 @@ class EducationPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function handleActions()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -55,7 +55,12 @@ class EducationPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+        return TRUE;
+    }
 
+
+    function displayMain()
+    {
         $edus = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_from ASC", $this->journo['id'] );
 ?>
 <h2>Tell us about your education</h2>

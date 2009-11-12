@@ -44,7 +44,7 @@ class BooksPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function handleActions()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -54,6 +54,12 @@ class BooksPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+        return TRUE;
+    }
+
+
+    function displayMain()
+    {
 ?><h2>Have you published any books?</h2><?php
 
         $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );

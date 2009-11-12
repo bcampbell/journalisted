@@ -148,6 +148,7 @@ a.edit {
 
 a.remove {
     padding-left: 18px;
+    margin-left: 2em;
     background: transparent url(images/delete_16x16.gif) no-repeat center left;
 }
 

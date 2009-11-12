@@ -13,7 +13,9 @@
  $rssurl       - url of RSS feed for this page
 
  $picture      - array with picture of journo (or null)
-    src        - url of image
+    width
+    height
+    url        - url of image
 
 
  $writtenfor   - eg "The Sun, The Mirror and The Daily Telegraph"
@@ -124,7 +126,7 @@ foreach( $employers as $emp ) {
 
   <div class="picture">
 <?php if( $picture ) { ?>
-    <img src="<?= $picture['src']; ?>" />
+    <img src="<?= $picture['url']; ?>" />
 <?php } else { ?>
     <img src="/images/rupe.gif" />
 <?php } ?>

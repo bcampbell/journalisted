@@ -22,6 +22,9 @@ class EditProfilePage
     public $pageTitle = '';
     public $pageParams = array();
 
+    public $error_messages = array();
+    public $info_messages = array();
+
     function __construct()
     {
 //        $this->P = person_if_signed_on();
@@ -52,13 +55,25 @@ class EditProfilePage
     }
 
 
+    /* to be overriden */
+    /* called before displayMain, so can redirect, show error page,
+       whatever. return FALSE to suppress normal page */
+    function handleActions() {
+        return TRUE;    /* show page please! */
+    }
+
+
+    function addError( $msg ) { $this->error_messages[] = $msg; }
+    function addInfo( $msg ) { $this->info_messages[] = $msg; }
+
     /* normal, non-ajax display */
     function display()
     {
-        page_header( $this->pageTitle, $this->pageParams );
+
 
         // check we're logged in
         if( is_null($this->P) ) {
+            page_header( $this->pageTitle, $this->pageParams );
             print( "<p>Sorry, you need to be logged in to edit your profile.</p>\n" );
             page_footer();
             return;
@@ -66,6 +81,7 @@ class EditProfilePage
 
         // make sure we've specified a journo
         if( is_null( $this->journo ) ) {
+            page_header( $this->pageTitle, $this->pageParams );
             print( "<p>No journalist specified.</p>\n" );
             page_footer();
             return;
@@ -74,15 +90,32 @@ class EditProfilePage
         // is this person allowed to edit this journo?
         if( !db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
             $this->P->id(), $this->journo['id'] ) ) {
+            page_header( $this->pageTitle, $this->pageParams );
             print( "<p>Not allowed.</p>\n" );
             page_footer();
             return;
         }
 
+        if( $this->handleActions() == FALSE )
+            return;
 
+        page_header( $this->pageTitle, $this->pageParams );
         $this->showNavigation();
 
-
+        if( $this->error_messages ) {
+?>
+<ul class="errors">
+<?php foreach( $this->error_messages as $msg ) { ?> <li><?= $msg ?></li><?php } ?>
+</ul>
+<?php
+        }
+        if( $this->info_messages ) {
+?>
+<ul class="infomessage">
+<?php foreach( $this->info_messages as $msg ) { ?> <li><?= $msg ?></li><?php } ?>
+</ul>
+<?php
+        }
 
         $this->displayMain();
         page_footer();
@@ -98,7 +131,7 @@ class EditProfilePage
             'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
             'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
             'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
-            'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ),
+/*            'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ), */
         );
 
         // show the main nav bar
@@ -109,14 +142,27 @@ class EditProfilePage
             $default_url = $tabs['employment']['url'];
         }
 
-?>
-<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
+        $pic = journo_getPicture( $this->journo['id'] );
 
+?>
+<div class="picture">
+<?php if( $pic ) { ?>
+<img src="<?= $pic['url'] ?>" />
+<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Change</a>
+<a class="remove" href="/profile_picture?ref=<?= $this->journo['ref']; ?>&action=remove_pic">Remove</a>
+<?php } else { ?>
+<img src="images/rupe.gif" />
+<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Set a picture</a>
+<?php } ?>
+</div>
+
+<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
 <div class="pipeline">
  <span class="<?=$this->pageName=='admired'?'active':'';?>">1. <a href="/profile_admired?ref=<?=$this->journo['ref'];?>">Journalists you admire</a></span>
  <span class="<?=array_key_exists($this->pageName,$tabs)?'active':'';?>">2. <a href="<?=$default_url;?>?ref=<?=$this->journo['ref'];?>">Add to your profile</a></span>
  <span class="<?=$this->pageName=='missing'?'active':'';?>">3. <a href="/profile_missing?ref=<?=$this->journo['ref'];?>">Tell us anything we've missed/got wrong</a></span>
 </div>
+<div style="clear:both;"></div>
 <?php
 
         // secondary tab bar
@@ -133,6 +179,7 @@ class EditProfilePage
 */
 
 ?>
+
 <ul class="tabs">
 <?php foreach( $tabs as $tabname=>$tab ) {
  ?>

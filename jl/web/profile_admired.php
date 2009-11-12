@@ -73,10 +73,8 @@ class AdmiredJournosPage extends EditProfilePage
 
 
 
-
-    function displayMain()
+    function handleActions()
     {
-        // submitting new entries?
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $this->handleSubmit();
@@ -84,6 +82,13 @@ class AdmiredJournosPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+
+        return TRUE;
+    }
+
+
+    function displayMain()
+    {
 
         $sql = <<<EOT
 SELECT a.id, a.admired_id, a.admired_name, j.prettyname, j.ref as admired_ref, j.oneliner

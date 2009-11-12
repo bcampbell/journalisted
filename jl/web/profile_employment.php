@@ -57,7 +57,7 @@ class EmploymentPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function handleActions()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -67,7 +67,11 @@ class EmploymentPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+        return TRUE;
+    }
 
+    function displayMain()
+    {
 ?>
 <h2>Add Employment Information</h2>
 <?php

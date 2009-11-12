@@ -44,7 +44,7 @@ class WeblinksPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function handleActions()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -54,6 +54,12 @@ class WeblinksPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+        return TRUE;
+    }
+
+
+    function displayMain()
+    {
 ?><h2>Web links</h2><?php
 
         $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
