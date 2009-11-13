@@ -74,11 +74,11 @@ if( $journo && $P ) {
     }
 }
 
-showRegistration();
+showRegistration( $journo );
 
 
 
-function showRegistration()
+function showRegistration( $journo )
 {
 
 $title = "Edit profile";
