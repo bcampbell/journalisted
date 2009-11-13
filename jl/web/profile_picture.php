@@ -48,17 +48,17 @@ class PicturePage extends EditProfilePage
         $img = journo_getPicture( $this->journo['id'] );
 
 ?>
-<h2><?= $img ? "Change your picture" : "Set a picture" ?></h2>
+<h2><?= $img ? "Change your photo" : "Set a photo" ?></h2>
 
 <form action="<?= $this->pagePath; ?>" method="post" enctype="multipart/form-data">
 
 <?php if( $img ) { ?>
-<p>Your current picture:</p>
+<p>Your current photo:</p>
 <img src="<?= $img['url']; ?>" />
 <br/>
 <p>Upload a different one:</p>
 <?php } else { ?>
-<p>You have no picture set currently</p>
+<p>You have no photo set currently</p>
 <p>Upload one:</p>
 <?php } ?>
 

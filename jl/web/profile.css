@@ -55,9 +55,9 @@ div.pipeline {
 
 div.pipeline span{
     display: inline-block;
-    margin: 1em;
-    padding: 1em;
-    font-size: larger;
+    margin: 0.5em;
+    padding: 0.5em;
+/*    font-size: larger; */
     border: 1px solid white;
 }
    
@@ -161,3 +161,42 @@ a.plus {
 
 
 
+.profile div.picture { float:none; }
+
+.profile.maincolumn {
+  float:right;
+  width:77%;
+}
+
+.profile.smallcolumn {
+  margin:0 0 0 10px;
+  float:left;
+  width:20%;
+}
+
+.profile.maincolumn .box {
+    background-color: #DDDDFF;
+    border: none;
+    height: 100em;
+    
+}
+.profile.smallcolumn .box {
+  border: none;
+}
+
+
+.profile li.current {
+    background-color: #DDDDFF;
+    width: 50em;
+}
+
+.profile-box {
+    float:left;
+    background-color: #ffffff;
+    border: solid #4D4D4D 1px;
+    padding: 0.5em;
+    margin: 0.5em;
+    width: 20em;
+}
+
+.profile-box div.picture { float:none; }

@@ -100,7 +100,32 @@ class EditProfilePage
             return;
 
         page_header( $this->pageTitle, $this->pageParams );
+
+?>
+<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
+<a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a>
+<!--
+<div class="smallcolumn profile">
+
+<div class="box">
+<div class="box-content">
+-->
+<?php
+/*
         $this->showNavigation();
+        $this->showPicture();
+*/
+?>
+<!--
+</div>
+</div>
+
+</div>
+<div class="maincolumn profile">
+<div class="box">
+-->
+<?php
+
 
         if( $this->error_messages ) {
 ?>
@@ -118,11 +143,76 @@ class EditProfilePage
         }
 
         $this->displayMain();
+?>
+<!--
+</div>
+</div>
+-->
+
+<a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a>
+
+<?php
         page_footer();
     }
 
 
+    function showPicture()
+    {
+        $pic = journo_getPicture( $this->journo['id'] );
+
+?>
+<div class="picture">
+<?php if( $pic ) { ?>
+<img src="<?= $pic['url'] ?>" />
+<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Change</a>
+<a class="remove" href="/profile_picture?ref=<?= $this->journo['ref']; ?>&action=remove_pic">Remove</a>
+<?php } else { ?>
+<img src="images/rupe.gif" />
+<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Set a picture</a>
+<?php } ?>
+</div>
+<?php
+
+    }
+
+
+
+
     function showNavigation()
+    {
+        $pages = array(
+            'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
+            'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
+            'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
+            'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
+            'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
+            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
+/*            'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ), */
+        );
+
+        $this->emitMenu( $pages );
+    }
+
+
+    function emitMenu( $menu )
+    {
+?>
+<ul>
+<?php
+        foreach( $menu as $itemname=>$item ) {
+            $c = ($itemname==$this->pageName) ?' class="current" ' : '';
+            $url = "{$item['url']}?ref={$this->journo['ref']}";
+?>
+<li<?= $c ?>><a href="<?= $url ?>"><?= $item['title'] ?></a></li>
+<?php
+        }
+?>
+</ul>
+<?php
+    }
+
+
+    function showNavigationOLD()
     {
         $tabs = array(
             'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
@@ -142,21 +232,8 @@ class EditProfilePage
             $default_url = $tabs['employment']['url'];
         }
 
-        $pic = journo_getPicture( $this->journo['id'] );
 
 ?>
-<div class="picture">
-<?php if( $pic ) { ?>
-<img src="<?= $pic['url'] ?>" />
-<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Change</a>
-<a class="remove" href="/profile_picture?ref=<?= $this->journo['ref']; ?>&action=remove_pic">Remove</a>
-<?php } else { ?>
-<img src="images/rupe.gif" />
-<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Set a picture</a>
-<?php } ?>
-</div>
-
-<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
 <div class="pipeline">
  <span class="<?=$this->pageName=='admired'?'active':'';?>">1. <a href="/profile_admired?ref=<?=$this->journo['ref'];?>">Journalists you admire</a></span>
  <span class="<?=array_key_exists($this->pageName,$tabs)?'active':'';?>">2. <a href="<?=$default_url;?>?ref=<?=$this->journo['ref'];?>">Add to your profile</a></span>

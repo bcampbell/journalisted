@@ -112,6 +112,7 @@ EOT;
         $this->showForm('template', null);
 
         // if they've entered any journos already, encourage them to add more to their profile */
+/*
         if( sizeof( $admired) > 0 ) {
     ?>
     <div class="donate-box">
@@ -127,6 +128,7 @@ EOT;
     </div>
     <?php
         }
+*/
     }
 
 
