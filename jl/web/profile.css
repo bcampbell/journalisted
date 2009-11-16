@@ -68,8 +68,8 @@ div.pipeline span.active {
 
 
 .profile-nav {
-  border: 1px solid #DDDDDD;
-  background-color: #DDDDDD;
+/*  border: 1px solid #DDDDDD; */
+  background-color: #ffffff;
   display:inline;
 }
 
@@ -94,9 +94,20 @@ div.pipeline span.active {
 
 .profile-nav td {
     text-align: center;
-    background-color: #DDDDDD;
-
 }
+
+
+.profile-nav a {
+    padding: 0.4em;
+    background-color: #eeeeee;
+    border: 1px solid #eeeeee;
+}
+
+.profile-nav a:hover {
+    background-color: #cccccc;
+    border: 1px solid #cccccc;
+}
+
 
 
 /* form styles */

@@ -220,7 +220,7 @@ $this->showNavigation();
 <table border="0">
 <tr>
  <td></td>
- <td><a href="/profile?ref=<? $this->journo['ref'] ?>">back to profile page</a><br/>&uarr;</td>
+ <td><a href="/profile?ref=<?= $this->journo['ref'] ?>">back to profile page</a><br/>&uarr;</td>
  <td></td>
 </tr>
 <tr>
