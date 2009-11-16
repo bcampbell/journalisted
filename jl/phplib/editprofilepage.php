@@ -103,7 +103,9 @@ class EditProfilePage
 
 ?>
 <h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
-<a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a>
+
+<!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
+
 <!--
 <div class="smallcolumn profile">
 
@@ -149,9 +151,10 @@ class EditProfilePage
 </div>
 -->
 
-<a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a>
+<!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
 
 <?php
+$this->showNavigation();
         page_footer();
     }
 
@@ -181,20 +184,58 @@ class EditProfilePage
     function showNavigation()
     {
         $pages = array(
+            'picture'=>array( 'title'=>'Photo', 'url'=>'/profile_picture' ),
+            'admired'=>array( 'title'=>'Admired Journalists', 'url'=>'/profile_admired' ),
             'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
             'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
             'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
             'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
             'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
             'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
-/*            'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ), */
         );
+
+        $prev = NULL;
+        foreach( $pages as $pagename=>&$p ) {
+            $p['prev'] = $prev;
+            $p['next'] = NULL;
+            if( !is_null( $prev ) )
+                $pages[$prev]['next'] = $pagename;
+            $prev = $pagename;
+        }
+
 
         $this->emitMenu( $pages );
     }
 
 
     function emitMenu( $menu )
+    {
+
+        $curr = arr_get( $this->pageName, $menu );
+        $prev = arr_get( $curr['prev'], $menu );
+        $next = arr_get( $curr['next'], $menu );
+
+?>
+<div class="profile-nav">
+<table border="0">
+<tr>
+ <td></td>
+ <td><a href="/profile?ref=<? $this->journo['ref'] ?>">back to profile page</a><br/>&uarr;</td>
+ <td></td>
+</tr>
+<tr>
+ <td><?php if($prev) {?><a href="<?= $prev['url']; ?>?ref=<?= $this->journo['ref'] ?>"><?= $prev['title']; ?></a> &larr; <?php } ?></td>
+ <td><?= $curr['title'] ?></td>
+ <td><?php if($next) {?> &rarr; <a href="<?= $next['url']; ?>?ref=<?= $this->journo['ref'] ?>"><?= $next['title']; ?></a> <?php } ?></td>
+</tr>
+</table>
+</div>
+<?php
+
+
+    }
+
+    function emitMenuOLD( $menu )
     {
 ?>
 <ul>

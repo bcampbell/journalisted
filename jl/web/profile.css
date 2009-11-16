@@ -65,8 +65,38 @@ div.pipeline span{
 div.pipeline span.active {
     border: 1px solid black;
 }
-   
 
+
+.profile-nav {
+  border: 1px solid #DDDDDD;
+  background-color: #DDDDDD;
+  display:inline;
+}
+
+.profile-nav ul {
+  list-style-type: none;
+   display: inline;
+}
+
+.profile-nav li {
+   display: inline;
+   padding: 0.2em;
+}
+.profile-nav li a {
+    font-size: 75%;
+/*    color: #888888; */
+}
+ 
+.profile-nav li a.current {
+    font-size: larger;
+/*    color: #000000; */
+}
+
+.profile-nav td {
+    text-align: center;
+    background-color: #DDDDDD;
+
+}
 
 
 /* form styles */
