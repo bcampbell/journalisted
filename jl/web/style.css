@@ -7,6 +7,7 @@ body {
     padding: 0;
     font-family: Arial, Helvetica, sans-serif;
 /*    font-size: 80%; */
+    background-color: #ebebeb;
 }
 
 h1,h2,h3,h4,h5 { font-family: Times,serif; }
@@ -378,7 +379,7 @@ div.picture img { display:block; }
   width:33%;
 }
 
-
+/*
 .box {
     background-color: #ffffff;
     border: solid #4D4D4D 1px;
@@ -397,7 +398,9 @@ div.picture img { display:block; }
     background-color: #eeeeee;
     font-weight: normal;
 }
+*/
 
+/*
 .box.clipping {
     border-style: none;
     background: url(images/clipping.png) no-repeat bottom right;
@@ -411,7 +414,7 @@ div.picture img { display:block; }
 .box.clipping > h3 {
     background:none;
 }
-
+*/
 
 
 .strong-box {
@@ -599,5 +602,77 @@ div.picture img { display:block; }
     background-color: #FFFFFF;
     font-weight: bolder;
 }
+
+
+
+/* fancy new boxes */
+/* based on technique by Ryan Thrash - http://modxcms.com/about/blog/rthrash/simple-rounded-corner-css-boxes.html */
+
+/* standard-issue box */
+
+.box {
+    padding-right: 5px;
+    /* the gap on the right edge of the image (not content padding) */
+} 
+
+.box, .box .body, .box .head, .box .head h2, .box .head h3
+{ background: transparent url(/images/box.png) no-repeat bottom right; }
+
+
+/* set the top-right image */
+.box .head {
+    background-position: top right; margin-right: -5px; /* pull the right image over on top of border */
+    padding-right: 30px; /* right-image-gap + right-inside padding */
+}
+
+/* set the top-left image */
+.box .head h2, .box .head h3 {
+    background-position: top left;
+    margin: 0; /* reset main site styles*/
+    border: 0; /* ditto */
+    padding: 25px 0 5px 30px; /* padding-left = image gap + interior padding ... no padding-right */
+    height: auto !important; height: 1%; /* IE Holly Hack */
+}
+
+/* set the lower-left corner image */
+.box .body {
+    background-position: bottom left;
+    margin-right: 25px; /* interior-padding right */
+    padding: 15px 0 5px 30px; /* mirror .cssbox_head right/left */
+}
+
+/* newpaper clipping  box */
+
+.box.clipping {
+    padding-right: 5px;
+    /* the gap on the right edge of the image (not content padding) */
+} 
+
+.box.clipping, .box.clipping .body, .box.clipping .head, .box.clipping .head h2, .box.clipping .head h3
+{ background: transparent url(/images/clipping.png) no-repeat bottom right; }
+
+
+/* set the top-right image */
+.box.clipping .head {
+    background-position: top right; margin-right: -5px; /* pull the right image over on top of border */
+    padding-right: 30px; /* right-image-gap + right-inside padding */
+}
+
+/* set the top-left image */
+.box.clipping .head h2, .box.clipping .head h3 {
+    background-position: top left;
+    margin: 0; /* reset main site styles*/
+    border: 0; /* ditto */
+    padding: 25px 0 40px 30px; /* padding-left = image gap + interior padding ... no padding-right */
+    height: auto !important; height: 1%; /* IE Holly Hack */
+}
+
+/* set the lower-left corner image */
+.box.clipping .body {
+    background-position: bottom left;
+    margin-right: 25px; /* interior-padding right */
+    padding: 15px 0 40px 30px; /* mirror .cssbox_head right/left */
+}
+
 
 

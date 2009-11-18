@@ -48,8 +48,8 @@
 <div class="maincolumn">
 
 <div class="box clipping hentry">
- <h2 class="entry-title"><?= $title; ?></h2>
- <div class="box-content">
+ <div class="head"><h2 class="entry-title"><?= $title; ?></h2></div>
+ <div class="body">
   <span class="publication"><?= $srcorgname ?>,</span>
   <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr>,
   <?= $byline; ?><br/>
@@ -69,8 +69,8 @@
 
 
 <div class="box tags">
-  <h2>Subjects mentioned</h2>
-  <div class="box-content">
+  <div class="head"><h2>Subjects mentioned</h2></div>
+  <div class="body">
 <?php tag_display_cloud( $tags ); ?>
   </div>
 </div>
@@ -78,8 +78,8 @@
 
 
 <div class="box">
-<h2>Similar articles</h2>
-<div class="box-content">
+<div class="head"><h2>Similar articles</h2></div>
+<div class="body">
 <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
 
 
@@ -117,8 +117,8 @@
 
 
 <div class="box">
-  <h2>Feedback on the web</h2>
-  <div class="box-content">
+  <div class="head"><h2>Feedback on the web</h2></div>
+  <div class="body">
     <h3>Comments about this article</h3>
 <?php if( $comment_links ) { ?>
     <ul>

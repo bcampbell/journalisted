@@ -121,8 +121,8 @@ foreach( $employers as $emp ) {
 <div class="maincolumn">
 
 <div class="box strong-box overview">
-  <h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2>
-  <div class="box-content">
+  <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
+  <div class="body">
 
   <div class="picture">
 <?php if( $picture ) { ?>
@@ -160,7 +160,8 @@ foreach( $employers as $emp ) {
 <div class="smallcolumn">
 
 <div class="box">
-<div class="box-content">
+<div class="head"><h2></h2></div>
+<div class="body">
 <ul>
 <li><a href="/alert?Add=1&amp;j=<?= $ref ?>">Email me</a> when <?= $prettyname ?> writes an article</li>
 <li><a href="<?= $rssurl ?>">RSS Feed</a></li>
@@ -210,8 +211,8 @@ foreach( $employers as $emp ) {
 <div class="maincolumn">
 
 <div class="box">
-  <h3>Most Recent article</h3>
-  <div class="box-content art-list">
+  <div class="head"><h3>Most Recent article</h3></div>
+  <div class="body art-list">
 <?php $art = array_shift( $articles ); if( $art ) { ?>
     <div class="hentry">
       <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink'] ?>"><?= $art['title']; ?></a></h4>
@@ -232,8 +233,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Previous Articles</h3>
-  <div class="box-content">
+  <div class="head"><h3>Previous Articles</h3></div>
+  <div class="body">
   <ul class="art-list">
 
 <?php foreach( $articles as $art ) { ?>
@@ -263,8 +264,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box bynumbers">
-  <h3><?= $prettyname; ?> by numbers...</h3>
-  <div class="box-content">
+  <div class="head"><h3><?= $prettyname; ?> by numbers...</h3></div>
+  <div class="body">
 
 <?php if( !$quick_n_nasty ) { ?>
     <ul>
@@ -294,8 +295,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Most mentioned topics</h3>
-  <div class="box-content">
+  <div class="head"><h3>Most mentioned topics</h3></div>
+  <div class="body">
     <div class="tags">
 <?php
     if( !$quick_n_nasty ) {
@@ -312,8 +313,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box friendlystats">
-  <h3><?= $prettyname ?> has written...</h3>
-  <div class="box-content">
+  <div class="head"><h3><?= $prettyname ?> has written...</h3></div>
+  <div class="body">
     <ul>
 <?php if( !$quick_n_nasty && $toptag_alltime ) { ?>
       <li>More about '<a href ="<?= tag_gen_link( $toptag_alltime, $ref ) ?>"><?= $toptag_alltime ?></a>' than anything else</li>
@@ -330,9 +331,9 @@ foreach( $employers as $emp ) {
 
 
 <div class="box similar-journos">
-  <h3>Similar journalists</h3>
+  <div class="head"><h3>Similar journalists</h3></div>
   <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
-  <div class="box-content">
+  <div class="body">
     <ul>
 <?php foreach( $similar_journos as $j ) { ?>
       <li><?=journo_link($j) ?></li>
@@ -356,8 +357,8 @@ foreach( $employers as $emp ) {
 <div class="maincolumn">
 
 <div class="box">
-  <h3>Experience</h3>
-  <div class="box-content">
+  <div class="head"><h3>Experience</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
@@ -375,8 +376,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Education</h3>
-  <div class="box-content">
+  <div class="head"><h3>Education</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $education as $edu ) { ?>
       <li>
@@ -392,8 +393,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Books by <?= $prettyname ?></h3>
-  <div class="box-content">
+  <div class="head"><h3>Books by <?= $prettyname ?></h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $books as $b ) { ?>
     <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
@@ -405,8 +406,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="box">
-  <h3>Awards Won</h3>
-  <div class="box-content">
+  <div class="head"><h3>Awards Won</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $awards as $a ) { ?>
     <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
@@ -421,8 +422,8 @@ foreach( $employers as $emp ) {
 <div class="smallcolumn">
 
 <div class="box links">
-  <h3><?= $prettyname ?> on the web</h3>
-  <div class="box-content">
+  <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $links as $l ) { ?>
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
@@ -438,8 +439,8 @@ foreach( $employers as $emp ) {
 </div>
 
 <div class="box">
- <h3>Journalists admired by <?= $prettyname ?></h3>
- <div class="box-content">
+ <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
+ <div class="body">
   <ul>
 <?php foreach( $admired as $a ) { ?>
    <li><?=journo_link($a) ?></li>
@@ -461,7 +462,8 @@ foreach( $employers as $emp ) {
 <div class="maincolumn">
 
 <div class="box">
-  <div class="box-content">
+  <div class="head"><h3></h3></div>
+  <div class="body">
 <?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
     <p>Email <?= $prettyname ?> at: <span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
 <?php if( $known_email['srcurl'] ) { ?>
@@ -499,8 +501,8 @@ foreach( $employers as $emp ) {
 
 <div class="smallcolumn">
 <div class="box">
-  <h3>Press contacts</h3>
-  <div class="box-content">
+  <div class="head"><h3>Press contacts</h3></div>
+  <div class="body">
 
   </div>
 </div>

@@ -60,7 +60,6 @@ class WeblinksPage extends EditProfilePage
 
     function displayMain()
     {
-?><h2>Web links</h2><?php
 
         $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
         foreach( $weblinks as &$weblink ) {
@@ -111,12 +110,21 @@ class WeblinksPage extends EditProfilePage
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
-  <th><label for="url_<?= $uniq; ?>">URL:</label></th>
-  <td><input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" /></td>
+  <th><label for="description_<?= $uniq; ?>">Description:</label></th>
+  <td>
+    <select name="kind" id="kind_<?= $uniq ?>">
+      <option value="">Twitter Feed</option>
+      <option value="">Myspace page</option>
+      <option value="">Facebook Page</option>
+      <option value="">My Website</option>
+      <option value="">My Blog</option>
+    </select>
+    <input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" />
+  </td>
  </tr>
  <tr>
-  <th><label for="description_<?= $uniq; ?>">Description:</label></th>
-  <td><input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" /></td>
+  <th><label for="url_<?= $uniq; ?>">URL:</label></th>
+  <td><input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" /></td>
  </tr>
 </table>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
