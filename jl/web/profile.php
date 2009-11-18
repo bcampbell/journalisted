@@ -130,6 +130,7 @@ EOT;
 
     $data['picture'] = journo_getPicture( $journo['id'] );
 
+    $data['contact'] = journo_getContactDetails( $journo['id'] );
     return $data;
 }
 
@@ -220,6 +221,16 @@ function showPage( $journo )
 <?php } ?>
     </ul>
     <a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a>
+</div>
+
+<div class="profile-box">
+  <div class="head"><h3>Contact Details</h3></div>
+  <div class="body">
+    <p>Email: <?= $contact['email']['email']; ?></p>
+    <p>Phone: <?= $contact['phone']['phone_number']; ?></p>
+    <p>Address: <pre><?= $contact['address']['address']; ?></pre></p>
+    <a class="edit" href="/profile_contact?ref=<?= $ref ?>">edit</a>
+  </div>
 </div>
 
 
