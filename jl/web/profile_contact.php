@@ -26,17 +26,6 @@ class ContactPage extends EditProfilePage
 ?>
 <link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<? /*
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-*/
-?>
-<script type="text/javascript" src="/js/jquery.form.js"></script>
-<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
-<script type="text/javascript">
-    $(document).ready( function() {
-        fancyForms( '.contact' );
-    });
 </script>
 <?php
     }
@@ -56,23 +45,11 @@ class ContactPage extends EditProfilePage
         }
 ?><h2>Contact Information</h2><?php
 
-        $contacts = array();
-        $email = db_getOne( "SELECT email FROM journo_email WHERE journo_id=?", $this->journo['id'] );
-        if( $email )
-            $contacts[] = array( 'email'=>$email );
-
-        foreach( $contacts as &$contact ) {
-            $this->showForm( 'edit', $contact);
-        }
-
-        if( !$contacts ) {
-            /* show a ready-to-go creation form */
-            $this->showForm( 'creator', null );
-        }
-
-        /* template form for adding new ones */
-        $this->showForm( 'template', null );
+        $contact = journo_getContactDetails( $this->journo['id'] );
+        $this->showForm( $contact );
     }
+
+
 
 
     function ajax()
@@ -91,43 +68,48 @@ class ContactPage extends EditProfilePage
 
 
 
-    function showForm( $formtype, $contact )
+    function showForm( $contact )
     {
-        static $uniq=0;
-        ++$uniq;
-        if( is_null( $contact ) )
-            $contact = array( 'email'=>'', 'phone'=>'', 'postal'=>'' );
- 
-        $formclasses = 'contact';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
+        /* set up defaults for anything missing */
+        if( is_null( $contact['email'] ) )
+            $contact['email'] = array( 'email'=>'', 'show_public'=>TRUE );
+        if( is_null( $contact['phone'] ) )
+            $contact['phone'] = array( 'phone_number'=>'', 'show_public'=>TRUE );
+        if( is_null( $contact['address'] ) )
+            $contact['address'] = array( 'address'=>'', 'show_public'=>TRUE );
+
+        $email = $contact['email'];
+        $address = $contact['address'];
+        $phone = $contact['phone'];
+        $show_public = $email['show_public'] && $phone['show_public'] && $address['show_public'];
 
 ?>
 
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="contact" method="POST" action="<?= $this->pagePath; ?>">
 <table border="0">
  <tr>
-  <th><label for="email_<?= $uniq; ?>">Email:</label></th>
-  <td><input type="text" size="60" name="email" id="email_<?= $uniq; ?>" value="<?= h($contact['email']); ?>" /></td>
+  <th><label for="email">Email Address:</label></th>
+  <td><input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" /></td>
  </tr>
  <tr>
-  <th><label for="phone_<?= $uniq; ?>">Phone:</label></th>
-  <td><input type="text" size="60" name="phone" id="phone_<?= $uniq; ?>" value="<?= h($contact['phone']); ?>" /></td>
+  <th><label for="phone">Phone:</label></th>
+  <td><input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" /></td>
  </tr>
  <tr>
-  <th><label for="postal_<?= $uniq; ?>">Postal:</label></th>
-  <td><textarea cols="80" rows="5" name="postal" id="postal_<?= $uniq; ?>"><?= h($contact['postal']); ?></textarea></td>
+  <th><label for="address">Postal Address:</label></th>
+  <td><textarea cols="80" rows="5" name="address" id="address"><?= h($address['address']); ?></textarea></td>
+ </tr>
+ <tr>
+  <th></th>
+  <td>
+   <input type="checkbox" id="show_public" name="show_public" value="yes" <?= $show_public?'checked ':''?>/>
+   <label for="show_public">Allow this information to be public?</label>
+  </td>
  </tr>
 </table>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<?php if( $formtype=='edit' ) { ?>
-<input type="hidden" name="id" value="<?= $contact['id']; ?>" />
-<?= $this->genEditLinks($contact['id']); ?>
-<?php } ?>
 </form>
 <?php
 
@@ -138,21 +120,48 @@ class ContactPage extends EditProfilePage
 
     function handleSubmit()
     {
-/*        $fieldnames = array( 'title', 'publisher', 'year_published' );
-        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
-        $this->genericStoreItem( "journo_books", $fieldnames, $item );
-        return $item['id'];
-*/
-    }
+        $email = get_http_var('email');
+        $phone = get_http_var('phone');
+        $address = get_http_var('address');
+        $show_public = get_http_var('show_public' ) == 'yes' ? TRUE:FALSE;
 
-    function handleRemove() {
-/*        $id = get_http_var("remove_id");
 
-        // include journo id, to stop people zapping other journos entries!
-        db_do( "DELETE FROM journo_books WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+
+        // address
+        db_do( "DELETE FROM journo_address WHERE journo_id=? AND srctype=''", $this->journo['id'] );
+        if( $address ) {
+            db_do( "INSERT INTO journo_address (journo_id,address,srctype,show_public) VALUES (?,?,?,?)",
+                $this->journo['id'],
+                $address,
+                '',     // srctype
+                $show_public );
+        }
+
+        // phone
+        db_do( "DELETE FROM journo_phone WHERE journo_id=? AND srctype=''", $this->journo['id'] );
+        if( $phone ) {
+            db_do( "INSERT INTO journo_phone (journo_id,phone_number,srctype,show_public) VALUES (?,?,?,?)",
+                $this->journo['id'],
+                $phone,
+                '',     // srctype
+                $show_public );
+        }
+
+        // email
+        db_do( "DELETE FROM journo_email WHERE journo_id=? AND srctype=''", $this->journo['id'] );
+        if( $email ) {
+            db_do( "INSERT INTO journo_email (journo_id,email,srctype,srcurl,approved) VALUES (?,?,?,?,?)",
+                $this->journo['id'],
+                $email,
+                '',     // srctype
+                '',     // srcurl
+                $show_public );
+        }
+
         db_commit();
-*/
+
     }
+
 
 
 }

@@ -623,4 +623,23 @@ EOT;
 
 
 
+function journo_getContactDetails( $journo_id )
+{
+    /* contact info is a bit odd. behind the scenes it's all in different tables,
+    but the ui puts some restrictions on it for the sake of simplification */
+
+    $email = db_getRow( "SELECT email, approved as show_public FROM journo_email WHERE journo_id=? LIMIT 1", $journo_id );
+    $phone = db_getRow( "SELECT * FROM journo_phone WHERE journo_id=? LIMIT 1", $journo_id );
+    $address = db_getRow( "SELECT * FROM journo_address WHERE journo_id=? LIMIT 1", $journoi_id );
+
+    // convert bool fields into php bools
+    if( $email )
+        $email['show_public'] = $email['show_public'] =='t' ? TRUE:FALSE;
+    if( $phone )
+        $phone['show_public'] = $phone['show_public'] =='t' ? TRUE:FALSE;
+    if( $address )
+        $address['show_public'] = $address['show_public'] =='t' ? TRUE:FALSE;
+
+    return array( 'email' => $email, 'phone'=>$phone, 'address'=>$address );
+
 ?>
