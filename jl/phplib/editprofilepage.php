@@ -208,7 +208,7 @@ $this->showNavigation();
     }
 
 
-    function emitMenu( $menu )
+    function emitMenu_SHITTY( $menu )
     {
 
         $curr = arr_get( $this->pageName, $menu );
@@ -235,84 +235,28 @@ $this->showNavigation();
 
     }
 
-    function emitMenuOLD( $menu )
+    function emitMenu( $menu )
     {
 ?>
-<ul>
+<div class="profile-nav"> <a href="/profile?ref=<?= $this->journo['ref'] ?>"><strong>Overview</strong></a> |
 <?php
         foreach( $menu as $itemname=>$item ) {
             $c = ($itemname==$this->pageName) ?' class="current" ' : '';
             $url = "{$item['url']}?ref={$this->journo['ref']}";
+            if( $itemname == $this->pageName ) {
 ?>
-<li<?= $c ?>><a href="<?= $url ?>"><?= $item['title'] ?></a></li>
-<?php
-        }
-?>
-</ul>
-<?php
-    }
-
-
-    function showNavigationOLD()
-    {
-        $tabs = array(
-            'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
-            'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
-            'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
-            'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
-            'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
-            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
-/*            'picture'=>array( 'title'=>'Picture', 'url'=>'/profile_picture' ), */
-        );
-
-        // show the main nav bar
-
-        if( array_key_exists( $this->pageName, $tabs ) ) {
-            $default_url = $tabs[$this->pageName]['url'];
-        } else {
-            $default_url = $tabs['employment']['url'];
-        }
-
-
-?>
-<div class="pipeline">
- <span class="<?=$this->pageName=='admired'?'active':'';?>">1. <a href="/profile_admired?ref=<?=$this->journo['ref'];?>">Journalists you admire</a></span>
- <span class="<?=array_key_exists($this->pageName,$tabs)?'active':'';?>">2. <a href="<?=$default_url;?>?ref=<?=$this->journo['ref'];?>">Add to your profile</a></span>
- <span class="<?=$this->pageName=='missing'?'active':'';?>">3. <a href="/profile_missing?ref=<?=$this->journo['ref'];?>">Tell us anything we've missed/got wrong</a></span>
-</div>
-<div style="clear:both;"></div>
-<?php
-
-        // secondary tab bar
-
-        if( $this->pageName != 'admired' && $this->pageName != 'missing' ) {
-            // show the tabs
-/*
-            $tabs = array(
-                'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
-                'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
-                'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
-                'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
-            );
-*/
-
-?>
-
-<ul class="tabs">
-<?php foreach( $tabs as $tabname=>$tab ) {
- ?>
-<?php  if($tabname==$this->pageName) { ?>
-<li class="current"><a href="<?= "{$tab['url']}?ref={$this->journo['ref']}"; ?>"><?= $tab['title']; ?></a></li>
-<?php  } else{ ?>
-<li><a href="<?= "{$tab['url']}?ref={$this->journo['ref']}"; ?>"><?= $tab['title']; ?></a></li>
-<?php  } ?>
+<?= $item['title'] ?> |
+<?php } else { ?>
+<a href="<?= $url ?>"><?= $item['title'] ?></a> |
 <?php } ?>
-</ul>
-
 <?php
-
         }
+?>
+</div>
+<?php
     }
+
+
 
     // derived pages override this.
     function displayMain()
