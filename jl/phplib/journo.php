@@ -359,10 +359,56 @@ function journo_calculateSlowData( &$journo ) {
     $slowdata['guessed_main_org'] = journo_guessMainOrg( $journo['id'] );
     $slowdata['writtenfor'] = journo_calcWrittenFor( $journo['id'] );
 
+
+    /* find the most commented-upon article in the last 6 months */
+    $sql = <<<EOT
+SELECT a.id, a.title, a.pubdate, a.srcorg, o.prettyname AS srcorgname, a.permalink, a.total_bloglinks, a.total_comments
+    FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
+        INNER JOIN organisation o ON o.id=a.srcorg
+    WHERE attr.journo_id=?
+        AND a.status='a'
+        AND a.pubdate > NOW()-interval '6 months'
+        AND a.total_comments > 0
+    ORDER BY a.total_comments DESC,a.pubdate DESC LIMIT 1;
+EOT;
+
+    $a = db_getRow( $sql, $journo['id'] );
+    if( $a )
+        journo_AugmentArticle( $a );
+    $slowdata[ 'most_commented' ] = $a;
+
+    /* find the most blogged article in the last 6 months */
+    $sql = <<<EOT
+SELECT a.id, a.title, a.pubdate, a.srcorg, o.prettyname AS srcorgname, a.permalink, a.total_bloglinks, a.total_comments
+    FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
+        INNER JOIN organisation o ON o.id=a.srcorg
+    WHERE attr.journo_id=?
+        AND a.status='a'
+        AND a.pubdate > NOW()-interval '6 months'
+        AND a.total_bloglinks > 0
+    ORDER BY a.total_bloglinks DESC,a.pubdate DESC LIMIT 1;
+EOT;
+
+    $a = db_getRow( $sql, $journo['id'] );
+    if( $a )
+        journo_AugmentArticle( $a );
+    $slowdata[ 'most_blogged' ] = $a;
+
     return $slowdata;
 }
 
 
+// prepare an article for display by adding a few derived fields...
+function journo_AugmentArticle( &$a )
+{
+    $d = new datetime( $a['pubdate'] );
+    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
+    $a['iso_pubdate'] = $d->format('c');
+    // fill in prettyname of publisher, if possible
+    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
+        $a['srcorgname'] = db_getOne("SELECT prettyname FROM organisation WHERE id=?", $a['srcorg'] );
+    }
+}
 
 
 function journo_emitAllArticles( &$journo )
@@ -381,9 +427,7 @@ EOT;
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
-        $d = new datetime( $a['pubdate'] );
-        $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
-        $a['iso_pubdate'] = $d->format('c');
+        journo_AugmentArticle( $a );
         $a['buzz'] = BuzzFragment( $a );
     }
     /* sigh... php trainwreck. without this unset, the last element in array gets blatted-over
@@ -547,9 +591,7 @@ EOT;
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
-        $d = new datetime( $a['pubdate'] );
-        $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
-        $a['iso_pubdate'] = $d->format('c');
+        journo_AugmentArticle($a);
         if( !is_null( $a['id'] ) )
             $a['buzz'] = BuzzFragment( $a );
         else

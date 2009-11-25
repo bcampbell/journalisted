@@ -72,6 +72,27 @@
     iso_pubdate - eg "2007-12-28T22:35:00+00:00"
     pretty_pubdate - eg "Fri 28 December 2007"
     buzz - eg "4 blog posts, 96 comments"
+    total_bloglinks - num of blog posts known to reference this article
+    total_comments - num of comments known about this article around the web
+
+ $most_blogged - the most blogged article in the last 6 months
+ $most_commented - the most commented-upon article in the last 6 months
+   both of these have:
+    id
+    title
+    permalink
+    srcorgname
+    iso_pubdate
+    pretty_pubdate
+    total_bloglinks
+    total_comments
+
+ $links
+    url
+    description
+
+ $can_edit_page - TRUE if journo is logged in and can edit this page
+
 
  $quick_n_nasty  - if true, the rest of the fields are not set
                    (used if the data is not cached and we need to throw up something quickly.
@@ -89,12 +110,6 @@
  $tags          - list of tags used by this journo
                   as an array of tag=>freq pairs
                   eg array( 'economy'=>65, 'sucks'=>1023 )
-
- $links
-    url
-    description
-
- $can_edit_page - TRUE if journo is logged in and can edit this page
 
 */
 
@@ -291,7 +306,25 @@ foreach( $employers as $emp ) {
 
 
 
+<?php if( !$quick_n_nasty && $most_blogged ) { ?>
+<div class="box">
+  <div class="head"><h3>Most blogged-about</h3></div>
+  <div class="body">
+    <a href="<?= article_url( $most_blogged['id'] );?>"><?= $most_blogged['title'];?></a>
+    (<?= $most_blogged['total_bloglinks'] ?> blog posts)
+  </div>
+</div>
+<?php } ?>
 
+<?php if( !$quick_n_nasty && $most_commented ) { ?>
+<div class="box">
+  <div class="head"><h3>Most commented-on</h3></div>
+  <div class="body">
+    <a href="<?= article_url( $most_commented['id'] );?>"><?= $most_commented['title'];?></a>
+    (<?= $most_commented['total_comments'] ?> comments)
+  </div>
+</div>
+<?php } ?>
 
 
 <div class="box">
