@@ -66,8 +66,9 @@ if( $journo && $P ) {
     // is this person allowed to edit this journo?
     if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
         $P->id(), $journo['id'] ) ) {
+        header( "Location: /{$journo['ref']}" );
 
-        showPage( $journo );
+//        showPage( $journo );
         // yes - just redirect to the first profile page
 //        header( "Location: /profile_admired?ref={$journo['ref']}" );
             exit();
