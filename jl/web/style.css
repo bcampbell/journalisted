@@ -644,6 +644,7 @@ div.picture img { display:block; }
 /* newpaper clipping  box */
 
 .box.clipping {
+    font-family: Times,serif;
     padding-right: 5px;
     /* the gap on the right edge of the image (not content padding) */
 } 
