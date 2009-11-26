@@ -707,10 +707,10 @@ EOT;
         <td><?php echo $row['status'];?></td>
         <td>
 			<a href="?action=remove_otherarticle_confirmed&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">remove</a>
-<?php if( $row['status'] == 'h' ) { ?>
-			<a href="?action=approve_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">approve</a>
-<?php } else { ?>
+<?php if( $row['status'] == 'a' ) { ?>
 			<a href="?action=disapprove_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">disapprove</a>
+<?php } else { /* 'h'idden or 'u'napproved */ ?>
+			<a href="?action=approve_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">approve</a>
 <?php } ?>
         <td>
     </tr>
