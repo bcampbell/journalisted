@@ -7,6 +7,7 @@ require_once 'misc.php';
 require_once 'image.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/gatso.php';
+require_once '../phplib/eventlog.php';
 
 define( 'OPTION_JL_NUM_SITES_COVERED', '14' );
 
@@ -543,7 +544,9 @@ SELECT j.prettyname, j.ref, j.oneliner
 EOT;
     $data['similar_journos'] = db_getAll( $sql, $journo['id'] );
 
-
+    
+    /* recent editing changes (from the eventlog) */
+    $data['recent_changes'] = journo_fetchRecentEvents( $journo['id'] );
 
     return $data;
 }
@@ -685,4 +688,22 @@ function journo_getContactDetails( $journo_id )
     return array( 'email' => $email, 'phone'=>$phone, 'address'=>$address );
 
 }
+
+
+function journo_fetchRecentEvents( $journo_id ) {
+
+    $sql = <<<EOT
+SELECT event_time, event_type, extra FROM event_log
+    WHERE journo_id=? AND event_time>NOW()-interval '1 day'
+    ORDER BY event_time DESC;
+EOT;
+    $events = db_getAll( $sql, $journo_id );
+    foreach( $events as &$ev ) {
+        $ev['description'] = eventlog_Describe( $ev );
+    }
+
+    return $events;
+}
+
+
 

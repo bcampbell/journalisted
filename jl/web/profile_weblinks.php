@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -162,6 +163,7 @@ class WeblinksPage extends EditProfilePage
             $weblink['id'] = db_getOne( "SELECT lastval()" );
         }
         db_commit();
+        eventlog_Add( 'modify-weblinks', $this->journo['id'] );
         return $weblink['id'];
     }
 

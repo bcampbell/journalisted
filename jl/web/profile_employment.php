@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -161,6 +162,7 @@ class EmploymentPage extends EditProfilePage
         if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
         $this->genericStoreItem( "journo_employment", $fieldnames, $item );
+        eventlog_Add( 'modify-employment', $this->journo['id'] );
         return $item['id'];
     }
 
@@ -170,6 +172,8 @@ class EmploymentPage extends EditProfilePage
         // include journo id, to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_employment WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
+
+        eventlog_Add( 'modify-employment', $this->journo['id'] );
     }
 }
 

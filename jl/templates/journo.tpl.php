@@ -94,11 +94,15 @@
  $can_edit_page - TRUE if journo is logged in and can edit this page
 
 
+ $recent_changes - list of recent changes to the journo's profile
+   for each entry:
+    description - eg "added a previous employer"
+
  $quick_n_nasty  - if true, the rest of the fields are not set
                    (used if the data is not cached and we need to throw up something quickly.
                     the affected fields are all a little slower to calculate, so we don't want
                     to be doing it in response to user request)
-
+ ===== non quick_n_nasty fields =====
  $num_articles - number of articles journo has written (only for publications we cover)
  $first_pubdate - date of earliest article we have for this journo eg "May 2007"
  $wc_avg       - average wordcount of this journos articles
@@ -171,8 +175,22 @@ foreach( $employers as $emp ) {
   </div>
 </div>
 
+
+
+
 </div> <!-- end maincolumn -->
 <div class="smallcolumn">
+
+<div class="box">
+ <div class="head"><h2>Recent changes</h2></div>
+ <div class="body">
+  <ul>
+<?php foreach( $recent_changes as $recent ) { ?>
+   <li><?= $recent['description'] ?></li>
+<?php } ?>
+  </ul>
+ </div>
+</div>
 
 <div class="box">
 <div class="head"><h2></h2></div>

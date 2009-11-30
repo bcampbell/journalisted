@@ -5,6 +5,7 @@ require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/image.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -97,6 +98,8 @@ class PicturePage extends EditProfilePage
                 db_commit();
                 foreach( $others as $other )
                     imageZap( $other['image_id'] );
+
+                eventlog_Add( 'modify-photo', $this->journo['id'] );
 
             } else {
                 $this->addError( "failed to store image" );

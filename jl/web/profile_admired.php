@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -208,13 +209,17 @@ EOT;
             // it's already in the DB - update it
             db_do( "UPDATE journo_admired SET admired_name=?, admired_id=? WHERE id=? and journo_id=?",
                 $admired_name, $admired_id, $id, $this->journo['id'] );
+
         } else {
             // it's new
             db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,?)",
                 $this->journo['id'], $admired_name, $admired_id  );
             $id = db_getOne( "SELECT lastval()" );
         }
+        eventlog_Add( "modify-admired", $this->journo['id'] );
+
         db_commit();
+
         return $id;
     }
 
@@ -222,10 +227,11 @@ EOT;
     function handleRemove() {
         $id = get_http_var("remove_id");
 
-        // include journo id, to stop people zapping other journos entries!
+        // include journo id to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_admired WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
-        print"REMOVED $id {$this->journo['id']}";
+
+        eventlog_Add( "modify-admired", $this->journo['id'] );
     }
 }
 

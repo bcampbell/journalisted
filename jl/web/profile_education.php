@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -166,6 +167,7 @@ class EducationPage extends EditProfilePage
         if( !$item['year_to'] )
             $item['year_to'] = NULL;
         $this->genericStoreItem( "journo_education", $fieldnames, $item );
+        eventlog_Add( 'modify-education', $this->journo['id'] );
         return $item['id'];
     }
 
@@ -176,6 +178,7 @@ class EducationPage extends EditProfilePage
 
         // include journo id, to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_education WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
+        eventlog_Add( 'modify-education', $this->journo['id'] );
         db_commit();
     }
 

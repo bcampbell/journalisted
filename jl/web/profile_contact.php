@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
 require_once '../phplib/editprofilepage.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -159,6 +160,7 @@ class ContactPage extends EditProfilePage
         }
 
         db_commit();
+        eventlog_Add( 'modify-contact', $this->journo['id'] );
 
     }
 
