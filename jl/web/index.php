@@ -21,7 +21,6 @@ NEW_version();
 function NEW_version()
 {
 
-    $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
     // setup for placeholder text in input forms
     $head_extra = <<<EOT
@@ -32,54 +31,30 @@ function NEW_version()
       </script>
 EOT;
 
+
     page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
 
-?>
 
-<div class="greenbox">
-Journa<i>listed</i> is an independent, non-profit site run by the <a class="extlink" href="http://www.mediastandardstrust.org">Media Standards Trust</a> to help the public navigate the news
-</div>
+    $sql = <<<EOT
+SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, e.event_time, e.event_type, e.context_json
+    FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
+    WHERE event_time>NOW()-interval '12 hours'
+    ORDER BY event_time DESC
+    LIMIT 10;
+EOT;
+    $events = db_getAll( $sql );
+    foreach( $events as &$ev ) {
+//        $ev['context'] = json_decode( $ev['context_json'], TRUE );
+        $ev['description'] = eventlog_Describe( $ev );
+    }
 
-<div class="action-box">
- <div class="action-box_top"><div></div></div>
-  <div class="action-box_content">
+    {
 
-   <form action="/list" method="get" class="frontform">
-    <label for="name">Find a journalist</label>
-    <input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
-    <input type="submit" value="Find" alt="find" />
-<!--    <input type="image" src="images/white_arrow.png" alt="find" /> -->
-   </form>
+        $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
+        include "../templates/frontpage.tpl.php";
+    }
 
-   <form action="/list" method="get" class="frontform">
-    <label for="outlet">See journalists by news outlet</label>
-
-     <select id="outlet" name="outlet" class="select" >
-<?php foreach( $orgs as $o ) { ?>
-		<option value="<?php echo $o['shortname'];?>"><?php echo $o['prettyname']; ?></option>
-<?php } ?>
-     </select>
-    <input type="submit" value="Find" alt="find" />
-   </form>
-
-
-   <form action="/search" method="get" class="frontform">
-    <label for="q">Search articles</label>
-    <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
-<!--    <input type="submit" value="Find" /><br /> -->
-    <input type="submit" value="Find" alt="find" />
-   </form>
-
-  </div>
- <div class="action-box_bottom"><div></div></div>
-</div>
-
-<p>Journa<i>listed</i> is also for: &nbsp;&nbsp;&nbsp;<a href="/forjournos">journalists</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/pressofficers">press officers</a></p>
-
-</p>
-<?php
-
-page_footer();
+    page_footer();
 }
 
 
