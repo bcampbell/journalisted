@@ -545,9 +545,6 @@ EOT;
     $data['similar_journos'] = db_getAll( $sql, $journo['id'] );
 
     
-    /* recent editing changes (from the eventlog) */
-    $data['recent_changes'] = journo_fetchRecentEvents( $journo['id'] );
-
     return $data;
 }
 
@@ -690,15 +687,17 @@ function journo_getContactDetails( $journo_id )
 }
 
 
+// fetch a list of recent profile-editing events for the journo
 function journo_fetchRecentEvents( $journo_id ) {
 
     $sql = <<<EOT
-SELECT event_time, event_type, extra FROM event_log
-    WHERE journo_id=? AND event_time>NOW()-interval '1 day'
+SELECT event_time, event_type, context_json FROM event_log
+    WHERE journo_id=? AND event_time>NOW()-interval '12 hours'
     ORDER BY event_time DESC;
 EOT;
     $events = db_getAll( $sql, $journo_id );
     foreach( $events as &$ev ) {
+        $ev['context'] = json_decode( $ev['context_json'], TRUE );
         $ev['description'] = eventlog_Describe( $ev );
     }
 

@@ -146,7 +146,6 @@ class BooksPage extends EditProfilePage
         if( !$item['year_published'] )
             $item['year_published'] = NULL;
         $this->genericStoreItem( "journo_books", $fieldnames, $item );
-        eventlog_Add( 'modify-books', $this->journo['id'] );
         return $item['id'];
     }
 
@@ -156,7 +155,7 @@ class BooksPage extends EditProfilePage
         // include journo id, to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_books WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
-        eventlog_Add( 'modify-books', $this->journo['id'] );
+        eventlog_Add( 'remove-books', $this->journo['id'] );
     }
 
 

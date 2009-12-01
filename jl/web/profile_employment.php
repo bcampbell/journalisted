@@ -161,8 +161,8 @@ class EmploymentPage extends EditProfilePage
             $item['year_to'] = NULL;
         if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
+
         $this->genericStoreItem( "journo_employment", $fieldnames, $item );
-        eventlog_Add( 'modify-employment', $this->journo['id'] );
         return $item['id'];
     }
 
@@ -173,7 +173,7 @@ class EmploymentPage extends EditProfilePage
         db_do( "DELETE FROM journo_employment WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
 
-        eventlog_Add( 'modify-employment', $this->journo['id'] );
+        eventlog_Add( 'remove-employment', $this->journo['id'] );
     }
 }
 

@@ -306,6 +306,9 @@ EOT;
             $params[] = $this->journo['id'];
 
             db_do( $sql, $params );
+
+            eventlog_Add( "modify-{$this->pageName}", $this->journo['id'], $item );
+
         } else {
             /* insert new entry */
 
@@ -319,6 +322,7 @@ EOT;
                 "VALUES (" . implode(',',$frags) . ")";
             db_do( $sql, $params );
             $item['id'] = db_getOne( "SELECT lastval()" );
+            eventlog_Add( "add-{$this->pageName}", $this->journo['id'], $item );
         }
         db_commit();
 

@@ -209,14 +209,15 @@ EOT;
             // it's already in the DB - update it
             db_do( "UPDATE journo_admired SET admired_name=?, admired_id=? WHERE id=? and journo_id=?",
                 $admired_name, $admired_id, $id, $this->journo['id'] );
+            eventlog_Add( "modify-admired", $this->journo['id'] );
 
         } else {
             // it's new
             db_do( "INSERT INTO journo_admired (journo_id,admired_name,admired_id) VALUES (?,?,?)",
                 $this->journo['id'], $admired_name, $admired_id  );
             $id = db_getOne( "SELECT lastval()" );
+            eventlog_Add( "add-admired", $this->journo['id'] );
         }
-        eventlog_Add( "modify-admired", $this->journo['id'] );
 
         db_commit();
 
@@ -231,7 +232,7 @@ EOT;
         db_do( "DELETE FROM journo_admired WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
 
-        eventlog_Add( "modify-admired", $this->journo['id'] );
+        eventlog_Add( "remove-admired", $this->journo['id'] );
     }
 }
 

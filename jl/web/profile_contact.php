@@ -161,7 +161,6 @@ class ContactPage extends EditProfilePage
 
         db_commit();
         eventlog_Add( 'modify-contact', $this->journo['id'] );
-
     }
 
 

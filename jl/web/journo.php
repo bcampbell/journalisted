@@ -8,6 +8,7 @@ require_once '../phplib/journo.php';
 require_once '../phplib/misc.php';
 require_once '../phplib/gatso.php';
 require_once '../phplib/cache.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -115,10 +116,14 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
     }
 }
 
-/* all set - invoke the template to render the page! */
 
-/* can_edit_page is never cached */
+// some stuff we don't cache:
 $data['can_edit_page'] = $can_edit_page;
+// recent editing changes (from the eventlog) - would be fine to cache this list, but we'd
+// need to make sure the page template only displayed events which were less than than a day or so old...
+$data['recent_changes'] = journo_fetchRecentEvents( $journo['id'] );
+
+/* all set - invoke the template to render the page! */
 {
     extract( $data );
     include "../templates/journo.tpl.php";

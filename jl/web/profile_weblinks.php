@@ -163,7 +163,6 @@ class WeblinksPage extends EditProfilePage
             $weblink['id'] = db_getOne( "SELECT lastval()" );
         }
         db_commit();
-        eventlog_Add( 'modify-weblinks', $this->journo['id'] );
         return $weblink['id'];
     }
 
@@ -173,6 +172,7 @@ class WeblinksPage extends EditProfilePage
         // include journo id, to stop people zapping other journos entries!
         db_do( "DELETE FROM journo_weblink WHERE id=? AND journo_id=?", $id, $this->journo['id'] );
         db_commit();
+        eventlog_Add( 'remove-weblinks', $this->journo['id'] );
     }
 
 
