@@ -13,13 +13,14 @@ require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
+require_once '../phplib/journo.php';    // for journo_link()
 
 /* two sets of buttons/action selectors */
 $action = get_http_var( 'action' );
 
 admPageHeader( "Canned Queries" );
 
-$canned = array( new ProlificJournos(), new KnownEmailAddresses(), new OrgList(), new ArticleCount(), new AlertUsers() );
+$canned = array(  new KnownEmailAddresses(), new OrgList(), new ArticleCount(), new AlertUsers(), new ProlificJournos(), new MostIndepthJournos(), new TopTags() );
 
 function ShowMenu()
 {
@@ -135,7 +136,7 @@ function Do_verysimilararticles()
 ?>
 <h2>VerySimilarArticles</h2>
 
-<p>Shows similar articles, with score >= 98</p>
+<p>Shows similar articles, with score &gt;= 98</p>
 
 <form method="get">
 <input type="hidden" name="action" value="verysimilararticles" />
@@ -164,7 +165,7 @@ EOT;
 
     $rows = db_getAll( $sql, $from_date, $to_date, $from_date, $to_date );
 
-    Tabluate( $rows, array( 'article','score','similar'), 'Do_verysimilararticles_format' );
+    Tabulate( $rows, array( 'article','score','similar'), 'Do_verysimilararticles_format' );
 }
 
 function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
@@ -186,12 +187,46 @@ function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
 
 
 function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
-    if( $col=='ref' ) {
-        $ref = $row[$col];
-        return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
-    }
 
-    return admMarkupPlainText( $row[$col] );
+    if( is_array( $row[$col] ) ) {
+        if( $col=='journo' ) {
+            $j = $row[$col];
+            $out = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
+            if( array_key_exists( 'oneliner', $j ) )
+                $out .= " <small><em>({$j['oneliner']})</em></small>";
+            $out .= " <small>[<a href=\"/adm/{$j['ref']}\">admin</a>]</small>";
+            return $out;
+        }
+
+        if( $col=='article' ) {
+            $a = $row[$col];
+
+            // assume we've got title and id at least
+            $out = "<a href=\"/article?id={$a['id']}\">{$a['title']}</a>";
+            $out .= " <small>[<a href=\"/adm/article?id={$a['id']}\">admin</a>]</small>";
+            if( array_key_exists( 'permalink', $a ) ) {
+                $out .= " <small>[<a href=\"{$a['permalink']}\">original article</a>]</small>";
+            }
+            if( array_key_exists( 'srcorgname', $a ) ) {
+                $out .= " <small>{$a['srcorgname']}</small>";
+            }
+            if( array_key_exists( 'pubdate', $a ) ) {
+                $prettydate = date_create( $a['pubdate'] )->format('Y-m-d H:i');
+
+                $out .= " <small>{$prettydate}</small>";
+            }
+            return $out;
+        }
+
+        return "[array]";
+
+    } else {
+        if( $col=='ref' ) {
+            $ref = $row[$col];
+            return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
+        }
+        return admMarkupPlainText( $row[$col] );
+    }
 }
 
 /*
@@ -210,7 +245,7 @@ $(document).ready(function()
 */
 
 
-function Tabluate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
+function Tabulate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 
 ?>
 <p><?php echo sizeof($rows); ?> rows:</p>
@@ -246,6 +281,52 @@ function Tabluate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 }
 
 
+//
+function collectColumns( &$rows )
+{
+    $orgs = get_org_names();
+
+    foreach( $rows as &$row ) {
+
+        // journo?
+        if( array_key_exists( 'ref', $row ) ) {
+            $j = array();
+            foreach( array( 'ref','prettyname','oneliner' ) as $col ) {
+                if( array_key_exists( $col, $row ) ) {
+                    if( !is_null( $row[$col] ) ) {
+                        $j[$col] = $row[$col];
+                        unset( $row[$col] );
+                    }
+                }
+            }
+
+            if( !$j )
+                $j=NULL;
+
+            $row['journo'] = $j;
+        }
+
+        // article
+        if( array_key_exists( 'title', $row ) ) {
+            $a = array();
+            foreach( array( 'title','id','permalink','pubdate','srcorg' ) as $col ) {
+                if( array_key_exists( $col, $row ) ) {
+                    $a[$col] = $row[$col];
+                    unset( $row[$col] );
+                }
+
+                if( array_key_exists( 'srcorg', $a ) ) {
+                    $a['srcorgname'] = $orgs[$a['srcorg']];
+                }
+            }
+            $row['article'] = $a;
+        }
+    }
+}
+
+
+
+
 class CannedQuery {
 
     public $param_spec = array();
@@ -264,8 +345,17 @@ class CannedQuery {
 <form method="get">
 <input type="hidden" name="action" value="<?php echo $this->ident; ?>" />
 <?php foreach( $this->param_spec as $p ) { ?>
-<label for="<?php echo $p['name']; ?>"><?php echo $p['label']; ?></label>
-<input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo $params[$p['name']]; ?>"/><br />
+<label for="<?= $p['name'] ?>"><?= $p['label'] ?></label>
+<?php if( array_key_exists( 'options', $p ) ) { /* SELECT element */ ?>
+ <select name="<?= $p['name'] ?>" id="<?= $p['name'] ?>">
+ <?php foreach( $p['options'] as $value=>$desc ) { ?>
+  <option <?= ($params[$p['name']]==$value)?'selected':'' ?> value="<?= $value ?>"><?= $desc ?></option>
+ <?php } ?>
+ </select>
+<?php } else { /* just use a generic text input element */ ?>
+ <input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo $params[$p['name']]; ?>"/>
+<?php } ?>
+<br />
 <?php } ?>
 <input type="submit" name="go" value="Go!" />
 
@@ -274,51 +364,95 @@ class CannedQuery {
 
     }
 
-};
 
 
-class ProlificJournos extends CannedQuery {
-    public $name = "ProlificJournos";
-    public $ident = "prolificjournos";
-
-    function __construct() {
-        $this->name = "ProlificJournos";
-        $this->ident = "prolificjournos";
-        $this->desc = "list how many articles a journo has written over a period of time";
-        $this->param_spec = array(
-            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
-            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
-        );
-    }
 
     function go() {
         echo "<h2>{$this->name}</h2>\n";
         echo "<p>{$this->desc}</p>\n";
 
-        $params = $this->get_params();
-        $this->emit_params_form( $params );
+        $params = array();
+        if( $this->param_spec ) {
+            $params = $this->get_params();
+            $this->emit_params_form( $params );
+            if( !get_http_var( 'go' ) )
+                return;
+        }
 
-        if( !get_http_var( 'go' ) )
-            return;
-
-        $sql = <<<EOT
-SELECT count(a.id) as num_articles, j.id,j.status,j.ref,j.oneliner
-    FROM (( article a INNER JOIN journo_attr attr ON attr.article_id=a.id ) INNER JOIN journo j ON j.id=attr.journo_id)
-    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
-    GROUP BY j.id,j.ref, j.oneliner, j.status
-    ORDER BY num_articles DESC;
-EOT;
-
-        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
-        Tabluate( $rows, array( 'num_articles','journo'), array($this,'fmt') );
+        $this->perform( $params );
     }
 
-    function fmt( &$row, $col, $prevrow ) {
-        if( $col == 'journo' ) {
-            return sprintf( '<a href="/adm/%s">%s</a> <small>(%s)</small>', $row['ref'], $row['ref'], $row['oneliner'] );
-        } else {
-            return $row[$col];
+
+    // to be overidden
+    function perform( $params = array () )
+    {
+    }
+
+};
+
+
+
+class ProlificJournos extends CannedQuery {
+    function __construct() {
+        $this->name = "ProlificJournos";
+        $this->ident = "prolificjournos";
+        $this->desc = "Rank journos according to total words/articles written over time interval (top 100)";
+        $orgs = get_org_names();
+        $orgs[ 'all' ] = 'All';
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') ),
+            array( 'name'=>'orderby',
+                'label'=>'Who has written the:',
+                'options'=>array( 'words'=>'Most Words', 'articles'=>'Most Articles'),
+                'default'=>'articles' ),
+            array( 'name'=>'publication',
+                'label'=>'Publication',
+                'options'=>$orgs,
+                'default'=>'all' ),
+         //o Who have written the most words and/or articles in each of the national papers',
+        );
+    }
+
+
+    function perform($params) {
+        $orderby = NULL;
+        $column_order = array();
+
+        $sqlparams = array( $params['from_date'], $params['to_date'] );
+
+        switch( $params['orderby'] ) {
+            case 'words':
+                $orderby='total_words';
+                $column_order = array( 'total_words','total_articles','journo');
+                break;
+            case 'articles' :
+                $orderby='total_articles';
+                $column_order = array( 'total_articles','total_words','journo');
+                break;
         }
+
+        // restrict by publication (maybe)
+        $extraclause = '';
+        if( $params['publication']!='all' ) {
+            $extraclause = 'AND srcorg=?';
+            $sqlparams[] = $params['publication'];
+        }
+
+        $sql = <<<EOT
+SELECT count(a.id) as total_articles, sum(a.wordcount) as total_words, j.id,j.status,j.ref,j.prettyname,j.oneliner
+    FROM (( article a INNER JOIN journo_attr attr ON attr.article_id=a.id ) INNER JOIN journo j ON j.id=attr.journo_id)
+    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') {$extraclause}
+    GROUP BY j.id,j.ref, j.oneliner, j.status,j.prettyname
+    ORDER BY {$orderby} DESC
+    LIMIT 100;
+EOT;
+
+        $rows = db_getAll( $sql, $sqlparams );
+        collectColumns( $rows );
+
+        Tabulate( $rows, $column_order );
     }
 }
 
@@ -330,16 +464,14 @@ class KnownEmailAddresses extends CannedQuery {
         $this->desc = "list email addresses for journos";
     }
 
-    function go() {
-        echo "<h2>{$this->name}</h2>\n";
-        echo "<p>{$this->desc}</p>\n";
+    function perform($params) {
 
         $sql = <<<EOT
 SELECT j.ref,e.email FROM (journo_email e INNER JOIN journo j ON e.journo_id=j.id) ORDER BY j.ref;
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabluate( $rows );
+        Tabulate( $rows );
     }
 }
 
@@ -351,16 +483,14 @@ class OrgList extends CannedQuery {
         $this->desc = "List of news organisations we cover, with details (phone number etc)";
     }
 
-    function go() {
-        echo "<h2>{$this->name}</h2>\n";
-        echo "<p>{$this->desc}</p>\n";
+    function perform($params) {
 
         $sql = <<<EOT
 SELECT * FROM organisation ORDER BY shortname;
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabluate( $rows );
+        Tabulate( $rows );
     }
 }
 
@@ -371,16 +501,14 @@ class ArticleCount extends CannedQuery {
         $this->desc = "The number of active articles in the database";
     }
 
-    function go() {
-        echo "<h2>{$this->name}</h2>\n";
-        echo "<p>{$this->desc}</p>\n";
+    function perform($params) {
 
         $sql = <<<EOT
 SELECT count(*) as num_articles FROM article WHERE status='a';
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabluate( $rows );
+        Tabulate( $rows );
     }
 }
 
@@ -391,16 +519,78 @@ class AlertUsers extends CannedQuery {
         $this->desc = "List of alerts (ordered by email address)";
     }
 
-    function go() {
-        echo "<h2>{$this->name}</h2>\n";
-        echo "<p>{$this->desc}</p>\n";
+    function perform($params) {
 
         $sql = <<<EOT
 SELECT p.email, j.ref FROM ((alert a INNER JOIN person p ON a.person_id=p.id) INNER JOIN journo j ON a.journo_id=j.id) ORDER BY p.email;
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabluate( $rows );
+        Tabulate( $rows );
     }
 }
 
+
+class MostIndepthJournos extends CannedQuery {
+    function __construct() {
+        $this->name = "MostIndepthJournos";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Which journos have written the longest articles (top 100)";
+
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT a.wordcount,a.id,a.title,a.srcorg,a.pubdate,a.permalink,j.prettyname, j.ref
+    FROM article a LEFT JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
+    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
+    ORDER BY a.wordcount DESC
+    LIMIT 100
+EOT;
+
+        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
+        collectColumns( $rows );
+        Tabulate( $rows, array( 'journo','wordcount','article') );
+    }
+}
+
+
+
+class TopTags extends CannedQuery {
+    function __construct() {
+        $this->name = "TopTags";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "The top 100 tags used over the given interval";
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT t.tag, sum(t.freq) as tag_total
+    FROM article a INNER JOIN article_tag t ON a.id=t.article_id
+    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
+    GROUP BY tag
+    ORDER BY tag_total DESC
+    LIMIT 100
+EOT;
+
+        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+?>
