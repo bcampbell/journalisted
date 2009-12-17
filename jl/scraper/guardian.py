@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
@@ -671,7 +671,7 @@ def FindBlogFeeds():
 #    feeds.append( ('All guardian.co.uk blog posts', 'http://blogs.guardian.co.uk/atom.xml') )
 
 
-    bloglist = soup.find( 'div', {'id':'related'} ) 
+    bloglist = soup.find( 'div', {'id':'box'} ).find( 'div', {'class':'two-col'})
 
     for a in bloglist.findAll( 'a', {'class': 'link-text'} ):
         url = a['href']
