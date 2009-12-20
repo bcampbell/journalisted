@@ -364,11 +364,11 @@ class CannedQuery {
 <?php if( array_key_exists( 'options', $p ) ) { /* SELECT element */ ?>
  <select name="<?= $p['name'] ?>" id="<?= $p['name'] ?>">
  <?php foreach( $p['options'] as $value=>$desc ) { ?>
-  <option <?= ($params[$p['name']]==$value)?'selected':'' ?> value="<?= $value ?>"><?= $desc ?></option>
+  <option <?= ($params[$p['name']]==$value)?'selected':'' ?> value="<?= h($value) ?>"><?= $desc ?></option>
  <?php } ?>
  </select>
 <?php } else { /* just use a generic text input element */ ?>
- <input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo $params[$p['name']]; ?>"/>
+ <input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo h($params[$p['name']]); ?>"/>
 <?php } ?>
 <br />
 <?php } ?>
@@ -625,11 +625,29 @@ class QueryFight extends CannedQuery {
 
 
     function perform($params) {
+        $from = date_create( $params['from_date'])->format('Ymd');
+        $to = date_create( $params['to_date'])->format('Ymd');
+        $range = " $from..$to";
+
         if( $params['q1'] && $params['q2'] ) {
-            $xap = new XapSearch();
-            $xap->set_query( $params['q1'] );
-            $rows = $xap->run(0,999999,'date');
-            Tabulate( $rows );
+            $q1 = $params['q1'] . $range;
+            $q2 = $params['q2'] . $range;
+
+            $result = array();
+            {
+                $xap = new XapSearch();
+                $xap->set_query( $q1 );
+                $rows = $xap->run(0,999999,'date');
+                $result[ "q1: {$params['q1']}" ] = sizeof( $rows );
+            }
+            {
+                $xap = new XapSearch();
+                $xap->set_query( $q2 );
+                $rows = $xap->run(0,999999,'date');
+                $result[ "q2: {$params['q2']}" ] = sizeof( $rows );
+            }
+
+            Tabulate( array( $result ) );
         }
     }
 }
