@@ -14,13 +14,26 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/journo.php';    // for journo_link()
+require_once '../phplib/xap.php';
 
 /* two sets of buttons/action selectors */
 $action = get_http_var( 'action' );
 
 admPageHeader( "Canned Queries" );
 
-$canned = array(  new KnownEmailAddresses(), new OrgList(), new ArticleCount(), new AlertUsers(), new ProlificJournos(), new MostIndepthJournos(), new TopTags() );
+$canned = array(
+    new KnownEmailAddresses(),
+    new OrgList(),
+    new ArticleCount(),
+    new AlertUsers(),
+    new ProlificJournos(),
+    new MostIndepthJournos(),
+    new TopTags(),
+    new QueryFight(),
+);
+
+
+
 
 function ShowMenu()
 {
@@ -187,10 +200,12 @@ function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
 
 
 function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
-
-    if( is_array( $row[$col] ) ) {
+    $cell = $row[$col];
+    if( $cell instanceof DateTime ) {
+        return $cell->format( 'Y-m-d' );
+    } else if( is_array( $cell ) ) {
         if( $col=='journo' ) {
-            $j = $row[$col];
+            $j = $cell;
             $out = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
             if( array_key_exists( 'oneliner', $j ) )
                 $out .= " <small><em>({$j['oneliner']})</em></small>";
@@ -199,7 +214,7 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
         }
 
         if( $col=='article' ) {
-            $a = $row[$col];
+            $a = $cell;
 
             // assume we've got title and id at least
             $out = "<a href=\"/article?id={$a['id']}\">{$a['title']}</a>";
@@ -222,10 +237,10 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
 
     } else {
         if( $col=='ref' ) {
-            $ref = $row[$col];
+            $ref = $cell;
             return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
         }
-        return admMarkupPlainText( $row[$col] );
+        return admMarkupPlainText( $cell );
     }
 }
 
@@ -281,7 +296,7 @@ function Tabulate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 }
 
 
-//
+// compress certain groups of columns into a single one for better formatting
 function collectColumns( &$rows )
 {
     $orgs = get_org_names();
@@ -592,5 +607,31 @@ EOT;
     }
 }
 
+
+
+class QueryFight extends CannedQuery {
+    function __construct() {
+        $this->name = "QueryFight";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Compare fulltext queries side-by-side over time";
+
+        $this->param_spec = array(
+            array( 'name'=>'q1', 'label'=>'Query one', 'default'=>'' ),
+            array( 'name'=>'q2', 'label'=>'Query two', 'default'=>'' ),
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function perform($params) {
+        if( $params['q1'] && $params['q2'] ) {
+            $xap = new XapSearch();
+            $xap->set_query( $params['q1'] );
+            $rows = $xap->run(0,999999,'date');
+            Tabulate( $rows );
+        }
+    }
+}
 
 ?>
