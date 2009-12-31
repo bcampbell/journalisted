@@ -48,9 +48,17 @@ EOT;
         $ev['description'] = eventlog_Describe( $ev );
     }
 
-    {
 
-        $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
+    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted LIMIT 5" );
+
+    foreach( $news as &$n ) {
+        $n['prettydate'] = pretty_date( strtotime($n['posted']) );
+    }
+    unset( $n );
+
+    $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
+
+    {
         include "../templates/frontpage.tpl.php";
     }
 

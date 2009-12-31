@@ -9,6 +9,9 @@
 //   shortname   - the internal name eg 'thesun'
 //   prettyname  - eg "The Sun"
 //
+// $news - list of recent news entries
+//
+//
 
 
 ?>
@@ -58,6 +61,7 @@ Journa<i>listed</i> is an independent, non-profit site run by the <a class="extl
 
 </div>  <!-- end maincolumn -->
 <div class="smallcolumn">
+
 <div class="box">
  <div class="head"><h3>Recent changes</h3></div>
  <div class="body">
@@ -68,6 +72,19 @@ Journa<i>listed</i> is an independent, non-profit site run by the <a class="extl
  </ul>
  </div>
 </div>
+
+<div class="box">
+ <div class="head"><h3>Site News</h3></div>
+ <div class="body">
+ <ul>
+<?php foreach( $news as $n ) { ?>
+  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/>
+    <small><?= $n['prettydate'] ?></small></li>
+<?php } ?>
+ </ul>
+ </div>
+</div>
+
 </div> <!-- end smallcolumn -->
 <?php
 
