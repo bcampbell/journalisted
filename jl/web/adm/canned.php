@@ -563,7 +563,7 @@ class MostIndepthJournos extends CannedQuery {
 
         $sql = <<<EOT
 SELECT a.wordcount,a.id,a.title,a.srcorg,a.pubdate,a.permalink,j.prettyname, j.ref
-    FROM article a LEFT JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
+    FROM article a INNER JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
     ORDER BY a.wordcount DESC
     LIMIT 100
@@ -595,7 +595,7 @@ class TopTags extends CannedQuery {
         $sql = <<<EOT
 SELECT t.tag, sum(t.freq) as tag_total
     FROM article a INNER JOIN article_tag t ON a.id=t.article_id
-    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
+    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') AND t.kind=' '
     GROUP BY tag
     ORDER BY tag_total DESC
     LIMIT 100
