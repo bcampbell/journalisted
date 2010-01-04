@@ -137,9 +137,9 @@ foreach( $employers as $emp ) {
  */
 ?>
 
-<div class="maincolumn">
+<div class="maincolumn journo-profile">
 
-<div class="box strong-box overview">
+<div class="overview">
   <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
   <div class="body">
 
@@ -173,12 +173,227 @@ foreach( $employers as $emp ) {
 
     <div style="clear: both;"></div>
   </div>
+</div>  <!-- end overview -->
+
+
+
+
+<?php /* END OVERVIEW */ ?>
+
+<?php /* TAB SECTIONS START HERE */ ?>
+
+<div style="clear: both;"></div>
+
+
+<ul class="tabs">
+<li><a href="#tab-work"><?= $journo['prettyname']; ?>'s work</a></li>
+<li><a href="#tab-bio">Biography</a></li>
+<li><a href="#tab-contact">Contact</a></li>
+</ul>
+
+
+<div class="tab" id="tab-work">
+
+
+<div class="section">
+  <div class="head"><h3>Most Recent article</h3></div>
+  <div class="body art-list">
+<?php $art = array_shift( $articles ); if( $art ) { ?>
+    <div class="hentry">
+      <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink'] ?>"><?= $art['title']; ?></a></h4>
+      <span class="publication"><?= $art['srcorgname'] ?>,</span>
+      <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+      <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<br /> <?php } ?><br/>
+      <blockquote class="entry-summary">
+        <?= $art['description']; ?>
+      </blockquote>
+
+      <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
+    </div>
+<?php } else { ?>
+  <p>None known</p>
+<?php } ?>
+  </div>
+</div>
+
+
+<div class="section">
+  <div class="head"><h3>Previous Articles</h3></div>
+  <div class="body">
+  <ul class="art-list">
+
+<?php foreach( $articles as $art ) { ?>
+    <li class="hentry">
+        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
+        <span class="publication"><?= $art['srcorgname']; ?>,</span>
+        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+        <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
+    </li>
+<?php } ?>
+<?php if( !$articles ) { ?>
+  <p>None known</p>
+<?php } ?>
+
+  </ul>
+
+<?php if($more_articles) { ?>
+  (<a href="/<?= $ref ?>?allarticles=yes">Show all articles</a>)
+<?php } ?>
+
+<p>Article(s) missing? If you notice an article is missing,
+<a href="/missing?j=<?= $ref ?>">click here</a></p>
+</div>
+</div>
+
+
+
+<div class="section bynumbers">
+  <div class="head"><h3><?= $prettyname; ?> by numbers...</h3></div>
+  <div class="body">
+
+<?php if( !$quick_n_nasty ) { ?>
+    <ul>
+      <li>
+        <?= $num_articles ?> articles <?php if( $num_articles>0) { ?> (since <?= $first_pubdate ?>) <?php } ?>
+      </li>
+      <li>Average article: <?php printf( "%.0f", $wc_avg/30); ?> column inches (<?php printf( "%.0f", $wc_avg); ?> words)</li>
+      <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
+      <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
+    </ul>
+    <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
+<?php } else { ?>
+    <p>(sorry, information not currently available)</p>
+<?php } ?>
+  </div>
 </div>
 
 
 
 
+</div> <!-- end work tab -->
+
+
+
+
+<div id="tab-bio">
+
+
+<div class="section">
+  <div class="head"><h3>Experience</h3></div>
+  <div class="body">
+    <ul>
+<?php foreach( $employers as $e ) { ?>
+ <?php if( $e['year_to'] ) { ?>
+      <li><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
+        <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span></li>
+ <?php } else { ?>
+      <li class="current-employer" ><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
+        <span class="daterange"><?= $e['year_from'] ?>-Present</span></li>
+ <?php } ?>
+<?php } ?>
+    </ul>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+</div>
+
+
+<div class="section">
+  <div class="head"><h3>Education</h3></div>
+  <div class="body">
+    <ul>
+<?php foreach( $education as $edu ) { ?>
+      <li>
+        <?= $edu['school']; ?><br/>
+        <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
+        <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span><br/>
+      </li>
+<?php } ?>
+    </ul>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+</div>
+
+
+<div class="section">
+  <div class="head"><h3>Books by <?= $prettyname ?></h3></div>
+  <div class="body">
+    <ul>
+<?php foreach( $books as $b ) { ?>
+    <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
+<?php } ?>
+    </ul>
+    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_books?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+</div>
+
+
+<div class="section">
+  <div class="head"><h3>Awards Won</h3></div>
+  <div class="body">
+    <ul>
+<?php foreach( $awards as $a ) { ?>
+    <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
+<?php } ?>
+    </ul>
+    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+</div>
+
+
+
+</div> <!-- end bio tab -->
+
+
+
+<div id="tab-contact">
+
+
+<div class="section">
+  <div class="head"><h3></h3></div>
+  <div class="body">
+<?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
+    <p>Email <?= $prettyname ?> at: <span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
+<?php if( $known_email['srcurl'] ) { ?>
+        <div class="email-source">(from <a class="extlink" href="<?= $known_email['srcurl'] ?>"><?= $known_email['srcurlname'] ?></a>)</div>
+<?php } ?>
+<?php } ?>
+
+
+<?php if( $guessed ) { /* show guessed contact details */ ?>
+    <p>No email address known for <?= $prettyname; ?>.</p>
+    <p>You could try contacting <span class="publication"><?= $guessed['orgname']; ?></span>
+    <?php if( $guessed['orgphone'] ) { ?> (Telephone: <?= $guessed['orgphone']; ?>) <?php } ?></p>
+<?php
+        if( $guessed['emails'] )
+        {
+            $safe_emails = array();
+            foreach( $guessed['emails'] as $e )
+                $safe_emails[] = SafeMailTo( $e );
+?>
+      <p>
+      Based on the standard email format for <span class="publication"><?php echo $guessed['orgname']; ?></span>, the email address <em>might</em> be <?php echo implode( ' or ', $safe_emails ); ?>.
+<?php } ?>
+    </p>
+<?php } ?>
+
+<?php if( !$guessed && !$known_email ) { ?>
+    <p>Sorry, no contact details known.</p>
+<?php } ?>
+
+
+  </div>
+</div>
+
+
+
+</div> <!-- end contact tab -->
+
 </div> <!-- end maincolumn -->
+
+
+
+
 <div class="smallcolumn">
 
 <div class="box">
@@ -223,104 +438,6 @@ foreach( $employers as $emp ) {
 </div>
 
 
-</div> <!-- end smallcolumn -->
-
-<?php /* END OVERVIEW */ ?>
-
-<?php /* TAB SECTIONS START HERE */ ?>
-
-<div style="clear: both;"></div>
-
-
-<ul class="tabs">
-<li><a href="#tab-work"><?= $journo['prettyname']; ?>'s work</a></li>
-<li><a href="#tab-bio">Biography</a></li>
-<li><a href="#tab-contact">Contact</a></li>
-</ul>
-
-
-<div id="tab-work">
-
-<div class="maincolumn">
-
-<div class="box">
-  <div class="head"><h3>Most Recent article</h3></div>
-  <div class="body art-list">
-<?php $art = array_shift( $articles ); if( $art ) { ?>
-    <div class="hentry">
-      <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink'] ?>"><?= $art['title']; ?></a></h4>
-      <span class="publication"><?= $art['srcorgname'] ?>,</span>
-      <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
-      <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<br /> <?php } ?><br/>
-      <blockquote class="entry-summary">
-        <?= $art['description']; ?>
-      </blockquote>
-
-      <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
-    </div>
-<?php } else { ?>
-  <p>None known</p>
-<?php } ?>
-  </div>
-</div>
-
-
-<div class="box">
-  <div class="head"><h3>Previous Articles</h3></div>
-  <div class="body">
-  <ul class="art-list">
-
-<?php foreach( $articles as $art ) { ?>
-    <li class="hentry">
-        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
-        <span class="publication"><?= $art['srcorgname']; ?>,</span>
-        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
-        <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
-    </li>
-<?php } ?>
-<?php if( !$articles ) { ?>
-  <p>None known</p>
-<?php } ?>
-
-  </ul>
-
-<?php if($more_articles) { ?>
-  (<a href="/<?= $ref ?>?allarticles=yes">Show all articles</a>)
-<?php } ?>
-
-<p>Article(s) missing? If you notice an article is missing,
-<a href="/missing?j=<?= $ref ?>">click here</a></p>
-</div>
-</div>
-
-
-
-<div class="box bynumbers">
-  <div class="head"><h3><?= $prettyname; ?> by numbers...</h3></div>
-  <div class="body">
-
-<?php if( !$quick_n_nasty ) { ?>
-    <ul>
-      <li>
-        <?= $num_articles ?> articles <?php if( $num_articles>0) { ?> (since <?= $first_pubdate ?>) <?php } ?>
-      </li>
-      <li>Average article: <?php printf( "%.0f", $wc_avg/30); ?> column inches (<?php printf( "%.0f", $wc_avg); ?> words)</li>
-      <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
-      <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
-    </ul>
-    <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
-<?php } else { ?>
-    <p>(sorry, information not currently available)</p>
-<?php } ?>
-  </div>
-</div>
-
-</div> <!-- end maincolumn -->
-
-
-
-<div class="smallcolumn">
 
 
 
@@ -396,81 +513,6 @@ foreach( $employers as $emp ) {
 
 
 
-</div> <!-- end smallcolumn -->
-
-</div> <!-- end work tab -->
-
-
-
-
-<div id="tab-bio">
-
-<div class="maincolumn">
-
-<div class="box">
-  <div class="head"><h3>Experience</h3></div>
-  <div class="body">
-    <ul>
-<?php foreach( $employers as $e ) { ?>
- <?php if( $e['year_to'] ) { ?>
-      <li><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
-        <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span></li>
- <?php } else { ?>
-      <li class="current-employer" ><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
-        <span class="daterange"><?= $e['year_from'] ?>-Present</span></li>
- <?php } ?>
-<?php } ?>
-    </ul>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
-  </div>
-</div>
-
-
-<div class="box">
-  <div class="head"><h3>Education</h3></div>
-  <div class="body">
-    <ul>
-<?php foreach( $education as $edu ) { ?>
-      <li>
-        <?= $edu['school']; ?><br/>
-        <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
-        <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span><br/>
-      </li>
-<?php } ?>
-    </ul>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
-  </div>
-</div>
-
-
-<div class="box">
-  <div class="head"><h3>Books by <?= $prettyname ?></h3></div>
-  <div class="body">
-    <ul>
-<?php foreach( $books as $b ) { ?>
-    <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
-<?php } ?>
-    </ul>
-    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_books?ref=<?= $ref ?>">edit</a><?php } ?>
-  </div>
-</div>
-
-
-<div class="box">
-  <div class="head"><h3>Awards Won</h3></div>
-  <div class="body">
-    <ul>
-<?php foreach( $awards as $a ) { ?>
-    <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
-<?php } ?>
-    </ul>
-    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
-  </div>
-</div>
-
-</div> <!-- end maincolumn -->
-
-<div class="smallcolumn">
 
 <div class="box links">
   <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
@@ -501,56 +543,6 @@ foreach( $employers as $emp ) {
  </div>
 </div>
 
-</div> <!-- end smallcolumn -->
-
-
-</div> <!-- end bio tab -->
-
-
-
-<div id="tab-contact">
-
-<div class="maincolumn">
-
-<div class="box">
-  <div class="head"><h3></h3></div>
-  <div class="body">
-<?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
-    <p>Email <?= $prettyname ?> at: <span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
-<?php if( $known_email['srcurl'] ) { ?>
-        <div class="email-source">(from <a class="extlink" href="<?= $known_email['srcurl'] ?>"><?= $known_email['srcurlname'] ?></a>)</div>
-<?php } ?>
-<?php } ?>
-
-
-<?php if( $guessed ) { /* show guessed contact details */ ?>
-    <p>No email address known for <?= $prettyname; ?>.</p>
-    <p>You could try contacting <span class="publication"><?= $guessed['orgname']; ?></span>
-    <?php if( $guessed['orgphone'] ) { ?> (Telephone: <?= $guessed['orgphone']; ?>) <?php } ?></p>
-<?php
-        if( $guessed['emails'] )
-        {
-            $safe_emails = array();
-            foreach( $guessed['emails'] as $e )
-                $safe_emails[] = SafeMailTo( $e );
-?>
-      <p>
-      Based on the standard email format for <span class="publication"><?php echo $guessed['orgname']; ?></span>, the email address <em>might</em> be <?php echo implode( ' or ', $safe_emails ); ?>.
-<?php } ?>
-    </p>
-<?php } ?>
-
-<?php if( !$guessed && !$known_email ) { ?>
-    <p>Sorry, no contact details known.</p>
-<?php } ?>
-
-
-  </div>
-</div>
-
-</div> <!-- end maincolumn -->
-
-<div class="smallcolumn">
 <div class="box">
   <div class="head"><h3>Press contacts</h3></div>
   <div class="body">
@@ -558,10 +550,4 @@ foreach( $employers as $emp ) {
   </div>
 </div>
 </div> <!-- end smallcolumn -->
-
-</div> <!-- end contact tab -->
-
-
-
-
 

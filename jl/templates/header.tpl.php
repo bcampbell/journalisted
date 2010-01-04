@@ -36,28 +36,24 @@
 
 
 <body>
-  <div id="head">
+  <div id="header">
     <div class="inner">
-      <h1><a href="/"><span></span>Journalisted</a></h1>
+      <h1><a href="/"><img src="/img/journalisted_logo.png" alt="Journalisted - read all about them!" /></a></h1>
 
-      <div id="tagline">&#8230;read all about them!</div>
-      <div id="menu">
+      <div class="nav">
         <ul>
-<!--          <li class="cover<?= $mnpage=='cover' ? ' active' :''; ?>"> <a href="/">Home</a> </li> -->
           <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"> <a href="/list">Journalists A-Z</a> </li>
           <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"> <a href="/tags">Subject Index</a> </li>
           <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"> <a href="/alert">Alerts</a> </li>
           <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"> <a href="/about">About</a> </li>
-<!--
-          <li class="donate<?= $mnpage=='donate' ? ' active' :''; ?>"> <a href="/donate">Donate</a> </li>
-        </ul>
--->
       </div>
-      <form action="/journo_search" method="get" id="headsearch">
+      <div class="search">
+        <form action="/journo_search" method="get">
 <!--        <label for="q">Search articles</label> -->
-        <input type="text" value="" title="find journalist" id="q" name="q" class="text" placeholder="find journalist"/>
-        <input type="submit" alt="find" value="Find" />
-      </form>
+          <input type="text" value="" title="find journalist" id="q" name="q" class="text" placeholder="find journalist"/>
+          <input type="submit" alt="find" value="Find" />
+        </form>
+      </div>
       <div style="clear:both;"></div>
     </div>
   </div>
@@ -69,11 +65,7 @@
 <?php if( $can_edit_profile ) { ?> [<a href="/profile">edit my profile</a>] <?php } ?>
 [<a href="/logout">log out</a>] <br/>
   </span>
-<?php } else { ?>
-  <span id="today"><?php echo date( 'l d F Y' ); ?></span>
 <?php } ?>
-  <span id="mst"><a href="http://www.mediastandardstrust.org">Media Standards Trust</a></span>
-  <div style="clear:both;"></div>
 </div>
 
 

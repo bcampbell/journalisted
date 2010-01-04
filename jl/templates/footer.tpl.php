@@ -8,14 +8,19 @@
 
 
 <div id="footer">
-  <div class="inner">
+  <div class="nav">
 <?php
     gatso_report_html();
     $contactemail = OPTION_TEAM_EMAIL;
 ?>
-  <a href="/development">Development</a> |
-  <?= SafeMailto( $contactemail, 'Contact us' );?> | <a href="/faq">FAQs</a> | <a href="/api">API</a> | <a href="/faq/what-is-your-privacy-policy">Privacy Policy</a>
-  <br />
+  <ul>
+<li><a href="/development">Development</a></li>
+<li><?= SafeMailto( $contactemail, 'Contact us' );?></li>
+<li><a href="/faq">FAQs</a></li>
+<li><a href="/api">API</a></li>
+<li><a href="/faq/what-is-your-privacy-policy">Privacy Policy</a></li>
+</ul>
+</div>
 &copy; 2007 <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
 
 
