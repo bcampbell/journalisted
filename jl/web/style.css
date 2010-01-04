@@ -165,6 +165,8 @@ body {
 }
 
 
+/* default boxes */
+
 .box {
   -moz-box-shadow : 0 0 4px #888888;
   -moz-border-radius : 5px;
@@ -202,10 +204,16 @@ body {
 }
 
 
+
+
 /* specific to front page: */
 /* 995/3 = 331ish */
 .recently-viewed, .recently-updated, .most-blogged {
     float: left;
     width: 315px;   /* = (995/3) - 8*2 - 16*2 */
+}
+
+.box.front .body {
+  padding: 0;
 }
 

@@ -16,8 +16,10 @@
 
 ?>
 
-<div class="box">
+<div class="box front">
+<div class="body">
 <img src="/img/front.png" alt="" />
+</div>
 </div>
 
 
