@@ -1,4 +1,4 @@
-
+/* BASIC STYLES */
 
 h1,h2,h3,h4,h5,h6 {
     margin: 0; padding: 0;
@@ -26,6 +26,57 @@ body {
 
     color: #4d4d4d;
 }
+
+
+a { color: #ff0000; text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:visited { color: #ff2222; }
+
+/* default box style */
+
+.box {
+  -moz-box-shadow: 0 0 5px #888888;
+  -webkit-box-shadow: 0 0 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+
+  background: white;
+  margin: 0 8px 16px 8px;
+  padding: 0px;
+}
+
+.box .head
+{
+    border-top-right-radius: 5px;
+ 	-moz-border-radius-topright: 5px;
+ 	-webkit-border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+ 	-moz-border-radius-topleft: 5px;
+ 	-webkit-border-top-left-radius: 5px;
+
+    background: #ebebeb url( "/img/box_head_bg.png" ) repeat-x top;
+    border-bottom: 1px solid #d9d9d9;
+}
+
+.box .head h2,
+.box .head h3,
+.box .head h4
+{
+  padding: 8px 16px;
+}
+
+.box .body
+{
+  padding: 8px 16px;
+}
+
+
+
+
+
+
+/* HEADER */
 
 #header {
     position: relative;
@@ -92,6 +143,7 @@ body {
 /* FOOTER */
 
 #footer {
+  clear: both;
   border-top: 1px solid #c4c4c4;
   font-size: 90%;
 }
@@ -127,8 +179,25 @@ body {
 }
 
 
+/* CONTENT */
+
 #content {
     position: relative;
+    padding: 8px 0px;
+}
+
+.maincolumn {
+    float: left;
+    width: 660px;
+    margin: 0px 8px;
+}
+
+.sidebar {
+    float: right;
+    width: 316px;
+/*    width: 303px; */
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -137,14 +206,15 @@ body {
 
 /* 995 = 8+660+8+8+n+8 */
 
-.maincolumn.journo-profile {
+.ZZZmaincolumn.journo-profile {
     background-color: #f7dbdb;
     margin-left: 8px;
     margin-right: 8px;
     width: 660px;
 }
 
-.smallcolumn {
+
+.ZZZsmallcolumn {
     position: absolute;
     top: 0px;
     left: 676px;    /* 8+660+8 */
@@ -156,8 +226,6 @@ body {
 
 
 
-
-
 .tab {
     background-color: #ffffff;
     border: 1px solid grey;
@@ -165,46 +233,12 @@ body {
 }
 
 
-/* default boxes */
-
-.box {
-  -moz-box-shadow : 0 0 4px #888888;
-  -moz-border-radius : 5px;
-  -webkit-border-radius : 5px;
-  border-radius : 5px;
-  background: white;
-  margin: 8px;
-  padding: 0px;
-}
-
-.box .head
-{
-
-
-    background: #ebebeb url( "/img/box_head_bg.png" ) repeat-x top;
-    border-top-right-radius: 5px;
- 	-moz-border-radius-topright: 5px;
- 	-webkit-border-top-right-radius: 5px;
-    border-top-left-radius: 5px;
- 	-moz-border-radius-topleft: 5px;
- 	-webkit-border-top-left-radius: 5px;
-    border-bottom: 1px solid #d9d9d9;
-}
-
-.box .head h2,
-.box .head h3,
-.box .head h4
-{
-  padding: 8px 16px;
-}
-
-.box .body
-{
-  padding: 8px 16px;
-}
+/* OTHER STUFF */
 
 
 
+
+/* everything below here is page-specific */
 
 /* specific to front page: */
 /* 995/3 = 331ish */
@@ -216,4 +250,76 @@ body {
 .box.front .body {
   padding: 0;
 }
+
+
+/* journo page */
+.journo-profile {
+  -moz-box-shadow: 0 0 5px #888888;
+  -webkit-box-shadow: 0 0 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+
+  background-color: #f7dbdb;
+}
+
+/* some non-default journo page boxes */
+.box.you-can-also .head
+{
+    background: #7f2284 url( "/img/box_head_bg_purple.png" ) repeat-x top;
+    border-bottom: 1px solid #630460;
+}
+
+.box.you-can-also .head h2,
+.box.you-can-also .head h3,
+.box.you-can-also .head h4
+{ color: #ffffff; }
+
+
+.box.subscribe-newsletter .head
+{
+    background: #49a02b url( "/img/box_head_bg_green.png" ) repeat-x top;
+    border-bottom: 1px solid #408e26;
+}
+
+.box.subscribe-newsletter .head h2,
+.box.subscribe-newsletter .head h3,
+.box.subscribe-newsletter .head h4
+{ color: #ffffff; }
+
+/* overview section on journo page */
+
+.box.overview {
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+  border: none;
+
+  background: none;
+  margin: 16px;
+}
+
+.box.overview {
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  border: none;
+}
+
+.box.overview .head {
+    background: none;
+    border-bottom: 1px solid #000000;
+}
+
+.box.overview .head h2 {
+    color: #000000;
+}
+
+.box.overview .picture {
+  float:left;
+  -moz-box-shadow: 3px 3px 5px #888888;
+  -webkit-box-shadow: 3px 3px 5px #888888;
+}
+
 

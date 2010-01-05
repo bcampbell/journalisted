@@ -131,15 +131,10 @@ foreach( $employers as $emp ) {
 ?>
 
 
-<?php
-/*
- * ******** OVERVIEW *************
- */
-?>
-
 <div class="maincolumn journo-profile">
 
-<div class="overview">
+
+<div class="box overview">
   <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
   <div class="body">
 
@@ -193,9 +188,19 @@ foreach( $employers as $emp ) {
 
 
 <div class="tab" id="tab-work">
+<div class="">
+    <form action="/search" method="get">
+    Find articles by <?= $prettyname ?> containing:
+    <input id="findarticles" type="text" name="q" value="" />
+    <input type="hidden" name="j" value="<?= $ref ?>" />
+    <input type="submit" value="Find" />
+    </form>
+</div>
+
 
 
 <div class="section">
+
   <div class="head"><h3>Most Recent article</h3></div>
   <div class="body art-list">
 <?php $art = array_shift( $articles ); if( $art ) { ?>
@@ -394,10 +399,10 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="smallcolumn">
-
+<div class="sidebar">
+<?php /*
 <div class="box">
- <div class="head"><h2>Recent changes</h2></div>
+ <div class="head"><h3>Recent changes</h3></div>
  <div class="body">
   <ul>
 <?php foreach( $recent_changes as $recent ) { ?>
@@ -406,9 +411,18 @@ foreach( $employers as $emp ) {
   </ul>
  </div>
 </div>
+*/
+?>
 
-<div class="box">
-<div class="head"><h2></h2></div>
+<div class="box subscribe-newsletter">
+<div class="head"><h3>Subscribe to Journa<i>listed</i> newsletter</h3></div>
+<div class="body">
+blah blah blah blah blah
+</div>
+</div>
+
+<div class="box you-can-also">
+<div class="head"><h3>You can also...</h3></div>
 <div class="body">
 <ul>
 <li><a href="/alert?Add=1&amp;j=<?= $ref ?>">Email me</a> when <?= $prettyname ?> writes an article</li>
@@ -422,44 +436,24 @@ foreach( $employers as $emp ) {
 </div>
 
 
-<div class="action-box">
-  <div class="action-box_top"><div></div></div>
-  <div class="action-box_content">
-
-    <form action="/search" method="get">
-    <p>Find articles by <?= $prettyname ?> containing:</p>
-    <input id="findarticles" type="text" name="q" value="" />
-    <input type="hidden" name="j" value="<?= $ref ?>" />
-    <input type="submit" value="Find" />
-    </form>
-
-  </div>
-  <div class="action-box_bottom"><div></div></div>
-</div>
-
-
-
-
-
-<?php if( !$quick_n_nasty && $most_blogged ) { ?>
-<div class="box">
-  <div class="head"><h3>Most blogged-about</h3></div>
+<div class="box links">
+  <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
   <div class="body">
-    <a href="<?= article_url( $most_blogged['id'] );?>"><?= $most_blogged['title'];?></a>
-    (<?= $most_blogged['total_bloglinks'] ?> blog posts)
+    <ul>
+<?php foreach( $links as $l ) { ?>
+       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
+<?php } ?>
+    </ul>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
+    <?php } else { ?>
+    <div class="box-action"><a href="/forjournos?j=<?= $ref ?>">Suggest a link for <?= $prettyname ?></a></div>
+    <?php } ?>
+    <div style="clear: both;"></div>
   </div>
 </div>
-<?php } ?>
 
-<?php if( !$quick_n_nasty && $most_commented ) { ?>
-<div class="box">
-  <div class="head"><h3>Most commented-on</h3></div>
-  <div class="body">
-    <a href="<?= article_url( $most_commented['id'] );?>"><?= $most_commented['title'];?></a>
-    (<?= $most_commented['total_comments'] ?> comments)
-  </div>
-</div>
-<?php } ?>
+
 
 
 <div class="box">
@@ -496,6 +490,27 @@ foreach( $employers as $emp ) {
 </div>
 
 
+<?php if( !$quick_n_nasty && $most_blogged ) { ?>
+<div class="box">
+  <div class="head"><h3>Most blogged-about</h3></div>
+  <div class="body">
+    <a href="<?= article_url( $most_blogged['id'] );?>"><?= $most_blogged['title'];?></a>
+    (<?= $most_blogged['total_bloglinks'] ?> blog posts)
+  </div>
+</div>
+<?php } ?>
+
+<?php if( !$quick_n_nasty && $most_commented ) { ?>
+<div class="box">
+  <div class="head"><h3>Most commented-on</h3></div>
+  <div class="body">
+    <a href="<?= article_url( $most_commented['id'] );?>"><?= $most_commented['title'];?></a>
+    (<?= $most_commented['total_comments'] ?> comments)
+  </div>
+</div>
+<?php } ?>
+
+
 
 
 <div class="box similar-journos">
@@ -514,22 +529,6 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="box links">
-  <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
-  <div class="body">
-    <ul>
-<?php foreach( $links as $l ) { ?>
-       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
-<?php } ?>
-    </ul>
-    <?php if( $can_edit_page ) { ?>
-    <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
-    <?php } else { ?>
-    <div class="box-action"><a href="/forjournos?j=<?= $ref ?>">Suggest a link for <?= $prettyname ?></a></div>
-    <?php } ?>
-    <div style="clear: both;"></div>
-  </div>
-</div>
 
 <div class="box">
  <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
@@ -549,5 +548,5 @@ foreach( $employers as $emp ) {
 
   </div>
 </div>
-</div> <!-- end smallcolumn -->
+</div> <!-- end sidebar -->
 
