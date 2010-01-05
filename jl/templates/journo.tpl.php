@@ -171,14 +171,7 @@ foreach( $employers as $emp ) {
 </div>  <!-- end overview -->
 
 
-
-
-<?php /* END OVERVIEW */ ?>
-
 <?php /* TAB SECTIONS START HERE */ ?>
-
-<div style="clear: both;"></div>
-
 
 <ul class="tabs">
 <li><a href="#tab-work"><?= $journo['prettyname']; ?>'s work</a></li>
@@ -187,19 +180,12 @@ foreach( $employers as $emp ) {
 </ul>
 
 
+
 <div class="tab" id="tab-work">
-<div class="">
-    <form action="/search" method="get">
-    Find articles by <?= $prettyname ?> containing:
-    <input id="findarticles" type="text" name="q" value="" />
-    <input type="hidden" name="j" value="<?= $ref ?>" />
-    <input type="submit" value="Find" />
-    </form>
-</div>
 
 
-
-<div class="section">
+<?php /*
+<div class="box">
 
   <div class="head"><h3>Most Recent article</h3></div>
   <div class="body art-list">
@@ -220,11 +206,18 @@ foreach( $employers as $emp ) {
 <?php } ?>
   </div>
 </div>
+*/ ?>
 
-
-<div class="section">
+<div class="box previous-articles">
   <div class="head"><h3>Previous Articles</h3></div>
   <div class="body">
+    <form action="/search" method="get">
+    Find articles by <?= $prettyname ?> containing:
+    <input id="findarticles" type="text" name="q" value="" />
+    <input type="hidden" name="j" value="<?= $ref ?>" />
+    <input type="submit" value="Find" />
+    </form>
+
   <ul class="art-list">
 
 <?php foreach( $articles as $art ) { ?>
@@ -253,7 +246,7 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="section bynumbers">
+<div class="box bynumbers">
   <div class="head"><h3><?= $prettyname; ?> by numbers...</h3></div>
   <div class="body">
 
@@ -281,10 +274,10 @@ foreach( $employers as $emp ) {
 
 
 
-<div id="tab-bio">
+<div class="tab" id="tab-bio">
 
 
-<div class="section">
+<div class="box">
   <div class="head"><h3>Experience</h3></div>
   <div class="body">
     <ul>
@@ -303,7 +296,7 @@ foreach( $employers as $emp ) {
 </div>
 
 
-<div class="section">
+<div class="box">
   <div class="head"><h3>Education</h3></div>
   <div class="body">
     <ul>
@@ -320,7 +313,7 @@ foreach( $employers as $emp ) {
 </div>
 
 
-<div class="section">
+<div class="box">
   <div class="head"><h3>Books by <?= $prettyname ?></h3></div>
   <div class="body">
     <ul>
@@ -333,7 +326,7 @@ foreach( $employers as $emp ) {
 </div>
 
 
-<div class="section">
+<div class="box">
   <div class="head"><h3>Awards Won</h3></div>
   <div class="body">
     <ul>
@@ -351,10 +344,10 @@ foreach( $employers as $emp ) {
 
 
 
-<div id="tab-contact">
+<div class="tab" id="tab-contact">
 
 
-<div class="section">
+<div class="box">
   <div class="head"><h3></h3></div>
   <div class="body">
 <?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
