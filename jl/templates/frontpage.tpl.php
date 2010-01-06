@@ -15,6 +15,7 @@
 
 
 ?>
+<div class="main front-page">
 
 <div class="box front">
 <div class="body">
@@ -24,7 +25,7 @@
 
 
 <div class="box recently-viewed">
-<div class="head"><h2>Recently Viewed</h2></div>
+<div class="head"><h3>Recently Viewed</h3></div>
 <div class="body">
 
 <ul>
@@ -38,7 +39,7 @@
 </div>
 
 <div class="box recently-updated">
-<div class="head"><h2>Recently Updated</h2></div>
+<div class="head"><h3>Recently Updated</h3></div>
 <div class="body">
 
 <ul>
@@ -53,7 +54,7 @@
 </div>
 
 <div class="box most-blogged">
-<div class="head"><h2>Most blogged-about Articles</h2></div>
+<div class="head"><h3>Most blogged-about Articles</h3></div>
 <div class="body">
 <ul>
 <li>blah</li>
@@ -68,7 +69,7 @@
 <div style="clear:both;"></div>
 
 <div class="box">
-<div class="head"><h2>This Week on Journalisted</h2></div>
+<div class="head"><h3>This Week on Journalisted</h3></div>
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
@@ -78,5 +79,7 @@
  </ul>
 </div>
 </div>
+
+</div>  <!-- end main -->
 <?php
 

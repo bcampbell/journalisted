@@ -80,6 +80,8 @@ function faq_end() {
 
 
 ?>
+<div class="main">
+
 <h2>Frequently Asked Questions</h2>
 
 <?php faq_begin("Who runs Journa<i>listed</i>?"); ?>
@@ -196,6 +198,7 @@ takes a column inch to be 30 words.</p>
 <p>No. The site is meant to make it easier for the public to navigate the news – not as a PR tool</p>
 <?php faq_end(); ?>
 
+</div> <!-- end main -->
 <?php
 
 page_footer();

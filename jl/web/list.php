@@ -52,14 +52,17 @@ function AlphabeticalList()
 	$letter = strtolower( get_http_var( 'letter', 'a' ) );
 	$order = get_http_var( 'order', 'lastname' );
 
-	print "<h2>Journalists A-Z</h2>\n";
+?>
+<div class="main">
+<h2>Journalists A-Z</h2>
 
-	print "<p>Ordered by ";
-	if( $order=='firstname' )
-		print "first name (<a href=\"list?letter={$letter}\">order by last name</a>)";
-	else
-		print "last name (<a href=\"list?order=firstname&amp;letter={$letter}\">order by first name</a>)";
-	print "</p>\n";
+<p>Ordered by <?php	if( $order=='firstname' ) { ?>
+first name (<a href="list?letter=<?= $letter ?>">order by last name</a>)
+<?php }	else { ?>
+last name (<a href="list?order=firstname&amp;letter=<?=$letter?>">order by first name</a>)
+<?php } ?>
+</p>
+<?php
 
 	$orderfield = ($order=='firstname') ? 'firstname':'lastname';
 	$orderfields = ($order=='firstname') ?
@@ -99,6 +102,7 @@ EOT;
         
 	}
     print "</ul>\n";
+    print "</div>\n";
 	page_footer();
 }
 

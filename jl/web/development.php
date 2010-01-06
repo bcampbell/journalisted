@@ -7,6 +7,7 @@ require_once '../../phplib/db.php';
 page_header( "Development" );
 
 ?>
+<div class="main">
 <h2>Journa<i>listed</i> for Developers</h2>
 
 
@@ -52,7 +53,7 @@ There is a public development <a href="http://groups.google.com/group/jl-dev">ma
 If you have technical questions, contact <a href="http://scumways.com">Ben Campbell</a>.
 </p>
 
-
+</div> <!-- end main -->
 <?php
 
 page_footer();

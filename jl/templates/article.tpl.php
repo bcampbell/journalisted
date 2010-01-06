@@ -45,7 +45,7 @@
 */
 ?>
 
-<div class="maincolumn">
+<div class="main">
 
 <div class="box clipping hentry">
  <div class="head"><h2 class="entry-title"><?= $title; ?></h2></div>
@@ -109,10 +109,10 @@
 </div>
 
 
-</div> <!-- end maincolumn -->
+</div> <!-- end main -->
 
 
-<div class="smallcolumn">
+<div class="sidebar">
 
 
 
@@ -148,5 +148,5 @@
 
 </div>
 
-</div> <!-- end smallcolumn -->
+</div> <!-- end sidebar -->
 

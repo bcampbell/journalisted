@@ -13,7 +13,7 @@ $contactemail = OPTION_TEAM_EMAIL;
 $subject = "Suggestions for site";
 
 ?>
-<div id="maincolumn">
+<div class="main">
 <h2>About Journalisted</h2>
 
 <p>Journalisted is an independent, not-for-profit website built to make it easier for you, the public, to find out more about journalists and what they write about. It is run by the Media Standards Trust, a registered charity set up to foster high standards in news on behalf of the public, and funded by donations from charitable foundations.</p>
@@ -53,9 +53,9 @@ Gavin Freeguard and Ben Campbell administrate the site.
 <p>Thanks to Gavin Buttimore, Tom Lynn, Ayesha Garrett, Gary Jones and Simon Roe, who have all contributed to development.</p>
 <p>Thanks also to Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and everyone else who offered invaluable ideas and advice.</p>
 <p>Journalisted reuses some code from the wonderful <a class="extlink" href="http://mysociety.org">mySociety</a> websites.</p>
-</div>  <!-- end maincolumn -->
+</div>  <!-- end main -->
 
-<div id="smallcolumn">
+<div class="sidebar">
 
 <?php donatebutton_emit(); ?>
   <br/>
