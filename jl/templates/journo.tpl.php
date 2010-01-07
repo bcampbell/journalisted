@@ -140,9 +140,9 @@ foreach( $employers as $emp ) {
 
   <div class="picture">
 <?php if( $picture ) { ?>
-    <img src="<?= $picture['url']; ?>" />
+    <img src="<?= $picture['url']; ?>" alt="photo" />
 <?php } else { ?>
-    <img src="/images/rupe.gif" />
+    <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
 <?php } ?>
     <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_picture?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>

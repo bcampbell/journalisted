@@ -46,6 +46,9 @@ ul.art-list li {
   padding: 4px 0 16px 0;
 }
 
+abbr.published { text-decoration: none; border: none; }
+
+
 /* HEADER */
 
 #header {
@@ -334,11 +337,12 @@ ul.art-list li {
 /* overview section on journo page */
 
 .overview {
-  padding: 0 8px;
+  padding: 20px 8px 0 8px;
 }
 
 .overview .picture {
-  float:left;
+  float: left;
+  margin-right: 20px;
   -moz-box-shadow: 3px 3px 5px #888888;
   -webkit-box-shadow: 3px 3px 5px #888888;
 }
