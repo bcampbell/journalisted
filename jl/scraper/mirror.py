@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
@@ -213,6 +213,10 @@ def Extract_MainSite( html, context ):
     # sometimes a misplaced "link" element!
     for cruft in contentdiv.findAll( 'link' ):
         cruft.extract()
+
+    for cruft in contentdiv.findAll( 'p', {'class':'append-html'} ):
+        cruft.extract()
+
 
     content = contentdiv.renderContents(None)
 
