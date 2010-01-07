@@ -15,15 +15,14 @@ h4 { font-size: 125%; }
 h5 { font-size: 112%; }
 
 body {
-    margin: 0 auto;
-    padding: 0;
-    width: 995px;
-    background-color: #ebebeb;
-    font-size: 13px;
-    line-height: 21px;
-    font-family: Arial, Helvetica, sans-serif;
-
-    color: #4d4d4d;
+  margin: 0 auto;
+  padding: 0;
+  width: 995px;
+  background-color: #ebebeb;
+  font-size: 13px;
+  line-height: 21px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #4d4d4d;
 }
 
 
@@ -31,19 +30,30 @@ a { color: #cc0000; text-decoration: none; }
 a:hover { text-decoration: underline; }
 a:visited { color: #ee3333; }
 
+ul {
+  padding: 16px;
+  list-style: url( "/img/bullet.png") disc outside;
+}
 
-ul { padding: 16px; }
+/* lists of articles */
+ul.art-list {
+  padding: 0;
+  list-style: none;
+}
 
-
+ul.art-list li {
+  border-bottom: 1px solid #cccccc;
+  padding: 4px 0 16px 0;
+}
 
 /* HEADER */
 
 #header {
-    position: relative;
-    margin: 0;
-    padding: 0;
-    height: 104px;
-    background: url("/img/header_bg.png") repeat-x;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  height: 104px;
+  background: url("/img/header_bg.png") repeat-x;
 }
 
 #header h1 {
@@ -55,7 +65,7 @@ ul { padding: 16px; }
 }
 
 #header h1 a img {
-    border: 0;
+  border: 0;
 }
 
 #header a.mst-logo {
@@ -99,9 +109,9 @@ ul { padding: 16px; }
 /* */
 
 #header .search {
-    position: absolute;
-    bottom: 12px;
-    right: 8px;
+  position: absolute;
+  bottom: 12px;
+  right: 8px;
 }
 
 #header .search form {
@@ -121,15 +131,15 @@ ul { padding: 16px; }
 }
 
 #footer .nav {
-    float: right;
-    padding: 0;
-    margin: 0;
-    color: #747474; 
+  float: right;
+  padding: 0;
+  margin: 0;
+  color: #747474; 
 }
 
 #footer .nav ul {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
 #footer .nav ul li {
@@ -181,13 +191,13 @@ ul { padding: 16px; }
 .main h2,
 .main h3
 {
-    border-bottom: 1px solid #252525;
-    padding: 4px 0;
+  border-bottom: 1px solid #252525;
+  padding: 4px 0;
 }
 
 .main h2
 {
-    margin-bottom: 16px;
+  margin-bottom: 16px;
 }
 
 
@@ -207,10 +217,10 @@ ul { padding: 16px; }
 /* sidebar */
 
 .sidebar {
-    float: right;
-    width: 300px;
-    margin: 0;
-    padding: 0;
+  float: right;
+  width: 300px;
+  margin: 0;
+  padding: 0;
 }
 
 .sidebar h2 { font-size: 150%; }
@@ -304,8 +314,8 @@ ul { padding: 16px; }
 /* some non-default journo page boxes */
 .box.you-can-also .head
 {
-    background: #7f2284 url( "/img/box_head_bg_purple.png" ) repeat-x top;
-    border-bottom: 1px solid #630460;
+  background: #7f2284 url( "/img/box_head_bg_purple.png" ) repeat-x top;
+  border-bottom: 1px solid #630460;
 }
 
 .box.you-can-also .head h2,
@@ -316,8 +326,8 @@ ul { padding: 16px; }
 
 .box.subscribe-newsletter .head
 {
-    background: #49a02b url( "/img/box_head_bg_green.png" ) repeat-x top;
-    border-bottom: 1px solid #408e26;
+  background: #49a02b url( "/img/box_head_bg_green.png" ) repeat-x top;
+  border-bottom: 1px solid #408e26;
 }
 
 .box.subscribe-newsletter .head h2,
@@ -328,7 +338,7 @@ ul { padding: 16px; }
 /* overview section on journo page */
 
 .overview {
-    padding: 0 8px;
+  padding: 0 8px;
 }
 
 .overview .picture {
@@ -338,20 +348,11 @@ ul { padding: 16px; }
 }
 
 
-ul.art-list {
-    padding: 0;
-    list-style-type: none;
-}
-
-ul.art-list li {
-    border-bottom: 1px solid #cccccc;
-    padding: 4px 0 16px 0;
-}
 
 .previous-articles form {
-    margin: 0;
-    background-color: #eeeeee;
-    border: none;
+  margin: 0;
+  background-color: #eeeeee;
+  border: none;
 }
 
 
