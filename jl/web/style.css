@@ -176,7 +176,7 @@ abbr.published { text-decoration: none; border: none; }
   width: 628px; /* 995 = 10 + 16+628+16 + 15 + 300+10 */
   background: white;
   margin: 0;
-  padding: 8px 16px;
+  padding: 8px 16px 16px 16px;
 
   -moz-box-shadow: 0 0 5px #888888;
   -webkit-box-shadow: 0 0 5px #888888;
