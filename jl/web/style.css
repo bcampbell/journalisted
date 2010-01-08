@@ -112,10 +112,28 @@ abbr.published { text-decoration: none; border: none; }
 
 #header .search form {
   padding: 0;
+  margin: 0;
   border: none;
 }
 
+#header .search form input#q {
+  padding: 4px 32px 4px 4px;
+  margin: 0;
+  width: 184px;  /* = 220-32-4 */
+  height: 20px; /* = 28-4-4 */
+  background: url("/img/searchbox.png") no-repeat;
+  border: none;
+}
 
+#header .search form input[type="submit"] {
+  padding: 0;
+  margin: 0;
+  width: 81px;
+  height: 28px;
+  background: url("/img/buttons.png") no-repeat;
+  overflow: hidden;
+  border: none;
+}
 
 
 /* FOOTER */
