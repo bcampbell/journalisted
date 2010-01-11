@@ -209,7 +209,7 @@ foreach( $employers as $emp ) {
 */ ?>
 
 <div class="previous-articles">
-  <div class="head"><h3>Previous Articles</h3></div>
+  <div class="head"><h3>Articles</h3></div>
   <div class="body">
     <form action="/search" method="get">
     Find articles by <?= $prettyname ?> containing:
@@ -415,17 +415,18 @@ blah blah blah blah blah
 </div>
 
 <div class="box you-can-also">
-<div class="head"><h3>You can also...</h3></div>
-<div class="body">
-<ul>
-<li><a href="/alert?Add=1&amp;j=<?= $ref ?>">Email me</a> when <?= $prettyname ?> writes an article</li>
-<li><a href="<?= $rssurl ?>">RSS Feed</a></li>
-<?php if( !$can_edit_page ) { ?><li>
-<a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
+  <div class="head"><h3>You can also...</h3></div>
+  <div class="body">
+    <ul>
+      <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add journalist's articles to my daily alerts</a></li>
+      <li class="print-page"><a href="">Print this page</a></li>
+      <li class="forward-profile"><a href="">Forward profile to a friend</a></li>
+<?php if( !$can_edit_page ) { ?>
+      <li class="claim-profile">
+        <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
 <?php } ?>
-<li><a href="#">Report any incorrect information</a></li>
-</ul>
-</div>
+    </ul>
+  </div>
 </div>
 
 

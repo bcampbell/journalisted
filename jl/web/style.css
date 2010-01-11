@@ -117,22 +117,45 @@ abbr.published { text-decoration: none; border: none; }
 }
 
 #header .search form input#q {
-  padding: 4px 32px 4px 4px;
-  margin: 0;
+  padding: 6px 32px 6px 4px;
+  margin: 0px;
   width: 184px;  /* = 220-32-4 */
-  height: 20px; /* = 28-4-4 */
+  height: 16px; /* = 28-6-6 */
   background: url("/img/searchbox.png") no-repeat;
+  overflow: hidden;
   border: none;
+/*  float: left;*/
+  text-indent: 32px;
+box-sizing: content-box;
+-moz-box-sizing: content-box;
+-webkit-box-sizing: content-box;
+
+}
+
+#header .search form input#q:focus {
+    outline: 1px solid white;
 }
 
 #header .search form input[type="submit"] {
-  padding: 0;
-  margin: 0;
+  padding: 0px;
+  margin: 0px;
   width: 81px;
   height: 28px;
   background: url("/img/buttons.png") no-repeat;
   overflow: hidden;
   border: none;
+/*  float: left;*/
+box-sizing: content-box;
+-moz-box-sizing: content-box;
+-webkit-box-sizing: content-box;
+
+}
+
+#header .search form input[type="submit"]:hover {
+  background-position: 0px -28px;
+}
+#header .search form input[type="submit"]:active {
+  background-position: 0px -56px;
 }
 
 
@@ -339,6 +362,12 @@ abbr.published { text-decoration: none; border: none; }
 .box.you-can-also .head h3,
 .box.you-can-also .head h4
 { color: #ffffff; }
+
+.box.you-can-also ul li { padding-left: 0px; height: 32px; }
+li.add-alert { list-style: url( "/img/icon_newspaper.png") disc outside; }
+li.print-page { list-style: url( "/img/icon_printer.png") disc outside; }
+li.forward-profile { list-style: url( "/img/icon_rightarrow.png") disc outside; }
+li.claim-profile { list-style: url( "/img/icon_person.png") disc outside; }
 
 
 .box.subscribe-newsletter .head
