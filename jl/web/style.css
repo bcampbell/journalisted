@@ -31,7 +31,8 @@ a:hover { text-decoration: underline; }
 a:visited { color: #ee3333; }
 
 ul {
-  padding: 16px;
+  margin: 0px;
+  padding: 0px 0px 0px 16px;
   list-style: url( "/img/bullet.png") disc outside;
 }
 
@@ -300,7 +301,7 @@ box-sizing: content-box;
 .box .head h3,
 .box .head h4
 {
-  padding: 4px 16px;
+  padding: 8px 16px;
   border: none;
 }
 
@@ -363,13 +364,32 @@ box-sizing: content-box;
 .box.you-can-also .head h4
 { color: #ffffff; }
 
-.box.you-can-also ul li { padding-left: 0px; height: 32px; }
-li.add-alert { list-style: url( "/img/icon_newspaper.png") disc outside; }
-li.print-page { list-style: url( "/img/icon_printer.png") disc outside; }
-li.forward-profile { list-style: url( "/img/icon_rightarrow.png") disc outside; }
-li.claim-profile { list-style: url( "/img/icon_person.png") disc outside; }
+.box.you-can-also {
+  background-color: #f1e3f1;
+}
 
+.box.you-can-also ul { padding: 0px; list-style: none; }
 
+.box.you-can-also ul li {
+  background-repeat: no-repeat;
+  background-position: left center;
+  padding: 7px 0px 8px 20px;
+  height: 16px;
+  border-top: 1px solid #cccccc;
+}
+
+.box.you-can-also ul li:first-child {
+  border-top: none;
+}
+
+.box.you-can-also li.add-alert { background-image: url( "/img/icon_newspaper.png"); }
+.box.you-can-also li.print-page { background-image: url( "/img/icon_printer.png"); }
+.box.you-can-also li.forward-profile { background-image: url( "/img/icon_rightarrow.png"); }
+.box.you-can-also li.claim-profile { background-image: url( "/img/icon_person.png"); }
+
+.box.subscribe-newsletter {
+  background-color: #e7f3e3;
+}
 .box.subscribe-newsletter .head
 {
   background: #49a02b url( "/img/box_head_bg_green.png" ) repeat-x top;
