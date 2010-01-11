@@ -50,6 +50,36 @@ ul.art-list li {
 abbr.published { text-decoration: none; border: none; }
 
 
+/* tabs... */
+.main .tabs ul {
+  list-style: none;
+  border: 0px;
+  margin: 30px 0px 0px 0px;
+  padding: 0px 0px 0px 8px;
+
+}
+
+.main .tabs ul li {
+  background-color: white;
+  float: left;
+/*  display: inline;*/
+  margin-bottom: -1px;
+  padding: 4px 20px;
+  margin-right: 4px;
+
+  border: 1px solid #888888;
+  border-bottom: none;
+
+  border-top-right-radius: 5px;
+  -moz-border-radius-topright: 5px;
+  -webkit-border-top-right-radius: 5px;
+
+  border-top-left-radius: 5px;
+  -moz-border-radius-topleft: 5px;
+  -webkit-border-top-left-radius: 5px;
+}
+
+
 /* HEADER */
 
 #header {
@@ -117,28 +147,28 @@ abbr.published { text-decoration: none; border: none; }
   border: none;
 }
 
+#header .search form select {
+  float: left;
+  padding: 0px;
+  margin: 0px 4px 0px 0px;
+  height: 28px;
+}
+
 #header .search form input#q {
-  padding: 6px 32px 6px 4px;
+  padding: 6px 4px 6px 32px;
   margin: 0px;
   width: 184px;  /* = 220-32-4 */
   height: 16px; /* = 28-6-6 */
   background: url("/img/searchbox.png") no-repeat;
   overflow: hidden;
   border: none;
-/*  float: left;*/
-  text-indent: 32px;
-box-sizing: content-box;
--moz-box-sizing: content-box;
--webkit-box-sizing: content-box;
-
+  float: left;
 }
 
 #header .search form input#q:focus {
-    outline: 1px solid white;
 }
 
 #header .search form input[type="submit"] {
-  padding: 0px;
   margin: 0px;
   width: 81px;
   height: 28px;
@@ -146,19 +176,21 @@ box-sizing: content-box;
   overflow: hidden;
   border: none;
 /*  float: left;*/
-box-sizing: content-box;
--moz-box-sizing: content-box;
--webkit-box-sizing: content-box;
-
 }
 
 #header .search form input[type="submit"]:hover {
   background-position: 0px -28px;
 }
+
+
 #header .search form input[type="submit"]:active {
   background-position: 0px -56px;
+  padding-top: 1px;
 }
 
+#header .search form input[type="submit"]::-moz-focus-inner {
+  border: 0;
+}
 
 /* FOOTER */
 
@@ -233,7 +265,7 @@ box-sizing: content-box;
 .main h3
 {
   border-bottom: 1px solid #252525;
-  padding: 4px 0;
+  padding: 16px 0px 4px 0px;
 }
 
 .main h2
@@ -242,8 +274,9 @@ box-sizing: content-box;
 }
 
 
-.main .tab
+.main .tab-content
 {
+  clear: both;
   border: 1px solid #888888;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
@@ -404,7 +437,7 @@ box-sizing: content-box;
 /* overview section on journo page */
 
 .overview {
-  padding: 20px 8px 0 8px;
+  padding: 0px 8px 0 8px;
 }
 
 .overview .picture {

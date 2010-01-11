@@ -173,15 +173,16 @@ foreach( $employers as $emp ) {
 
 <?php /* TAB SECTIONS START HERE */ ?>
 
-<ul class="tabs">
-<li><a href="#tab-work"><?= $journo['prettyname']; ?>'s work</a></li>
+<div class="tabs">
+<ul>
+<li><a href="#tab-work">Work</a></li>
 <li><a href="#tab-bio">Biography</a></li>
 <li><a href="#tab-contact">Contact</a></li>
 </ul>
+</div>
 
 
-
-<div class="tab" id="tab-work">
+<div class="tab-content" id="tab-work">
 
 
 <?php /*
@@ -274,7 +275,7 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="tab" id="tab-bio">
+<div class="tab-content" id="tab-bio">
 
 
 <div class="">
@@ -344,7 +345,7 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="tab" id="tab-contact">
+<div class="tab-content" id="tab-contact">
 
 
 <div class="">

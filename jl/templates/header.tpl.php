@@ -50,8 +50,12 @@
       <div class="search">
         <form action="/journo_search" method="get">
 <!--        <label for="q">Search articles</label> -->
-          <input type="text" value="" title="find journalist" id="q" name="q" class="text" placeholder="find journalist"/>
-          <input type="submit" alt="find" value="Find" />
+          <select name="type">
+            <option value="journos">Search journalists</option>
+            <option value="articles">Search articles</option>
+          </select>
+          <input type="text" value="" id="q" name="q" />
+          <input type="submit" alt="search" value="Search" />
         </form>
       </div>
       <div style="clear:both;"></div>

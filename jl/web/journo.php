@@ -143,7 +143,7 @@ function extra_head()
 
 ?>
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
+<!-- <link type="text/css" rel="stylesheet" href="/profile.css" /> -->
 
 <script type="text/javascript">
 $(document).ready(
