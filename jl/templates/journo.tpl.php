@@ -175,7 +175,7 @@ foreach( $employers as $emp ) {
 
 <div class="tabs">
 <ul>
-<li><a href="#tab-work">Work</a></li>
+<li class="current"><a href="#tab-work">Work</a></li>
 <li><a href="#tab-bio">Biography</a></li>
 <li><a href="#tab-contact">Contact</a></li>
 </ul>

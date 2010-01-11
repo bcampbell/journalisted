@@ -151,27 +151,27 @@ $(document).ready(
         $('#tab-bio').hide();
         $('#tab-contact').hide();
         $(".tabs a[href='#tab-work']").click( function() {
-            $('ul.tabs li').removeClass('current');
+            $('.tabs li').removeClass('current');
             $(this).closest('li').addClass('current');
             $('#tab-bio').hide();
             $('#tab-contact').hide();
-            $('#tab-work').fadeIn('fast');
+            $('#tab-work').show();
             return false;
         });
         $(".tabs a[href='#tab-bio']").click( function() {
-            $('ul.tabs li').removeClass('current');
+            $('.tabs li').removeClass('current');
             $(this).closest('li').addClass('current');
             $('#tab-work').hide();
             $('#tab-contact').hide();
-            $('#tab-bio').fadeIn('fast');
+            $('#tab-bio').show();
             return false;
         });
         $(".tabs a[href='#tab-contact']").click( function() {
-            $('ul.tabs li').removeClass('current');
+            $('.tabs li').removeClass('current');
             $(this).closest('li').addClass('current');
             $('#tab-work').hide();
             $('#tab-bio').hide();
-            $('#tab-contact').fadeIn('fast');
+            $('#tab-contact').show();
             return false;
         });
 });
