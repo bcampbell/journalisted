@@ -120,9 +120,12 @@ abbr.published { text-decoration: none; border: none; }
 
 #header .search form select {
   float: left;
-  padding: 0px;
   margin: 0px 4px 0px 0px;
   height: 28px;
+/*  border: 1px solid #888888;
+  background: #ffffff;
+  color: #888888;
+*/
 }
 
 #header .search form input#q {
@@ -261,7 +264,6 @@ abbr.published { text-decoration: none; border: none; }
   float: left;
 /*  display: inline;*/
   padding: 4px 20px;
-  margin-bottom: -1px;
   margin-right: 4px;
 
   background: #b30c0c url("/img/tab_bg.png") repeat-x;
@@ -270,6 +272,7 @@ abbr.published { text-decoration: none; border: none; }
   color: #ffffff;
 
   border: 1px solid #b30c0c;
+  border-bottom: none;
 
   border-top-right-radius: 5px;
   -moz-border-radius-topright: 5px;
@@ -281,6 +284,7 @@ abbr.published { text-decoration: none; border: none; }
 }
 
 .main .tabs li.current a {
+  margin-bottom: -1px;
   background: #ffffff;
   border: 1px solid #888888;
   border-bottom: 1px solid #ffffff;
@@ -290,8 +294,6 @@ abbr.published { text-decoration: none; border: none; }
 .main .tabs a:hover,
 .main .tabs a:focus {
   background: #ef1313 url("/img/tab_bg_light.png") repeat-x;
-  border: 1px solid #ef1313;
-  border-bottom: 1px solid #888888;
   color: #ffffff;
   outline: 0;
 }
