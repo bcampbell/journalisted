@@ -521,6 +521,21 @@ abbr.published { text-decoration: none; border: none; }
 .box.subscribe-newsletter .head h4
 { color: #ffffff; }
 
+
+.box.admired-journos {
+  background-color: #deebf6;
+}
+.box.admired-journos .head
+{
+  background: #005294 url( "/img/box_head_bg_blue.png" ) repeat-x top;
+  border-bottom: 1px solid #004073;
+}
+
+.box.admired-journos .head h2,
+.box.admired-journos .head h3,
+.box.admired-journos .head h4
+{ color: #ffffff; }
+
 /* overview section on journo page */
 
 .overview {

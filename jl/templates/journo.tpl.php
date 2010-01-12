@@ -527,7 +527,7 @@ blah blah blah blah blah
 
 
 
-<div class="box">
+<div class="box admired-journos">
  <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
  <div class="body">
   <ul>
