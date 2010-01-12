@@ -174,6 +174,23 @@ $(document).ready(
             $('#tab-contact').show();
             return false;
         });
+
+        var searchLabel = $('.journo-profile .search form label').remove().text();
+        $('#findarticles').addClass('placeholder').val(searchLabel).focus(function() {
+            if (this.value == searchLabel) {
+                $(this).removeClass('placeholder').val('');
+            };
+        }).blur(function() {
+            if (this.value == '') {
+                $(this).addClass('placeholder').val(searchLabel);
+            };
+        });
+        $('.journo-profile .search form').submit(function() {
+            if ($('#findarticles').val() == searchLabel) {
+                $('#findarticles').val('');
+            }
+        });
+
 });
 </script>
 <?php

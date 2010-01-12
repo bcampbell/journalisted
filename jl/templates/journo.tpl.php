@@ -212,12 +212,14 @@ foreach( $employers as $emp ) {
 <div class="previous-articles">
   <div class="head"><h3>Articles</h3></div>
   <div class="body">
+    <div class="search">
     <form action="/search" method="get">
-    Find articles by <?= $prettyname ?> containing:
+    <label for="findarticles">Search previous articles</label>
     <input id="findarticles" type="text" name="q" value="" />
     <input type="hidden" name="j" value="<?= $ref ?>" />
-    <input type="submit" value="Find" />
+    <input type="submit" value="Search" />
     </form>
+    </div>
 
   <ul class="art-list">
 

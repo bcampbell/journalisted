@@ -159,7 +159,7 @@ abbr.published { text-decoration: none; border: none; }
 
 #header .search form input[type="submit"]:active {
   background-position: 0px -56px;
-  padding-top: 1px;
+/*  padding-top: 1px; */
 }
 
 #header .search form input[type="submit"]::-moz-focus-inner {
@@ -409,6 +409,69 @@ abbr.published { text-decoration: none; border: none; }
   background-color: #f7dbdb;
 }
 
+
+.journo-profile .search form {
+  padding: 5px;
+  margin: 0px;
+  background-color: #eeeeee;
+  border: none;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+.journo-profile .search form label { display: none; }
+
+.journo-profile .search form select {
+  float: left;
+  margin: 0px 4px 0px 0px;
+  height: 28px;
+/*  border: 1px solid #888888;
+  background: #ffffff;
+  color: #888888;
+*/
+}
+
+.journo-profile .search form input#findarticles {
+  padding: 7px 4px 0px 25px;
+  margin: 0px;
+  width: 160px;  /* = 189-25-4 */
+  height: 18px; /* = 25-7-0 */
+  background: url("/img/searchbox_small.png") no-repeat;
+  overflow: hidden;
+  border: none;
+  float: left;
+  font-size: 90%;
+  color: #222222;
+}
+
+.journo-profile .search form input#findarticles.placeholder {
+  color: #888888;
+}
+
+.journo-profile .search form input[type="submit"] {
+  margin: 0px;
+  width: 73px;
+  height: 25px;
+  background: url("/img/buttons.png") no-repeat 0px -90px;
+  overflow: hidden;
+  border: none;
+/*  float: left;*/
+}
+
+.journo-profile .search form input[type="submit"]:hover {
+  background-position: 0px -116px;
+}
+
+
+.journo-profile .search form input[type="submit"]:active {
+  background-position: 0px -142px;
+}
+
+.journo-profile .search form input[type="submit"]::-moz-focus-inner {
+  border: 0;
+}
+
+
+
 /* some non-default journo page boxes */
 .box.you-can-also .head
 {
@@ -472,11 +535,5 @@ abbr.published { text-decoration: none; border: none; }
 }
 
 
-
-.previous-articles form {
-  margin: 0;
-  background-color: #eeeeee;
-  border: none;
-}
 
 
