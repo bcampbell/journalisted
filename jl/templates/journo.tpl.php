@@ -138,13 +138,13 @@ foreach( $employers as $emp ) {
   <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
   <div class="body">
 
-  <div class="picture">
+  <div class="photo">
 <?php if( $picture ) { ?>
     <img src="<?= $picture['url']; ?>" alt="photo" />
 <?php } else { ?>
     <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
 <?php } ?>
-    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_picture?ref=<?= $ref ?>">edit</a><?php } ?>
+  <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_picture?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
 
     <ul>
@@ -281,7 +281,10 @@ foreach( $employers as $emp ) {
 
 
 <div class="">
-  <div class="head"><h3>Experience</h3></div>
+  <div class="head">
+    <h3>Experience</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
   <div class="body">
     <ul>
 <?php foreach( $employers as $e ) { ?>
@@ -294,13 +297,15 @@ foreach( $employers as $emp ) {
  <?php } ?>
 <?php } ?>
     </ul>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
 </div>
 
 
 <div class="">
-  <div class="head"><h3>Education</h3></div>
+  <div class="head">
+    <h3>Education</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
   <div class="body">
     <ul>
 <?php foreach( $education as $edu ) { ?>
@@ -311,33 +316,36 @@ foreach( $employers as $emp ) {
       </li>
 <?php } ?>
     </ul>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
 </div>
 
 
 <div class="">
-  <div class="head"><h3>Books by <?= $prettyname ?></h3></div>
+  <div class="head">
+    <h3>Books by <?= $prettyname ?></h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
   <div class="body">
     <ul>
 <?php foreach( $books as $b ) { ?>
     <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
 <?php } ?>
     </ul>
-    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_books?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
 </div>
 
 
 <div class="">
-  <div class="head"><h3>Awards Won</h3></div>
+  <div class="head">
+    <h3>Awards Won</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
   <div class="body">
     <ul>
 <?php foreach( $awards as $a ) { ?>
     <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
 <?php } ?>
     </ul>
-    <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
 </div>
 

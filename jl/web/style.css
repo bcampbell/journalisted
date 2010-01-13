@@ -50,6 +50,24 @@ ul.art-list li {
 abbr.published { text-decoration: none; border: none; }
 
 
+/* edit buttons */
+a.edit {
+  margin: 0px;
+  padding: 0px 0px 0px 26px;
+  display: inline-block;
+  height: 21px;
+  width: 38px;
+  background: url("/img/buttons.png") no-repeat -82px 0px;
+  overflow: hidden;
+  color: #1a1a1a;
+  line-height: 21px;
+}
+
+a.edit:hover
+  { background-position: -82px -22px; text-decoration: none; }
+a.edit:focus
+  { background-position: -82px -44px; }
+
 
 /* HEADER */
 
@@ -542,13 +560,29 @@ abbr.published { text-decoration: none; border: none; }
   padding: 0px 8px 0 8px;
 }
 
-.overview .picture {
+.overview .photo {
   float: left;
   margin-right: 20px;
-  -moz-box-shadow: 3px 3px 5px #888888;
-  -webkit-box-shadow: 3px 3px 5px #888888;
+}
+.overview .photo a.edit {
+  margin-top: 8px;
 }
 
+.overview .photo img {
+  -moz-box-shadow: 3px 3px 5px #888888;
+  -webkit-box-shadow: 3px 3px 5px #888888;
+  display: block;
+}
 
+/* bio tab on journo page */
+
+#tab-bio .head {
+  position: relative;
+}
+#tab-bio .head a.edit {
+  position: absolute;
+  top: 10px;
+  right: 0px;
+}
 
 
