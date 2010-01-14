@@ -102,6 +102,9 @@ class EditProfilePage
         page_header( $this->pageTitle, $this->pageParams );
 
 ?>
+
+<div class="main">
+
 <h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
 
 <!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
@@ -153,8 +156,10 @@ class EditProfilePage
 
 <!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
 
+</div> <!-- end main -->
 <?php
-$this->showNavigation();
+//$this->showNavigation();
+
         page_footer();
     }
 
