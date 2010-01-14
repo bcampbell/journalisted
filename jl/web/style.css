@@ -572,9 +572,9 @@ a.edit:focus
 }
 
 .overview .photo {
-  margin-right: 20px;
   float: left;
 }
+
 .overview .photo a.edit {
   margin-top: 8px;
 }
@@ -587,10 +587,12 @@ a.edit:focus
 
 .overview .fudge {
   float: left;
+  width: 362px; /* =440-88 */
+  padding-left: 88px;
+  margin-left: 20px;
 }
 
 .overview .section {
-  margin-left: 88px;
   margin-bottom: 4px;
 }
 
