@@ -36,6 +36,7 @@ ul {
   list-style: url( "/img/bullet.png") disc outside;
 }
 
+
 /* lists of articles */
 ul.art-list {
   padding: 0;
@@ -67,6 +68,13 @@ a.edit:hover
   { background-position: -82px -22px; text-decoration: none; }
 a.edit:focus
   { background-position: -82px -44px; }
+
+
+
+.bio .jobtitle { color: #222222; font-size: 110% }
+.bio .publication { color: #222222; font-size: 110% }
+.bio .daterange { color: #555555; }
+
 
 
 /* HEADER */
@@ -267,6 +275,9 @@ a.edit:focus
 
 
 /* tabs (TODO: use more semantic name... another "nav" group maybe?) */
+
+.tabs { clear: both; }
+
 .main .tabs ul {
   list-style: none;
   border: 0px;
@@ -561,8 +572,8 @@ a.edit:focus
 }
 
 .overview .photo {
-  float: left;
   margin-right: 20px;
+  float: left;
 }
 .overview .photo a.edit {
   margin-top: 8px;
@@ -574,15 +585,56 @@ a.edit:focus
   display: block;
 }
 
+.overview .fudge {
+  float: left;
+}
+
+.overview .section {
+  margin-left: 88px;
+  margin-bottom: 4px;
+}
+
+.overview .section h4 {
+  float: left;
+  border: none;
+  width: 88px;
+  height: 16px;
+  margin-left: -88px;
+
+  font-size: 100%;
+  font-weight: bold;
+  color: #555555;
+
+}
+
+.overview .section ul {
+  list-style: square;
+/*  margin-left: 70px; */
+}
+
+
 /* bio tab on journo page */
 
-#tab-bio .head {
-  position: relative;
-}
-#tab-bio .head a.edit {
+/* position the "edit" link */
+.bio .head { position: relative; }
+.bio .head a.edit {
   position: absolute;
   top: 10px;
   right: 0px;
 }
 
+
+
+a.donate {
+  margin: 0px 0px 16px 0px;
+  padding: 0px;
+  width: 300px;
+  height: 41px;
+  line-height: 41px;
+  text-align: center;
+  color: #ffffff;
+  display: block;
+  background: url("/img/buttons.png") no-repeat -88px -127px;
+  font-size: 125%;
+}
 

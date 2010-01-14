@@ -39,7 +39,7 @@
 
  $employers    - list of employers journo has worked for
    for each one:
-    employer
+    employer   - name eg "Pig Farmer Monthly"
     job_title
     year_from  - eg "2005"
     year_to    - null if still employed here
@@ -120,11 +120,19 @@
 
 
 /* build up a list of _current_ employers */
-$current_employers = array();
+$current_employment = array();
 foreach( $employers as $emp ) {
     if( !$emp['year_to'] )
-        $current_employers[] = $emp;
+        $current_employment[] = $emp;
 }
+
+/* list of previous employers (just employer name, nothing else) */
+$previous_employers = array();
+foreach( $employers as $emp ) {
+    if( $emp['year_to'] )
+        $previous_employers[] = $emp['employer'];
+}
+$previous_employers = array_unique( $previous_employers );
 
 
 
@@ -138,35 +146,65 @@ foreach( $employers as $emp ) {
   <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
   <div class="body">
 
-  <div class="photo">
+    <div class="photo">
 <?php if( $picture ) { ?>
-    <img src="<?= $picture['url']; ?>" alt="photo" />
+      <img src="<?= $picture['url']; ?>" alt="photo" />
 <?php } else { ?>
-    <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
+      <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
 <?php } ?>
   <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_picture?ref=<?= $ref ?>">edit</a><?php } ?>
-  </div>
+    </div>
 
-    <ul>
+    <div class="fudge">
+<?php if( $bios ) { ?>
+    <div class="section bios">
+      <h4>Bio</h4>
 <?php foreach($bios as $bio ) { ?>
-    <li class="bio-para"><?= $bio['bio']; ?>
-      <div class="disclaimer">
-        (source: <a class="extlink" href="<?= $bio['srcurl'];?>"><?= $bio['srcname'];?></a>)
-      </div>
-    </li>
+      <p class="bio-para"><?= $bio['bio']; ?>
+        <div class="disclaimer">
+          (source: <a class="extlink" href="<?= $bio['srcurl'];?>"><?= $bio['srcname'];?></a>)
+        </div>
+      </p>
+<?php } ?>
+    </div>
 <?php } ?>
 
-<?php if( !$quick_n_nasty && $writtenfor ) { ?>
-    <li>
+
+<?php /* if( !$quick_n_nasty && $writtenfor ) { ?>
+    <p>
       <?= $prettyname; ?> has written articles published in <?= $writtenfor; ?>.
-    </li>
+    </p>
+<?php } */ ?>
+
+
+<?php if( $current_employment ) { ?>
+    <div class="section current-employment">
+
+      <h4>Current</h4>
+      <ul>
+<?php   foreach( $current_employment as $e ) { ?>
+        <li class="current-employer"><span class="jobtitle"><?= $e['job_title'] ?></span> at <span class="publication"><?= $e['employer'] ?></span></li>
+<?php   } ?>
+      </ul>
+    </div>
 <?php } ?>
 
-<?php foreach( $current_employers as $e ) { ?>
-    <li>Current: <span class="jobtitle"><?= $e['job_title'] ?></span> at <span class="publication"><?= $e['employer'] ?></span></li>
+<?php if( $previous_employers ) { ?>
+    <div class="section previous-employers">
+      <h4>Experience</h4>
+      <ul>
+<?php foreach( $previous_employers as $e ) { ?>
+        <li><span class="publication"><?= $e ?></span></li>
+<?php } ?>
+      </ul>
+    </div>
 <?php } ?>
 
+
+
+    </div> <!-- end fudge -->
     <div style="clear: both;"></div>
+
   </div>
 </div>  <!-- end overview -->
 
@@ -277,10 +315,10 @@ foreach( $employers as $emp ) {
 
 
 
-<div class="tab-content" id="tab-bio">
+<div class="tab-content bio" id="tab-bio">
 
 
-<div class="">
+<div class="experience">
   <div class="head">
     <h3>Experience</h3>
     <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
@@ -404,19 +442,8 @@ foreach( $employers as $emp ) {
 
 
 <div class="sidebar">
-<?php /*
-<div class="box">
- <div class="head"><h3>Recent changes</h3></div>
- <div class="body">
-  <ul>
-<?php foreach( $recent_changes as $recent ) { ?>
-   <li><?= $recent['description'] ?></li>
-<?php } ?>
-  </ul>
- </div>
-</div>
-*/
-?>
+
+<a class="donate" href="/donate">Donate</a>
 
 <div class="box subscribe-newsletter">
 <div class="head"><h3>Subscribe to Journa<i>listed</i> newsletter</h3></div>
