@@ -12,6 +12,12 @@
 
 */
 
+/* if there was a search, we want the header search bar to retain the details */
+$q = get_http_var( 'q', '' );
+$type = strtolower( get_http_var( 'type', 'journo' ) );
+
+
+
 ?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
@@ -48,13 +54,13 @@
           <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"> <a href="/about">About</a> </li>
       </div>
       <div class="search">
-        <form action="/journo_search" method="get">
+        <form action="/search" method="get">
 <!--        <label for="q">Search articles</label> -->
           <select name="type">
-            <option value="journos">Search journalists</option>
-            <option value="articles">Search articles</option>
+            <option value="journo"<?= ($type=='journo')?' selected':'' ?>>Search journalists</option>
+            <option value="article"<?= ($type=='article')?' selected':'' ?>>Search articles</option>
           </select>
-          <input type="text" value="" id="q" name="q" />
+          <input type="text" value="<?= h($q) ?>" id="q" name="q" />
           <input type="submit" alt="search" value="Search" />
         </form>
       </div>

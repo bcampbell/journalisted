@@ -4,6 +4,7 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 /*require_once '../phplib/frontpage.php'; */
 require_once '../phplib/misc.php';
+require_once '../phplib/journo.php';
 require_once '../phplib/xap.php';
 require_once '../../phplib/db.php';
 
@@ -12,9 +13,50 @@ define( 'DEFAULT_NUM_PER_PAGE', 25 );
 
 
 $query = get_http_var( 'q', '' );
+$type = strtolower( get_http_var( 'type', 'journo' ) );
 $num_per_page = (int)get_http_var('num', DEFAULT_NUM_PER_PAGE );
 $start = (int)get_http_var('start', '0' );
+
+if( $type=='article' ) {
+    page_header( "Search Articles" );
+    page_footer();
+} else {
+    page_header( "Search Journalists" );
+
+    $journos = array();
+    if( $query )
+        $journos = journo_FuzzyFind( $query );
+
+?>
+<div class="main search-results">
+  <div class="head">
+    <b>Search Results:</b> <span class="count"><?= sizeof($journos) ?> results</span> for <span class="query"><?= h($query) ?></span>
+  </div>
+  <div class="body">
+<?php
+
+    if( $journos ) {
+?>
+<ul>
+<?php   foreach( $journos as $j ) { ?>
+  <li><?= journo_link($j); ?></li>
+<?php   } ?>
+</ul>
+<?php } ?>
+  </div>
+</div>  <!-- end main -->
+<?php
+    page_footer();
+}
+
+
+return;
+
+
 $sort_order = get_http_var( 'o', 'date' );
+
+
+
 
 
 /* temp hack */

@@ -224,9 +224,10 @@ function spew_404( $ref )
 </ul>
 <?php } ?>
 
-<form method="get" action="/journo_search">
+<form method="get" action="/search">
+ <input type="hidden" name="type" value="journo" />
  <input type="text" size="40" name="q" value="<?= h($query) ?>" />
- <input type="submit" name="action" value="Find Journalist" />
+ <input type="submit" name="action" value="Search for Journalist" />
 </form>
 
 <?php

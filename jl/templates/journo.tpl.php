@@ -129,8 +129,7 @@ foreach( $employers as $emp ) {
 /* list of previous employers (just employer name, nothing else) */
 $previous_employers = array();
 foreach( $employers as $emp ) {
-    if( $emp['year_to'] )
-        $previous_employers[] = $emp['employer'];
+    $previous_employers[] = $emp['employer'];
 }
 $previous_employers = array_unique( $previous_employers );
 

@@ -640,3 +640,25 @@ a.donate {
   font-size: 125%;
 }
 
+
+/* SEARCH PAGE */
+
+/* TODO: this should be default for .main (ie move padding from .main to .main>.body) */
+.main.search-results { padding: 0px; }
+.main.search-results>.body { padding: 8px 16px 16px 16px; }
+
+.main.search-results>.head {
+  padding: 8px;
+  margin: 0px;
+  height: 20px;   /* =34-8-8 */
+  line-height: 20px;
+  background-color: #eeeeee;
+  border-bottom: 1px solid #dddddd;
+}
+
+.search-results .count,
+.search-results .query
+{ font-weight: bold; color: #2352a1; }
+
+.search-results ul { list-style: none; padding: 0; }
+
