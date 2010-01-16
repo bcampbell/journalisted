@@ -647,14 +647,16 @@ a.donate {
 .main.search-results { padding: 0px; }
 .main.search-results>.body { padding: 8px 16px 16px 16px; }
 
-.main.search-results>.head {
-  padding: 8px;
+.search-results>.head,
+.search-results>.foot {
+  padding: 8px 16px;
   margin: 0px;
   height: 20px;   /* =34-8-8 */
   line-height: 20px;
   background-color: #eeeeee;
-  border-bottom: 1px solid #dddddd;
 }
+.search-results>.head {  border-bottom: 1px solid #dddddd; }
+.search-results>.foot {  border-top: 1px solid #dddddd; }
 
 .search-results .count,
 .search-results .query

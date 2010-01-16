@@ -254,6 +254,7 @@ $previous_employers = array_unique( $previous_employers );
     <label for="findarticles">Search previous articles</label>
     <input id="findarticles" type="text" name="q" value="" />
     <input type="hidden" name="j" value="<?= $ref ?>" />
+    <input type="hidden" name="type" value="article" />
     <input type="submit" value="Search" />
     </form>
     </div>
