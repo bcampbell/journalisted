@@ -25,7 +25,6 @@ class EducationPage extends EditProfilePage
     function extra_head()
     {
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <? /*
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
@@ -112,38 +111,32 @@ class EducationPage extends EditProfilePage
 ?>
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="school_<?= $uniq; ?>">School name:</label></th>
-  <td>
+<div class="field">
+  <label for="school_<?= $uniq; ?>">School name:</label>
     <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
     <span class="explain">eg: "St. Cedd's College, Cambridge"</span>
-  </td>
- </tr>
- <tr>
-  <th><label for="field_<?= $uniq; ?>">Field(s) of study:</label></th>
-  <td>
+</div>
+
+<div class="field">
+  <label for="field_<?= $uniq; ?>">Field(s) of study:</label>
    <input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" />
    <span class="explain">eg: "Rocket Surgery"</span>
-  </td>
- </tr>
- <tr>
-  <th><label for="qualification_<?= $uniq; ?>">Qualification:</label></th>
-  <td>
+</div>
+
+<div class="field">
+  <label for="qualification_<?= $uniq; ?>">Qualification:</label>
    <input type="text" size="30" name="qualification" id="qualification_<?= $uniq; ?>" value="<?= h($edu['qualification']); ?>" />
    <span class="explain">eg: "BA"</span>
-  </td>
- </tr>
- <tr>
-  <th>Years attended:</th>
-  <td>
-   <label for="year_from_<?= $uniq; ?>">from</label>
-   <input type="text" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
-   <label for="year_to_<?= $uniq; ?>">to</label>
-   <input type="text" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
-  </td>
- </tr>
-</table>
+</div>
+
+<fieldset class="field range">
+ <span class="faux-label">Years attended:</span>
+ <label for="year_from_<?= $uniq; ?>">from</label>
+ <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
+ <label for="year_to_<?= $uniq; ?>">to</label>
+ <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
+</fieldset>
+
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>

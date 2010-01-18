@@ -29,9 +29,66 @@ function fancyForms( formClass, extraSetupFn ) {
     var fieldId = 0;
     var formFields = "input, checkbox, select, textarea";
 
+    function initForm() {
+        var f = $(this);
+        f.find('.edit').hide();
+        f.find('.submit').hide();
+        f.find( '.cancel' ).hide();
+        f.find(formFields).each(function(){ $(this).change( function() {
+            f.find('.submit').show();
+            f.find( '.cancel' ).show();
+            f.addClass('modified');
+            } )
+         } );
+
+        f.append( '<input type="hidden" name="ajax" value="1" />'); // so server knows it's ajax
+        f.append( '<span class="ajax-msg"></span>');    // add a place to plonk messages
+
+        /* set up for ajax submission of form to avoid page reload */
+        f.ajaxForm( {
+            dataType: "json",
+            beforeSend: function() {
+                f.find('button').attr("disabled", true);
+                f.find('.ajax-msg').html( '<img src="/css/indicator.gif" /><em>working...</em>' );
+            },
+            success: function(result) {
+                f.find('button').removeAttr("disabled");
+                f.find('.ajax-msg').html( '' );
+
+                if( result.status=='success' ) {
+                    // if a creator form, turn it into a full editing form
+                    if( f.hasClass("creator") ) {
+                        f.removeClass("creator");
+/*
+                        f.append( ' ' + result.editlinks_html );
+                        ajaxifyEditLinks( f );
+*/
+                        f.append( '<input type="hidden" name="id" value="' + result.id + '" />' );
+                    }
+
+                    f.find( '.submit' ).hide();
+                    f.find( '.cancel' ).hide();
+                    f.removeClass('modified');
+/*                    freezeForm(f); */
+                }
+            },
+            error: function() {
+                /* this gets called on IE in _addition_ to success callback... */
+/*                f.find('button').removeAttr("disabled"); */
+                // hmm... could show an error message... but... well...
+/*                freezeForm(f); */
+            }
+        } );
+
+
+        if (typeof extraSetupFn != 'undefined') {
+            extraSetupFn.apply( f );
+        }
+    }
+
 
     /* ajaxify a form */
-    function initForm() {
+    function OLDinitForm() {
         var f = $(this);
 
         function ajaxifyEditLinks( f ) {

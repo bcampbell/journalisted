@@ -75,6 +75,56 @@ a.edit:focus
 .bio .publication { color: #222222; font-size: 110% }
 .bio .daterange { color: #555555; }
 
+/* default form style */
+
+form {
+  border: none;
+  border-bottom: 1px solid #d9d9d9;
+  padding: 8px 0px;
+  clear: both;
+}
+
+form.modified {
+  background-color: #deebf6;
+}
+
+form div.field label,
+form fieldset.field .faux-label {
+  float: left;
+  width: 130px;
+  height: 20px;
+  line-height: 20px;
+  color: #4d4d4d;
+  font-weight: bold;
+}
+
+form input.year { width: 4em; }
+
+form fieldset.field { border: none; padding: 0px; margin 0px; }
+form fieldset.field input { margin-right: 4px; }
+
+form input {
+  width: 300px;
+  height: 18px;
+  border: 1px solid #d9d9d9;
+}
+
+form div.field { margin: 8px 0px; }
+
+form .submit {
+  margin: 6px 0px 6px 130px;
+}
+
+form .explain {
+ margin-left: 130px;
+  display: block;
+  font-size: 80%;
+  color: #888888;
+}
+
+form .remove {
+  float: right;
+}
 
 
 /* HEADER */

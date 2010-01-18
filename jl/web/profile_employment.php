@@ -27,7 +27,6 @@ class EmploymentPage extends EditProfilePage
         // TODO: use compressed jquery.autocomplete
 
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
@@ -40,14 +39,17 @@ class EmploymentPage extends EditProfilePage
 
         fancyForms( '.employer', function() {
             var f = $(this);
-
             f.find("input[name=employer]").autocomplete( "/ajax_employer_lookup" );
 
             var current = f.find("input[name=current]")
-            var year_to = f.find("input[name=year_to]").closest('tr')
+
+            var year_to = f.find("input[name=year_to]")
+            var year_to_label = year_to.prev( "label" );
             year_to.toggle( ! current.attr('checked') );
+            year_to_label.toggle( ! current.attr('checked') );
             current.click( function() {
                 year_to.toggle( ! current.attr('checked') );
+                year_to_label.toggle( ! current.attr('checked') );
             } );
         } );
     } );
@@ -130,20 +132,35 @@ class EmploymentPage extends EditProfilePage
 ?>
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr><th><label for="employer_<?= $uniq; ?>">Employer:</label></td><td><input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></td></tr>
- <tr><th><label for="job_title_<?= $uniq; ?>">Job Title:</label></td><td><input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></td></tr>
- <tr><th><label for="year_from_<?= $uniq; ?>">Year from:</label></td><td><input type="text" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/></td></tr>
- <tr><th><label for="year_to_<?= $uniq; ?>">Year to:</label></td><td><input type="text" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/></td></tr>
- <tr><th></th><td><input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label></td></tr>
-</table>
+
+ <div class="field">
+  <label for="employer_<?= $uniq; ?>">Employer:</label>
+  <input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/>
+ </div>
+
+ <div class="field">
+  <label for="job_title_<?= $uniq; ?>">Job Title:</label>
+  <input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/>
+ </div>
+
+
+ <fieldset class="field">
+  <span class="faux-label"></span>
+  <label for="year_from_<?= $uniq; ?>">Year from:</label>
+  <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
+  <label for="year_to_<?= $uniq; ?>">Year to:</label>
+  <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
+  <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label>
+</fieldset>
+
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
-<input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $emp['id']; ?>" />
 <?= $this->genEditLinks($emp['id']); ?>
 <?php } ?>
+<input type="hidden" name="action" value="submit" />
+<button class="submit" type="submit">Save changes</button>
+<div style="clear:both;"></div>
 </form>
 <?php
 

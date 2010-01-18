@@ -157,6 +157,11 @@ class EditProfilePage
 <!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
 
 </div> <!-- end main -->
+
+<div class="sidebar">
+<?php $this->navBox(); ?>
+</div> <!-- end sidebar -->
+
 <?php
 //$this->showNavigation();
 
@@ -184,9 +189,7 @@ class EditProfilePage
     }
 
 
-
-
-    function showNavigation()
+    function navBox()
     {
         $pages = array(
             'picture'=>array( 'title'=>'Photo', 'url'=>'/profile_picture' ),
@@ -207,59 +210,28 @@ class EditProfilePage
                 $pages[$prev]['next'] = $pagename;
             $prev = $pagename;
         }
-
-
-        $this->emitMenu( $pages );
-    }
-
-
-    function emitMenu_SHITTY( $menu )
-    {
-
-        $curr = arr_get( $this->pageName, $menu );
-        $prev = arr_get( $curr['prev'], $menu );
-        $next = arr_get( $curr['next'], $menu );
-
 ?>
-<div class="profile-nav">
-<table border="0">
-<tr>
- <td></td>
- <td><a href="/profile?ref=<?= $this->journo['ref'] ?>">back to profile page</a><br/>&uarr;</td>
- <td></td>
-</tr>
-<tr>
- <td><?php if($prev) {?><a href="<?= $prev['url']; ?>?ref=<?= $this->journo['ref'] ?>"><?= $prev['title']; ?></a> &larr; <?php } ?></td>
- <td><?= $curr['title'] ?></td>
- <td><?php if($next) {?> &rarr; <a href="<?= $next['url']; ?>?ref=<?= $this->journo['ref'] ?>"><?= $next['title']; ?></a> <?php } ?></td>
-</tr>
-</table>
-</div>
-<?php
-
-
-    }
-
-    function emitMenu( $menu )
-    {
-?>
-<div class="profile-nav"> <a href="/profile?ref=<?= $this->journo['ref'] ?>"><strong>Overview</strong></a> |
-<?php
-        foreach( $menu as $itemname=>$item ) {
-            $c = ($itemname==$this->pageName) ?' class="current" ' : '';
-            $url = "{$item['url']}?ref={$this->journo['ref']}";
-            if( $itemname == $this->pageName ) {
-?>
-<?= $item['title'] ?> |
+<div class="box">
+<div class="head"><h4>Edit your profile</h4></div>
+<div class="body">
+<ul>
+<?php foreach( $pages as $n=>$p ) { ?>
+<li>
+<?php if( $n == $this->pageName ) { ?>
+<?= $p['title'] ?>
 <?php } else { ?>
-<a href="<?= $url ?>"><?= $item['title'] ?></a> |
+<a href="<?= $p['url'] ?>?ref=<?=$this->journo['ref'] ?>" ><?= $p['title'] ?></a>
 <?php } ?>
-<?php
-        }
-?>
+</li>
+<?php } ?>
+</ul>
 </div>
+</div>
+
 <?php
     }
+
+
 
 
 
