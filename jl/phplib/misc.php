@@ -392,6 +392,25 @@ function glue_url($parsed) {
 }
 
 
+/* param processing for search forms
+ * (shared by site header, and also on various pages)
+ */
+function search_getParams()
+{
+	static $s=null;
+	if( $s )
+		return $s;
+    
+    $s = array();
+    $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
+    $s['q'] = get_http_var( 'q', '' );
+    $s['num'] = (int)get_http_var('num', 20 );
+    $s['start'] = (int)get_http_var('start', '0' );
+    if( $s['type'] == 'article' ) {
+        $s['sort_order'] = get_http_var( 'o', 'date' );
+    }
 
+    return $s;
+}
 
 ?>

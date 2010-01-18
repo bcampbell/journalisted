@@ -100,7 +100,7 @@ form fieldset.field .faux-label {
 
 form input.year { width: 4em; }
 
-form fieldset.field { border: none; padding: 0px; margin 0px; }
+form fieldset.field { border: none; padding: 0px; margin: 0px; }
 form fieldset.field input { margin-right: 4px; }
 
 form input {
@@ -489,6 +489,8 @@ form .remove {
 }
 
 
+
+/* search forms for journo page and search results page */
 .journo-profile .search form {
   padding: 5px;
   margin: 0px;
@@ -497,8 +499,17 @@ form .remove {
   border-bottom: 1px solid #d9d9d9;
 }
 
+.search-results .search form {
+  padding: 32px 64px;
+  margin: 0px;
+  background-color: #d9d9d9;
+  border: none;
+  border-top: 1px solid #cacaca;
+}
+
 .journo-profile .search form label { display: none; }
 
+.search-results .search form select,
 .journo-profile .search form select {
   float: left;
   margin: 0px 4px 0px 0px;
@@ -509,6 +520,7 @@ form .remove {
 */
 }
 
+.search-results .search form input#q2,
 .journo-profile .search form input#findarticles {
   padding: 7px 4px 0px 25px;
   margin: 0px;
@@ -526,6 +538,8 @@ form .remove {
   color: #888888;
 }
 
+
+.search-results .search form input[type="submit"],
 .journo-profile .search form input[type="submit"] {
   margin: 0px;
   width: 73px;
@@ -536,15 +550,18 @@ form .remove {
 /*  float: left;*/
 }
 
+.search-results .search form input[type="submit"]:hover,
 .journo-profile .search form input[type="submit"]:hover {
   background-position: 0px -116px;
 }
 
 
+.search-results .search form input[type="submit"]:active,
 .journo-profile .search form input[type="submit"]:active {
   background-position: 0px -142px;
 }
 
+.search-results .search form input[type="submit"]::-moz-focus-inner,
 .journo-profile .search form input[type="submit"]::-moz-focus-inner {
   border: 0;
 }
@@ -698,7 +715,7 @@ a.donate {
 .main.search-results>.body { padding: 8px 16px 16px 16px; }
 
 .search-results>.head,
-.search-results>.foot {
+.search-results>.pager {
   padding: 8px 16px;
   margin: 0px;
   height: 20px;   /* =34-8-8 */
@@ -706,11 +723,13 @@ a.donate {
   background-color: #eeeeee;
 }
 .search-results>.head {  border-bottom: 1px solid #dddddd; }
-.search-results>.foot {  border-top: 1px solid #dddddd; }
+.search-results>.pager {  border-top: 1px solid #dddddd; }
 
 .search-results .count,
 .search-results .query
 { font-weight: bold; color: #2352a1; }
 
 .search-results ul { list-style: none; padding: 0; }
+
+.pager .page-links { float:right; }
 

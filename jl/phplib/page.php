@@ -53,6 +53,7 @@ function page_header( $title, $params=array() )
     }
 
 
+    $search = search_getParams();
 
     include "../templates/header.tpl.php";
 }

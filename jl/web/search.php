@@ -9,12 +9,11 @@ require_once '../phplib/xap.php';
 require_once '../../phplib/db.php';
 
 
-define( 'DEFAULT_NUM_PER_PAGE', 25 );
 
 
-$type = strtolower( get_http_var( 'type', 'journo' ) );
 
-if( $type=='article' ) {
+$s = search_getParams();
+if( $s['type']=='article' ) {
     search_articles();
 #    page_header( "Search Articles" );
 #    page_footer();
@@ -24,7 +23,9 @@ if( $type=='article' ) {
 return;
 
 function search_journos() {
-    $query = get_http_var( 'q', '' );
+
+    $s = search_getParams();
+    $query = $s['q'];
 
     page_header( "Search Journalists" );
 
@@ -37,9 +38,9 @@ function search_journos() {
   <div class="head">
     <b>Search Results:</b> <span class="count"><?= sizeof($journos) ?> journalists</span> like <span class="query"><?= h($query) ?></span>
   </div>
+
   <div class="body">
 <?php
-
     if( $journos ) {
 ?>
 <ul>
@@ -49,22 +50,25 @@ function search_journos() {
 </ul>
 <?php } ?>
   </div>
+
+<?php search_emit_onpage_form(); ?>
+
 </div>  <!-- end main -->
 <?php
     page_footer();
 }
 
 
-
 function search_articles()
 {
-    $query = get_http_var( 'q', '' );
-    $num_per_page = (int)get_http_var('num', DEFAULT_NUM_PER_PAGE );
-    $start = (int)get_http_var('start', '0' );
-    $sort_order = get_http_var( 'o', 'date' );
+    $s = search_getParams();
+    $query = $s['q'];
+    $num_per_page = $s['num'];
+    $start = $s['start'];
+    $sort_order = $s['sort_order'];
 
 /* temp hack */
-$query = str_replace( '"', '', $query );
+//$query = str_replace( '"', '', $query );
 
 
     $results = array();
@@ -112,13 +116,15 @@ $query = str_replace( '"', '', $query );
 <?php } ?>
     </ul>
   </div>
-  <div class="foot">
+  <div class="pager">
 <?php
     if( $total >= $num_per_page || $start>0 ) {
         EmitPageControl( $query, $sort_order, $start, $num_per_page, $total );
     }
 ?>
   </div>
+
+<?php search_emit_onpage_form(); ?>
 </div> <!-- end main -->
 <?php
 
@@ -129,7 +135,22 @@ $query = str_replace( '"', '', $query );
 
 
 
-
+function search_emit_onpage_form() {
+    $s = search_getParams();
+?>
+  <div class="search">
+    <form action="/search" method="get">
+<!--        <label for="q">Search articles</label> -->
+      <select name="type">
+        <option value="journo"<?= ($s['type']=='journo')?' selected':'' ?>>Search journalists</option>
+        <option value="article"<?= ($s['type']=='article')?' selected':'' ?>>Search articles</option>
+      </select>
+      <input type="text" value="<?= h($s['q']) ?>" id="q2" name="q" />
+      <input type="submit" alt="search" value="Search" />
+    </form>
+  </div>
+<?php
+}
 
 
 /* temp hack */
@@ -232,13 +253,23 @@ function PageURL( $query, $sort_order, $start, $num_per_page )
 
 function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
 {
-    $pagecnt = $total/$num_per_page;
-    $currentpage = $start/$num_per_page;
+    $total_pages = (int)($total/$num_per_page);
+    $current_page = (int)($start/$num_per_page);
 
-    $n = 20;
-    $firstpage = max( 0, $currentpage-$n/2 );
-    $lastpage = min( $pagecnt, $firstpage+($n-1) );
+    $max_pages = 10;
+    $firstpage = max( 0, $current_page-$max_pages/2 );
+    $lastpage = min( $total_pages, $firstpage+($max_pages-1) );
 
+
+
+?>
+<span>Page <?= $current_page+1 ?> of <?= $total_pages+1 ?></span>
+<?php
+
+
+?>
+<span class="page-links">
+<?php
     if( $start>0 && $total>0 )
     {
         printf( "<a rel=\"prev\" href=\"%s\">%s</a> ",
@@ -246,12 +277,12 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
                 $sort_order,
                 max(0,$start-$num_per_page),
                 $num_per_page) ),
-            "Previous" );
+            "&laquo; Previous" );
     }
 
     for( $page=$firstpage; $page<=$lastpage; ++$page )
     {
-        if( $page == $currentpage ) {
+        if( $page == $current_page ) {
             printf("%s ", $page+1 );
         } else {
             printf( "<a href=\"%s\">%s</a> ",
@@ -264,11 +295,11 @@ function EmitPageControl( $query, $sort_order, $start, $num_per_page, $total )
     {
         printf( "<a rel=\"next\" href=\"%s\">%s</a> ",
             htmlentities( PageURL($query, $sort_order, $start+$num_per_page, $num_per_page) ),
-            "Next" );
+            "Next &raquo;" );
     }
-
-    print "<br/>\n";
-
+?>
+</span>
+<?php
 
 }
 

@@ -9,12 +9,8 @@
  $js_files - list of extra javascript files to include
  $head_extra - extra stuff to plonk in the <head> block
  $mnpage - name of active menu page (for showing active menu tab)
-
+ $search - search parameters
 */
-
-/* if there was a search, we want the header search bar to retain the details */
-$q = get_http_var( 'q', '' );
-$type = strtolower( get_http_var( 'type', 'journo' ) );
 
 
 
@@ -57,10 +53,10 @@ $type = strtolower( get_http_var( 'type', 'journo' ) );
         <form action="/search" method="get">
 <!--        <label for="q">Search articles</label> -->
           <select name="type">
-            <option value="journo"<?= ($type=='journo')?' selected':'' ?>>Search journalists</option>
-            <option value="article"<?= ($type=='article')?' selected':'' ?>>Search articles</option>
+            <option value="journo"<?= ($search['type']=='journo')?' selected':'' ?>>Search journalists</option>
+            <option value="article"<?= ($search['type']=='article')?' selected':'' ?>>Search articles</option>
           </select>
-          <input type="text" value="<?= h($q) ?>" id="q" name="q" />
+          <input type="text" value="<?= h($search['q']) ?>" id="q" name="q" />
           <input type="submit" alt="search" value="Search" />
         </form>
       </div>
