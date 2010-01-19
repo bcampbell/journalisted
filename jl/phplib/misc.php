@@ -296,21 +296,6 @@ If you already have a Journa<i>listed</i> account, log in here
 }
 
 
-function donatebutton_emit( $txt='Donate', $href='/donate' )
-{
-
-?>
-<div class="donate-box">
- <div class="donate-box_top"><div></div></div>
-  <div class="donate-box_content">
-    <a class="donatebutton" href="<?php echo $href; ?>"><?php echo $txt; ?></a>
-  </div>
- <div class="donate-box_bottom"><div></div></div>
-</div>
-<?php
-
-}
-
 
 // htmlentities()-encode any strings in the array, adding them under
 // new values with an "h_"-prefixed key

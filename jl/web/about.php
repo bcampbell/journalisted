@@ -57,12 +57,12 @@ Gavin Freeguard and Ben Campbell administrate the site.
 
 <div class="sidebar">
 
-<?php donatebutton_emit(); ?>
+  <a class="donate" href="/donate">Donate</a>
   <br/>
 
   <div class="box">
-    <h3>FAQs</h3>
-    <div class="box-content">
+    <div class="head"><h3>FAQs</h3></div>
+    <div class="body">
       <ul>
         <li><a href="/faq/what-news-outlets-does-journalisted-cover">What news outlets does Journalisted cover?</a></li>
         <li><a href="/faq/why-doesnt-journalisted-cover-more-news-outlets">Why doesn’t Journalisted cover more news outlets?</a></li>
@@ -74,7 +74,7 @@ Gavin Freeguard and Ben Campbell administrate the site.
       <div style="clear: both;"></div>
     </div>
   </div>
-</div> <!-- end smallcolumn -->
+</div> <!-- end sidebar -->
 <?php
 
 page_footer();
