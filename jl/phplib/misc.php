@@ -410,6 +410,10 @@ function search_getParams()
         $s['sort_order'] = get_http_var( 'o', 'date' );
     }
 
+    $journo = get_http_var( 'journo' );
+    if( $journo )
+        $s['q'] .= " author:" . $journo;
+
     return $s;
 }
 
