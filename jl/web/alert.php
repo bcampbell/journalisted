@@ -63,10 +63,8 @@ else
 page_header( "Alerts", array( 'menupage'=>'my') );
 
 ?>
-<div id="maincolumn">
-<div class="box">
+<div class="main">
 <h2>Alerts</h2>
-<div class="box-content">
 <p>
 Follow your favourite journalist(s).<br />
 Just enter your email address and you’ll be able to pick
@@ -99,17 +97,15 @@ if( $P ) {
 }
 
 ?>
-</div>
-</div>
-</div>  <!-- end maincolumn -->
-<div id="smallcolumn">
+</div>  <!-- end main -->
+<div class="sidebar">
 <?php
 if( $P ) {
     EmitChangePasswordBox();
 }
 emit_popularalertsbox();
 ?>
-</div>  <!-- end smallcolumn -->
+</div>  <!-- end sidebar -->
 <?php
 
 page_footer();
@@ -177,8 +173,10 @@ function EmitChangePasswordBox()
 
 ?>
 <div class="box">
+ <div class="head">
   <h3><?=$has_password ? _('Change your password') : _('Set a password') ?></h3>
-  <div class="box-content">
+ </div>
+  <div class="body">
 <?php
     if( !$q_UpdateDetails && !$has_password ) {
 ?>
@@ -213,12 +211,14 @@ function EmitChangePasswordBox()
     if (!is_null($error))
         print "<p class=\"errhint\">$error</p>";
     ?>
-      <p>
-        <label for="pw1">New password:</label>
-        <input type="password" name="pw1" id="pw1" size="15" /><br/>
-        <label for="pw2">New password, again:</label>
+      <div class="field">
+        <label for="pw1">New password</label>
+        <input type="password" name="pw1" id="pw1" size="15" />
+      </div>
+      <div class="field">
+        <label for="pw2">and again...</label>
         <input type="password" name="pw2" id="pw2" size="15" />
-      </p>
+      </div>
       <input name="submit" type="submit" value="<?=_('Submit') ?>">
     </form>
   </div>
@@ -305,8 +305,8 @@ EOT;
 
 ?>
 <div class="box">
-  <h3>Popular alerts</h3>
-  <div class="box-content">
+  <div class="head"><h3>Popular alerts</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $popular as $j ) { ?>
       <li>

@@ -100,6 +100,10 @@ form fieldset.field .faux-label {
   font-weight: bold;
 }
 
+.sidebar div.field label {
+  width: 100px;
+}
+
 
 form fieldset.field { border: none; padding: 0px; margin: 0px; }
 form fieldset.field input { margin-right: 4px; }
@@ -109,6 +113,14 @@ form input[type="text"] {
   height: 18px;
   border: 1px solid #d9d9d9;
 }
+
+form input[type="password"] {
+  width: 150px;
+  height: 18px;
+  border: 1px solid #d9d9d9;
+}
+
+
 form input[type="text"].year { width: 4em; }
 
 form textarea { border: 1px solid #d9d9d9; }
@@ -130,6 +142,8 @@ form .explain {
 form .remove {
   float: right;
 }
+
+.errhint { font-style: bold; color: red; }
 
 
 /* HEADER */

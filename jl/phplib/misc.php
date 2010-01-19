@@ -258,29 +258,29 @@ function loginform_emit( $email='', $stash='', $rememberme='', $errs = array())
 
 
 <strong>New users: <a href="<?php echo $register_url; ?>">REGISTER HERE</a></strong><br/>
-If you already have a Journa<i>listed</i> account, login below
+If you already have a Journa<i>listed</i> account, log in here
 
 <input type="hidden" name="stash" value="<?=$h_stash?>" />
 
 
 <?php if(array_key_exists('badpass',$errs) ) { ?><p class="errhint"><?php echo $errs['badpass'];?></p><?php } ?>
 
-<p>
+<div class="field">
 <?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
 <label for="email">Email address</label>
 <input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
-</p>
+</div>
 
-<p>
+<div class="field">
 <label for="password">Password</label>
 <input type="password" size="30" name="password" id="password" value="" />
-</p>
+</div>
 
-<p>
-<label for="rememberme">Remember me</label>
+<div class="field">
 <input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
-<small>(don't use this on a public or shared computer)</small>
-</p>
+<label for="rememberme">Remember me</label>
+<span class="explain">(don't use this on a public or shared computer)</span>
+</div>
 
 <a href="<?php echo $nopass_url; ?>">forgot password?</a>
 <p>

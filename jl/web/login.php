@@ -160,12 +160,10 @@ function DoLoginPage()
     page_header( "Logging in" );
 
 ?>
-<div class="box">
+<div class="main">
 <h3><?php echo $reason; ?></h3>
-<div class="box-content">
 <?php loginform_emit( $q_email, $q_stash, $q_rememberme, $errs ); ?>
-</div>
-</div>
+</div> <!-- end main -->
 <?php
 
     page_footer();
