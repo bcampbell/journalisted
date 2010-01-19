@@ -52,8 +52,9 @@ function page_header( $title, $params=array() )
             $can_edit_profile = TRUE;
     }
 
-
-    $search = search_getParams();
+    $search = array( 'q'=>'', 'type'=>'journo' );
+    if (array_key_exists('search_params', $params))
+        $search = $params['search_params'];
 
     include "../templates/header.tpl.php";
 }

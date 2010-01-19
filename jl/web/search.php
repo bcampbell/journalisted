@@ -27,7 +27,7 @@ function search_journos() {
     $s = search_getParams();
     $query = $s['q'];
 
-    page_header( "Search Journalists" );
+    page_header( "Search Journalists", array('search_params'=>$s) );
 
     $journos = array();
     if( $query )
@@ -93,7 +93,7 @@ function search_articles()
     unset( $art );
 
 
-    page_header( "Search Articles" );
+    page_header( "Search Articles", array('search_params'=>$s) );
 
 
 
