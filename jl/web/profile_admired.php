@@ -28,7 +28,6 @@ class AdmiredJournosPage extends EditProfilePage
         // TODO: use compressed jquery.autocompete
 
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
@@ -112,24 +111,6 @@ EOT;
             $this->showForm('creator',null);
         $this->showForm('template', null);
 
-        // if they've entered any journos already, encourage them to add more to their profile */
-/*
-        if( sizeof( $admired) > 0 ) {
-    ?>
-    <div class="donate-box">
-     <div class="donate-box_top"><div></div></div>
-      <div class="donate-box_content exhort">
-
-        Would you like to add to your profile page on Journalisted?<br/>
-    <a href="/profile_employment?ref=<?=$this->journo['ref'];?>">Add to my profile</a><br/>
-    <a href="/<?=$this->journo['ref'];?>">View my Journalisted page</a><br/>
-
-      </div>
-     <div class="donate-box_bottom"><div></div></div>
-    </div>
-    <?php
-        }
-*/
     }
 
 
@@ -168,15 +149,12 @@ EOT;
 ?>
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="admired_name_<?= $uniq; ?>">Journalist:</label></th>
-  <td>
+ <div class="field">
+  <label for="admired_name_<?= $uniq; ?>">Journalist</label>
    <input type="text" name="admired_name" class="admired_name" id="admired_name_<?= $uniq; ?>" value="<?= h($admired['admired_name']); ?>" />
    <span class="admired_oneliner"><?= h(is_null($admired['oneliner']) ? '':"({$admired['oneliner']})" ); ?></span>
-  </td>
- </tr>
-</table>
+ </div>
+
 <input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
 <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />

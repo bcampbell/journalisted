@@ -134,18 +134,18 @@ class EmploymentPage extends EditProfilePage
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 
  <div class="field">
-  <label for="employer_<?= $uniq; ?>">Employer:</label>
+  <label for="employer_<?= $uniq; ?>">Employer</label>
   <input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/>
  </div>
 
  <div class="field">
-  <label for="job_title_<?= $uniq; ?>">Job Title:</label>
+  <label for="job_title_<?= $uniq; ?>">Job Title</label>
   <input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/>
  </div>
 
 
  <fieldset class="field">
-  <span class="faux-label"></span>
+  <span class="faux-label">Date</span>
   <label for="year_from_<?= $uniq; ?>">Year from:</label>
   <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
   <label for="year_to_<?= $uniq; ?>">Year to:</label>

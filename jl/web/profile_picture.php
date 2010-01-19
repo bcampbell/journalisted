@@ -26,7 +26,6 @@ class PicturePage extends EditProfilePage
     function extra_head()
     {
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <?php
     }
 
@@ -57,17 +56,16 @@ class PicturePage extends EditProfilePage
 <p>Your current photo:</p>
 <img src="<?= $img['url']; ?>" />
 <br/>
-<p>Upload a different one:</p>
 <?php } else { ?>
-<p>You have no photo set currently</p>
-<p>Upload one:</p>
+<p>You have no photo set</p>
 <?php } ?>
-
+<div class="field">
 <label for="file">Filename:</label>
 <input type="file" name="file" id="file" />
+</div>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="upload_pic" />
-<input type="submit" name="submit" value="Upload" />
+<input type="submit" name="submit" value="<?= $img ? "Change Photo" : "Upload Photo" ?>" />
 </form>
 
 <?php

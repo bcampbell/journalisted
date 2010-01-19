@@ -25,13 +25,7 @@ class WeblinksPage extends EditProfilePage
     function extra_head()
     {
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<? /*
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-*/
-?>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
@@ -63,6 +57,12 @@ class WeblinksPage extends EditProfilePage
     {
 
         $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
+
+?>
+<h2>Elsewhere on the Web</h2>
+<?php
+
+
         foreach( $weblinks as &$weblink ) {
             $this->showForm( 'edit', $weblink);
         }
@@ -109,30 +109,24 @@ class WeblinksPage extends EditProfilePage
 ?>
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="description_<?= $uniq; ?>">Description:</label></th>
-  <td>
-    <select name="kind" id="kind_<?= $uniq ?>">
-      <option value="">Twitter Feed</option>
-      <option value="">Myspace page</option>
-      <option value="">Facebook Page</option>
-      <option value="">My Website</option>
-      <option value="">My Blog</option>
-    </select>
-    <input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" />
-  </td>
- </tr>
- <tr>
-  <th><label for="url_<?= $uniq; ?>">URL:</label></th>
-  <td><input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" /></td>
- </tr>
-</table>
-<input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-<input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+
+ <div class="field">
+  <label for="url_<?= $uniq; ?>">URL</label>
+  <input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" />
+  <span class="explain">eg: http://<?= h($this->journo['ref']) ?>.com</span>
+ </div>
+
+ <div class="field">
+   <label for="description_<?= $uniq; ?>">Description</label>
+   <input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" />
+ </div>
+
+
+ <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+ <input type="hidden" name="action" value="submit" />
+ <button class="submit" type="submit">Save</button>
 <?php if( $formtype=='edit' ) { ?>
-<input type="hidden" name="id" value="<?= $weblink['id']; ?>" />
+ <input type="hidden" name="id" value="<?= $weblink['id']; ?>" />
 <?= $this->genEditLinks($weblink['id']); ?>
 <?php } ?>
 </form>

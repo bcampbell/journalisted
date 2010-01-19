@@ -25,13 +25,7 @@ class BooksPage extends EditProfilePage
     function extra_head()
     {
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<? /*
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-*/
-?>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
@@ -110,20 +104,21 @@ class BooksPage extends EditProfilePage
 ?>
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="title_<?= $uniq; ?>">Title:</label></th>
-  <td><input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" /></td>
- </tr>
- <tr>
-  <th><label for="publisher_<?= $uniq; ?>">Publisher:</label></th>
-  <td><input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" /></td>
- </tr>
- <tr>
-  <th><label for="year_published<?= $uniq; ?>">Year Published:</label></th>
-  <td><input type="text" size="60" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" /></td>
- </tr>
-</table>
+ <div class="field">
+  <label for="title_<?= $uniq; ?>">Title</label>
+  <input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" />
+ </div>
+
+ <div class="field">
+  <label for="publisher_<?= $uniq; ?>">Publisher</label>
+  <input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" />
+ </div>
+
+ <div class="field">
+  <label for="year_published<?= $uniq; ?>">Year Published</label>
+  <input type="text" class="year" size="4" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" />
+ </div>
+
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>

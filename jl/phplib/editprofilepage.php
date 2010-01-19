@@ -104,34 +104,7 @@ class EditProfilePage
 ?>
 
 <div class="main">
-
-<h2>Welcome, <a href="/<?=$this->journo['ref'];?>"><em><?=$this->journo['prettyname'];?></em></a></h2>
-
-<!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
-
-<!--
-<div class="smallcolumn profile">
-
-<div class="box">
-<div class="box-content">
--->
 <?php
-/*
-        $this->showNavigation();
-        $this->showPicture();
-*/
-?>
-<!--
-</div>
-</div>
-
-</div>
-<div class="maincolumn profile">
-<div class="box">
--->
-<?php
-
-
         if( $this->error_messages ) {
 ?>
 <ul class="errors">
@@ -149,12 +122,10 @@ class EditProfilePage
 
         $this->displayMain();
 ?>
-<!--
-</div>
-</div>
--->
 
-<!-- <a href="/profile?ref=<?= $this->journo['ref'] ?>">Finish editing</a> -->
+<br/>
+<br/>
+<a href="/<?= $this->journo['ref'] ?>">Finish editing</a>
 
 </div> <!-- end main -->
 
@@ -210,6 +181,8 @@ class EditProfilePage
                 $pages[$prev]['next'] = $pagename;
             $prev = $pagename;
         }
+        unset( $p );
+
 ?>
 <div class="box">
 <div class="head"><h4>Edit your profile</h4></div>

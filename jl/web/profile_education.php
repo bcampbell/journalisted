@@ -26,11 +26,6 @@ class EducationPage extends EditProfilePage
     {
 ?>
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<? /*
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-*/
-?>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
@@ -112,25 +107,25 @@ class EducationPage extends EditProfilePage
 
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
 <div class="field">
-  <label for="school_<?= $uniq; ?>">School name:</label>
+  <label for="school_<?= $uniq; ?>">School name</label>
     <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
     <span class="explain">eg: "St. Cedd's College, Cambridge"</span>
 </div>
 
 <div class="field">
-  <label for="field_<?= $uniq; ?>">Field(s) of study:</label>
+  <label for="field_<?= $uniq; ?>">Field(s) of study</label>
    <input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" />
    <span class="explain">eg: "Rocket Surgery"</span>
 </div>
 
 <div class="field">
-  <label for="qualification_<?= $uniq; ?>">Qualification:</label>
+  <label for="qualification_<?= $uniq; ?>">Qualification</label>
    <input type="text" size="30" name="qualification" id="qualification_<?= $uniq; ?>" value="<?= h($edu['qualification']); ?>" />
    <span class="explain">eg: "BA"</span>
 </div>
 
 <fieldset class="field range">
- <span class="faux-label">Years attended:</span>
+ <span class="faux-label">Years attended</span>
  <label for="year_from_<?= $uniq; ?>">from</label>
  <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
  <label for="year_to_<?= $uniq; ?>">to</label>

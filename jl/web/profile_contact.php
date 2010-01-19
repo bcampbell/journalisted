@@ -25,9 +25,7 @@ class ContactPage extends EditProfilePage
     function extra_head()
     {
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-</script>
 <?php
     }
 
@@ -87,30 +85,31 @@ class ContactPage extends EditProfilePage
 ?>
 
 <form class="contact" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="email">Email Address:</label></th>
-  <td><input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" /></td>
- </tr>
- <tr>
-  <th><label for="phone">Phone:</label></th>
-  <td><input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" /></td>
- </tr>
- <tr>
-  <th><label for="address">Postal Address:</label></th>
-  <td><textarea cols="80" rows="5" name="address" id="address"><?= h($address['address']); ?></textarea></td>
- </tr>
- <tr>
-  <th></th>
-  <td>
+
+ <div class="field">
+  <label for="email">Email Address</label>
+  <input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" />
+ </div>
+
+ <div class="field">
+  <label for="phone">Phone</label>
+  <input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" />
+ </div>
+
+ <div class="field">
+  <label for="address">Postal Address</label>
+  <textarea name="address" cols="80" rows="5" id="address"><?= h($address['address']); ?></textarea>
+ </div>
+
+ <fieldset class="field">
+   <span class="faux-label"></span>
    <input type="checkbox" id="show_public" name="show_public" value="yes" <?= $show_public?'checked ':''?>/>
    <label for="show_public">Allow this information to be public?</label>
-  </td>
- </tr>
-</table>
-<input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-<input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+ </div>
+
+ <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+ <input type="hidden" name="action" value="submit" />
+ <button class="submit" type="submit">Save</button>
 </form>
 <?php
 

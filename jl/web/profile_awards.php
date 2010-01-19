@@ -24,17 +24,9 @@ class AwardsPage extends EditProfilePage
 
     function extra_head()
     {
-        // TODO: use compressed jquery.autocompete
-
 ?>
-<link type="text/css" rel="stylesheet" href="/profile.css" /> 
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<? /*
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-*/
-?>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
@@ -104,16 +96,16 @@ class AwardsPage extends EditProfilePage
 
 ?>
 <form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<table border="0">
- <tr>
-  <th><label for="award_<?= $uniq; ?>">Award:</label></th>
-  <td><input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" /></td>
- </tr>
- <tr>
-  <th><label for="year_<?= $uniq; ?>">Year:</label></th>
-  <td><input type="text" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" /></td>
- </tr>
-</table>
+ <div class="field">
+  <label for="award_<?= $uniq; ?>">Award</label>
+  <input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" />
+ </div>
+
+ <div class="field">
+  <label for="year_<?= $uniq; ?>">Year</label>
+  <input type="text" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" />
+ </div>
+
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
