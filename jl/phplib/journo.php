@@ -375,7 +375,7 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        journo_AugmentArticle( $a );
+        article_Augment( $a );
     $slowdata[ 'most_commented' ] = $a;
 
     /* find the most blogged article in the last 6 months */
@@ -392,24 +392,12 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        journo_AugmentArticle( $a );
+        article_Augment( $a );
     $slowdata[ 'most_blogged' ] = $a;
 
     return $slowdata;
 }
 
-
-// prepare an article for display by adding a few derived fields...
-function journo_AugmentArticle( &$a )
-{
-    $d = new datetime( $a['pubdate'] );
-    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
-    $a['iso_pubdate'] = $d->format('c');
-    // fill in prettyname of publisher, if possible
-    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
-        $a['srcorgname'] = db_getOne("SELECT prettyname FROM organisation WHERE id=?", $a['srcorg'] );
-    }
-}
 
 
 function journo_emitAllArticles( &$journo )
@@ -428,7 +416,7 @@ EOT;
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
-        journo_AugmentArticle( $a );
+        article_Augment( $a );
         $a['buzz'] = BuzzFragment( $a );
     }
     /* sigh... php trainwreck. without this unset, the last element in array gets blatted-over
@@ -591,7 +579,7 @@ EOT;
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
-        journo_AugmentArticle($a);
+        article_Augment($a);
         if( !is_null( $a['id'] ) )
             $a['buzz'] = BuzzFragment( $a );
         else

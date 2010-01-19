@@ -87,7 +87,16 @@ function search_articles()
     $first = $start+1;
     $last = min( $start+$num_per_page, $total );
 
+    foreach( $results as &$art ) {
+        article_Augment( $art );
+    }
+    unset( $art );
+
+
     page_header( "Search Articles" );
+
+
+
 ?>
 <div class="main search-results">
 
@@ -108,11 +117,22 @@ function search_articles()
             $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], cook( $j['prettyname'] ) );
         }
 ?>
+    <li class="hentry">
+        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
+        <?php if( $journolinks ) { ?><small><?= implode( ', ', $journolinks ); ?></small><br/><?php } ?>
+        <span class="publication"><?= $art['srcorgname']; ?>,</span>
+        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+        <br/>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
+    </li>
+
+<?php /*
       <li>
         <a href="/article?id=<?= $art['id']; ?>"><?= h($art['title']);?></a><br/>
         <?php if( $journolinks ) { ?><small><?= implode( ', ', $journolinks ); ?></small><br/><?php } ?>
         <?= PostedFragment( $art ); ?>
       </li>
+*/ ?>
 <?php } ?>
     </ul>
   </div>

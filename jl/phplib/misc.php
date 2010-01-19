@@ -413,4 +413,17 @@ function search_getParams()
     return $s;
 }
 
+// prepare an article for display by adding a few derived fields...
+function article_Augment( &$a )
+{
+    $d = new datetime( $a['pubdate'] );
+    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
+    $a['iso_pubdate'] = $d->format('c');
+    // fill in prettyname of publisher, if possible
+    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
+        $orgs = get_org_names();
+        $a['srcorgname'] = $orgs[ $a['srcorg'] ];
+    }
+}
+
 ?>
