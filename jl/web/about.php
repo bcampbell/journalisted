@@ -58,7 +58,6 @@ Gavin Freeguard and Ben Campbell administrate the site.
 <div class="sidebar">
 
   <a class="donate" href="/donate">Donate</a>
-  <br/>
 
   <div class="box">
     <div class="head"><h3>FAQs</h3></div>
