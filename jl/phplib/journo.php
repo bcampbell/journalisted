@@ -471,7 +471,7 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
     $data['bios'] = journo_fetchBios( $journo['id'] );
 
-    $data['picture'] = journo_getPicture( $journo['id'] );
+    $data['picture'] = journo_getThumbnail( $journo['id'] );
 
     /* contact details */
     $guessed = null;
@@ -636,11 +636,12 @@ function journo_FuzzyFind( $query )
 }
 
 
-function journo_getPicture( $journo_id )
+/* returns the journo's thumbnail photo if set, else null */
+function journo_getThumbnail( $journo_id )
 {
     $sql = <<<EOT
 SELECT i.id,i.filename,i.width,i.height
-        FROM ( image i INNER JOIN journo_picture jp ON jp.image_id=i.id )
+        FROM ( image i INNER JOIN journo_photo jp ON jp.thumb_id=i.id )
         WHERE jp.journo_id=?
 EOT;
     $img = db_getRow( $sql, $journo_id );

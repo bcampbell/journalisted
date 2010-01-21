@@ -151,7 +151,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } else { ?>
       <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
 <?php } ?>
-  <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_picture?ref=<?= $ref ?>">edit</a><?php } ?>
+  <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_photo?ref=<?= $ref ?>">edit</a><?php } ?>
     </div>
 
     <div class="fudge">

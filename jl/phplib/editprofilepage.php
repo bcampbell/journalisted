@@ -140,30 +140,11 @@ class EditProfilePage
     }
 
 
-    function showPicture()
-    {
-        $pic = journo_getPicture( $this->journo['id'] );
-
-?>
-<div class="picture">
-<?php if( $pic ) { ?>
-<img src="<?= $pic['url'] ?>" />
-<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Change</a>
-<a class="remove" href="/profile_picture?ref=<?= $this->journo['ref']; ?>&action=remove_pic">Remove</a>
-<?php } else { ?>
-<img src="images/rupe.gif" />
-<a class="edit" href="/profile_picture?ref=<?= $this->journo['ref'] ?>">Set a picture</a>
-<?php } ?>
-</div>
-<?php
-
-    }
-
 
     function navBox()
     {
         $pages = array(
-            'picture'=>array( 'title'=>'Photo', 'url'=>'/profile_picture' ),
+            'photo'=>array( 'title'=>'Photo', 'url'=>'/profile_photo' ),
             'admired'=>array( 'title'=>'Admired Journalists', 'url'=>'/profile_admired' ),
             'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
             'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),

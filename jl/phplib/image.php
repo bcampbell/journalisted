@@ -53,8 +53,16 @@ function imageStoreUploaded( &$up ) {
 
 
 
+
+
+//
+function imagePath( $filename ) {
+    return OPTION_JL_IMG_UPLOAD . '/' . $filename;
+}
+
+
 function imageURL( $filename ) {
-    return "/img/" . $filename;
+    return "/uploads/" . $filename;
 }
 
 // delete an uploaded image. commits the db change before deleting image file.
@@ -64,7 +72,7 @@ function imageZap( $image_id )
     db_do( "DELETE FROM image WHERE id=?", $image_id );
     db_commit();
 
-    unlink( OPTION_JL_IMG_UPLOAD . '/' . $filename );
+    unlink( imagePath( $filename )  );
 }
 
 
