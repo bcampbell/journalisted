@@ -9,7 +9,8 @@ require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
-
+define( 'THUMB_W', 128 );
+define( 'THUMB_H', 128 );
 
 class PhotoPage extends EditProfilePage
 {
@@ -19,12 +20,30 @@ class PhotoPage extends EditProfilePage
         $this->pageTitle = "Photo";
         $this->pagePath = "/profile_photo";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
+
+        $this->uploadError = NULL;
+
         parent::__construct();
+
+        // fetch the current photo, if any
+        $sql = <<<EOT
+SELECT p.id, p.image_id, p.is_thumbnail, i.width, i.height, i.filename, i.created
+    FROM (journo_photo p INNER JOIN image i ON i.id=p.image_id )
+    WHERE p.journo_id=?
+    LIMIT 1
+EOT;
+        $this->photo = db_getRow( $sql, $this->journo['id'] );
+        if( !is_null($this->photo) ) {
+            $this->photo['is_thumbnail'] = ($this->photo['is_thumbnail']=='t') ? TRUE:FALSE;
+        }
     }
 
 
     function extra_head()
     {
+        if( is_null( $this->photo ) )
+            return;
+
 ?>
 <link rel="stylesheet" type="text/css" href="/imgareaselect-default.css" />
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
@@ -32,33 +51,34 @@ class PhotoPage extends EditProfilePage
 
 
 <script type="text/javascript">
-    $(document).ready( function() {
+  $(document).ready( function() {
 
-function preview(img, selection) {
-    if (!selection.width || !selection.height)
-        return;
+    function preview(img, selection) {
+      if (!selection.width || !selection.height)
+          return;
     
-    var scaleX = 100 / selection.width;
-    var scaleY = 100 / selection.height;
+      var scaleX = <?= THUMB_W ?> / selection.width;
+      var scaleY = <?= THUMB_H ?> / selection.height;
 
-    $('#preview img').css({
-        width: Math.round(scaleX * 640),
-        height: Math.round(scaleY * 480),
-        marginLeft: -Math.round(scaleX * selection.x1),
-        marginTop: -Math.round(scaleY * selection.y1)
-    });
+      $('#preview img').css({
+          width: Math.round(scaleX * <?= $this->photo['width'] ?>),
+          height: Math.round(scaleY * <?= $this->photo['height'] ?>),
+          marginLeft: -Math.round(scaleX * selection.x1),
+          marginTop: -Math.round(scaleY * selection.y1)
+      });
 
-    $('#x1').val(selection.x1);
-    $('#y1').val(selection.y1);
-    $('#x2').val(selection.x2);
-    $('#y2').val(selection.y2);
-    $('#w').val(selection.width);
-    $('#h').val(selection.height);    
-}
+      $('#x1').val(selection.x1);
+      $('#y1').val(selection.y1);
+      $('#x2').val(selection.x2);
+      $('#y2').val(selection.y2);
+      $('#w').val(selection.width);
+      $('#h').val(selection.height);    
+    }  
 
+    $('form.croptool .field').hide();
 
-        $('#fullsize img').imgAreaSelect({ aspectRatio: '1:1', handles: true,
-            fadeSpeed: 200, onSelectChange: preview });
+    $('#fullsize img').imgAreaSelect({ aspectRatio: '1:1', handles: true,
+      fadeSpeed: 200, onSelectChange: preview });
     } );
 </script>
 
@@ -72,8 +92,8 @@ function preview(img, selection) {
         if( $action=='upload_pic' ) {
             $this->handleUpload();
         }
-        if( $action=='remove_pic' ) {
-            $this->handleRemove();
+        if( $action=='remove' ) {
+            $this->replacePhoto( NULL );
         }
         if( $action=='set_thumbnail' ) {
             $this->handleSetThumbnail();
@@ -84,27 +104,37 @@ function preview(img, selection) {
 
     function displayMain()
     {
-        $thumb = null;
-        $fullsize = null;
-        $jpics = db_getRow( "SELECT * FROM journo_photo WHERE journo_id=?", $this->journo['id'] );
-        if( $jpics ) {
-            if( !is_null( $jpics['thumb_id'] ) )
-                $thumb = db_getRow( "SELECT * FROM image WHERE id=?", $jpics['thumb_id'] );
-            if( !is_null( $jpics['fullsize_id'] ) )
-                $fullsize = db_getRow( "SELECT * FROM image WHERE id=?", $jpics['fullsize_id'] );
+?>
+<h2>Your photo</h2>
+<?php
+        if( !is_null( $this->photo ) ) {
+            if( $this->photo['is_thumbnail'] ) {
+?>
+<div class="photo">
+  <img src="<?= image_url( $this->photo['filename'] ) ?>" alt="photo" width="<?= $this->photo['width'] ?>" height="<?= $this->photo['height']; ?>" />
+</div>
+<?php
+            } else {
+                $this->emitCroppingTool();
+            }
+?>
+<a href="<?= $this->pagePath; ?>?ref=<?= $this->journo['ref'] ?>&action=remove">Remove</a>
+<?php
 
-            if( is_null($thumb) && is_null($fullsize) )
-                $jpics = null;  /* shouldn't get here, but hey. */
+        } else {
+?>
+<p>You have no photo set</p>
+<?php
         }
-
-
-        if( $fullsize ) {
-            $this->emitCroppingTool( $fullsize );
-        }
+       
 
 
 ?>
-<h2>Upload a photo</h2>
+<?php if( is_null($this->photo) ) { ?>
+<h3>Upload a photo</h3>
+<?php } else { ?>
+<h3>Upload a different photo</h3>
+<?php } ?>
 
 <form action="<?= $this->pagePath; ?>" method="post" enctype="multipart/form-data">
 
@@ -127,50 +157,14 @@ function preview(img, selection) {
         $up = $_FILES['file'];
         $errmsg = $this->CheckUploadedImage( $up );
         if( is_null( $errmsg ) ) {
-            $img = imageStoreUploaded( $up );
-            if( $img ) {
-                db_do( "DELETE FROM journo_photo WHERE journo_id=?", $this->journo['id'] );
-                /* TODO: zap actual images! */
-
-                db_do( "INSERT INTO journo_photo (journo_id,fullsize_id) VALUES (?,?)", $this->journo['id'], $img['id'] );
-                db_commit();
-            } else {
-                $this->addError( "failed to store image" );
-            }
+            $this->replacePhoto( $up, FALSE );
         } else {
-            $this->addError( $errmsg );
+            $this->uploadError = $errmsg;
         }
     }
 
 
-    function handleRemove() {
-        /* should only be one image, but zap all, just in case */
-/*
-        $image_ids = db_getAll( "SELECT image_id FROM journo_picture WHERE journo_id=?", $this->journo['id'] );
-        db_do( "DELETE FROM journo_picture WHERE journo_id=?", $this->journo['id'] );
-        db_commit();
 
-        foreach( $image_ids as $image_id ) {
-            imageZap( $image_id );
-        }
-*/
-        $this->addInfo( "Photo removed" );
-    }
-
-
-    function fetchCurrent() {
-        $cur = db_getRow( "SELECT * FROM journo_photo WHERE journo_id=?", $this->journo['id'] );
-        if( $cur ) {
-            $cur['fullsize'] = null;
-            $cur['thumb'] = null;
-            if( !is_null( $cur['thumb_id'] ) )
-                $cur['thumb'] = db_getRow( "SELECT * FROM image WHERE id=?", $cur['thumb_id'] );
-            if( !is_null( $cur['fullsize_id'] ) )
-                $cur['fullsize'] = db_getRow( "SELECT * FROM image WHERE id=?", $cur['fullsize_id'] );
-        }
-
-        return $cur;
-    }
 
 
     function CheckUploadedImage( &$file ) {
@@ -178,7 +172,7 @@ function preview(img, selection) {
             return "Upload failed (code {$file['error']})";
         }
 
-        if( imageFileExt( $file['type'] ) == NULL ) {
+        if( image_fileExt( $file['type'] ) == NULL ) {
             return 'Image must be jpeg, gif or png';
         }
 
@@ -199,21 +193,24 @@ function preview(img, selection) {
     }
 
 
-    function emitCroppingTool( $fullsize, $thumbrect=null ) {
+    function emitCroppingTool( $thumbrect=null ) {
         // show the cropping tool
 
+        $img = $this->photo;
+
         if( is_null($thumbrect) ) {
-            $thumbrect = array( 'x1'=>'0', 'y1'=>'0', 'x2'=>$fullsize['width'], 'y2'=>$fullsize['height'] );
+            $thumbrect = array( 'x1'=>'0', 'y1'=>'0', 'x2'=>$img['width'], 'y2'=>$img['height'] );
         }
 ?>
+<p>Select the area of the picture you want to use:</p>
 
 <div id="fullsize">
- <img src="<?= imageUrl($fullsize['filename']); ?>" width="<?=$fullsize['width'] ?>" height="<?= $fullsize['height'] ?>" />
+ <img src="<?= image_url($img['filename']); ?>" width="<?=$img['width'] ?>" height="<?= $img['height'] ?>" />
 </div>
 
-<form method="post" action="<?= $this->pagePath; ?>">
- <div id="preview" style="padding:0px; width: 100px; height: 100px; overflow: hidden;" >
-  <img src="<?= imageUrl($fullsize['filename']); ?>" width="100" height="100" />
+<form class="croptool" method="post" action="<?= $this->pagePath; ?>">
+ <div id="preview" style="padding:0px; width: <?= THUMB_W ?>px; height: <?= THUMB_H ?>px; overflow: hidden;" >
+  <img src="<?= image_url($img['filename']); ?>" width="<?= THUMB_W ?>" height="<?= THUMB_H ?>" />
  </div>
 
  <div class="field">
@@ -250,8 +247,8 @@ function preview(img, selection) {
 
     function handleSetThumbnail()
     {
-        $cur = fetchCurrent();
-        if( is_null($cur) || is_null($cur['fullsize']) )
+        $photo = $this->photo;
+        if( is_null($photo) )
             return;
 
         $x1 = get_http_var('x1');
@@ -259,26 +256,62 @@ function preview(img, selection) {
         $x2 = get_http_var('x2');
         $y2 = get_http_var('y2');
 
-/*
-        $thumb_width = 100;
-        $thumn_heihgt = 100;
-
         $source = imagecreatefromstring(
-            file_get_contents( imagePath( $cur['fullsize']['filename'] ) ) );
-        $thumb = imagecreatetruecolor($thumb_width, $thumb_height);
+            file_get_contents( image_path( $this->photo['filename'] ) ) );
+        $thumb = imagecreatetruecolor( THUMB_W, THUMB_H );
         imagecopyresampled( $thumb, $source, 0, 0, $x1, $y1,
-            $thumb_width, $thumb_height,
-            $x2-$x1, $y2-y1 );
-       
+            THUMB_W, THUMB_H,
+            $x2-$x1, $y2-$y1 );
 
+        $this->replacePhoto( $thumb, TRUE );
 
- 
-        imagedestroy($source);
-*/        
-
-
+        imagedestroy( $thumb );
+        imagedestroy( $source );
     }
 
+
+    // $p can be one of:
+    // 1) uploaded file info
+    // 2) a gd image
+    // 3) null - just remove existing photo without adding a new one
+    function replacePhoto( $p, $is_thumbnail=FALSE ) {
+
+        $new_photo = null;
+
+        if( $p ) {
+            if( is_resource($p) && get_resource_type($p)=='gd' ) {
+                $new_photo = image_storeGD( $p );
+            } else {
+                // assume it's an uploaded file
+                $new_photo = image_storeUploaded( $p );
+            }
+            if( $new_photo ) {
+                $new_photo['image_id'] = $new_photo['id'];
+                $new_photo['is_thumbnail'] = $is_thumbnail;
+                unset( $new_photo['id'] );
+            }
+        }
+
+        if( $this->photo ) {
+            // remove existing one from db
+            db_do( "DELETE FROM journo_photo WHERE id=?", $this->photo['id'] );
+            db_do( "DELETE FROM image WHERE id=?", $this->photo['image_id'] );
+        }
+
+
+        if( $new_photo ) {
+            // put new one in db
+            $new_photo['id'] = db_getOne( "select nextval('journo_photo_id_seq' )" );
+            db_do( "INSERT INTO journo_photo (journo_id,image_id,is_thumbnail) VALUES (?,?,?)", $this->journo['id'], $new_photo['image_id'], $new_photo['is_thumbnail'] );
+
+            db_commit();
+            // db synced - now zap the old file
+            unlink( image_path( $this->photo['filename'] ) );
+        }
+
+        // done.
+        $this->photo = $new_photo;
+    }
 
 
 }

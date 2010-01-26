@@ -147,7 +147,7 @@ $previous_employers = array_unique( $previous_employers );
 
     <div class="photo">
 <?php if( $picture ) { ?>
-      <img src="<?= $picture['url']; ?>" alt="photo" />
+      <img src="<?= $picture['url']; ?>" alt="photo" width="<?= $picture['width'] ?>" height="<?= $picture['height']; ?>" />
 <?php } else { ?>
       <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
 <?php } ?>

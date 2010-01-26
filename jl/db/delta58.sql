@@ -13,12 +13,8 @@ CREATE TABLE image (
 CREATE TABLE journo_photo (
     id serial PRIMARY KEY,
     journo_id integer NOT NULL REFERENCES journo(id) ON DELETE CASCADE,
-    fullsize_id integer REFERENCES image(id) ON DELETE CASCADE,
-    thumb_id integer REFERENCES image(id) ON DELETE CASCADE,
-    thumb_x1 integer,
-    thumb_y1 integer,
-    thumb_x2 integer,
-    thumb_y2 integer
+    image_id integer NOT NULL REFERENCES image(id) ON DELETE CASCADE,
+    is_thumbnail boolean NOT NULL
 );
 
 -- journo_photo triggers

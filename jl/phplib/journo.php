@@ -641,13 +641,13 @@ function journo_getThumbnail( $journo_id )
 {
     $sql = <<<EOT
 SELECT i.id,i.filename,i.width,i.height
-        FROM ( image i INNER JOIN journo_photo jp ON jp.thumb_id=i.id )
+        FROM ( image i INNER JOIN journo_photo jp ON jp.image_id=i.id AND jp.is_thumbnail=true )
         WHERE jp.journo_id=?
 EOT;
     $img = db_getRow( $sql, $journo_id );
 
     if( $img ) {
-        $img['url'] = imageUrl( $img['filename'] );
+        $img['url'] = image_url( $img['filename'] );
     }
     return $img;
 }
