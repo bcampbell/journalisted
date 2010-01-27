@@ -143,7 +143,7 @@ form .remove {
   float: right;
 }
 
-.errhint { font-style: bold; color: red; }
+.errhint { font-style: bold; color: red; display: block; }
 
 
 /* HEADER */
@@ -665,7 +665,7 @@ form .remove {
   margin-top: 8px;
 }
 
-.overview .photo img {
+.photo img {
   -moz-box-shadow: 3px 3px 5px #888888;
   -webkit-box-shadow: 3px 3px 5px #888888;
   display: block;
@@ -751,4 +751,19 @@ a.donate {
 .search-results ul { list-style: none; padding: 0; }
 
 .pager .page-links { float:right; }
+
+
+/* profile-editing */
+.croptool form {
+  width: 130px;
+  float: right;
+  border: none;
+}
+.croptool form .preview {
+  margin: 8px 0px;
+}
+
+.croptool .fullsize {
+  width: 400px;
+}
 

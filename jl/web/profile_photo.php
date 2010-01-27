@@ -60,7 +60,7 @@ EOT;
       var scaleX = <?= THUMB_W ?> / selection.width;
       var scaleY = <?= THUMB_H ?> / selection.height;
 
-      $('#preview img').css({
+      $('.croptool .preview img').css({
           width: Math.round(scaleX * <?= $this->photo['width'] ?>),
           height: Math.round(scaleY * <?= $this->photo['height'] ?>),
           marginLeft: -Math.round(scaleX * selection.x1),
@@ -75,9 +75,9 @@ EOT;
       $('#h').val(selection.height);    
     }  
 
-    $('form.croptool .field').hide();
+    $('.croptool form .field').hide();
 
-    $('#fullsize img').imgAreaSelect({ aspectRatio: '1:1', handles: true,
+    $('.croptool .fullsize img').imgAreaSelect({ aspectRatio: '1:1', handles: true,
       fadeSpeed: 200, onSelectChange: preview });
     } );
 </script>
@@ -141,6 +141,9 @@ EOT;
 <div class="field">
 <label for="file">Filename:</label>
 <input type="file" name="file" id="file" />
+<?php if( $this->uploadError ) { ?>
+<span class="errhint"><?= $this->uploadError; ?></span>
+<?php } ?>
 </div>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="upload_pic" />
@@ -152,44 +155,66 @@ EOT;
     }
 
 
-
     function handleUpload() {
-        $up = $_FILES['file'];
-        $errmsg = $this->CheckUploadedImage( $up );
-        if( is_null( $errmsg ) ) {
-            $this->replacePhoto( $up, FALSE );
-        } else {
-            $this->uploadError = $errmsg;
-        }
-    }
 
+        $file = $_FILES['file'];
 
+        $err = $file['error'];
+        switch( $err ) {
+            case UPLOAD_ERR_OK:
+                break;
 
-
-
-    function CheckUploadedImage( &$file ) {
-        if( $file['error'] > 0 ) {
-            return "Upload failed (code {$file['error']})";
+            case UPLOAD_ERR_INI_SIZE:       // 1
+                $this->uploadError = "That file was too big (maximum size is " . ini_get( 'upload_max_filesize' ) . ")";
+                return;
+            case UPLOAD_ERR_NO_FILE:        // 4
+                $this->uploadError = "No file was uploaded";
+                return;
+            default:
+                $this->uploadError = "Upload failed (code {$file['error']})";
+                return;
         }
 
         if( image_fileExt( $file['type'] ) == NULL ) {
-            return 'Image must be jpeg, gif or png';
+            $this->uploadError = 'Image must be jpeg, gif or png';
+            return;
         }
 
         $inf = getimagesize( $file['tmp_name'] );
-        if( $inf === FALSE )
-            return "can't determine image size";
+        if( $inf === FALSE ) {
+            $this->uploadError = "can't determine image size";
+            return;
+        }
 
         $w = $inf[0];
         $h = $inf[1];
-        $MAXH = 1000;
-        $MAXW = 1000;
-        if( $w>$MAXW || $h>$MAXH) {
-            return "image too large (max {$MAXW}x{$MAXH})";
+        $MAXW = 480;
+        if( $w>$MAXW) {
+            // scale it down to a reasonable width
+            $scale = (float)$MAXW/(float)$w;
+
+            $new_w = $w * $scale;
+            $new_h = $h * $scale;
+
+            $source = imagecreatefromstring(
+                file_get_contents( $file['tmp_name'] ) );
+            $new_image = imagecreatetruecolor( $new_w, $new_h );
+            imagecopyresampled( $new_image, $source, 0,0, 0,0,
+                $new_w, $new_h,
+                $w, $h );
+            $this->replacePhoto( $new_image, FALSE );
+            return;
         }
 
-        /* if we get this far, image is acceptable! */
-        return NULL;
+
+        if( $w<=THUMB_W && $h<=THUMB_H ) {
+            // It's small enough to use as a thumbnail straight off
+            $this->replacePhoto( $file, TRUE );
+            return;
+        }
+
+        // 
+        $this->replacePhoto( $file, FALSE );
     }
 
 
@@ -202,14 +227,12 @@ EOT;
             $thumbrect = array( 'x1'=>'0', 'y1'=>'0', 'x2'=>$img['width'], 'y2'=>$img['height'] );
         }
 ?>
-<p>Select the area of the picture you want to use:</p>
+<div class="croptool">
 
-<div id="fullsize">
- <img src="<?= image_url($img['filename']); ?>" width="<?=$img['width'] ?>" height="<?= $img['height'] ?>" />
-</div>
 
-<form class="croptool" method="post" action="<?= $this->pagePath; ?>">
- <div id="preview" style="padding:0px; width: <?= THUMB_W ?>px; height: <?= THUMB_H ?>px; overflow: hidden;" >
+<form method="post" action="<?= $this->pagePath; ?>">
+ <h4>preview</h4>
+ <div class="preview" style="padding:0px; width: <?= THUMB_W ?>px; height: <?= THUMB_H ?>px; overflow: hidden;" >
   <img src="<?= image_url($img['filename']); ?>" width="<?= THUMB_W ?>" height="<?= THUMB_H ?>" />
  </div>
 
@@ -236,10 +259,18 @@ EOT;
  <input type="hidden" name="ref" value="<?= $this->journo['ref'] ?>" />
  <input type="hidden" name="action" value="set_thumbnail" />
 
- <input type="submit" name="submit" value="Set Thumbnail" />
+ <input type="submit" name="submit" value="Set" />
 
 </form>
 
+<div class="fullsize">
+  <p>Select the area of the picture you want to use:</p>
+ <img src="<?= image_url($img['filename']); ?>" width="<?=$img['width'] ?>" height="<?= $img['height'] ?>" />
+</div>
+
+</div>
+
+<div style="clear: both;"></div>
 <?php
 
     }
