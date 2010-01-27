@@ -324,6 +324,7 @@ $previous_employers = array_unique( $previous_employers );
     <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
+<?php if( $employers ) { ?>
     <ul>
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
@@ -335,6 +336,9 @@ $previous_employers = array_unique( $previous_employers );
  <?php } ?>
 <?php } ?>
     </ul>
+<?php } else { ?>
+    <p><?= $prettyname ?> has not entered any experience</p>
+<?php } ?>
   </div>
 </div>
 
@@ -345,6 +349,7 @@ $previous_employers = array_unique( $previous_employers );
     <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
+<?php if( $education ) { ?>
     <ul>
 <?php foreach( $education as $edu ) { ?>
       <li>
@@ -354,6 +359,9 @@ $previous_employers = array_unique( $previous_employers );
       </li>
 <?php } ?>
     </ul>
+<?php } else { ?>
+    <p><?= $prettyname ?> has not entered any education</p>
+<?php } ?>
   </div>
 </div>
 
@@ -364,11 +372,15 @@ $previous_employers = array_unique( $previous_employers );
     <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
+<?php if( $books ) { ?>
     <ul>
 <?php foreach( $books as $b ) { ?>
     <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
 <?php } ?>
     </ul>
+<?php } else { ?>
+    <p><?= $prettyname ?> has not entered any books</p>
+<?php } ?>
   </div>
 </div>
 
@@ -379,11 +391,15 @@ $previous_employers = array_unique( $previous_employers );
     <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
+<?php if( $awards ) { ?>
     <ul>
 <?php foreach( $awards as $a ) { ?>
     <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
 <?php } ?>
     </ul>
+<?php } else { ?>
+    <p><?= $prettyname ?> has not entered any awards</p>
+<?php } ?>
   </div>
 </div>
 
