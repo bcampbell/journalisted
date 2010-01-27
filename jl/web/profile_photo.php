@@ -336,8 +336,11 @@ EOT;
             db_do( "INSERT INTO journo_photo (journo_id,image_id,is_thumbnail) VALUES (?,?,?)", $this->journo['id'], $new_photo['image_id'], $new_photo['is_thumbnail'] );
 
             db_commit();
-            // db synced - now zap the old file
-            unlink( image_path( $this->photo['filename'] ) );
+        
+            if( $this->photo ) {
+                // db synced - can now zap the old file
+                unlink( image_path( $this->photo['filename'] ) );
+            }
         }
 
         // done.
