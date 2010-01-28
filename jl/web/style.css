@@ -30,6 +30,11 @@ a { color: #cc0000; text-decoration: none; }
 a:hover { text-decoration: underline; }
 a:visited { color: #ee3333; }
 
+a.extlink { 
+  padding-right: 19px;
+  background: transparent url('/img/icon_extlink.png') no-repeat center right;
+}
+
 ul {
   margin: 0px;
   padding: 0px 0px 0px 16px;
@@ -438,6 +443,10 @@ form .remove {
 .sidebar h3 { font-size: 125%; }
 .sidebar h4 { font-size: 112%; }
 
+.sidebar a.extlink { 
+  padding-right: 15px;
+  background: transparent url('/img/icon_extlink_small.png') no-repeat center right;
+}
 
 /* default box style */
 .box
