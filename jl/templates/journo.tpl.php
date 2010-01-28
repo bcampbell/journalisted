@@ -115,6 +115,7 @@
  $tags          - list of tags used by this journo
                   as an array of tag=>freq pairs
                   eg array( 'economy'=>65, 'sucks'=>1023 )
+                  in order of freq, descending.
 
 */
 
@@ -486,7 +487,7 @@ blah blah blah blah blah
     <div class="tags">
 <?php
     if( !$quick_n_nasty ) {
-        tag_cloud_from_getall( $tags, $ref );
+        tag_display_cloud( $tags, $ref );
     } else {
 ?>
       <p>(sorry, information not currently available)</p>

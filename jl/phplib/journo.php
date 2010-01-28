@@ -356,7 +356,7 @@ function journo_calculateSlowData( &$journo ) {
     $slowdata = journo_calcStats( $journo );
 
     /* TAGS */
-    $maxtags = 20;
+    $maxtags = 10;
     # TODO: should only include active articles (ie where article.status='a')
     $sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
         "FROM ( journo_attr a INNER JOIN article_tag t ON a.article_id=t.article_id ) ".
@@ -364,7 +364,13 @@ function journo_calculateSlowData( &$journo ) {
         "GROUP BY t.tag ".
         "ORDER BY freq DESC " .
         "LIMIT ?";
-    $slowdata['tags'] = db_getAll( $sql, $journo['id'], $maxtags );
+    $foo = db_getAll( $sql, $journo['id'], $maxtags );
+    $tags = array();
+    foreach( $foo as $f ) {
+        $tags[$f['tag']] = $f['freq'];
+    }
+    $slowdata['tags'] = $tags;
+
     $slowdata['guessed_main_org'] = journo_guessMainOrg( $journo['id'] );
     $slowdata['writtenfor'] = journo_calcWrittenFor( $journo['id'] );
 

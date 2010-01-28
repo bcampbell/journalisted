@@ -109,7 +109,6 @@ function tag_gen_link( $tag, $journo_ref=null, $period=null )
 
 
 
-// TODO: merge with tag_cloud_from_getall()
 function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 {
 	$minsize = 10;
@@ -138,7 +137,7 @@ function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 }
 
 
-// TEMP for journo page - TODO: tidy up all the tag functions
+// TODO: KILL THIS ONE (used only in the offline_ pages)
 function tag_cloud_from_getall( &$tags, $journo_ref=null, $period=null )
 {
     $sorted_tags = array();
@@ -150,7 +149,7 @@ function tag_cloud_from_getall( &$tags, $journo_ref=null, $period=null )
 	tag_display_cloud( $sorted_tags, $journo_ref, $period );
 }
 
-// TODO: KILL THIS ONE
+// TODO: KILL THIS ONE (used only in the offline_ pages)
 function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 {
 	$tags = array();
