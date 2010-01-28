@@ -91,8 +91,9 @@
     url
     description
 
- $can_edit_page - TRUE if journo is logged in and can edit this page
+ $similar_journos - list of journos who write similar articles
 
+ $can_edit_page - TRUE if journo is logged in and can edit this page
 
  $recent_changes - list of recent changes to the journo's profile
    for each entry:
@@ -220,31 +221,6 @@ $previous_employers = array_unique( $previous_employers );
 
 
 <div class="tab-content" id="tab-work">
-
-
-<?php /*
-<div class="box">
-
-  <div class="head"><h3>Most Recent article</h3></div>
-  <div class="body art-list">
-<?php $art = array_shift( $articles ); if( $art ) { ?>
-    <div class="hentry">
-      <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink'] ?>"><?= $art['title']; ?></a></h4>
-      <span class="publication"><?= $art['srcorgname'] ?>,</span>
-      <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
-      <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<br /> <?php } ?><br/>
-      <blockquote class="entry-summary">
-        <?= $art['description']; ?>
-      </blockquote>
-
-      <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
-    </div>
-<?php } else { ?>
-  <p>None known</p>
-<?php } ?>
-  </div>
-</div>
-*/ ?>
 
 <div class="previous-articles">
   <div class="head"><h3>Articles</h3></div>
@@ -562,13 +538,13 @@ blah blah blah blah blah
 
 
 <div class="box similar-journos">
-  <div class="head"><h3>Similar journalists</h3></div>
+  <div class="head"><h3>Journalists who write similar articles</h3></div>
   <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
   <div class="body">
     <ul>
-<?php foreach( $similar_journos as $j ) { ?>
+<?php $n=0; foreach( $similar_journos as $j ) { ?>
       <li><?=journo_link($j) ?></li>
-<?php } ?>
+<?php if(++$n>=5) break; } ?>
     </ul>
   </div>
 </div>
@@ -581,11 +557,15 @@ blah blah blah blah blah
 <div class="box admired-journos">
  <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
  <div class="body">
+<?php if( $admired ) { ?>
   <ul>
 <?php foreach( $admired as $a ) { ?>
    <li><?=journo_link($a) ?></li>
 <?php } ?>
   </ul>
+<?php } else { ?>
+  <p><?= $prettyname ?> has not added any journalists</p>
+<?php } ?>
   <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a><?php } ?>
  </div>
 </div>

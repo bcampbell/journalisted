@@ -12,11 +12,19 @@ require_once '../phplib/eventlog.php';
 define( 'OPTION_JL_NUM_SITES_COVERED', '14' );
 
 
-/* returns a link to journos page, with oneliner (if present)... */
+/* returns a link to journos page, with oneliner (if present)...
+ * journo must have 'prettyname' field, at very least. All others optional.
+ */
 function journo_link( $j )
 {
-    $a = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
-    if( array_key_exists( 'oneliner', $j ) ) {
+    $a = '';
+    if( arr_get( 'ref', $j ) ) {
+        $a .= "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
+    } else {
+        $a .= $j['prettyname'];
+    }
+
+    if( arr_get( 'oneliner', $j ) ) {
         $a .= " <em>({$j['oneliner']})</em>";
     }
 
@@ -494,9 +502,10 @@ function journo_collectData( $journo, $quick_n_nasty=false )
     $data['awards'] = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY year DESC", $journo['id'] );
     $data['books'] = db_getAll( "SELECT * FROM journo_books WHERE journo_id=? ORDER BY year_published DESC", $journo['id'] );
 
+    /* admired journos */
     $sql = <<<EOT
-SELECT j.prettyname, j.ref, j.oneliner
-    FROM (journo_admired a INNER JOIN journo j ON j.id=a.admired_id)
+SELECT a.admired_name AS prettyname, j.ref, j.oneliner
+    FROM (journo_admired a LEFT JOIN journo j ON j.id=a.admired_id)
     WHERE a.journo_id=?
 EOT;
     $data['admired'] = db_getAll( $sql, $journo['id'] );
@@ -514,13 +523,6 @@ EOT;
     $links = array_merge( $links, journo_getBioLinks( $journo ) );
     $data['links'] = $links;
 
-    /* admired journos */
-    $sql = <<<EOT
-SELECT j.prettyname, j.ref, j.oneliner
-    FROM (journo_admired a INNER JOIN journo j ON j.id=a.admired_id)
-    WHERE a.journo_id=?
-EOT;
-    $data['admired'] = db_getAll( $sql, $journo['id'] );
 
     /* similar journos */
     $sql = <<<EOT
