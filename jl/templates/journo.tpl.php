@@ -229,7 +229,7 @@ $previous_employers = array_unique( $previous_employers );
     <form action="/search" method="get">
     <label for="findarticles">Search previous articles</label>
     <input id="findarticles" type="text" name="q" value="" />
-    <input type="hidden" name="journo" value="<?= $ref ?>" />
+    <input type="hidden" name="by" value="<?= $ref ?>" />
     <input type="hidden" name="type" value="article" />
     <input type="submit" value="Search" />
     </form>

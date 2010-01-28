@@ -101,9 +101,9 @@ function tag_gen_link( $tag, $journo_ref=null, $period=null )
 //    $query = (strpos($tag, ' ') === FALSE ) ? $tag: '"'.$tag.'"';
     $query = $tag;
 
-    $l = '/search?q=' . urlencode( $query );
+    $l = '/search?a=' . urlencode( $query );
     if( $journo_ref )
-        $l .= '&j=' . $journo_ref;
+        $l .= '&by=' . $journo_ref;
 	return $l;
 }
 
@@ -387,20 +387,35 @@ function search_getParams()
 		return $s;
     
     $s = array();
-    $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
-    $s['q'] = get_http_var( 'q', '' );
+    $art_q = get_http_var( 'a' );
+    $journo_q = get_http_var( 'j' );
+    if( $art_q ) {
+        $s['type'] = 'article';
+        $s['q'] = $art_q;
+    } else if( $journo_q ) {
+        $s['type'] = 'journo';
+        $s['q'] = $journo_q;
+    } else {
+        // need this one to handle search forms with dropdown to select type of query
+        $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
+        $s['q'] = get_http_var( 'q', '' );
+    }
     $s['num'] = (int)get_http_var('num', 20 );
     $s['start'] = (int)get_http_var('start', '0' );
     if( $s['type'] == 'article' ) {
         $s['sort_order'] = get_http_var( 'o', 'date' );
     }
 
-    $journo = get_http_var( 'journo' );
-    if( $journo )
-        $s['q'] .= " author:" . $journo;
-
+    $s['by'] = get_http_var( 'by' );    // a journo ref
+    $s['q_original'] = '';
+    if( $s['by'] ) {
+        $s['q_original'] = $s['q'];
+        $s['q'] .= " author:" . $s['by'];
+    }
     return $s;
 }
+
+
 
 // prepare an article for display by adding a few derived fields...
 function article_Augment( &$a )
