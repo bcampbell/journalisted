@@ -17,7 +17,7 @@ h5 { font-size: 112%; }
 body {
   margin: 0 auto;
   padding: 0;
-  width: 995px;
+/*  width: 995px; */
   background-color: #ebebeb;
   font-size: 13px;
   line-height: 17px;
@@ -143,23 +143,30 @@ form .remove {
   float: right;
 }
 
-.errhint { font-style: bold; color: red; display: block; }
+.errhint { font-weight: bold; color: red; display: block; }
 
 
 /* HEADER */
 
 #header {
-  position: relative;
   margin: 0;
   padding: 0;
   height: 104px;
   background: url("/img/header_bg.png") repeat-x;
 }
 
+#header .inner {
+  position: relative;
+  width: 995px;
+  height:100%;
+  margin: 0px auto;
+}
+
+
 #header h1 {
   position: absolute;
   bottom: 14px;
-  left: 40px;
+  left: 32px;
   width: 228px;
   height: 59px;
 }
@@ -264,10 +271,12 @@ form .remove {
 /* FOOTER */
 
 #footer {
+  margin: 0px auto;
+  padding: 0px 10px;
+  width: 955px; /* =995-10-10-10-10 */
   clear: both;
   border-top: 1px solid #c4c4c4;
   font-size: 90%;
-  margin: 0 10px;
 }
 
 #footer .nav {
@@ -302,13 +311,19 @@ form .remove {
   text-decoration: underline;
 }
 
+/* DATELINE (login indicator) */
+#dateline {
+  margin: 0px auto;
+  width: 975px;
+}
 
 /* CONTENT */
 
 #content {
   position: relative;
-  padding: 12px 10px; /* => width = 995-10-10 = 975 */
-  margin: 0;
+  padding: 12px 10px;
+  margin: 0px auto;
+  width: 975px;
 }
 
 
