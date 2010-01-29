@@ -741,13 +741,23 @@ a.donate {
   margin: 0px 0px 16px 0px;
   padding: 0px;
   width: 300px;
-  height: 41px;
-  line-height: 41px;
+  height: 42px;
+  line-height: 42px;
   text-align: center;
   color: #ffffff;
   display: block;
-  background: url("/img/buttons.png") no-repeat -88px -127px;
+  background: url("/img/bigredbutton.png") no-repeat 0px 0px;
   font-size: 125%;
+}
+
+a.donate:hover {
+  background: url("/img/bigredbutton.png") no-repeat 0px -42px;
+  text-decoration: none;
+}
+
+a.donate:focus {
+  background: url("/img/bigredbutton.png") no-repeat 0px -84px;
+  text-decoration: none;
 }
 
 
