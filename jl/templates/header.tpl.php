@@ -21,6 +21,8 @@
   <style type="text/css" media="all">@import "/style.css";</style>
   <meta name="Content-Type" content="text/html; charset=UTF-8" />
 
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+
 <?php foreach( $rss_feeds as $rss_title => $rss_url) { ?>
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
