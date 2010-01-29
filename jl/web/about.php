@@ -57,7 +57,7 @@ Gavin Freeguard and Ben Campbell administrate the site.
 
 <div class="sidebar">
 
-  <a class="donate" href="/donate">Donate</a>
+  <a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
   <div class="box">
     <div class="head"><h3>FAQs</h3></div>

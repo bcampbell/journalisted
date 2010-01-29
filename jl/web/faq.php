@@ -118,7 +118,7 @@ function faq_end() {
 
 <?php faq_begin("Why doesn’t Journa<i>listed</i> cover more news outlets?"); ?>
 <p>We would certainly like to cover more outlets, but to do so we would need more money (more technical costs, more administration costs). So until we get a little more funding, we have to stick with what we’ve got.</p>
-<p>Please consider making a <a href="/donate">donation</a>.</p>
+<p>Please consider making a <a href="http://www.justgiving.com/mediastandardstrust">donation</a>.</p>
 <?php faq_end(); ?>
 
 <?php faq_begin("What time period does Journa<i>listed</i> cover?"); ?>

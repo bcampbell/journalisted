@@ -436,7 +436,7 @@ $previous_employers = array_unique( $previous_employers );
 
 <div class="sidebar">
 
-<a class="donate" href="/donate">Donate</a>
+<a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
 <div class="box subscribe-newsletter">
 <div class="head"><h3>Subscribe to Journa<i>listed</i> newsletter</h3></div>
