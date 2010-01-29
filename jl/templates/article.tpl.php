@@ -45,17 +45,22 @@
 */
 ?>
 
-<div class="main">
+<div class="main article-summary">
 
-<div class="box clipping hentry">
- <div class="head"><h2 class="entry-title"><?= $title; ?></h2></div>
- <div class="body">
-  <span class="publication"><?= $srcorgname ?>,</span>
+<div class="cutting hentry">
+ <div class="head">
   <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr>,
+  <span class="publication"><?= $srcorgname ?></span>
+ <h2 class="entry-title"><?= $title; ?></h2>
+ </div>
+ <div class="body">
   <?= $byline; ?><br/>
   <blockquote class="entry-summary">
     <?= $description ?>
   </blockquote>
+ </div>
+</div>
+
   <div class="art-info">
     <?php if( $buzz ) { ?> (<?= $buzz ?>)<br /> <?php } ?>
     <a class="extlink" href="<?= $permalink ?>" >Original article at <?= $srcorgname ?></a><br/>
@@ -63,8 +68,6 @@
   (This article was originally published by
   <span class="published-by vcard"><a class="fn org url extlink" href="<?= $srcorg_url ?>"><?= $srcorgname ?></a></span>,
   which adheres to the <a rel="statement-of-principles" class="extlink" href="<?= $sop_url;?>"><?= $sop_name ?></a>)<br/>
- </div>
-</div>
 
 
 

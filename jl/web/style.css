@@ -787,7 +787,7 @@ a.donate:focus {
 .pager .page-links { float:right; }
 
 
-/* profile-editing */
+/* PROFILE-EDITING PAGES */
 .croptool form {
   width: 130px;
   float: right;
@@ -799,5 +799,39 @@ a.donate:focus {
 
 .croptool .fullsize {
   width: 400px;
+}
+
+/* ARTICLE PAGE */
+
+.cutting {
+  margin: 0px;
+  padding: 7px 36px 38px 32px;
+  width: 593px; /* = 661 -36-32 */
+  height: 189px;  /* = 231 -14-38 */
+  background: url("/img/cutting.png") no-repeat;
+
+  font-family: Times,serif;
+  color: #111111;
+}
+
+
+.cutting h2 {
+  border: none;
+  border-top: 1px solid #111111;
+  font-size: 250%;
+}
+
+
+.main.article-summary {
+  -moz-box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  border: none;
+
+  background: none;
+  margin: 0;
+  padding: 0;
 }
 
