@@ -24,19 +24,25 @@
  */
 
 
-function fancyForms( formClass, extraSetupFn ) {
+function fancyForms( formClass, options ) {
 
     var fieldId = 0;
     var formFields = "input, checkbox, select, textarea";
 
+    settings = jQuery.extend({
+      extraSetupFn: function() {},
+      plusLabel: "AND ANOTHER THING!!!",
+    }, options);
+
+
     function initForm() {
         var f = $(this);
-        f.find('.edit').hide();
+//        f.find('.edit').hide();
         f.find('.submit').hide();
-        f.find( '.cancel' ).hide();
+//        f.find( '.cancel' ).hide();
         f.find(formFields).each(function(){ $(this).change( function() {
             f.find('.submit').show();
-            f.find( '.cancel' ).show();
+//            f.find( '.cancel' ).show();
             f.addClass('modified');
             } )
          } );
@@ -67,7 +73,7 @@ function fancyForms( formClass, extraSetupFn ) {
                     }
 
                     f.find( '.submit' ).hide();
-                    f.find( '.cancel' ).hide();
+//                    f.find( '.cancel' ).hide();
                     f.removeClass('modified');
 /*                    freezeForm(f); */
                 } else {
@@ -89,120 +95,9 @@ function fancyForms( formClass, extraSetupFn ) {
             }
         } );
 
-
-        if (typeof extraSetupFn != 'undefined') {
-            extraSetupFn.apply( f );
-        }
+        settings.extraSetupFn.apply( f );
     }
 
-
-    /* ajaxify a form */
-    function OLDinitForm() {
-        var f = $(this);
-
-        function ajaxifyEditLinks( f ) {
-            f.find('.remove').click( function() {
-                $.ajax( { url: $(this).attr('href'),
-                    success: function() {
-/*                        var f=a.closest("form"); */
-                        f.css("background-color","#ffcccc")
-                        f.fadeOut(500, function() { $(this).remove(); });
-                    }
-                } );
-                return false;
-            });
-
-            f.find('.edit').click( function() {
-                var f = $(this).closest('form');
-                thawForm(f);
-                return false;
-            });
-
-        }
-
-
-        f.append( '<input type="hidden" name="ajax" value="1" />'); // so server know's it's ajax
-        f.append( '<span class="ajax-msg"></span>');    // add a place to plonk messages
-
-        /* add some extra elements, but only if it's an editing form rather than a creation form */
-        if( !f.hasClass( 'creator' )) {
-            ajaxifyEditLinks( f );
-            freezeForm(f);
-        }
-
-        f.find('.cancel').click( function() {
-            var f = $(this).closest('form');
-            if( f.hasClass( 'creator' ) ) {
-                f.css("background-color","#ffcccc")
-                f.fadeOut(500, function() { $(this).remove(); });
-            } else {
-                /* go back to read-only */
-                f.resetForm();
-                freezeForm(f);
-            }
-            return false;
-        });
-
-
-        /* set up for ajax submission of form to avoid page reload */
-        f.ajaxForm( {
-            dataType: "json",
-            beforeSend: function() {
-                f.find('button').attr("disabled", true);
-                f.find('.ajax-msg').html( '<img src="/css/indicator.gif" /><em>working...</em>' );
-            },
-            success: function(result) {
-                f.find('button').removeAttr("disabled");
-                f.find('.ajax-msg').html( '' );
-
-                if( result.status=='success' ) {
-                    // if a creator form, turn it into a full editing form
-                    if( f.hasClass("creator") ) {
-                        f.removeClass("creator");
-                        f.append( ' ' + result.editlinks_html );
-                        ajaxifyEditLinks( f );
-                        f.append( '<input type="hidden" name="id" value="' + result.id + '" />' );
-                    }
-
-                    freezeForm(f);
-                }
-            },
-            error: function() {
-                /* this gets called on IE in _addition_ to success callback... */
-                f.find('button').removeAttr("disabled");
-                // hmm... could show an error message... but... well...
-/*                freezeForm(f); */
-            }
-        } );
-
-        if (typeof extraSetupFn != 'undefined') {
-            extraSetupFn.apply( f );
-        }
-    }
-
-    function freezeForm(f) {
-        f.addClass('frozen');
-//        f.find('input').attr("disabled", true);
-        f.find('input').attr("readOnly", true); /* note CamelCase, needed for IE */
-        f.find(':checkbox').attr("disabled", true); /* readonly doesn't stop checkbox twiddling */
-        f.find('button').hide();
-        f.find('.cancel').hide();
-        f.find('.remove').show();
-        f.find('.edit').show();
-        f.find('span.explain').hide();
-    }
-
-    function thawForm(f) {
-        f.removeClass('frozen');
-//        f.find('input').removeAttr("disabled");
-        f.find('input').removeAttr("readOnly");
-        f.find(':checkbox').removeAttr("disabled" );
-        f.find('button').show();
-        f.find('.cancel').hide();
-        f.find('.edit').hide();
-        f.find('.remove').hide();
-        f.find('span.explain').show();
-    }
 
     /* based on fn from jquery-dynamic-form */	
     function normalizeElmnt(elmnt){
@@ -226,7 +121,7 @@ function fancyForms( formClass, extraSetupFn ) {
     /* hide the new-entry template form, add the "Add new" link */
     /* (could use jquery-dynamic-form plugin but it turns field names into arrays [], which
        we don't want in this case) */
-    $( formClass + ".template").hide().after( '<a href="" class="plus">Add another</a>' );
+    $( formClass + ".template").hide().after( '<a href="" class="plus">' + settings.plusLabel + '</a>' );
     $(".plus").click( function() {
         /* add a creator form by cloning the template */
         var f = $(formClass + ".template:first");

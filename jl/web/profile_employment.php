@@ -37,7 +37,9 @@ class EmploymentPage extends EditProfilePage
 
     $(document).ready( function() {
 
-        fancyForms( '.employer', function() {
+        fancyForms( '.employer', {
+            plusLabel: 'Add experience',
+            extraSetupFn: function() {
             var f = $(this);
             f.find("input[name=employer]").autocomplete( "/ajax_employer_lookup" );
 
@@ -51,7 +53,7 @@ class EmploymentPage extends EditProfilePage
                 year_to.toggle( ! current.attr('checked') );
                 year_to_label.toggle( ! current.attr('checked') );
             } );
-        } );
+        } } );
     } );
 </script>
 <?php
@@ -82,8 +84,8 @@ class EmploymentPage extends EditProfilePage
         foreach( $employers as $e ) {
             $this->showForm( 'edit', $e );
         }
-        if( !$employers )
-            $this->showForm( 'creator', null );
+        //if( !$employers )
+        //    $this->showForm( 'creator', null );
 
         $this->showForm( 'template', null );
     }

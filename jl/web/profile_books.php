@@ -30,7 +30,7 @@ class BooksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.book' );
+        fancyForms( '.book', { plusLabel: 'Add a book' } );
     });
 </script>
 <?php
@@ -60,11 +60,6 @@ class BooksPage extends EditProfilePage
         $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
         foreach( $books as &$book ) {
             $this->showForm( 'edit', $book);
-        }
-
-        if( !$books ) {
-            /* show a ready-to-go creation form */
-            $this->showForm( 'creator', null );
         }
 
         /* template form for adding new ones */

@@ -30,7 +30,7 @@ class EducationPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.education' );
+        fancyForms( '.education', {plusLabel:'Add education'}  );
     });
 </script>
 <?php
@@ -63,8 +63,8 @@ class EducationPage extends EditProfilePage
         foreach( $edus as &$edu ) {
             $this->showForm( 'edit', $edu );
         }
-        if( !$edus )
-            $this->showForm('creator',null );
+        //if( !$edus )
+        //    $this->showForm('creator',null );
 
         /* output the template form */
         $this->showForm( 'template', NULL );

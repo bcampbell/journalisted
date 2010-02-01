@@ -31,7 +31,7 @@ class AwardsPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.award' );
+        fancyForms( '.award', {plusLabel:'Add an award'} );
     });
 </script>
 <?php
@@ -62,8 +62,6 @@ class AwardsPage extends EditProfilePage
         foreach( $awards as $a ) {
             $this->showForm( "edit", $a );
         }
-        if( !$awards )
-            $this->showForm( "creator", null );
         $this->showForm( "template", null );
 
     }
@@ -108,7 +106,7 @@ class AwardsPage extends EditProfilePage
 
  <div class="field">
   <label for="year_<?= $uniq; ?>">Year</label>
-  <input type="text" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" />
+  <input type="text" class="year" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" />
  </div>
 
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />

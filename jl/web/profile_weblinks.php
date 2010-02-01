@@ -30,7 +30,7 @@ class WeblinksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.weblink' );
+        fancyForms( '.weblink', { plusLabel: 'Add another website' } );
     });
 </script>
 <?php
@@ -62,7 +62,7 @@ class WeblinksPage extends EditProfilePage
         $twitter_name = '';
 
 ?>
-<h2>Web links</h2>
+<h2>Web Sites</h2>
 
 <form class="weblink" method="POST" action="<?= $this->pagePath; ?>">
 
@@ -83,6 +83,7 @@ class WeblinksPage extends EditProfilePage
  <button class="submit" type="submit">Save</button>
 </form>
 
+<h3>Others</h3>
 <?php
 
 
@@ -90,10 +91,9 @@ class WeblinksPage extends EditProfilePage
             $this->showForm( 'edit', $weblink);
         }
 
-        if( !$weblinks ) {
-            /* show a ready-to-go creation form */
-            $this->showForm( 'creator', null );
-        }
+//        if( !$weblinks ) {
+//            $this->showForm( 'creator', null );
+//        }
 
         /* template form for adding new ones */
         $this->showForm( 'template', null );

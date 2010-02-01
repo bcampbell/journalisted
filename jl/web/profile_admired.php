@@ -35,7 +35,9 @@ class AdmiredJournosPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.admired', function() {
+        fancyForms( '.admired', {
+            plusLabel:'Add a journalist',
+            extraSetupFn: function() {
             var f = $(this);
 
             var el = f.find(".admired_name");
@@ -65,7 +67,7 @@ class AdmiredJournosPage extends EditProfilePage
                 f.find(".admired_oneliner").text( '(' + oneliner + ')' );
                 f.find(".admired_ref").val(ref);
             });
-        });
+        } } );
     });
 </script>
 <?php
@@ -107,8 +109,7 @@ EOT;
         foreach( $admired as $a ) {
             $this->showForm('edit',$a);
         }
-        if( !$admired )
-            $this->showForm('creator',null);
+
         $this->showForm('template', null);
 
     }
