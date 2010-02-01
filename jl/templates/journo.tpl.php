@@ -346,7 +346,7 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head">
     <h3>Books by <?= $prettyname ?></h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_books?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
 <?php if( $books ) { ?>
@@ -365,7 +365,7 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head">
     <h3>Awards Won</h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
 <?php if( $awards ) { ?>
