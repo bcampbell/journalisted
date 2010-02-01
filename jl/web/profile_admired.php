@@ -87,7 +87,7 @@ class AdmiredJournosPage extends EditProfilePage
     }
 
 
-    function displayMain()
+    function display()
     {
 
         $sql = <<<EOT
@@ -116,19 +116,19 @@ EOT;
 
     function ajax()
     {
-        header( "Cache-Control: no-cache" );
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
-            $result = array( 'status'=>'success',
+            return array(
                 'id'=>$entry_id,
                 'editlinks_html'=>$this->genEditLinks($entry_id),
             );
-            print json_encode( $result );
         }
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
+            return array(); // success!
         }
+        return NULL;
     }
 
 

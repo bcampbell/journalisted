@@ -73,7 +73,7 @@ class EmploymentPage extends EditProfilePage
         return TRUE;
     }
 
-    function displayMain()
+    function display()
     {
 ?>
 <h2>Add Employment Information</h2>
@@ -88,30 +88,23 @@ class EmploymentPage extends EditProfilePage
         $this->showForm( 'template', null );
     }
 
-
-
     function ajax()
     {
-        header( "Cache-Control: no-cache" );
-
-        $parms = print_r( $_POST, TRUE );
-
-
-        $result=array();
-
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
-
-            $result = array( 'status'=>'success',
+            $result = array(
                 'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks( $entry_id ),
-                'parms'=>$parms
+                'editlinks_html'=>$this->genEditLinks($entry_id),
             );
-        } else {
-            $result = array( 'status'=>'grrr.', 'parms'=>$parms );
+            return $result;
         }
-        print json_encode( $result );
+        if( get_http_var("remove_id") )
+        {
+            $this->handleRemove();
+            return array();
+        }
+        return NULL;
     }
 
 

@@ -27,7 +27,6 @@ class EditProfilePage
 
     function __construct()
     {
-//        $this->P = person_if_signed_on();
         $ref = get_http_var( 'ref' );
         $this->journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
         $r = array(
@@ -35,28 +34,73 @@ class EditProfilePage
             'reason_email' => "Edit Journalisted profile for {$this->journo['prettyname']}",
             'reason_email_subject' => "Edit {$this->journo['prettyname']} on Journalisted"
         );
-        // rediect to login screen if not logged in (so this may never return)
-        $this->P = person_signon($r);
+
+        if( get_http_var('ajax') ) {
+            $this->P = person_if_signed_on();
+        } else {
+            // if not ajax, it's ok to redirect to login screen
+            $this->P = person_signon($r);
+        }
     }
 
 
     function run()
     {
         if( get_http_var('ajax') ) {
-            $this->ajax();
+            $this->run_ajax();
         } else {
-            $this->display();
+            $this->run_normal();
         }
     }
 
 
-    /* to be overriden */
-    function ajax() {
+    function run_ajax() {
+        header( "Cache-Control: no-cache" );
+        header('Content-type: application/json');
+
+        // check we're logged in
+        if( is_null($this->P) ) {
+            $result = array( 'success'=>FALSE,
+                'errmsg'=>"Not logged in" );
+            print json_encode( $result );
+            return;
+        }
+
+        // make sure we've specified a journo
+        if( is_null( $this->journo ) ) {
+            $result = array( 'success'=>FALSE,
+                'errmsg'=>"No journalist specified" );
+            print json_encode( $result );
+            return;
+        }
+
+        // is this person allowed to edit this journo?
+        if( !db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
+            $this->P->id(), $this->journo['id'] ) ) {
+            $result = array( 'success'=>FALSE,
+                'errmsg'=>"Not allowed" );
+            print json_encode( $result );
+            return;
+        }
+
+        // got this far, so let derived class do it's thing.
+        $result = $this->ajax();
+
+        // assume success if unspecified
+        if( is_array($result) && !array_key_exists('success',$result) ) {
+            $result['success']=TRUE;
+        }
+
+        if( is_null( $result ) ) {
+            $result = array( 'success'=>FALSE, 'errmsg' => 'Failed.' );
+        }
+
+        print json_encode( $result );
     }
 
 
     /* to be overriden */
-    /* called before displayMain, so can redirect, show error page,
+    /* called before display(), so can redirect, show error page,
        whatever. return FALSE to suppress normal page */
     function handleActions() {
         return TRUE;    /* show page please! */
@@ -67,7 +111,7 @@ class EditProfilePage
     function addInfo( $msg ) { $this->info_messages[] = $msg; }
 
     /* normal, non-ajax display */
-    function display()
+    function run_normal()
     {
 
 
@@ -120,7 +164,10 @@ class EditProfilePage
 <?php
         }
 
-        $this->displayMain();
+
+        // now let derived class show the important bits
+        $this->display();
+
 ?>
 
 <br/>
@@ -189,12 +236,17 @@ class EditProfilePage
 
 
 
+    // main display function
     // derived pages override this.
-    function displayMain()
+    function display()
     {
     }
 
-
+    // like display() but for ajax requests.
+    function ajax()
+    {
+        return NULL;
+    }
 
 
     /* helper for submitting items */

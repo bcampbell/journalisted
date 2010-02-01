@@ -102,7 +102,7 @@ EOT;
     }
 
 
-    function displayMain()
+    function display()
     {
 ?>
 <h2>Your photo</h2>

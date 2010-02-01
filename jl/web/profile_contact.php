@@ -32,7 +32,7 @@ class ContactPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function display()
     {
         // submitting new entries?
         $action = get_http_var( "action" );
@@ -46,23 +46,6 @@ class ContactPage extends EditProfilePage
 
         $contact = journo_getContactDetails( $this->journo['id'] );
         $this->showForm( $contact );
-    }
-
-
-
-
-    function ajax()
-    {
-        header( "Cache-Control: no-cache" );
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array( 'status'=>'success',
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            print json_encode( $result );
-        }
     }
 
 

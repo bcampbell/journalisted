@@ -55,7 +55,7 @@ class AwardsPage extends EditProfilePage
     }
 
 
-    function displayMain()
+    function display()
     {
 ?><h2>Have you won any awards?</h2><?php
         $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY YEAR DESC", $this->journo['id'] );
@@ -70,16 +70,21 @@ class AwardsPage extends EditProfilePage
 
     function ajax()
     {
-        header( "Cache-Control: no-cache" );
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
-            $result = array( 'status'=>'success',
+            $result = array(
                 'id'=>$entry_id,
                 'editlinks_html'=>$this->genEditLinks($entry_id),
             );
-            print json_encode( $result );
+            return $result;
         }
+        if( get_http_var("remove_id") )
+        {
+            $this->handleRemove();
+            return array();
+        }
+        return NULL;
     }
 
     function showForm( $formtype, $award )

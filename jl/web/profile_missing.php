@@ -40,7 +40,7 @@ class MissingInfoPage extends EditProfilePage
 
 
 
-    function displayMain()
+    function display()
     {
 
 ?>

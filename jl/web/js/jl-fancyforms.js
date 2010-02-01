@@ -55,7 +55,7 @@ function fancyForms( formClass, extraSetupFn ) {
                 f.find('button').removeAttr("disabled");
                 f.find('.ajax-msg').html( '' );
 
-                if( result.status=='success' ) {
+                if( result.success ) {
                     // if a creator form, turn it into a full editing form
                     if( f.hasClass("creator") ) {
                         f.removeClass("creator");
@@ -70,13 +70,22 @@ function fancyForms( formClass, extraSetupFn ) {
                     f.find( '.cancel' ).hide();
                     f.removeClass('modified');
 /*                    freezeForm(f); */
+                } else {
+                    /* show an app-level error */
+                    f.find('.ajax-msg').html( result.errmsg );
+                    f.find('button').removeAttr("disabled");
                 }
             },
-            error: function() {
-                /* this gets called on IE in _addition_ to success callback... */
-/*                f.find('button').removeAttr("disabled"); */
-                // hmm... could show an error message... but... well...
-/*                freezeForm(f); */
+            error: function(result,textStatus) {
+                /* a low-level (timeout, http, json syntax, whatever) error */
+                if( textStatus == 'timeout' ) {
+                    f.find('.ajax-msg').html( "Timed out." );
+                } else {
+                    f.find('.ajax-msg').html( "Failed." );
+                }
+                f.find('button').removeAttr("disabled");
+
+                /* this gets called on IE in _addition_ to success callback... ??? */
             }
         } );
 

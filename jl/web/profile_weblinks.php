@@ -53,13 +53,36 @@ class WeblinksPage extends EditProfilePage
     }
 
 
-    function displayMain()
+    function display()
     {
 
         $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
 
+        $home_url = '';
+        $twitter_name = '';
+
 ?>
-<h2>Elsewhere on the Web</h2>
+<h2>Web links</h2>
+
+<form class="weblink" method="POST" action="<?= $this->pagePath; ?>">
+
+ <div class="field">
+  <label for="home_url">Homepage or Blog</label>
+  <input type="text" size="60" name="home_url" id="home_url" value="<?= h($home_url) ?>" />
+  <span class="explain">eg: http://<?= h($this->journo['ref']) ?>.com</span>
+ </div>
+
+ <div class="field">
+  <label for="twitter_name">Twitter ID</label>
+  <input type="text" size="60" name="twitter_name" id="twitter_name" value="<?= h($twitter_name) ?>" />
+  <span class="explain">eg: <?= h($this->journo['ref']) ?></span>
+ </div>
+
+ <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+ <input type="hidden" name="action" value="set_special" />
+ <button class="submit" type="submit">Save</button>
+</form>
+
 <?php
 
 
@@ -79,18 +102,22 @@ class WeblinksPage extends EditProfilePage
 
     function ajax()
     {
-        header( "Cache-Control: no-cache" );
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
-            $result = array( 'status'=>'success',
+            $result = array(
                 'id'=>$entry_id,
                 'editlinks_html'=>$this->genEditLinks($entry_id),
             );
-            print json_encode( $result );
+            return $result;
         }
+        if( get_http_var("remove_id") )
+        {
+            $this->handleRemove();
+            return array();
+        }
+        return NULL;
     }
-
 
 
     function showForm( $formtype, $weblink )
