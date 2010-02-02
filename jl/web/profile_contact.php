@@ -26,6 +26,20 @@ class ContactPage extends EditProfilePage
     {
 ?>
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready( function() {
+        $('form.contact .submit').hide();
+        $('form.contact input, form.contact textarea' ).each( function(){
+            $(this).keyup( function() {
+                $('form.contact .submit').show();
+                $('form.contact').addClass('modified');
+            } )
+         } );
+    } );
+
+</script>
+
 <?php
     }
 
@@ -91,7 +105,7 @@ class ContactPage extends EditProfilePage
 
  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
  <input type="hidden" name="action" value="submit" />
- <button class="submit" type="submit">Save</button>
+ <button class="submit" type="submit">Save changes</button>
 </form>
 <?php
 
