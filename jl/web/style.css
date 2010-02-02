@@ -727,9 +727,14 @@ form .remove {
 
 /* bio tab on journo page */
 
-/* position the "edit" link */
-.bio .head { position: relative; }
-.bio .head a.edit {
+/* position the "edit" links */
+.bio .head,
+.contact .head
+ { position: relative; }
+
+.bio .head a.edit,
+.contact .head a.edit
+ {
   position: absolute;
   top: 10px;
   right: 0px;

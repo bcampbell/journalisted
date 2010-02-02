@@ -30,21 +30,27 @@ class ContactPage extends EditProfilePage
     }
 
 
+    function handleActions()
+    {
+        $action = get_http_var( "action" );
+        if( $action == "submit" ) {
+            $this->handleSubmit();
+        }
+        return TRUE;
+    }
 
 
     function display()
     {
-        // submitting new entries?
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $added = $this->handleSubmit();
-        }
-        if( get_http_var('remove_id') ) {
-            $this->handleRemove();
-        }
 ?><h2>Contact Information</h2><?php
 
-        $contact = journo_getContactDetails( $this->journo['id'] );
+        $email = db_getRow( "SELECT * FROM journo_email WHERE journo_id=? AND approved=true AND srctype='' LIMIT 1", $this->journo['id'] );
+        $phone = db_getRow( "SELECT * FROM journo_phone WHERE journo_id=? LIMIT 1", $this->journo['id'] );
+        $address = db_getRow( "SELECT * FROM journo_address WHERE journo_id=? LIMIT 1", $this->journo['id'] );
+
+        $contact = array( 'email' => $email, 'phone'=>$phone, 'address'=>$address );
+
+
         $this->showForm( $contact );
     }
 
@@ -54,16 +60,15 @@ class ContactPage extends EditProfilePage
     {
         /* set up defaults for anything missing */
         if( is_null( $contact['email'] ) )
-            $contact['email'] = array( 'email'=>'', 'show_public'=>TRUE );
+            $contact['email'] = array( 'email'=>'' );
         if( is_null( $contact['phone'] ) )
-            $contact['phone'] = array( 'phone_number'=>'', 'show_public'=>TRUE );
+            $contact['phone'] = array( 'phone_number'=>'' );
         if( is_null( $contact['address'] ) )
-            $contact['address'] = array( 'address'=>'', 'show_public'=>TRUE );
+            $contact['address'] = array( 'address'=>'' );
 
         $email = $contact['email'];
         $address = $contact['address'];
         $phone = $contact['phone'];
-        $show_public = $email['show_public'] && $phone['show_public'] && $address['show_public'];
 
 ?>
 
@@ -84,12 +89,6 @@ class ContactPage extends EditProfilePage
   <textarea name="address" cols="80" rows="5" id="address"><?= h($address['address']); ?></textarea>
  </div>
 
- <fieldset class="field">
-   <span class="faux-label"></span>
-   <input type="checkbox" id="show_public" name="show_public" value="yes" <?= $show_public?'checked ':''?>/>
-   <label for="show_public">Allow this information to be public?</label>
- </div>
-
  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
  <input type="hidden" name="action" value="submit" />
  <button class="submit" type="submit">Save</button>
@@ -106,28 +105,21 @@ class ContactPage extends EditProfilePage
         $email = get_http_var('email');
         $phone = get_http_var('phone');
         $address = get_http_var('address');
-        $show_public = get_http_var('show_public' ) == 'yes' ? TRUE:FALSE;
-
-
 
         // address
-        db_do( "DELETE FROM journo_address WHERE journo_id=? AND srctype=''", $this->journo['id'] );
+        db_do( "DELETE FROM journo_address WHERE journo_id=?", $this->journo['id'] );
         if( $address ) {
-            db_do( "INSERT INTO journo_address (journo_id,address,srctype,show_public) VALUES (?,?,?,?)",
+            db_do( "INSERT INTO journo_address (journo_id,address) VALUES (?,?)",
                 $this->journo['id'],
-                $address,
-                '',     // srctype
-                $show_public );
+                $address );
         }
 
         // phone
-        db_do( "DELETE FROM journo_phone WHERE journo_id=? AND srctype=''", $this->journo['id'] );
+        db_do( "DELETE FROM journo_phone WHERE journo_id=?", $this->journo['id'] );
         if( $phone ) {
-            db_do( "INSERT INTO journo_phone (journo_id,phone_number,srctype,show_public) VALUES (?,?,?,?)",
+            db_do( "INSERT INTO journo_phone (journo_id,phone_number) VALUES (?,?)",
                 $this->journo['id'],
-                $phone,
-                '',     // srctype
-                $show_public );
+                $phone );
         }
 
         // email
@@ -138,13 +130,12 @@ class ContactPage extends EditProfilePage
                 $email,
                 '',     // srctype
                 '',     // srcurl
-                $show_public );
+                TRUE );
         }
 
         db_commit();
         eventlog_Add( 'modify-contact', $this->journo['id'] );
     }
-
 
 
 }

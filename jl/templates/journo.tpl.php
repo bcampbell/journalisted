@@ -386,23 +386,25 @@ $previous_employers = array_unique( $previous_employers );
 
 
 
-<div class="tab-content" id="tab-contact">
+<div class="tab-content contact" id="tab-contact">
 
 
 <div class="">
-  <div class="head"><h3></h3></div>
+  <div class="head">
+    <h3>Email</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_contact?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
   <div class="body">
 <?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
     <p>Email <?= $prettyname ?> at: <span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
 <?php if( $known_email['srcurl'] ) { ?>
-        <div class="email-source">(from <a class="extlink" href="<?= $known_email['srcurl'] ?>"><?= $known_email['srcurlname'] ?></a>)</div>
+    <span class="email-source">(from <a class="extlink" href="<?= $known_email['srcurl'] ?>"><?= $known_email['srcurlname'] ?></a>)</span>
 <?php } ?>
 <?php } ?>
-
 
 <?php if( $guessed ) { /* show guessed contact details */ ?>
     <p>No email address known for <?= $prettyname; ?>.</p>
-    <p>You could try contacting <span class="publication"><?= $guessed['orgname']; ?></span>
+    <p>You could <em>try</em> contacting <span class="publication"><?= $guessed['orgname']; ?></span>
     <?php if( $guessed['orgphone'] ) { ?> (Telephone: <?= $guessed['orgphone']; ?>) <?php } ?></p>
 <?php
         if( $guessed['emails'] )
@@ -411,17 +413,46 @@ $previous_employers = array_unique( $previous_employers );
             foreach( $guessed['emails'] as $e )
                 $safe_emails[] = SafeMailTo( $e );
 ?>
-      <p>
-      Based on the standard email format for <span class="publication"><?php echo $guessed['orgname']; ?></span>, the email address <em>might</em> be <?php echo implode( ' or ', $safe_emails ); ?>.
-<?php } ?>
+    <p>
+    Based on the standard email format for <span class="publication"><?php echo $guessed['orgname']; ?></span>, the email address <em>might</em> be <?php echo implode( ' or ', $safe_emails ); ?>.
     </p>
+<?php   } ?>
 <?php } ?>
 
 <?php if( !$guessed && !$known_email ) { ?>
-    <p>Sorry, no contact details known.</p>
+    <p>No email address known.</p>
 <?php } ?>
+  </div>
+</div>
 
 
+<div class="">
+  <div class="head">
+    <h3>Phone</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_contact?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+  <div class="body">
+<?php if( $phone_number ) { ?>
+    <p>Phone <?= $prettyname; ?> at: <?= h( $phone_number ) ?></p>
+<?php } else { ?>
+    <p>No phone number known</p>
+<?php } ?>
+  </div>
+</div>
+
+
+<div class="">
+  <div class="head">
+    <h3>Address</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_contact?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+  <div class="body">
+<?php if( $address ) { ?>
+    <p>Write to <?= $prettyname ?> at:<br/><br/>
+    <?= str_replace( "\n", "<br/>", h( $address ) ) ?>
+<?php } else { ?>
+    <p>No address known</p>
+<?php } ?>
   </div>
 </div>
 
