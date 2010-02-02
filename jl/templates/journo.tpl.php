@@ -500,12 +500,13 @@ blah blah blah blah blah
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
     </ul>
+  </div>
+  <div class="foot">
     <?php if( $can_edit_page ) { ?>
     <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
     <?php } else { ?>
     <div class="box-action"><a href="/forjournos?j=<?= $ref ?>">Suggest a link for <?= $prettyname ?></a></div>
     <?php } ?>
-    <div style="clear: both;"></div>
   </div>
 </div>
 
@@ -598,8 +599,12 @@ blah blah blah blah blah
 <?php } else { ?>
   <p><?= $prettyname ?> has not added any journalists</p>
 <?php } ?>
-  <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a><?php } ?>
  </div>
+<?php if( $can_edit_page ) { ?>
+ <div class="foot">
+  <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a>
+ </div>
+<?php } ?>
 </div>
 
 <div class="box">

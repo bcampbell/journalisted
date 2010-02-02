@@ -159,7 +159,7 @@ EOT;
 <input type="hidden" name="admired_ref" class="admired_ref" value="<?= h($admired['admired_ref']); ?>" />
 <input type="hidden" name="ref" value="<?php echo $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+<button class="submit" type="submit">Save changes</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $admired['id']; ?>" />
 <?= $this->genEditLinks($admired['id']); ?>

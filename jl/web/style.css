@@ -765,6 +765,18 @@ a.donate:focus {
   text-decoration: none;
 }
 
+/* position edit buttons in sidebar boxes */
+.sidebar .foot { position: relative; height: 29px; }
+
+.sidebar .foot a.edit,
+.sidebar .foot .box-action {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+
+
 
 /* SEARCH PAGE */
 
