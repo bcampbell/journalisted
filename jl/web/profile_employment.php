@@ -36,7 +36,7 @@ class EmploymentPage extends EditProfilePage
 <script type="text/javascript">
 
     $(document).ready( function() {
-
+/*
         fancyForms( '.employer', {
             plusLabel: 'Add experience',
             extraSetupFn: function() {
@@ -54,7 +54,22 @@ class EmploymentPage extends EditProfilePage
                 year_to_label.toggle( ! current.attr('checked') );
             } );
         } } );
+*/
+
+            var f = $('.employer');
+            var current = f.find("input[name=current]");
+
+            var year_to = f.find("input[name=year_to]");
+            var year_to_label = year_to.prev( "label" );
+            year_to.toggle( ! current.attr('checked') );
+            year_to_label.toggle( ! current.attr('checked') );
+            current.click( function() {
+                year_to.toggle( ! current.attr('checked') );
+                year_to_label.toggle( ! current.attr('checked') );
+            } );
+
     } );
+
 </script>
 <?php
     }
@@ -72,26 +87,56 @@ class EmploymentPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+
+
+        if( $action != 'edit' && $action != 'new' )
+        {
+            header( "Location: /{$this->journo['ref']}" );
+            exit;
+        }
         return TRUE;
     }
 
     function display()
     {
+
+        $action = get_http_var( "action" );
+
+        if( $action=='edit' )
+        {
+            $emp_id = get_http_var('id');
+            $emp = db_getRow( "SELECT * FROM journo_employment WHERE journo_id=? AND id=?",
+                $this->journo['id'], $emp_id );
 ?>
-<h2>Add employment information</h2>
+<h2>Edit experience</h2>
 <?php
-        $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
+            $this->showForm( $emp );
+        }
+
+        if( $action=='new' )
+        {
+?>
+<h2>Add experience</h2>
+<?php
+            $this->showForm( null );
+        }
+
+
+/*        $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
         foreach( $employers as $e ) {
             $this->showForm( 'edit', $e );
         }
+*/
+
         //if( !$employers )
         //    $this->showForm( 'creator', null );
 
-        $this->showForm( 'template', null );
+//        $this->showForm( 'template', null );
     }
 
     function ajax()
     {
+/*
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
@@ -106,23 +151,24 @@ class EmploymentPage extends EditProfilePage
             $this->handleRemove();
             return array();
         }
+*/
         return NULL;
     }
 
 
     /* if $emp is null, then display a fresh form for entering a new entry */
-    function showForm( $formtype, $emp )
+    function showForm( $emp )
     {
         static $uniq=0;
         ++$uniq;
-        if( is_null( $emp ) )
+        $formtype = 'edit';
+        if( is_null( $emp ) ) {
             $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
+            $formtype = 'new';
+        }
+
  
         $formclasses = 'employer';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
 
 ?>
 
@@ -150,13 +196,15 @@ class EmploymentPage extends EditProfilePage
 
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <?php if( $formtype=='edit' ) { ?>
-<input type="hidden" name="id" value="<?= $emp['id']; ?>" />
-<?= $this->genEditLinks($emp['id']); ?>
+<input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
 <?php } ?>
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save changes</button>
 <div style="clear:both;"></div>
 </form>
+<?php if( $formtype=='edit' ) { ?>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($emp['id']); ?>">Delete this experience</a>
+<?php } ?>
 <?php
 
     }

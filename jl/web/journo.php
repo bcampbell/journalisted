@@ -148,7 +148,8 @@ function extra_head()
 <script type="text/javascript">
 $(document).ready(
     function() {
-        $('#tab-bio').hide();
+        $('#tab-work').hide();
+//        $('#tab-bio').hide();
         $('#tab-contact').hide();
         $(".tabs a[href='#tab-work']").click( function() {
             $('.tabs li').removeClass('current');

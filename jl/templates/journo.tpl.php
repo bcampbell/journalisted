@@ -214,8 +214,8 @@ $previous_employers = array_unique( $previous_employers );
 
 <div class="tabs">
 <ul>
-<li class="current"><a href="#tab-work">Work</a></li>
-<li><a href="#tab-bio">Biography</a></li>
+<li><a href="#tab-work">Work</a></li>
+<li class="current"><a href="#tab-bio">Biography</a></li>
 <li><a href="#tab-contact">Contact</a></li>
 </ul>
 </div>
@@ -295,10 +295,10 @@ $previous_employers = array_unique( $previous_employers );
 <div class="tab-content bio" id="tab-bio">
 
 
-<div class="experience">
+<div id="experience" class="experience">
   <div class="head">
     <h3>Experience</h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } ?>
+    <?php /*if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } */?>
   </div>
   <div class="body">
 <?php if( $employers ) { ?>
@@ -306,16 +306,21 @@ $previous_employers = array_unique( $previous_employers );
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
       <li><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
-        <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span></li>
+        <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
+    <?php if( $can_edit_page ) { ?><a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a><?php } ?>
+</li>
  <?php } else { ?>
       <li class="current-employer" ><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
-        <span class="daterange"><?= $e['year_from'] ?>-Present</span></li>
+        <span class="daterange"><?= $e['year_from'] ?>-Present</span>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a><?php } ?>
+  </li>
  <?php } ?>
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
+    <?php if( $can_edit_page ) { ?><a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a><?php } ?>
   </div>
 </div>
 
