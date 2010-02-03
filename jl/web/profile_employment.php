@@ -78,7 +78,7 @@ class EmploymentPage extends EditProfilePage
     function display()
     {
 ?>
-<h2>Add Employment Information</h2>
+<h2>Add employment information</h2>
 <?php
         $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
         foreach( $employers as $e ) {
@@ -134,7 +134,7 @@ class EmploymentPage extends EditProfilePage
  </div>
 
  <div class="field">
-  <label for="job_title_<?= $uniq; ?>">Job Title</label>
+  <label for="job_title_<?= $uniq; ?>">Job title(s)</label>
   <input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/>
  </div>
 

@@ -55,7 +55,7 @@ class BooksPage extends EditProfilePage
 
     function display()
     {
-?><h2>Have you published any books?</h2><?php
+?><h2>Add books you have written</h2><?php
 
         $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
         foreach( $books as &$book ) {
@@ -115,13 +115,13 @@ class BooksPage extends EditProfilePage
  </div>
 
  <div class="field">
-  <label for="year_published<?= $uniq; ?>">Year Published</label>
+  <label for="year_published<?= $uniq; ?>">Year published</label>
   <input type="text" class="year" size="4" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" />
  </div>
 
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+<button class="submit" type="submit">Save changes</button>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />
 <?= $this->genEditLinks($book['id']); ?>
