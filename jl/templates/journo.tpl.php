@@ -30,6 +30,8 @@
     orgphone   -
     emails     - array of email addresses
 
+ $twitter_id   - if journo has one, else null
+ $twitter_url  - url of journos twitter feed (or null)
 
  $bios         - a list of bios for this journo
    for each one:
@@ -201,7 +203,12 @@ $previous_employers = array_unique( $previous_employers );
     </div>
 <?php } ?>
 
-
+<?php if( $twitter_id ) { ?>
+    <div class="section twitter">
+    <h4>Twitter</h4>
+    <ul><li>@<a href="<?= $twitter_url ?>"><?= h($twitter_id) ?></a></li></ul>
+    </div>
+<?php } ?>
 
     </div> <!-- end fudge -->
     <div style="clear: both;"></div>
@@ -408,7 +415,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
 
 <?php if( $guessed ) { /* show guessed contact details */ ?>
-    <p>No email address known for <?= $prettyname; ?>.</p>
+    <p class="not-known">No email address known for <?= $prettyname; ?>.</p>
     <p>You could <em>try</em> contacting <span class="publication"><?= $guessed['orgname']; ?></span>
     <?php if( $guessed['orgphone'] ) { ?> (Telephone: <?= $guessed['orgphone']; ?>) <?php } ?></p>
 <?php
@@ -425,7 +432,22 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
 
 <?php if( !$guessed && !$known_email ) { ?>
-    <p>No email address known.</p>
+    <p class="not-known">No email address known.</p>
+<?php } ?>
+  </div>
+</div>
+
+
+<div class="">
+  <div class="head">
+    <h3>Twitter</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_contact?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+  <div class="body">
+<?php if( $twitter_id ) { ?>
+    <p>Direct message <?= $prettyname; ?>: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
+<?php } else { ?>
+    <p class="not-known"><?= $prettyname ?> has not added a Twitter name</p>
 <?php } ?>
   </div>
 </div>
@@ -440,7 +462,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $phone_number ) { ?>
     <p>Phone <?= $prettyname; ?> at: <?= h( $phone_number ) ?></p>
 <?php } else { ?>
-    <p>No phone number known</p>
+    <p class="not-known">No phone number known</p>
 <?php } ?>
   </div>
 </div>
@@ -456,7 +478,7 @@ $previous_employers = array_unique( $previous_employers );
     <p>Write to <?= $prettyname ?> at:<br/><br/>
     <?= str_replace( "\n", "<br/>", h( $address ) ) ?>
 <?php } else { ?>
-    <p>No address known</p>
+    <p class="not-known">No address known</p>
 <?php } ?>
   </div>
 </div>

@@ -505,7 +505,15 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
     $data['known_email'] = $known;
     $data['guessed'] = $guessed;
+    $data['twitter_id'] = journo_fetchTwitterID( $journo['id'] );
+    if( $data['twitter_id'] ) {
+        $data['twitter_url'] = 'http://twitter.com/' . urlencode($data['twitter_id']);
+    } else {
+        $data['twitter_url'] = NULL;
+    }
 
+
+    /* assorted bio things */
     $data['employers'] = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
     $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
     $data['awards'] = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY year DESC", $journo['id'] );
@@ -684,4 +692,16 @@ EOT;
 }
 
 
+function journo_fetchTwitterID( $journo_id ) {
+    $twitter_id = NULL;
+    $l = db_getRow( "SELECT * FROM journo_weblink WHERE journo_id=? AND kind='twitter' LIMIT 1", $journo_id );
+    if( !is_null( $l ) )
+    {
+        $matches = array();
+        if( preg_match( '%.*twitter.com/([^/?]+)$%i', $l['url'], $matches ) ) {
+            $twitter_id = $matches[1];
+        }
+    }
+    return $twitter_id;
+}
 

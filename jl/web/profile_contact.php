@@ -61,8 +61,9 @@ class ContactPage extends EditProfilePage
         $email = db_getRow( "SELECT * FROM journo_email WHERE journo_id=? AND approved=true AND srctype='' LIMIT 1", $this->journo['id'] );
         $phone = db_getRow( "SELECT * FROM journo_phone WHERE journo_id=? LIMIT 1", $this->journo['id'] );
         $address = db_getRow( "SELECT * FROM journo_address WHERE journo_id=? LIMIT 1", $this->journo['id'] );
+        $twitter_id = journo_fetchTwitterID( $this->journo['id'] );
 
-        $contact = array( 'email' => $email, 'phone'=>$phone, 'address'=>$address );
+        $contact = array( 'email' => $email, 'phone'=>$phone, 'address'=>$address, 'twitter'=>$twitter_id );
 
 
         $this->showForm( $contact );
@@ -83,6 +84,7 @@ class ContactPage extends EditProfilePage
         $email = $contact['email'];
         $address = $contact['address'];
         $phone = $contact['phone'];
+        $twitter = $contact['twitter'];
 
 ?>
 
@@ -94,7 +96,12 @@ class ContactPage extends EditProfilePage
  </div>
 
  <div class="field">
-  <label for="phone">Phone</label>
+  <label for="email">Twitter name</label>
+  <input type="text" size="60" name="twitter" id="twitter" value="<?= h($twitter) ?>" />
+ </div>
+
+ <div class="field">
+  <label for="phone">Telephone</label>
   <input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" />
  </div>
 
@@ -106,7 +113,11 @@ class ContactPage extends EditProfilePage
  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
  <input type="hidden" name="action" value="submit" />
  <button class="submit" type="submit">Save changes</button>
+
+<p>This contact information is for your public profile. If you wish to
+keep this information private do not add it to your profile.</p>
 </form>
+
 <?php
 
     }
@@ -119,6 +130,7 @@ class ContactPage extends EditProfilePage
         $email = get_http_var('email');
         $phone = get_http_var('phone');
         $address = get_http_var('address');
+        $twitter = get_http_var('twitter');
 
         // address
         db_do( "DELETE FROM journo_address WHERE journo_id=?", $this->journo['id'] );
@@ -145,6 +157,17 @@ class ContactPage extends EditProfilePage
                 '',     // srctype
                 '',     // srcurl
                 TRUE );
+        }
+
+        // twitter
+        db_do( "DELETE FROM journo_weblink WHERE journo_id=? AND kind='twitter'", $this->journo['id'] );
+        if( $twitter ) {
+            $twitter_url = 'http://twitter.com/' . $twitter;
+            $twitter_desc = $this->journo['prettyname'] . ' on Twitter';
+            db_do( "INSERT INTO journo_weblink (journo_id,url,description,approved,kind) VALUES (?,?,?,true,'twitter')",
+                $this->journo['id'],
+                $twitter_url,
+                $twitter_desc );
         }
 
         db_commit();
