@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Scraper for Financial Times
 #
@@ -130,7 +130,7 @@ def Extract_article( html, context ):
 
     headerdiv = soup.find( 'div', {'class':'ft-story-header'} )
     
-    h = headerdiv.find( ['h2','h3' ] )
+    h = headerdiv.find( ['h1','h2','h3' ] )
     headline = h.renderContents( None )
     headline = ukmedia.FromHTML( headline )
 
