@@ -325,7 +325,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p><?= $prettyname ?> has not entered any experience</p>
+    <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?><a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a><?php } ?>
   </div>
@@ -349,7 +349,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p><?= $prettyname ?> has not entered any education</p>
+    <p class="not-known"><?= $prettyname ?> has not entered any education</p>
 <?php } ?>
   </div>
 </div>
@@ -368,7 +368,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p><?= $prettyname ?> has not entered any books</p>
+    <p class="not-known"><?= $prettyname ?> has not entered any books</p>
 <?php } ?>
   </div>
 </div>
@@ -387,7 +387,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p><?= $prettyname ?> has not entered any awards</p>
+    <p class="not-known"><?= $prettyname ?> has not entered any awards</p>
 <?php } ?>
   </div>
 </div>
@@ -447,7 +447,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $twitter_id ) { ?>
     <p>Direct message <?= $prettyname; ?>: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not added a Twitter name</p>
+    <p class="not-known"><?= $prettyname ?> has not entered any Twitter information</p>
 <?php } ?>
   </div>
 </div>
@@ -462,7 +462,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $phone_number ) { ?>
     <p>Phone <?= $prettyname; ?> at: <?= h( $phone_number ) ?></p>
 <?php } else { ?>
-    <p class="not-known">No phone number known</p>
+    <p class="not-known"><?= $prettyname ?> has not entered a phone number</p>
 <?php } ?>
   </div>
 </div>
@@ -478,7 +478,7 @@ $previous_employers = array_unique( $previous_employers );
     <p>Write to <?= $prettyname ?> at:<br/><br/>
     <?= str_replace( "\n", "<br/>", h( $address ) ) ?>
 <?php } else { ?>
-    <p class="not-known">No address known</p>
+    <p class="not-known"><?= $prettyname ?> has not entered an address</p>
 <?php } ?>
   </div>
 </div>
@@ -624,7 +624,7 @@ blah blah blah blah blah
 <?php } ?>
   </ul>
 <?php } else { ?>
-  <p><?= $prettyname ?> has not added any journalists</p>
+  <p class="not-known"><?= $prettyname ?> has not added any journalists</p>
 <?php } ?>
  </div>
 <?php if( $can_edit_page ) { ?>

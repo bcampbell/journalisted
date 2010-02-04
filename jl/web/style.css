@@ -80,7 +80,7 @@ a.edit:focus
 .bio .publication { color: #222222; font-size: 110% }
 .bio .daterange { color: #555555; }
 
-
+.not-known { font-style: italic; color: #888888; }
 
 /* default form styling */
 
