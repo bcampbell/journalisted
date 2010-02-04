@@ -47,68 +47,73 @@
 
 <div class="main article-summary">
 
-<div class="cutting hentry">
- <div class="head">
-  <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr>,
-  <span class="publication"><?= $srcorgname ?></span>
- <h2 class="entry-title"><?= $title; ?></h2>
- </div>
- <div class="body">
-  <?= $byline; ?><br/>
-  <blockquote class="entry-summary">
-    <?= $description ?>
-  </blockquote>
- </div>
-</div>
+<div class="hentry">
+
+  <div class="cutting">
+    <div class="head">
+      <abbr class="published" title="<?= $iso_pubdate ?>"><?= $pretty_pubdate ?></abbr>,
+      <span class="publication"><?= $srcorgname ?></span>
+      <h2 class="entry-title"><?= $title; ?></h2>
+    </div>
+    <div class="body">
+      <?= $byline; ?><br/>
+      <blockquote class="entry-summary">
+        <?= $description ?>
+      </blockquote>
+    </div>
+  </div>
+
 
   <div class="art-info">
-    <?php if( $buzz ) { ?> (<?= $buzz ?>)<br /> <?php } ?>
-    <a class="extlink" href="<?= $permalink ?>" >Original article at <?= $srcorgname ?></a><br/>
+    <a class="extlink" href="<?= $permalink ?>" >Read the original article</a>.<br/>
+    It was published by
+    <span class="published-by vcard"><a class="fn org url extlink" href="<?= $srcorg_url ?>"><?= $srcorgname ?></a></span>,
+    which adheres to the <a rel="statement-of-principles" class="extlink" href="<?= $sop_url;?>"><?= $sop_name ?></a>
   </div>
-  (This article was originally published by
-  <span class="published-by vcard"><a class="fn org url extlink" href="<?= $srcorg_url ?>"><?= $srcorgname ?></a></span>,
-  which adheres to the <a rel="statement-of-principles" class="extlink" href="<?= $sop_url;?>"><?= $sop_name ?></a>)<br/>
 
-
-
-<div class="box tags">
-  <div class="head"><h2>Subjects mentioned</h2></div>
-  <div class="body">
-<?php tag_display_cloud( $tags ); ?>
-  </div>
-</div>
+</div>  <!-- end hentry -->
 
 
 
 <div class="box">
-<div class="head"><h2>Similar articles</h2></div>
-<div class="body">
-<small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
+  <div class="head"><h3>Similar articles</h3></div>
+  <div class="body">
+    <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
 
 
-<p>
+    <p>
 <?php if( $sim_orderby=='date' ) { ?>
-  ordered by date (<a href="<?= article_url( $article_id, 'score', $sim_showall ); ?>">order by similarity</a>)
+      ordered by date (<a href="<?= article_url( $article_id, 'score', $sim_showall ); ?>">order by similarity</a>)
 <?php } else { ?>
-  ordered by similarity (<a href="<?= article_url( $article_id, 'date', $sim_showall ); ?>">order by date</a>)
+      ordered by similarity (<a href="<?= article_url( $article_id, 'date', $sim_showall ); ?>">order by date</a>)
 <?php } ?>
-</p>
+    </p>
 
-<ul>
-<?php foreach( $sim_arts as $sim_art ) { ?>
-  <li>
+    <ul class="art-list">
+<?php foreach( $sim_arts as $art ) { ?>
+      <li class="hentry">
+        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
+        <span class="publication"><?= $art['srcorgname']; ?>,</span>
+        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+        <br/>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
+      </li>
+<?php /*
     <a href="<?php echo article_url( $sim_art['id'] );?>"><?php echo $sim_art['title'];?></a>
-        <?php /*TODO: expand these fns out into template! */ echo BuzzFragment($sim_art); ?><br />
+        <?php echo BuzzFragment($sim_art); ?><br />
         <?php print PostedFragment($sim_art); ?>
         <small><?php echo $sim_art['byline'];?></small>
   </li>
+*/ ?>
 <?php } ?>
-</ul>
+    </ul>
 
+  </div>
 <?php if( $sim_total > sizeof( $sim_arts ) && $sim_showall != 'yes' ) { ?>
-<a href="<?php echo article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all <?php print $sim_total; ?> similar articles.</a>
+  <div class="pager">
+    <a href="<?php echo article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all <?php print $sim_total; ?> similar articles.</a>
 <?php } ?>
-</div>
+  </div>
 </div>
 
 
@@ -120,9 +125,9 @@
 
 
 <div class="box">
-  <div class="head"><h2>Feedback on the web</h2></div>
+  <div class="head"><h3>Feedback on the web</h3></div>
   <div class="body">
-    <h3>Comments about this article</h3>
+    <h4>Comments about this article</h4>
 <?php if( $comment_links ) { ?>
     <ul>
       <?php foreach( $comment_links as $c ) { ?><li>
@@ -132,7 +137,7 @@
 <?php } else { ?>
     <p>None known</p>
 <?php } ?>
-    <h3>Blogs linking to this article</h3>
+    <h4>Blogs linking to this article</h4>
 <?php if( $blog_links ) { ?>
     <p><?= sizeof( $blog_links ) ?> blog posts link to this article:</p>
     <ul>
@@ -149,7 +154,14 @@
   </div>
 </div>
 
+
+<div class="box tags">
+  <div class="head"><h3>Topics mentioned</h3></div>
+  <div class="body">
+<?php tag_display_cloud( $tags ); ?>
+  </div>
 </div>
+
 
 </div> <!-- end sidebar -->
 

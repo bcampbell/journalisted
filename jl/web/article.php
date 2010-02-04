@@ -76,6 +76,10 @@ SELECT *
 EOT;
 
     $sim_arts = db_getAll( $sql, $article_id );
+    foreach( $sim_arts as &$s ) {
+        article_Augment( $s );
+    }
+    unset( $s );
 
     $sim_total = sizeof($sim_arts);
     $default_cnt = 10;

@@ -785,7 +785,7 @@ a.donate:focus {
 .main.search-results>.body { padding: 8px 16px 16px 16px; }
 
 .search-results>.head,
-.search-results>.pager {
+.box .pager {
   padding: 8px 16px;
   margin: 0px;
   height: 20px;   /* =34-8-8 */
@@ -793,7 +793,7 @@ a.donate:focus {
   background-color: #eeeeee;
 }
 .search-results>.head {  border-bottom: 1px solid #dddddd; }
-.search-results>.pager {  border-top: 1px solid #dddddd; }
+.box .pager {  border-top: 1px solid #dddddd; }
 
 .search-results .count,
 .search-results .query
@@ -835,9 +835,11 @@ a.donate:focus {
 .cutting h2 {
   border: none;
   border-top: 1px solid #111111;
-  font-size: 250%;
+  font-size: 25px;
+  line-height: 25px;
 }
 
+.article-summary .art-info { padding: 16px; }
 
 .main.article-summary {
   -moz-box-shadow: none;
