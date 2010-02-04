@@ -62,7 +62,11 @@ class WeblinksPage extends EditProfilePage
         $twitter_name = '';
 
 ?>
-<h2>Web Sites</h2>
+<pre>
+<?php print_r( $weblinks ); ?>
+</pre>
+
+<h2>Add web sites</h2>
 
 <form class="weblink" method="POST" action="<?= $this->pagePath; ?>">
 
@@ -73,9 +77,9 @@ class WeblinksPage extends EditProfilePage
  </div>
 
  <div class="field">
-  <label for="twitter_name">Twitter ID</label>
+  <label for="twitter_name">Twitter name</label>
   <input type="text" size="60" name="twitter_name" id="twitter_name" value="<?= h($twitter_name) ?>" />
-  <span class="explain">eg: <?= h($this->journo['ref']) ?></span>
+  <span class="explain">eg: <?= h(str_replace('-','',$this->journo['ref'])) ?></span>
  </div>
 
  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
@@ -103,6 +107,10 @@ class WeblinksPage extends EditProfilePage
     function ajax()
     {
         $action = get_http_var( "action" );
+        if( $action == "set_special" ) {
+
+        }
+
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
             $result = array(
