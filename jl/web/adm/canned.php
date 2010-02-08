@@ -30,6 +30,7 @@ $canned = array(
     new MostIndepthJournos(),
     new TopTags(),
     new QueryFight(),
+    new WhosWritingAbout(),
 );
 
 
@@ -651,5 +652,96 @@ class QueryFight extends CannedQuery {
         }
     }
 }
+
+
+class WhosWritingAbout extends CannedQuery {
+    function __construct() {
+        $this->name = "WhosWritingAbout";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List journos writing about a certain topic";
+
+        $this->param_spec = array(
+            array( 'name'=>'q', 'label'=>'Topic', 'default'=>'' ),
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') ),
+            array( 'name'=>'orderby',
+                'label'=>'Order by',
+                'options'=>array( 'articles'=>'articles', 'wordcount'=>'wordcount'),
+                'default'=>'articles' ),
+        );
+    }
+
+
+    function perform($params) {
+        $from = date_create( $params['from_date'])->format('Ymd');
+        $to = date_create( $params['to_date'])->format('Ymd');
+        $range = " $from..$to";
+
+        if( $params['q'] ) {
+            $q = $params['q'] . $range;
+
+
+            $xap = new XapSearch();
+            $xap->set_query( $q );
+            $rows = $xap->run(0,999999,'date');
+
+            /* collect journos */
+            $journos = array();
+            foreach( $rows as $r ) {
+                foreach( $r['journos'] as $j ) {
+                    $journo_id = $j['id'];
+                    if( array_key_exists( $journo_id, $journos ) ) {
+                        $journos[$journo_id]['articles'] += 1;
+                        $wc = db_getOne( "SELECT wordcount FROM article WHERE id=?", $r['id'] );
+                        $journos[$journo_id]['wordcount'] += $wc;
+                    } else {
+                        $j['articles'] = 1;
+                        $wc = db_getOne( "SELECT wordcount FROM article WHERE id=?", $r['id'] );
+                        $j['wordcount'] = $wc;
+                        $journos[ $journo_id ] = $j;
+                    }
+                }
+            }
+
+            /* format */
+            $results = array();
+            foreach( $journos as $j ) {
+                $results[] = array( 'journo'=>$j,
+                    'articles'=>$j['articles'],
+                    'wordcount'=>$j['wordcount'] );
+            }
+
+            if( $params['orderby'] == 'wordcount' ) {
+                uasort($results, 'cmp_word_count');
+            } else {
+                uasort($results, 'cmp_article_count');
+            }
+
+
+            Tabulate( $results );
+        }
+    }
+}
+
+
+function cmp_article_count( $a, $b ) {
+    if( $a['articles'] == $b['articles'] )
+        return 0;
+    if( $a['articles'] < $b['articles'] )
+        return 1;
+    else
+        return -1;
+}
+
+function cmp_word_count( $a, $b ) {
+    if( $a['wordcount'] == $b['wordcount'] )
+        return 0;
+    if( $a['wordcount'] < $b['wordcount'] )
+        return 1;
+    else
+        return -1;
+}
+
+
 
 ?>
