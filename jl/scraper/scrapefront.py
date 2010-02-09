@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.4
-#
 # front end to present a single interface for using the
 # news outlet scrapers.
 # CalcSrcID(url) - 
