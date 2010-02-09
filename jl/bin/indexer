@@ -227,104 +227,72 @@ def PerformIndexing( xapdb,  options ):
     conn = DB.Connect()
     c = conn.cursor()
 
-    conditions = []
-    params = []
-
-    if options.single_article_id is None:
-        # normal batch operation
-        conditions.append( "status=%s" )
-        params.append( 'a' )
-
-        conditions.append( "needs_indexing=%s" )
-        params.append( 'true' )
-
-        if options.from_date:
-            conditions.append( "lastscraped >= %s::date" )
-            params.append( options.from_date )
-
-        if options.to_date:
-            # +1 day to include the day of to_date
-            conditions.append( "lastscraped < %s::date + '1 day'::interval" )
-            params.append( options.to_date )
-
-        ukmedia.DBUG2( "counting...\n" )
-        sql = "SELECT count(*) FROM article WHERE " + " AND ".join( conditions )
+    if options.single_article_id is not None:
+        # just force indexing of the one article
+        article_id = int( options.single_article_id )
+        ukmedia.DBUG2( "Indexing single article (id=%d).\n" % (article_id) )
+        c.execute( "SELECT * FROM article WHERE id=%s", (article_id) )
+    else:
+        # retrieve articles
+        sql = "SELECT * FROM article INNER JOIN article_needs_indexing ON id=article_id ORDER BY pubdate DESC"
         if options.max_number:
             sql = sql + " LIMIT %d" % ( int(options.max_number) )
-
-
-        c.execute( sql, params );
-        expected = c.fetchone()[0]
-        if options.max_number:
-            if expected > int( options.max_number ):
-                expected = int( options.max_number )
-        ukmedia.DBUG2( "%d articles to process.\n" % (expected) )
-    else:
-        # just indexing a single article - ignore other params and ignore
-        # the needs_indexing flag.
-        conditions.append( "id=%s" )
-        article_id = int( options.single_article_id )
-        params.append( article_id )
-        ukmedia.DBUG2( "Indexing single article (id=%d).\n" % (article_id) )
-
-    # retrieve articles
-    sql = "SELECT * FROM article WHERE " + " AND ".join( conditions ) + " ORDER BY lastscraped DESC"
-    if options.max_number:
-        sql = sql + " LIMIT %d" % ( int(options.max_number) )
-
-    ukmedia.DBUG2( "fetching articles\n" )
-    #print sql
-
-    c.execute( sql, params );
+        ukmedia.DBUG2( "fetching articles\n" )
+        #print sql
+        c.execute( sql );
 
     ukmedia.DBUG2( "indexing begins\n" )
 
     xapdb.begin_transaction()
-    tot=0
-    cnt=0
-    skipped=0
+    idx_cnt=0
+    batch_cnt=0
+    zap_cnt=0
     indexed_ids = []
     while 1:
         row = c.fetchone()
         if not row:
             break
+
+
         art = {}
         # decode all the fields that need to be in unicode
         for f in ( 'title', 'content', 'byline', 'description' ):
             art[f] = row[f].decode( 'utf-8' )
         # ones we can just copy without any processing
-        for f in ( 'id','srcorg', 'pubdate','permalink' ):
+        for f in ( 'id','status','srcorg', 'pubdate','permalink' ):
             art[f] = row[f]
 
-        skip = False
-#        if not options.replace_existing:
-#            skip = xapdb.term_exists( 'Q' + str(art['id']) )
-
-        if not skip:
+        if art['status'] == 'a':
             art['journos'] = FetchJournos( conn, art['id'] )
             IndexArticle( xapdb, art )
-            indexed_ids.append( art['id'] )
-
-            cnt = cnt+1
-            tot = tot+1
-            if cnt >= COMMIT_BATCH_SIZE:
-                cnt=0
-                ukmedia.DBUG2( "committing...\n" )
-                xapdb.commit_transaction()
-                FlagIndexed( conn, indexed_ids )
-                indexed_ids = []
-                ukmedia.DBUG2( "=> committed %d\n" %(tot) )
-                xapdb.begin_transaction()
+            idx_cnt = idx_cnt+1
+            ukmedia.DBUG2( "index '%s' [%d]\n" %(art['title'].decode('utf-8'), art['id']) );
         else:
-            skipped = skipped+1
+            # if article is not active, make sure it's removed from xapian
+            Zap( xapdb, art['id'] )
+            zap_cnt = zap_cnt + 1
+            ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].decode('utf-8'), art['id'] ) );
 
+        indexed_ids.append( art['id'] )
+
+        batch_cnt = batch_cnt+1
+        if batch_cnt >= COMMIT_BATCH_SIZE:
+            batch_cnt=0
+            ukmedia.DBUG2( "committing %d...\n" %(batch_cnt) )
+            xapdb.commit_transaction()
+            FlagIndexed( conn, indexed_ids )
+            conn.commit()
+            indexed_ids = []
+            xapdb.begin_transaction()
 
     # commit any leftovers
-    if cnt > 0:
+    if batch_cnt > 0:
+        ukmedia.DBUG2( "committing %d...\n" %(batch_cnt) )
         xapdb.commit_transaction()
         FlagIndexed( conn, indexed_ids )
+        conn.commit()
         indexed_ids = []
-    ukmedia.DBUG2( "done. committed %d, skipped %d\n" %(tot,skipped) )
+    ukmedia.DBUG2( "done. indexed %d, removed %d\n" %(idx_cnt,zap_cnt) )
 
     c.close()
 
@@ -336,28 +304,19 @@ def FlagIndexed( conn, article_ids ):
     """mark articles in the db as having been indexed"""
     c = conn.cursor()
     params = ['%s'] * len( article_ids )
-    sql = "UPDATE article SET needs_indexing=false WHERE id IN ( %s )" % ( ','.join(params) )
+    sql = "DELETE FROM article_needs_indexing WHERE article_id IN ( %s )" % ( ','.join(params) )
     c.execute( sql, article_ids )
-    conn.commit()
     c.close()
 
 
 def Zap( xapdb, article_id ):
     """ remove an article from the xapian DB """
-    article_id_term = 'Q' + article_id
+    article_id_term = 'Q' + str(article_id)
     xapdb.delete_document( article_id_term )
 
 def main():
     parser = OptionParser()
 
-    parser.add_option("-f", "--from-date",
-        dest="from_date",
-        metavar="DATE",
-        help="index articles scraped from DATE (yyyy-mm-dd) onward" )
-    parser.add_option("-t", "--to-date",
-        dest="to_date",
-        metavar="DATE",
-        help="index articles scraped up to (and including) DATE (yyyy-mm-dd)" )
     parser.add_option("-z", "--zap",
         dest="zap_id",
         metavar="ARTICLE_ID",

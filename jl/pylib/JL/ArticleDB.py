@@ -84,6 +84,10 @@ class ArticleDB:
         cursor.execute( "select currval('article_id_seq')" )
         id = cursor.fetchone()[0]
 
+        # queue it for xapian indexing
+        cursor.execute( "DELETE FROM article_needs_indexing WHERE article_id=%s", (id) )
+        cursor.execute( "INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (id) )
+
         # if there was a scraper error entry for this article, delete it now
         cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid) )
 
