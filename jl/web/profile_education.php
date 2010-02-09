@@ -30,7 +30,7 @@ class EducationPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.education', {plusLabel:'Add education'}  );
+/*        fancyForms( '.education', {plusLabel:'Add education'}  ); */
     });
 </script>
 <?php
@@ -50,24 +50,38 @@ class EducationPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+
+        if( $action != 'edit' && $action != 'new' )
+        {
+            header( "Location: /{$this->journo['ref']}" );
+            exit;
+        }
         return TRUE;
     }
 
 
     function display()
     {
-        $edus = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_from ASC", $this->journo['id'] );
-?>
-<h2>Tell us about your education</h2>
-<?php
-        foreach( $edus as &$edu ) {
-            $this->showForm( 'edit', $edu );
-        }
-        //if( !$edus )
-        //    $this->showForm('creator',null );
+        $action = get_http_var( "action" );
 
-        /* output the template form */
-        $this->showForm( 'template', NULL );
+        if( $action=='edit' )
+        {
+            $edu_id = get_http_var('id');
+            $edu = db_getRow( "SELECT * FROM journo_education WHERE journo_id=? AND id=?",
+                $this->journo['id'], $edu_id );
+?>
+<h2>Edit education</h2>
+<?php
+            $this->showForm( $edu );
+        }
+
+        if( $action=='new' )
+        {
+?>
+<h2>Add education</h2>
+<?php
+            $this->showForm( null );
+        }
 
     }
 
@@ -75,6 +89,7 @@ class EducationPage extends EditProfilePage
 
     function ajax()
     {
+/*
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $entry_id = $this->handleSubmit();
@@ -89,24 +104,24 @@ class EducationPage extends EditProfilePage
             $this->handleRemove();
             return array();
         }
+*/
         return NULL;
     }
 
 
 
     /* if $edu is null, then display a fresh form for entering a new entry */
-    function showForm( $formtype, $edu )
+    function showForm( $edu )
     {
         static $uniq=0;
         ++$uniq;
-        if( is_null( $edu ) )
+        $formtype = 'edit';
+        if( is_null( $edu ) ) {
             $edu = array( 'school'=>'', 'field'=>'', 'qualification'=>'', 'year_from'=>'', 'year_to'=>'' );
+            $formtype = 'new';
+        }
 
         $formclasses = 'education';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
 
 ?>
 
@@ -145,6 +160,9 @@ class EducationPage extends EditProfilePage
 <?= $this->genEditLinks($edu['id']); ?>
 <?php } ?>
 </form>
+<?php if( $formtype=='edit' ) { ?>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Delete this education</a>
+<?php } ?>
 <?php
 
     }

@@ -335,7 +335,6 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head">
     <h3>Education</h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
 <?php if( $education ) { ?>
@@ -344,13 +343,17 @@ $previous_employers = array_unique( $previous_employers );
       <li>
         <?= $edu['school']; ?><br/>
         <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
-        <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span><br/>
+        <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">edit</a><?php } ?>
       </li>
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered any education</p>
 <?php } ?>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit"  href="/profile_education?ref=<?= $ref ?>&action=new">Add education</a>
+    <?php } ?>
   </div>
 </div>
 
