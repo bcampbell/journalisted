@@ -266,12 +266,12 @@ def PerformIndexing( xapdb,  options ):
             art['journos'] = FetchJournos( conn, art['id'] )
             IndexArticle( xapdb, art )
             idx_cnt = idx_cnt+1
-            ukmedia.DBUG2( "index '%s' [%d]\n" %(art['title'].decode('utf-8'), art['id']) );
+            ukmedia.DBUG2( "index '%s' [%d]\n" %(art['title'].encode('utf-8'), art['id']) );
         else:
             # if article is not active, make sure it's removed from xapian
             Zap( xapdb, art['id'] )
             zap_cnt = zap_cnt + 1
-            ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].decode('utf-8'), art['id'] ) );
+            ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].encode('utf-8'), art['id'] ) );
 
         indexed_ids.append( art['id'] )
 
@@ -292,7 +292,7 @@ def PerformIndexing( xapdb,  options ):
         FlagIndexed( conn, indexed_ids )
         conn.commit()
         indexed_ids = []
-    ukmedia.DBUG2( "done. indexed %d, removed %d\n" %(idx_cnt,zap_cnt) )
+    ukmedia.DBUG1( "done. indexed %d, removed %d\n" %(idx_cnt,zap_cnt) )
 
     c.close()
 
