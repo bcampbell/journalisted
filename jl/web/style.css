@@ -55,9 +55,19 @@ ul.art-list li {
 
 abbr.published { text-decoration: none; border: none; }
 
-
-/* edit buttons */
+/* fancify edit links */
 a.edit {
+  padding-left: 15px;
+  margin-left: 4px;
+  background: #ffee88 url('/img/icon_pencil.png') no-repeat center left;
+}
+
+
+
+/* show some edit links as buttons */
+.foot a.edit,
+.head a.edit,
+.overview .photo a.edit {
   margin: 0px;
   padding: 0px 0px 0px 26px;
   display: inline-block;
@@ -69,10 +79,17 @@ a.edit {
   line-height: 21px;
 }
 
-a.edit:hover
-  { background-position: -82px -22px; text-decoration: none; }
-a.edit:focus
-  { background-position: -82px -44px; }
+.foot a.edit:hover,
+.head a.edit:hover,
+.overview .photo a.edit:hover {
+  background-position: -82px -22px; text-decoration: none;
+}
+
+.foot a.edit:focus,
+.head a.edit:focus,
+.overview .photo a.edit:focus {
+  background-position: -82px -44px;
+}
 
 
 
