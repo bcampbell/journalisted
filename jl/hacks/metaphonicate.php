@@ -8,11 +8,11 @@ require_once "../conf/general";
 require_once '../../phplib/db.php';
 
 
-$journos = db_getAll( "SELECT id,firstname,lastname FROM journo" );
+$q = db_query( "SELECT id,firstname,lastname FROM journo" );
 
 
 
-foreach( $journos as $j ) {
+while( $j = db_fetch_array($q) ) {
 
     $f = substr( metaphone($j['firstname']), 0, 4);
     $l = substr( metaphone($j['lastname']), 0, 4);
