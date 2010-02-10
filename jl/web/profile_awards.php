@@ -31,7 +31,7 @@ class AwardsPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.award', {plusLabel:'Add an award'} );
+/*        fancyForms( '.award', {plusLabel:'Add an award'} ); */
     });
 </script>
 <?php
@@ -51,54 +51,59 @@ class AwardsPage extends EditProfilePage
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
+
+        if( $action != 'edit' && $action != 'new' )
+        {
+            header( "Location: /{$this->journo['ref']}" );
+            exit;
+        }
         return TRUE;
     }
 
 
     function display()
     {
-?><h2>Have you won any awards?</h2><?php
-        $awards = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY YEAR DESC", $this->journo['id'] );
-        foreach( $awards as $a ) {
-            $this->showForm( "edit", $a );
-        }
-        $this->showForm( "template", null );
+        $action = get_http_var( "action" );
 
+        if( $action=='edit' )
+        {
+            $id = get_http_var('id');
+            $entry = db_getRow( "SELECT * FROM journo_awards WHERE journo_id=? AND id=?",
+                $this->journo['id'], $id );
+?>
+<h2>Edit award</h2>
+<?php $this->showForm( $entry ); ?>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Delete this award</a>
+<?php
+        }
+
+        if( $action=='new' )
+        {
+?>
+<h2>Add award</h2>
+<?php
+            $this->showForm( null );
+        }
     }
+
 
     function ajax()
     {
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array(
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            return $result;
-        }
-        if( get_http_var("remove_id") )
-        {
-            $this->handleRemove();
-            return array();
-        }
         return NULL;
     }
 
-    function showForm( $formtype, $award )
+    function showForm( $award )
     {
         static $uniq=0;
         ++$uniq;
-        if( is_null( $award ) )
+        $formtype = 'edit';
+        if( is_null( $award ) ) {
+            $formtype = 'new';
             $award = array( 'award'=>'', 'year'=>'' );
-        $formclasses = 'award';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
+        }
 
 ?>
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="award" method="POST" action="<?= $this->pagePath; ?>">
  <div class="field">
   <label for="award_<?= $uniq; ?>">Award</label>
   <input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" />
@@ -112,9 +117,9 @@ class AwardsPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $award['id']; ?>" />
-<?= $this->genEditLinks($award['id']); ?>
 <?php } ?>
 </form>
 

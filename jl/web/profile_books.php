@@ -30,7 +30,7 @@ class BooksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
     $(document).ready( function() {
-        fancyForms( '.book', { plusLabel: 'Add a book' } );
+/*        fancyForms( '.book', { plusLabel: 'Add a book' } ); */
     });
 </script>
 <?php
@@ -46,8 +46,15 @@ class BooksPage extends EditProfilePage
         if( $action == "submit" ) {
             $added = $this->handleSubmit();
         }
+
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
+        }
+
+        if( $action != 'edit' && $action != 'new' )
+        {
+            header( "Location: /{$this->journo['ref']}" );
+            exit;
         }
         return TRUE;
     }
@@ -55,55 +62,50 @@ class BooksPage extends EditProfilePage
 
     function display()
     {
-?><h2>Add books you have written</h2><?php
+        $action = get_http_var( "action" );
 
-        $books = db_getAll( "SELECT * FROM journo_books WHERE journo_id=?", $this->journo['id'] );
-        foreach( $books as &$book ) {
-            $this->showForm( 'edit', $book);
+        if( $action=='edit' )
+        {
+            $id = get_http_var('id');
+            $entry = db_getRow( "SELECT * FROM journo_books WHERE journo_id=? AND id=?",
+                $this->journo['id'], $id );
+?>
+<h2>Edit book</h2>
+<?php $this->showForm( $entry ); ?>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Delete this book</a>
+<?php
         }
 
-        /* template form for adding new ones */
-        $this->showForm( 'template', null );
+        if( $action=='new' )
+        {
+?>
+<h2>Add book</h2>
+<?php
+            $this->showForm( null );
+        }
     }
 
 
     function ajax()
     {
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array(
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            return $result;
-        }
-        if( get_http_var("remove_id") )
-        {
-            $this->handleRemove();
-            return array();
-        }
         return NULL;
     }
 
 
 
-    function showForm( $formtype, $book )
+    function showForm( $book )
     {
         static $uniq=0;
         ++$uniq;
-        if( is_null( $book ) )
+        $formtype = 'edit';
+        if( is_null( $book ) ) {
+            $formtype = 'new';
             $book = array( 'title'=>'', 'publisher'=>'', 'year_published'=>'' );
+        }
  
-        $formclasses = 'book';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
-
 ?>
 
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="book" method="POST" action="<?= $this->pagePath; ?>">
  <div class="field">
   <label for="title_<?= $uniq; ?>">Title</label>
   <input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" />
@@ -121,10 +123,10 @@ class BooksPage extends EditProfilePage
 
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save changes</button>
+<button class="submit" type="submit">Save</button>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />
-<?= $this->genEditLinks($book['id']); ?>
 <?php } ?>
 </form>
 <?php

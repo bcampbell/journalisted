@@ -170,14 +170,10 @@ class EditProfilePage
 
 ?>
 
-<br/>
-<br/>
-<a href="/<?= $this->journo['ref'] ?>">Finish editing</a>
-
 </div> <!-- end main -->
 
 <div class="sidebar">
-<?php $this->navBox(); ?>
+<?php /*$this->navBox(); */?>
 </div> <!-- end sidebar -->
 
 <?php

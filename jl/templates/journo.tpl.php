@@ -305,29 +305,35 @@ $previous_employers = array_unique( $previous_employers );
 <div id="experience" class="experience">
   <div class="head">
     <h3>Experience</h3>
-    <?php /*if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>">edit</a><?php } */?>
   </div>
   <div class="body">
 <?php if( $employers ) { ?>
     <ul>
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
-      <li><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
+      <li>
+        <span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
         <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
-    <?php if( $can_edit_page ) { ?><a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a><?php } ?>
-</li>
+        <?php if( $can_edit_page ) { ?>
+        <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a>
+        <?php } ?>
+      </li>
  <?php } else { ?>
       <li class="current-employer" ><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
         <span class="daterange"><?= $e['year_from'] ?>-Present</span>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a><?php } ?>
-  </li>
+        <?php if( $can_edit_page ) { ?>
+        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a>
+        <?php } ?>
+      </li>
  <?php } ?>
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
-    <?php if( $can_edit_page ) { ?><a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a><?php } ?>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
+    <?php } ?>
   </div>
 </div>
 
@@ -344,7 +350,9 @@ $previous_employers = array_unique( $previous_employers );
         <?= $edu['school']; ?><br/>
         <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
         <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">edit</a><?php } ?>
+        <?php if( $can_edit_page ) { ?>
+        <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">edit</a>
+        <?php } ?>
       </li>
 <?php } ?>
     </ul>
@@ -361,18 +369,25 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head">
     <h3>Books by <?= $prettyname ?></h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_books?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
 <?php if( $books ) { ?>
     <ul>
 <?php foreach( $books as $b ) { ?>
-    <li><?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)</li>
+    <li>
+      <?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)
+      <?php if( $can_edit_page ) { ?>
+      <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">edit</a>
+      <?php } ?>
+    </li>
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered any books</p>
 <?php } ?>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit"  href="/profile_books?ref=<?= $ref ?>&action=new">Add book</a>
+    <?php } ?>
   </div>
 </div>
 
@@ -380,18 +395,25 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head">
     <h3>Awards Won</h3>
-    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_awards?ref=<?= $ref ?>">edit</a><?php } ?>
   </div>
   <div class="body">
 <?php if( $awards ) { ?>
     <ul>
 <?php foreach( $awards as $a ) { ?>
-    <li><?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?></li>
+    <li>
+      <?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?>
+      <?php if( $can_edit_page ) { ?>
+      <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">edit</a>
+      <?php } ?>
+    </li>
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered any awards</p>
 <?php } ?>
+    <?php if( $can_edit_page ) { ?>
+    <a class="edit"  href="/profile_awards?ref=<?= $ref ?>&action=new">Add award</a>
+    <?php } ?>
   </div>
 </div>
 

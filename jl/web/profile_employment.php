@@ -120,38 +120,10 @@ class EmploymentPage extends EditProfilePage
 <?php
             $this->showForm( null );
         }
-
-
-/*        $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_from DESC", $this->journo['id'] );
-        foreach( $employers as $e ) {
-            $this->showForm( 'edit', $e );
-        }
-*/
-
-        //if( !$employers )
-        //    $this->showForm( 'creator', null );
-
-//        $this->showForm( 'template', null );
     }
 
     function ajax()
     {
-/*
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array(
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            return $result;
-        }
-        if( get_http_var("remove_id") )
-        {
-            $this->handleRemove();
-            return array();
-        }
-*/
         return NULL;
     }
 
@@ -163,16 +135,13 @@ class EmploymentPage extends EditProfilePage
         ++$uniq;
         $formtype = 'edit';
         if( is_null( $emp ) ) {
-            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
             $formtype = 'new';
+            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
         }
-
  
-        $formclasses = 'employer';
-
 ?>
 
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
+<form class="employer" method="POST" action="<?= $this->pagePath; ?>">
 
  <div class="field">
   <label for="employer_<?= $uniq; ?>">Employer</label>
@@ -199,7 +168,8 @@ class EmploymentPage extends EditProfilePage
 <input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
 <?php } ?>
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save changes</button>
+<button class="submit" type="submit">Save</button>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <div style="clear:both;"></div>
 </form>
 <?php if( $formtype=='edit' ) { ?>

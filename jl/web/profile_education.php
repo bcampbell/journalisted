@@ -71,8 +71,9 @@ class EducationPage extends EditProfilePage
                 $this->journo['id'], $edu_id );
 ?>
 <h2>Edit education</h2>
+<?php $this->showForm( $edu ); ?>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Delete this education</a>
 <?php
-            $this->showForm( $edu );
         }
 
         if( $action=='new' )
@@ -155,13 +156,13 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
 <?= $this->genEditLinks($edu['id']); ?>
 <?php } ?>
 </form>
 <?php if( $formtype=='edit' ) { ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Delete this education</a>
 <?php } ?>
 <?php
 
