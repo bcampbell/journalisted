@@ -531,12 +531,43 @@ EOT;
     $data['more_articles'] = true;
 
     /*links*/
-    $sql = "SELECT url, description " .
+    $sql = "SELECT id, url, description, kind " .
         "FROM journo_weblink " .
         "WHERE journo_id=? " .
-        "AND approved";
+        "AND approved ORDER BY rank DESC";
 
     $links = db_getAll( $sql, $journo['id'] );
+    foreach( $links as &$l ) {
+        $desc = $l['kind'];
+        switch( $l['kind'] ) {
+            case 'blog':
+                $desc = "{$journo['prettyname']}'s blog";
+                break;
+            case 'website':
+                $desc = "{$journo['prettyname']}'s website";
+                break;
+            case 'twitter':
+                $desc = "{$journo['prettyname']}'s twitter feed";
+                break;
+            case 'profile':
+                $parts = crack_url( $l['url'] );
+                if( $parts ) {
+                    $host = preg_replace( '/^www[.]/', '', $parts['host'] );
+                    $desc = "{$journo['prettyname']}'s profile at {$host}";
+                }
+                else
+                    $desc = "{$journo['prettyname']}'s profile";
+                break;
+            case '':
+                $desc = $l['description'];
+                break;
+        }
+
+        $l['description'] = $desc;
+    }
+    unset( $l );
+
+
     $links = array_merge( $links, journo_getBioLinks( $journo ) );
     $data['links'] = $links;
 
@@ -704,4 +735,5 @@ function journo_fetchTwitterID( $journo_id ) {
     }
     return $twitter_id;
 }
+
 

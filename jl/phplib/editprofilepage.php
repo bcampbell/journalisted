@@ -25,6 +25,8 @@ class EditProfilePage
     public $error_messages = array();
     public $info_messages = array();
 
+    public $redirect = null;
+
     function __construct()
     {
         $ref = get_http_var( 'ref' );
@@ -43,6 +45,10 @@ class EditProfilePage
         }
     }
 
+
+    // for use in handleActions(), to abort normal page processing
+    function Redirect( $newurl )
+        { $this->redirect = $newurl; }
 
     function run()
     {
@@ -99,11 +105,10 @@ class EditProfilePage
     }
 
 
-    /* to be overriden */
-    /* called before display(), so can redirect, show error page,
-       whatever. return FALSE to suppress normal page */
+    /* to be overriden
+       called before display() to process stuff.
+       It shouldn't output anything! just set class data */
     function handleActions() {
-        return TRUE;    /* show page please! */
     }
 
 
@@ -140,8 +145,13 @@ class EditProfilePage
             return;
         }
 
-        if( $this->handleActions() == FALSE )
+        $this->handleActions();
+
+        if( !is_null( $this->redirect ) )
+        {
+            header( "Location: {$this->redirect}" );
             return;
+        }
 
         page_header( $this->pageTitle, $this->pageParams );
 

@@ -91,7 +91,8 @@
 
  $links
     url
-    description
+    kind  - 'blog', 'webpage', 'twitter', '' (other)
+    description - (only set if kind='')
 
  $similar_journos - list of journos who write similar articles
 
@@ -120,6 +121,8 @@
                   in order of freq, descending.
 
 */
+
+
 
 
 

@@ -102,8 +102,8 @@ a.edit {
 /* default form styling */
 
 form {
-  border: none;
-  border-bottom: 1px solid #d9d9d9;
+/*  border: none; */
+/*  border-bottom: 1px solid #d9d9d9; */
   padding: 8px 0px;
   clear: both;
 }
@@ -112,15 +112,15 @@ form.modified {
   background-color: #deebf6;
 }
 
-form div.field label,
-form fieldset.field .faux-label {
-  float: left;
+form dt label,
+form dt .faux-label {
   width: 130px;
   height: 20px;
   line-height: 20px;
   color: #4d4d4d;
   font-weight: bold;
 }
+
 
 .sidebar div.field label {
   width: 100px;
@@ -155,8 +155,6 @@ form .submit {
 }
 
 form .explain {
-/* margin-left: 130px; */
-/*  display: block; */
   font-size: 80%;
   color: #888888;
 }
@@ -166,6 +164,26 @@ form .remove {
 }
 
 .errhint { font-weight: bold; color: red; display: block; }
+
+form dt {
+    float: left;
+    width: 130px;
+    clear: both;
+    text-align: right;
+    padding-right: 8px;
+}
+
+
+form dd {
+    margin: 8px 0px;
+}
+
+
+form dl {
+    padding-bottom: 8px;
+    border-bottom: 1px solid black;
+    border-bottom: 1px solid #d9d9d9;
+}
 
 
 /* HEADER */
@@ -870,4 +888,6 @@ a.donate:focus {
   margin: 0;
   padding: 0;
 }
+
+
 

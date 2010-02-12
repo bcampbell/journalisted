@@ -118,41 +118,39 @@ class EducationPage extends EditProfilePage
         ++$uniq;
         $formtype = 'edit';
         if( is_null( $edu ) ) {
-            $edu = array( 'school'=>'', 'field'=>'', 'qualification'=>'', 'year_from'=>'', 'year_to'=>'' );
             $formtype = 'new';
+            $edu = array( 'school'=>'', 'field'=>'', 'qualification'=>'', 'year_from'=>'', 'year_to'=>'' );
         }
-
-        $formclasses = 'education';
 
 ?>
 
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-<div class="field">
-  <label for="school_<?= $uniq; ?>">School name</label>
+<form class="education" method="POST" action="<?= $this->pagePath; ?>">
+<dl>
+  <dt><label for="school_<?= $uniq; ?>">School name</label></dt>
+  <dd>
     <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
     <span class="explain">eg: "St. Cedd's College, Cambridge"</span>
-</div>
+  </dd>
 
-<div class="field">
-  <label for="field_<?= $uniq; ?>">Field(s) of study</label>
-   <input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" />
-   <span class="explain">eg: "Rocket Surgery"</span>
-</div>
+  <dt><label for="field_<?= $uniq; ?>">Field(s) of study</label></dt>
+  <dd>
+    <input type="text" size="60" name="field" id="field_<?= $uniq; ?>" value="<?= h($edu['field']); ?>" />
+    <span class="explain">eg: "Rocket Surgery"</span>
+  </dd>
 
-<div class="field">
-  <label for="qualification_<?= $uniq; ?>">Qualification</label>
+  <dt><label for="qualification_<?= $uniq; ?>">Qualification</label></dt>
+  <dd>
    <input type="text" size="30" name="qualification" id="qualification_<?= $uniq; ?>" value="<?= h($edu['qualification']); ?>" />
    <span class="explain">eg: "BA"</span>
-</div>
+  </dd>
 
-<fieldset class="field range">
- <span class="faux-label">Years attended</span>
- <label for="year_from_<?= $uniq; ?>">from</label>
+<dt><span class="faux-label">Years attended</span></dt>
+<dd><label for="year_from_<?= $uniq; ?>">from</label>
  <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
  <label for="year_to_<?= $uniq; ?>">to</label>
  <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
-</fieldset>
-
+</dd>
+</dl>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>

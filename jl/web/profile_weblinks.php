@@ -19,6 +19,21 @@ class WeblinksPage extends EditProfilePage
         $this->pageTitle = "Weblinks";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
+
+        /* if submitting, hold fields as class-wide data, so we can add error messages etc... */
+        $this->submitted = null;
+        $this->badSubmit = false;
+        if( get_http_var('action') == 'submit' ) {
+            $this->submitted = $this->weblinksFromHTTPVars();
+            /* check links, agument with error message if there is one */
+            foreach( $this->submitted as &$w ) {
+                $err = $this->checkWebLink( $w );
+                if( !is_null( $err ) ) {
+                    $this->badSubmit = true;
+                    $w['err'] = $err;
+                }
+            }
+        }
     }
 
 
@@ -29,8 +44,58 @@ class WeblinksPage extends EditProfilePage
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 <script type="text/javascript" src="/js/jl-fancyforms.js"></script>
 <script type="text/javascript">
+
+    var fieldId = 0;
+    var formFields = "input, checkbox, select, textarea";
+
+    /* based on fn from jquery-dynamic-form */	
+    function normalizeElmnt(elmnt){
+        elmnt.find(formFields).each(function(){
+            var nameAttr = jQuery(this).attr("name"), 
+            idAttr = jQuery(this).attr("id");
+
+            /* Normalize field id attributes */
+            if (idAttr) {
+                /* Normalize attached label */
+                jQuery("label[for='"+idAttr+"']").each(function(){
+                    jQuery(this).attr("for", idAttr + fieldId);
+                });
+
+                jQuery(this).attr("id", idAttr + fieldId);
+            }
+            fieldId++;
+        });
+    };
+
     $(document).ready( function() {
-        fancyForms( '.weblink', { plusLabel: 'Add another website' } );
+
+        /* only display description field if site kind is other */
+        function showHideDesc(sel) {
+            if( sel.val() == '' /* "Other..." */ ) {
+                sel.closest('dl').find('.desc').fadeIn();
+            } else {
+                sel.closest('dl').find('.desc').hide();
+            }
+        }
+        $('.weblink dl select').each( function() {
+            showHideDesc($(this));
+        }).change( function() {
+            showHideDesc($(this));
+        });
+
+        /* set up 'add' link - clone template to create a new entry */
+        $('.weblink .template' ).hide();
+        $('.weblink .add').click( function() {
+            var c = $('.weblink .template').clone(true);
+            normalizeElmnt( c );
+            c.removeClass('template');
+            c.insertBefore( '.weblink .template' )
+            c.fadeIn();
+            return false;
+        });
+
+
+/*        fancyForms( '.weblink', { plusLabel: 'Add another website' } ); */
     });
 </script>
 <?php
@@ -41,159 +106,175 @@ class WeblinksPage extends EditProfilePage
 
     function handleActions()
     {
-        // submitting new entries?
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
-            $added = $this->handleSubmit();
+            if( $this->badSubmit )
+                return; // just go on to redisplay form with errors
+            $this->handleSubmit();
         }
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
-        return TRUE;
+
+        if( $action == '' )
+            return;
+
+        // jump back to journo page
+        $this->Redirect( "/{$this->journo['ref']}" );
+    }
+
+
+
+    function weblinksFromHTTPVars()
+    {
+        $urls = get_http_var( 'url' );
+        $kinds = get_http_var( 'kind' );
+        $descs = get_http_var( 'desc' );
+        $ids = get_http_var( 'id' );
+
+        $weblinks = array();
+        while( !empty($urls) ) {
+            $w = array(
+                'url'=>array_shift($urls),
+                'kind'=>array_shift($kinds),
+                'description'=>array_shift($descs),
+                'id'=>array_shift($ids) );
+
+            // only use non-blank ones
+            if( $w['url'] || ($w['kind']=='' && $w['description']!='' ) )
+                $weblinks[] = $w;
+        }
+
+        return $weblinks;
+    }
+
+
+    function checkWebLink( &$w ) {
+        if( $w['kind']=='' && $w['description']=='' ) {
+            return 'Please enter a description';
+        }
+
+        if( $w['url']=='' ) {
+            return 'Please enter a URL';
+        }
+
+        return null;    // all OK.
     }
 
 
     function display()
     {
-
-        $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
+        $weblinks = null;
+        if( $this->badSubmit ) {
+            $weblinks = $this->submitted;
+        } else {
+            $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? ORDER BY rank DESC", $this->journo['id'] );
+        }
 
         $home_url = '';
         $twitter_name = '';
 
-?>
-<pre>
-<?php print_r( $weblinks ); ?>
-</pre>
 
-<h2>Add web sites</h2>
+
+?>
+
+<h2>Elsewhere on the web</h2>
 
 <form class="weblink" method="POST" action="<?= $this->pagePath; ?>">
 
- <div class="field">
-  <label for="home_url">Homepage or Blog</label>
-  <input type="text" size="60" name="home_url" id="home_url" value="<?= h($home_url) ?>" />
-  <span class="explain">eg: http://<?= h($this->journo['ref']) ?>.com</span>
- </div>
-
- <div class="field">
-  <label for="twitter_name">Twitter name</label>
-  <input type="text" size="60" name="twitter_name" id="twitter_name" value="<?= h($twitter_name) ?>" />
-  <span class="explain">eg: <?= h(str_replace('-','',$this->journo['ref'])) ?></span>
- </div>
-
- <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
- <input type="hidden" name="action" value="set_special" />
- <button class="submit" type="submit">Save</button>
-</form>
-
-<h3>Others</h3>
 <?php
-
-
-        foreach( $weblinks as &$weblink ) {
-            $this->showForm( 'edit', $weblink);
+        foreach( $weblinks as $w ) {
+            $this->emitLinkFields( $w );
         }
+        $this->emitLinkFields( null );
+?>
+ <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+ <input type="hidden" name="action" value="submit" />
+<div class="button-area">
+ <a class="add" href="#">Add a site</a><br/>
+ <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
+</div>
+</form>
+<?php
+    }
 
-//        if( !$weblinks ) {
-//            $this->showForm( 'creator', null );
-//        }
 
-        /* template form for adding new ones */
-        $this->showForm( 'template', null );
+    function emitLinkFields( $w=NULL )
+    {
+        static $uniq = 0;
+
+        $kinds = array(
+            'blog'=>'My Blog',
+            'homepage'=>'My Website',
+            'profile'=>'Profile/Bio',
+            'twitter'=>'Twitter',
+            ''=>'Other...' );
+
+        $is_template = false;
+        if( is_null( $w ) ) {
+            $is_template = true;
+            $w = array('id'=>'', 'url'=>'','kind'=>'blog', 'description'=>'' );
+        }
+        $err = null;
+        if( array_key_exists( 'err', $w ) )
+            $err = $w['err'];
+
+?>
+<?php if($err) { ?>
+ <span class="errhint"><?= h($err) ?></span>
+<?php } ?>
+ <dl class="<?= $is_template?'template':'' ?>">
+  <dt><span class="faux-label">Site</span></dt>
+  <dd>
+    <select name="kind[]" id="kind_<?= $uniq ?>">
+<?php foreach( $kinds as $k=>$ktxt ) { $sel=($k==$w['kind'])?' selected':''; ?>
+      <option value="<?= $k ?>"<?=$sel?>><?= $ktxt ?></option>
+<?php } ?>
+    </select>
+    <input type="text" size="60" id="url_<?= $uniq ?>"name="url[]" value="<?= h($w['url']) ?>" />
+  </dd>
+  <dt><label class="desc" for="desc_<?= $uniq; ?>">Description</label></dt>
+  <dd>
+    <input class="desc" type="text" size="60" id="desc_<?= $uniq ?>" name="desc[]" value="<?= h($w['description']) ?>" />
+<?php if( $w['id'] ) { ?>
+ <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<? $w['id'] ?>">remove</a>
+<?php } ?>
+  </dd>
+
+ </dl>
+ <input type="hidden" name="id[]" value="<?= $w['id'] ?>" />
+<?php
+        ++$uniq;
     }
 
 
     function ajax()
     {
-        $action = get_http_var( "action" );
-        if( $action == "set_special" ) {
-
-        }
-
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array(
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            return $result;
-        }
-        if( get_http_var("remove_id") )
-        {
-            $this->handleRemove();
-            return array();
-        }
         return NULL;
     }
-
-
-    function showForm( $formtype, $weblink )
-    {
-        static $uniq=0;
-        ++$uniq;
-        if( is_null( $weblink ) )
-            $weblink = array( 'url'=>'', 'description'=>'' );
- 
-        $formclasses = 'weblink';
-        if( $formtype == 'template' )
-            $formclasses .= " template";
-        if( $formtype == 'creator' )
-            $formclasses .= " creator";
-
-?>
-
-<form class="<?= $formclasses; ?>" method="POST" action="<?= $this->pagePath; ?>">
-
- <div class="field">
-  <label for="url_<?= $uniq; ?>">URL</label>
-  <input type="text" size="60" name="url" id="url_<?= $uniq; ?>" value="<?= h($weblink['url']); ?>" />
-  <span class="explain">eg: http://<?= h($this->journo['ref']) ?>.com</span>
- </div>
-
- <div class="field">
-   <label for="description_<?= $uniq; ?>">Description</label>
-   <input type="text" size="60" name="description" id="description_<?= $uniq; ?>" value="<?= h($weblink['description']); ?>" />
- </div>
-
-
- <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
- <input type="hidden" name="action" value="submit" />
- <button class="submit" type="submit">Save</button>
-<?php if( $formtype=='edit' ) { ?>
- <input type="hidden" name="id" value="<?= $weblink['id']; ?>" />
-<?= $this->genEditLinks($weblink['id']); ?>
-<?php } ?>
-</form>
-<?php
-
-    }
-
 
 
 
     function handleSubmit()
     {
-        $fieldnames = array( 'url', 'description' );
-        $weblink = $this->genericFetchItemFromHTTPVars( $fieldnames );
-
-        if( $weblink['id'] ) {
-            /* update existing */
-            db_do( "UPDATE journo_weblink SET url=?, description=? WHERE id=? AND journo_id=?",
-                $weblink['url'],
-                $weblink['description'],
-                $weblink['id'],
-                $this->journo['id'] );
-        } else {
-            db_do( "INSERT INTO journo_weblink (journo_id,url,description,approved) VALUES (?,?,?,true)",
+        db_do( "DELETE FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
+        $rankstep = 10;
+        $rank = 100 + $rankstep*sizeof($this->submitted);
+        foreach( $this->submitted as &$w ) {
+            db_do( "INSERT INTO journo_weblink (journo_id,kind,url,description,approved,rank) VALUES (?,?,?,?,true,?)",
                 $this->journo['id'],
-                $weblink['url'],
-                $weblink['description'] );
-            $weblink['id'] = db_getOne( "SELECT lastval()" );
+                $w['kind'],
+                $w['url'],
+                $w['description'],
+                $rank );
+            $w['id'] = db_getOne( "SELECT lastval()" );
+            $rank = $rank - $rankstep;
         }
         db_commit();
-        return $weblink['id'];
+        eventlog_Add( 'modify-weblinks', $this->journo['id'] );
     }
+
+
 
     function handleRemove() {
         $id = get_http_var("remove_id");
