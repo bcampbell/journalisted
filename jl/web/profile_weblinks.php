@@ -237,7 +237,7 @@ class WeblinksPage extends EditProfilePage
   <dd>
     <input class="desc" type="text" size="60" id="desc_<?= $uniq ?>" name="desc[]" value="<?= h($w['description']) ?>" />
 <?php if( $w['id'] ) { ?>
- <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<? $w['id'] ?>">remove</a>
+ <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= $w['id'] ?>">remove</a>
 <?php } ?>
   </dd>
 
