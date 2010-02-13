@@ -36,25 +36,6 @@ class EmploymentPage extends EditProfilePage
 <script type="text/javascript">
 
     $(document).ready( function() {
-/*
-        fancyForms( '.employer', {
-            plusLabel: 'Add experience',
-            extraSetupFn: function() {
-            var f = $(this);
-            f.find("input[name=employer]").autocomplete( "/ajax_employer_lookup" );
-
-            var current = f.find("input[name=current]")
-
-            var year_to = f.find("input[name=year_to]")
-            var year_to_label = year_to.prev( "label" );
-            year_to.toggle( ! current.attr('checked') );
-            year_to_label.toggle( ! current.attr('checked') );
-            current.click( function() {
-                year_to.toggle( ! current.attr('checked') );
-                year_to_label.toggle( ! current.attr('checked') );
-            } );
-        } } );
-*/
 
             var f = $('.employer');
             var current = f.find("input[name=current]");
@@ -88,14 +69,11 @@ class EmploymentPage extends EditProfilePage
             $this->handleRemove();
         }
 
-
-        if( $action != 'edit' && $action != 'new' )
-        {
-            header( "Location: /{$this->journo['ref']}" );
-            exit;
+        if( $action != 'edit' && $action != 'new' ) {
+            $this->Redirect( "/{$this->journo['ref']}" );
         }
-        return TRUE;
     }
+
 
     function display()
     {
@@ -111,6 +89,9 @@ class EmploymentPage extends EditProfilePage
 <h2>Edit experience</h2>
 <?php
             $this->showForm( $emp );
+?>
+<a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($emp['id']); ?>">Remove this experience</a>
+<?php
         }
 
         if( $action=='new' )
@@ -143,38 +124,32 @@ class EmploymentPage extends EditProfilePage
 
 <form class="employer" method="POST" action="<?= $this->pagePath; ?>">
 
- <div class="field">
-  <label for="employer_<?= $uniq; ?>">Employer</label>
-  <input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/>
- </div>
+  <dl>
+    <dt><label for="employer_<?= $uniq; ?>">Employer</label></dt>
+    <dd><input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/></dd>
 
- <div class="field">
-  <label for="job_title_<?= $uniq; ?>">Job title(s)</label>
-  <input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/>
- </div>
+    <dt><label for="job_title_<?= $uniq; ?>">Job title(s)</label></dt>
+    <dd><input type="text" size="60" name="job_title" id="job_title_<?= $uniq; ?>" value="<?= h($emp['job_title']); ?>"/></dd>
 
-
- <fieldset class="field">
-  <span class="faux-label">Date</span>
-  <label for="year_from_<?= $uniq; ?>">Year from:</label>
-  <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
-  <label for="year_to_<?= $uniq; ?>">Year to:</label>
-  <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
-  <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label>
-</fieldset>
+    <dt><span class="faux-label">Date</span></dt>
+    <dd>
+      <label for="year_from_<?= $uniq; ?>">Year from:</label>
+      <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
+      <label for="year_to_<?= $uniq; ?>">Year to:</label>
+      <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
+      <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label>
+    </dd>
+  </dl>
 
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
 <?php } ?>
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
-<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
+<button class="submit" type="submit">Save changes</button> or <a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <div style="clear:both;"></div>
 </form>
-<?php if( $formtype=='edit' ) { ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($emp['id']); ?>">Delete this experience</a>
-<?php } ?>
+
 <?php
 
     }

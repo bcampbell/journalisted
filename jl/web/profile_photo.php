@@ -75,7 +75,7 @@ EOT;
       $('#h').val(selection.height);    
     }  
 
-    $('.croptool form .field').hide();
+    $('.croptool form .box-dimensions').hide();
 
     $('.croptool .fullsize img').imgAreaSelect({ aspectRatio: '1:1', handles: true,
       fadeSpeed: 200, onSelectChange: preview });
@@ -118,7 +118,7 @@ EOT;
                 $this->emitCroppingTool();
             }
 ?>
-<a href="<?= $this->pagePath; ?>?ref=<?= $this->journo['ref'] ?>&action=remove">Remove</a>
+<a href="<?= $this->pagePath; ?>?ref=<?= $this->journo['ref'] ?>&action=remove">Remove photo</a>
 <?php
 
         } else {
@@ -133,7 +133,7 @@ EOT;
 <?php if( is_null($this->photo) ) { ?>
 <h3>Upload a photo</h3>
 <?php } else { ?>
-<h3>Upload a different photo</h3>
+<h3>Replace photo</h3>
 <?php } ?>
 
 <form action="<?= $this->pagePath; ?>" method="post" enctype="multipart/form-data">
@@ -147,7 +147,8 @@ EOT;
 </div>
 <input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
 <input type="hidden" name="action" value="upload_pic" />
-<input type="submit" name="submit" value="Upload Photo" />
+<input type="submit" name="submit" value="Upload Photo" /> or
+<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 </form>
 
 <?php
@@ -236,35 +237,28 @@ EOT;
   <img src="<?= image_url($img['filename']); ?>" width="<?= THUMB_W ?>" height="<?= THUMB_H ?>" />
  </div>
 
- <div class="field">
+<div class="box-dimensions">
   <label for="x1">x1</label>
   <input type="text" id="x1" name="x1" value="<?= $thumbrect['x1']; ?>" />
- </div>
 
- <div class="field">
   <label for="y1">y1</label>
   <input type="text" id="y1" name="y1" value="<?= $thumbrect['y1']; ?>" />
- </div>
 
- <div class="field">
   <label for="x2">x2</label>
   <input type="text" id="x2" name="x2" value="<?= $thumbrect['x2']; ?>" />
- </div>
 
- <div class="field">
   <label for="y2">y2</label>
   <input type="text" id="y2" name="y2" value="<?= $thumbrect['y2']; ?>" />
- </div>
-
+</div>
  <input type="hidden" name="ref" value="<?= $this->journo['ref'] ?>" />
  <input type="hidden" name="action" value="set_thumbnail" />
 
- <input type="submit" name="submit" value="Set" />
+ <input type="submit" name="submit" value="Set photo" />
 
 </form>
 
 <div class="fullsize">
-  <p>Select the area of the picture you want to use:</p>
+  <p>Select the area you want to use:</p>
  <img src="<?= image_url($img['filename']); ?>" width="<?=$img['width'] ?>" height="<?= $img['height'] ?>" />
 </div>
 

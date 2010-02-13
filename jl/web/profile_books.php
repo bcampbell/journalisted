@@ -51,12 +51,9 @@ class BooksPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        if( $action != 'edit' && $action != 'new' )
-        {
-            header( "Location: /{$this->journo['ref']}" );
-            exit;
+        if( $action != 'edit' && $action != 'new' ) {
+            $this->Redirect( "/{$this->journo['ref']}" );
         }
-        return TRUE;
     }
 
 
@@ -72,7 +69,7 @@ class BooksPage extends EditProfilePage
 ?>
 <h2>Edit book</h2>
 <?php $this->showForm( $entry ); ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Delete this book</a>
+<a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Remove this book</a>
 <?php
         }
 
@@ -106,24 +103,20 @@ class BooksPage extends EditProfilePage
 ?>
 
 <form class="book" method="POST" action="<?= $this->pagePath; ?>">
- <div class="field">
-  <label for="title_<?= $uniq; ?>">Title</label>
-  <input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" />
- </div>
+  <dl>
+    <dt><label for="title_<?= $uniq; ?>">Title</label></dt>
+    <dd><input type="text" size="60" name="title" id="title_<?= $uniq; ?>" value="<?= h($book['title']); ?>" /></dd>
 
- <div class="field">
-  <label for="publisher_<?= $uniq; ?>">Publisher</label>
-  <input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" />
- </div>
+    <dt><label for="publisher_<?= $uniq; ?>">Publisher</label></dt>
+    <dd><input type="text" size="60" name="publisher" id="publisher_<?= $uniq; ?>" value="<?= h($book['publisher']); ?>" /></dd>
 
- <div class="field">
-  <label for="year_published<?= $uniq; ?>">Year published</label>
-  <input type="text" class="year" size="4" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" />
- </div>
+    <dt><label for="year_published<?= $uniq; ?>">Year published</label></dt>
+    <dd><input type="text" class="year" size="4" name="year_published" id="year_published_<?= $uniq; ?>" value="<?= h($book['year_published']); ?>" /></dd>
+  </dl>
 
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+<button class="submit" type="submit">Save changes</button> or
 <a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $book['id']; ?>" />

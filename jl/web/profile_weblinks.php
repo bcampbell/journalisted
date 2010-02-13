@@ -42,32 +42,12 @@ class WeblinksPage extends EditProfilePage
 ?>
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
-<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
+<script type="text/javascript" src="/js/jl-util.js"></script>
 <script type="text/javascript">
 
-    var fieldId = 0;
-    var formFields = "input, checkbox, select, textarea";
-
-    /* based on fn from jquery-dynamic-form */	
-    function normalizeElmnt(elmnt){
-        elmnt.find(formFields).each(function(){
-            var nameAttr = jQuery(this).attr("name"), 
-            idAttr = jQuery(this).attr("id");
-
-            /* Normalize field id attributes */
-            if (idAttr) {
-                /* Normalize attached label */
-                jQuery("label[for='"+idAttr+"']").each(function(){
-                    jQuery(this).attr("for", idAttr + fieldId);
-                });
-
-                jQuery(this).attr("id", idAttr + fieldId);
-            }
-            fieldId++;
-        });
-    };
-
     $(document).ready( function() {
+
+        jl.foo();
 
         /* only display description field if site kind is other */
         function showHideDesc(sel) {
@@ -87,7 +67,7 @@ class WeblinksPage extends EditProfilePage
         $('.weblink .template' ).hide();
         $('.weblink .add').click( function() {
             var c = $('.weblink .template').clone(true);
-            normalizeElmnt( c );
+            jl.normalizeElement( c );
             c.removeClass('template');
             c.insertBefore( '.weblink .template' )
             c.fadeIn();
@@ -188,12 +168,12 @@ class WeblinksPage extends EditProfilePage
         }
         $this->emitLinkFields( null );
 ?>
- <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
- <input type="hidden" name="action" value="submit" />
-<div class="button-area">
- <a class="add" href="#">Add a site</a><br/>
- <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
-</div>
+  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+  <input type="hidden" name="action" value="submit" />
+  <div class="button-area">
+    <a class="add" href="#">Add a site</a><br/>
+    <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
+  </div>
 </form>
 <?php
     }

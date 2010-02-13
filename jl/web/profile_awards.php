@@ -52,12 +52,9 @@ class AwardsPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        if( $action != 'edit' && $action != 'new' )
-        {
-            header( "Location: /{$this->journo['ref']}" );
-            exit;
+        if( $action != 'edit' && $action != 'new' ) {
+            $this->Redirect( "/{$this->journo['ref']}" );
         }
-        return TRUE;
     }
 
 
@@ -73,7 +70,7 @@ class AwardsPage extends EditProfilePage
 ?>
 <h2>Edit award</h2>
 <?php $this->showForm( $entry ); ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Delete this award</a>
+<a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($entry['id']); ?>">Remove this award</a>
 <?php
         }
 
@@ -104,15 +101,13 @@ class AwardsPage extends EditProfilePage
 
 ?>
 <form class="award" method="POST" action="<?= $this->pagePath; ?>">
- <div class="field">
-  <label for="award_<?= $uniq; ?>">Award</label>
-  <input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" />
- </div>
+  <dl>
+    <dt><label for="award_<?= $uniq; ?>">Award</label></dt>
+    <dd><input type="text" size="60" name="award" id="award_<?= $uniq; ?>" value="<?= h($award['award']); ?>" /></dd>
 
- <div class="field">
-  <label for="year_<?= $uniq; ?>">Year</label>
-  <input type="text" class="year" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" />
- </div>
+    <dt><label for="year_<?= $uniq; ?>">Year</label></dt>
+    <dd><input type="text" class="year" size="4" name="year" id="year_<?= $uniq; ?>" value="<?= h($award['year']); ?>" /></dd>
+  </dl>
 
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />

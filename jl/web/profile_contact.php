@@ -29,13 +29,6 @@ class ContactPage extends EditProfilePage
 
 <script type="text/javascript">
     $(document).ready( function() {
-        $('form.contact .submit').hide();
-        $('form.contact input, form.contact textarea' ).each( function(){
-            $(this).keyup( function() {
-                $('form.contact .submit').show();
-                $('form.contact').addClass('modified');
-            } )
-         } );
     } );
 
 </script>
@@ -49,8 +42,9 @@ class ContactPage extends EditProfilePage
         $action = get_http_var( "action" );
         if( $action == "submit" ) {
             $this->handleSubmit();
+            // back to main profile page now please
+            $this->Redirect( "/{$this->journo['ref']}" );
         }
-        return TRUE;
     }
 
 
@@ -87,35 +81,31 @@ class ContactPage extends EditProfilePage
         $twitter = $contact['twitter'];
 
 ?>
+<p>This contact information is for your <em>public</em> profile.<br/>
+Please do not enter any information wish to keep private.</p>
 
 <form class="contact" method="POST" action="<?= $this->pagePath; ?>">
 
- <div class="field">
-  <label for="email">Email Address</label>
-  <input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" />
- </div>
 
- <div class="field">
-  <label for="email">Twitter name</label>
-  <input type="text" size="60" name="twitter" id="twitter" value="<?= h($twitter) ?>" />
- </div>
+  <dl>
+    <dt><label for="email">Email Address</label></dt>
+    <dd><input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" /></dd>
 
- <div class="field">
-  <label for="phone">Telephone</label>
-  <input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" />
- </div>
+    <dt><label for="email">Twitter name</label></dt>
+    <dd><input type="text" size="60" name="twitter" id="twitter" value="<?= h($twitter) ?>" /></dd>
 
- <div class="field">
-  <label for="address">Postal Address</label>
-  <textarea name="address" cols="80" rows="5" id="address"><?= h($address['address']); ?></textarea>
- </div>
+    <dt><label for="phone">Telephone</label></dt>
+    <dd><input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" /></dd>
 
- <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
- <input type="hidden" name="action" value="submit" />
- <button class="submit" type="submit">Save changes</button>
+    <dt><label for="address">Postal Address</label></dt>
+    <dd><textarea name="address" cols="80" rows="5" id="address"><?= h($address['address']); ?></textarea></dd>
+  </dl>
 
-<p>This contact information is for your public profile. If you wish to
-keep this information private do not add it to your profile.</p>
+  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+  <input type="hidden" name="action" value="submit" />
+  <button class="submit" type="submit">Save changes</button> or
+  <a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
+
 </form>
 
 <?php

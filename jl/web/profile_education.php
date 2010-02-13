@@ -51,12 +51,9 @@ class EducationPage extends EditProfilePage
             $this->handleRemove();
         }
 
-        if( $action != 'edit' && $action != 'new' )
-        {
-            header( "Location: /{$this->journo['ref']}" );
-            exit;
+        if( $action != 'edit' && $action != 'new' ) {
+            $this->Redirect( "/{$this->journo['ref']}" );
         }
-        return TRUE;
     }
 
 
@@ -72,7 +69,7 @@ class EducationPage extends EditProfilePage
 ?>
 <h2>Edit education</h2>
 <?php $this->showForm( $edu ); ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Delete this education</a>
+<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Remove this education</a>
 <?php
         }
 
@@ -90,22 +87,6 @@ class EducationPage extends EditProfilePage
 
     function ajax()
     {
-/*
-        $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $entry_id = $this->handleSubmit();
-            $result = array(
-                'id'=>$entry_id,
-                'editlinks_html'=>$this->genEditLinks($entry_id),
-            );
-            return $result;
-        }
-        if( get_http_var("remove_id") )
-        {
-            $this->handleRemove();
-            return array();
-        }
-*/
         return NULL;
     }
 
@@ -153,11 +134,10 @@ class EducationPage extends EditProfilePage
 </dl>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save</button>
+<button class="submit" type="submit">Save changes </button> or
 <a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
-<?= $this->genEditLinks($edu['id']); ?>
 <?php } ?>
 </form>
 <?php if( $formtype=='edit' ) { ?>
