@@ -61,6 +61,9 @@ class AdmiredJournosPage extends EditProfilePage
                 f.find(".admired_oneliner").text( '(' + oneliner + ')' );
                 f.find(".admired_ref").val(ref);
             });
+
+
+            f.find('.remove').click( function() { f.remove(); return false; } );
         }
 
         /* set up ajax lookup on name field */
@@ -145,7 +148,12 @@ EOT;
     <dd>
       <input type="text" name="admired_name[]" class="admired_name" id="admired_name_<?= $uniq; ?>" value="<?= h($e['admired_name']); ?>" />
       <span class="admired_oneliner"><?= h(is_null($e['oneliner']) ? '':"({$e['oneliner']})" ); ?></span>
-        <input type="hidden" name="admired_ref[]" class="admired_ref" value="<?= h($e['admired_ref']); ?>" />
+      <input type="hidden" name="admired_ref[]" class="admired_ref" value="<?= h($e['admired_ref']); ?>" />
+<?php if( $is_template ) { ?>
+      <a class="remove" href="#">Remove</a>
+<?php } else { ?>
+      <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&action=remove&id=<?= $e['id'] ?>">Remove</a>
+<?php } ?>
     </dd>
   </dl>
 

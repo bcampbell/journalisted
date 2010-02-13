@@ -47,7 +47,10 @@ class WeblinksPage extends EditProfilePage
 
     $(document).ready( function() {
 
-        jl.foo();
+        function initEntry() {
+            var e = $(this);
+            e.find('.remove').click( function() { e.remove(); return false; } );
+        }
 
         /* only display description field if site kind is other */
         function showHideDesc(sel) {
@@ -66,13 +69,16 @@ class WeblinksPage extends EditProfilePage
         /* set up 'add' link - clone template to create a new entry */
         $('.weblink .template' ).hide();
         $('.weblink .add').click( function() {
-            var c = $('.weblink .template').clone(true);
+            var c = $('.weblink .template').clone();
             jl.normalizeElement( c );
             c.removeClass('template');
             c.insertBefore( '.weblink .template' )
+            c.each( initEntry );
             c.fadeIn();
             return false;
         });
+
+        $('.weblink dl' ).each( initEntry );
 
 
 /*        fancyForms( '.weblink', { plusLabel: 'Add another website' } ); */
@@ -217,7 +223,9 @@ class WeblinksPage extends EditProfilePage
   <dd>
     <input class="desc" type="text" size="60" id="desc_<?= $uniq ?>" name="desc[]" value="<?= h($w['description']) ?>" />
 <?php if( $w['id'] ) { ?>
- <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= $w['id'] ?>">remove</a>
+    <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= $w['id'] ?>">Remove</a>
+<?php } else { ?>
+    <a class="remove" href="#">Remove</a>
 <?php } ?>
   </dd>
 
