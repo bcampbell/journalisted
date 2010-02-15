@@ -18,9 +18,13 @@
 <div class="main front-page">
 
 <div class="box front">
-<div class="body">
-<img src="/img/front.png" alt="" />
-</div>
+  <ul class="nav">
+   <li><a class="articles" href="#">articles</a></li>
+   <li><a class="link" href="#">link</a></li>
+   <li><a class="rate" href="#">rate</a></li>
+   <li><a class="search" href="#">search</a></li>
+   <li><a class="subjects" href="#">subjects</a></li>
+  </ul>
 </div>
 
 
