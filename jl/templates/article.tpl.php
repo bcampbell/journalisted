@@ -112,8 +112,8 @@
 <?php if( $sim_total > sizeof( $sim_arts ) && $sim_showall != 'yes' ) { ?>
   <div class="pager">
     <a href="<?php echo article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all <?php print $sim_total; ?> similar articles.</a>
-<?php } ?>
   </div>
+<?php } ?>
 </div>
 
 
