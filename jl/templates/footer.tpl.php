@@ -14,6 +14,7 @@
     $contactemail = OPTION_TEAM_EMAIL;
 ?>
   <ul>
+<li><a href="/about">About</a></li>
 <li><a href="/development">Development</a></li>
 <li><?= SafeMailto( $contactemail, 'Contact' );?></li>
 <li><a href="/faq">FAQs</a></li>

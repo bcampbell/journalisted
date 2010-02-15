@@ -45,11 +45,26 @@
       <h1><a href="/"><img src="/img/journalisted_logo.png" alt="Journalisted - read all about them!" /></a></h1>
       <a class="mst-logo" href="http://www.mediastandardstrust.org"><img src="/img/mst_logo.png" alt="Media Standards Trust" /></a>
       <div class="nav">
+<?php if( $logged_in_user ) { ?>
+          <span class="hellouser">Hello, <em><?= $logged_in_user ?></em></span>
+<?php } ?>
         <ul>
-          <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"> <a href="/list">Journalists A-Z</a> </li>
-          <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"> <a href="/tags">Subject Index</a> </li>
-          <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"> <a href="/alert">Alerts</a> </li>
-          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"> <a href="/about">About</a> </li>
+<?php if( $logged_in_user && $can_edit_profile ) { ?>
+          <li><a href="/profile">My page</a></li>
+<?php } ?>
+<?php if( $logged_in_user ) { ?>
+          <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">My settings</a></li>
+<?php } ?>
+          <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"><a href="/list">Journalists A-Z</a></li>
+          <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"><a href="/tags">Subject Index</a></li>
+<?php if( $logged_in_user ) { ?>
+          <li><a href="/logout">Log out</a></li>
+<?php } else { ?>
+          <li class="alert<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
+          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"><a href="/about">About</a></li>
+          <li><a href="/login">Log in</a></li>
+<?php } ?>
+        </ul>
       </div>
       <div class="search">
         <form action="/search" method="get">
@@ -66,15 +81,6 @@
     </div>
   </div>
 
-<div id="dateline">
-<?php if( $logged_in_user ) { ?>
-  <span id="hellouser">
-    Hello, <?php echo $logged_in_user; ?>
-<?php if( $can_edit_profile ) { ?> [<a href="/profile">edit my profile</a>] <?php } ?>
-[<a href="/logout">log out</a>] <br/>
-  </span>
-<?php } ?>
-</div>
 
 
 

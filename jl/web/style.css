@@ -224,25 +224,36 @@ form dl {
 
 /* header nav bar */
 
-#header .nav ul {
+#header .nav {
   position: absolute;   /* within header */
   top: 8px;
   right: 120px;
   padding: 0;
   margin: 0;
+  color: #ffffff;
+}
+
+#header .nav .hellouser {
+  font-weight: bold;
+}
+
+#header .nav ul {
+  margin: 0;
+  padding: 0;
+  display:inline;
 }
 
 #header .nav ul li {
   list-style-type:none;
   display:inline;
-  float:left;
   margin: 0;
+  padding: 0;
 }
 
 #header .nav a { 
   color: #FFFFFF; 
-/*  text-decoration: none; */
-  padding: 8px;
+  padding: 8px 0px 8px 8px;
+
 }
 
 
