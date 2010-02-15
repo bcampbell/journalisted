@@ -594,7 +594,7 @@ class TopTags extends CannedQuery {
     function perform($params) {
 
         $sql = <<<EOT
-SELECT t.tag, sum(t.freq) as tag_total
+SELECT t.tag, sum(t.freq) as tag_total, count(*) as num_articles
     FROM article a INNER JOIN article_tag t ON a.id=t.article_id
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') AND t.kind=' '
     GROUP BY tag
