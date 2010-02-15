@@ -123,7 +123,7 @@ function search_articles()
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
         <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
         <br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
       </li>
 <?php } ?>
     </ul>
