@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 
 // builds journo pages for any journos who need it (ie have had the modified flag set).
