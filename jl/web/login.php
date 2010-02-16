@@ -274,7 +274,7 @@ We've sent you an email, and you'll need to click the link in it to log in.
     page_header( "Register" );
 
 ?>
-<div class="box">
+<div class="main">
 <?php if( $action =='register' ) { ?>
   <h3>Register new account</h3>
   <p>To register, please tell us your email address.</p>
@@ -284,9 +284,7 @@ We've sent you an email, and you'll need to click the link in it to log in.
   <p>To log in, please tell us your email address.</p>
   <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
 <?php } ?>
-<div class="box-content">
 <?php RegisterForm_Emit( $errs ); ?>
-</div>
 </div>
 <?php
 
@@ -347,11 +345,13 @@ function RegisterForm_Emit($errs = array())
 <input type="hidden" name="stash" value="<?=$q_h_stash?>" />
 <input type="hidden" name="action" value="<?php echo $action; ?>" />
 
-<p>
+<dl>
+  <dt><label for="email">Email address</label></dt>
+  <dd>
+    <input type="text" size="30" name="email" id="email" value="<?php echo $q_h_email; ?>" />
 <?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
-<label for="email">Email address</label>
-<input type="text" size="30" name="email" id="email" value="<?php echo $q_h_email; ?>" />
-</p>
+  </dd>
+</dl>
 
 <p>
 <input type="submit" name="registersubmit" value="Continue" />

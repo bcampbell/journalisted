@@ -264,22 +264,21 @@ If you already have a Journa<i>listed</i> account, log in here
 
 <?php if(array_key_exists('badpass',$errs) ) { ?><p class="errhint"><?php echo $errs['badpass'];?></p><?php } ?>
 
-<div class="field">
-<?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
-<label for="email">Email address</label>
-<input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
-</div>
+<dl>
+  <dt><label for="email">Email address</label></dt>
+  <dd>
+    <input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
+    <?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
+  </dd>
 
-<div class="field">
-<label for="password">Password</label>
-<input type="password" size="30" name="password" id="password" value="" />
-</div>
-
-<div class="field">
-<input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
-<label for="rememberme">Remember me</label>
-<span class="explain">(don't use this on a public or shared computer)</span>
-</div>
+  <dt><label for="password">Password</label></dt>
+  <dd><input type="password" size="30" name="password" id="password" value="" /></dd>
+  <dd>
+    <input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
+    <label for="rememberme">Remember me</label>
+    <span class="explain">(don't use this on a public or shared computer)</span>
+  </dd>
+</dl>
 
 <a href="<?php echo $nopass_url; ?>">forgot password?</a>
 <p>
