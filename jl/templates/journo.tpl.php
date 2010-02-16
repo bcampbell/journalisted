@@ -315,17 +315,17 @@ $previous_employers = array_unique( $previous_employers );
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
       <li>
-        <span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
+        <h4><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></h4>
         <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a>
+        <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[edit]</a>
         <?php } ?>
       </li>
  <?php } else { ?>
       <li class="current-employer" ><h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
         <span class="daterange"><?= $e['year_from'] ?>-Present</span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a>
+        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[edit]</a>
         <?php } ?>
       </li>
  <?php } ?>
@@ -335,7 +335,7 @@ $previous_employers = array_unique( $previous_employers );
     <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
+    <a class="add"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
     <?php } ?>
   </div>
 </div>
@@ -350,13 +350,13 @@ $previous_employers = array_unique( $previous_employers );
     <ul class="bio-list">
 <?php foreach( $education as $edu ) { ?>
       <li>
-        <h4><?= $edu['school']; ?><h4>
+        <h4><?= $edu['school']; ?></h4>
 <?php if( $edu['qualification'] && $edu['field'] ) { ?>
         <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
 <?php } ?>
         <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">edit</a>
+        <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[edit]</a>
         <?php } ?>
       </li>
 <?php } ?>
@@ -365,7 +365,7 @@ $previous_employers = array_unique( $previous_employers );
     <p class="not-known"><?= $prettyname ?> has not entered any education</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="edit"  href="/profile_education?ref=<?= $ref ?>&action=new">Add education</a>
+    <a class="add"  href="/profile_education?ref=<?= $ref ?>&action=new">Add education</a>
     <?php } ?>
   </div>
 </div>
@@ -383,7 +383,7 @@ $previous_employers = array_unique( $previous_employers );
       <h4><?= $b['title']; ?></h4>
       <?= $b['publisher']; ?>, <?= $b['year_published']; ?>
       <?php if( $can_edit_page ) { ?>
-      <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">edit</a>
+      <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">[edit]</a>
       <?php } ?>
     </li>
 <?php } ?>
@@ -392,7 +392,7 @@ $previous_employers = array_unique( $previous_employers );
     <p class="not-known"><?= $prettyname ?> has not entered any books</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="edit"  href="/profile_books?ref=<?= $ref ?>&action=new">Add book</a>
+    <a class="add"  href="/profile_books?ref=<?= $ref ?>&action=new">Add book</a>
     <?php } ?>
   </div>
 </div>
@@ -410,7 +410,7 @@ $previous_employers = array_unique( $previous_employers );
       <h4><?= $a['award']; ?></h4>
       <?php if( $a['year'] ) { ?><?= $a['year'] ?><?php } ?>
       <?php if( $can_edit_page ) { ?>
-      <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">edit</a>
+      <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">[edit]</a>
       <?php } ?>
     </li>
 <?php } ?>
@@ -419,7 +419,7 @@ $previous_employers = array_unique( $previous_employers );
     <p class="not-known"><?= $prettyname ?> has not entered any awards</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="edit"  href="/profile_awards?ref=<?= $ref ?>&action=new">Add award</a>
+    <a class="add"  href="/profile_awards?ref=<?= $ref ?>&action=new">Add award</a>
     <?php } ?>
   </div>
 </div>
@@ -539,7 +539,7 @@ blah blah blah blah blah
   <div class="head"><h3>You can also...</h3></div>
   <div class="body">
     <ul>
-      <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add journalist's articles to my daily alerts</a></li>
+      <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add <?= $prettyname ?>'s articles to my daily alerts</a></li>
       <li class="print-page"><a href="#" onclick="javascript:window.print(); return false;" >Print this page</a></li>
       <li class="forward-profile"><a href="#">Forward profile to a friend</a></li>
 <?php if( !$can_edit_page ) { ?>
@@ -659,7 +659,7 @@ blah blah blah blah blah
 <?php } ?>
   </ul>
 <?php } else { ?>
-  <p class="not-known"><?= $prettyname ?> has not added any journalists</p>
+  <span class="not-known"><?= $prettyname ?> has not added any journalists</span>
 <?php } ?>
  </div>
 <?php if( $can_edit_page ) { ?>
@@ -669,11 +669,6 @@ blah blah blah blah blah
 <?php } ?>
 </div>
 
-<div class="box">
-  <div class="head"><h3>Press contacts</h3></div>
-  <div class="body">
-
-  </div>
 </div>
 </div> <!-- end sidebar -->
 

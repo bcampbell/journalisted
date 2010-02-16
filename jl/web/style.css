@@ -69,9 +69,22 @@ ul.bio-list li {
 a.edit {
   padding-left: 15px;
   margin-left: 4px;
-  background: #ffee88 url('/img/icon_pencil.png') no-repeat center left;
+/*  background: #ffee88 url('/img/icon_pencil.png') no-repeat center left; */
 }
 
+/* fancify "add" links */
+a.add {
+  padding-left: 15px;
+  margin-left: 4px;
+  background: url('/img/icon_plus.png') no-repeat center left;
+}
+
+/* fancify "remove" links */
+a.remove {
+  padding-left: 15px;
+  margin-left: 4px;
+  background: url('/img/icon_redx.png') no-repeat center left;
+}
 
 
 /* show some edit links as buttons */
@@ -743,7 +756,7 @@ form dl {
   background-repeat: no-repeat;
   background-position: left center;
   padding: 7px 0px 8px 20px;
-  height: 16px;
+/*  height: 16px; */
   border-top: 1px solid #cccccc;
 }
 

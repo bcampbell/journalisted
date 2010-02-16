@@ -49,14 +49,19 @@
           <span class="hellouser">Hello, <em><?= $logged_in_user ?></em></span>
 <?php } ?>
         <ul>
+          <li><a href="/">Home</a></li>
 <?php if( $logged_in_user && $can_edit_profile ) { ?>
-          <li><a href="/profile">My page</a></li>
+          <li><a href="/profile">Profile</a></li>
+<?php } else { ?>
+          <li><a href="/profile">Add profile</a></li>
 <?php } ?>
 <?php if( $logged_in_user ) { ?>
-          <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">My settings</a></li>
+          <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
 <?php } ?>
-          <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"><a href="/list">Journalists A-Z</a></li>
+<!--    <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"><a href="/list">Journalists A-Z</a></li>
           <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"><a href="/tags">Subject Index</a></li>
+-->
+          <li><a href="/about">About</a></li>
 <?php if( $logged_in_user ) { ?>
           <li><a href="/logout">Log out</a></li>
 <?php } else { ?>
