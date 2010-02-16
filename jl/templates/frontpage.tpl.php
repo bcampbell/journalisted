@@ -18,6 +18,8 @@
 <div class="main front-page">
 
 <div class="box front">
+  <span class="brag">140,000 people used journa<i>listed</i> last month!</span>
+  <span class="youcan">At journa<i>listed</i> you can:</span>
   <ul class="nav">
    <li><a class="articles" href="#">articles</a></li>
    <li><a class="link" href="#">link</a></li>
