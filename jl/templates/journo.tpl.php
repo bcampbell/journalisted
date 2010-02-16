@@ -318,14 +318,14 @@ $previous_employers = array_unique( $previous_employers );
         <h4><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></h4>
         <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[edit]</a>
+        <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
         <?php } ?>
       </li>
  <?php } else { ?>
       <li class="current-employer" ><h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
         <span class="daterange"><?= $e['year_from'] ?>-Present</span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[edit]</a>
+        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
         <?php } ?>
       </li>
  <?php } ?>
@@ -356,7 +356,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php } ?>
         <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
         <?php if( $can_edit_page ) { ?>
-        <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[edit]</a>
+        <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[Edit]</a>
         <?php } ?>
       </li>
 <?php } ?>
@@ -383,7 +383,7 @@ $previous_employers = array_unique( $previous_employers );
       <h4><?= $b['title']; ?></h4>
       <?= $b['publisher']; ?>, <?= $b['year_published']; ?>
       <?php if( $can_edit_page ) { ?>
-      <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">[edit]</a>
+      <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">[Edit]</a>
       <?php } ?>
     </li>
 <?php } ?>
@@ -410,7 +410,7 @@ $previous_employers = array_unique( $previous_employers );
       <h4><?= $a['award']; ?></h4>
       <?php if( $a['year'] ) { ?><?= $a['year'] ?><?php } ?>
       <?php if( $can_edit_page ) { ?>
-      <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">[edit]</a>
+      <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">[Edit]</a>
       <?php } ?>
     </li>
 <?php } ?>
@@ -529,9 +529,9 @@ $previous_employers = array_unique( $previous_employers );
 <a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
 <div class="box subscribe-newsletter">
-<div class="head"><h3>Subscribe to Journa<i>listed</i> newsletter</h3></div>
+<div class="head"><h3>Subscribe to journa<i>listed</i> weekly</h3></div>
 <div class="body">
-blah blah blah blah blah
+Weekly digest of previous week's journalism every Tuesday
 </div>
 </div>
 
