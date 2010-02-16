@@ -43,15 +43,18 @@ class EducationPage extends EditProfilePage
     {
         // submitting new entries?
         $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $added = $this->handleSubmit();
+        if( $action == "submit_uni" ) {
+            $added = $this->handleUniSubmit();
+        }
+        if( $action == "submit_school" ) {
+            $added = $this->handleSchoolSubmit();
         }
 
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
 
-        if( $action != 'edit' && $action != 'new' ) {
+        if( $action != 'edit' && $action != 'new_school' && $action != 'new_uni' ) {
             $this->Redirect( "/{$this->journo['ref']}?tab=bio" );
         }
     }
@@ -66,19 +69,36 @@ class EducationPage extends EditProfilePage
             $edu_id = get_http_var('id');
             $edu = db_getRow( "SELECT * FROM journo_education WHERE journo_id=? AND id=?",
                 $this->journo['id'], $edu_id );
+            if( $edu['kind'] == 's' ) {
 ?>
-<h2>Edit education</h2>
-<?php $this->showForm( $edu ); ?>
-<a href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Remove this education</a>
+<h2>Edit education (school)</h2>
+<?php $this->showSchoolForm( $edu ); ?>
+<a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Remove this school</a>
 <?php
+            } else /*'u'*/ {
+?>
+<h2>Edit education (university)</h2>
+<?php $this->showUniForm( $edu ); ?>
+<a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($edu['id']); ?>">Remove this university</a>
+<?php
+            }
         }
 
-        if( $action=='new' )
+
+
+        if( $action=='new_school' )
         {
 ?>
-<h2>Add education</h2>
+<h2>Add education (school)</h2>
 <?php
-            $this->showForm( null );
+            $this->showSchoolForm( null );
+        }
+        if( $action=='new_uni' )
+        {
+?>
+<h2>Add education (university)</h2>
+<?php
+            $this->showUniForm( null );
         }
 
     }
@@ -91,9 +111,52 @@ class EducationPage extends EditProfilePage
     }
 
 
+    /* if $edu is null, then display a fresh form for entering a new entry */
+    function showSchoolForm( $edu )
+    {
+        static $uniq=0;
+        ++$uniq;
+        $formtype = 'edit';
+        if( is_null( $edu ) ) {
+            $formtype = 'new';
+            $edu = array( 'school'=>'', 'year_from'=>'', 'year_to'=>'' );
+        }
+
+?>
+
+<form class="education" method="POST" action="<?= $this->pagePath; ?>">
+<dl>
+  <dt><label for="school_<?= $uniq; ?>">School name</label></dt>
+  <dd>
+    <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
+    <span class="explain">e.g. "St Augustine's, Canterbury"</span>
+  </dd>
+
+  <dt><span class="faux-label">Years attended</span></dt>
+  <dd><label for="year_from_<?= $uniq; ?>">from</label>
+    <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
+    <label for="year_to_<?= $uniq; ?>">to</label>
+    <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
+  </dd>
+</dl>
+<input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+<input type="hidden" name="action" value="submit_school" />
+<button class="submit" type="submit">Save changes </button> or
+<a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
+<?php if( $formtype=='edit' ) { ?>
+<input type="hidden" name="id" value="<?= $edu['id']; ?>" />
+<?php } ?>
+</form>
+<?php if( $formtype=='edit' ) { ?>
+<?php } ?>
+<?php
+
+    }
+
+
 
     /* if $edu is null, then display a fresh form for entering a new entry */
-    function showForm( $edu )
+    function showUniForm( $edu )
     {
         static $uniq=0;
         ++$uniq;
@@ -125,15 +188,15 @@ class EducationPage extends EditProfilePage
    <span class="explain">eg: "BA"</span>
   </dd>
 
-<dt><span class="faux-label">Years attended</span></dt>
-<dd><label for="year_from_<?= $uniq; ?>">from</label>
- <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
- <label for="year_to_<?= $uniq; ?>">to</label>
- <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
-</dd>
+  <dt><span class="faux-label">Years attended</span></dt>
+  <dd><label for="year_from_<?= $uniq; ?>">from</label>
+    <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($edu['year_from']); ?>" />
+    <label for="year_to_<?= $uniq; ?>">to</label>
+    <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($edu['year_to']); ?>" />
+  </dd>
 </dl>
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-<input type="hidden" name="action" value="submit" />
+<input type="hidden" name="action" value="submit_uni" />
 <button class="submit" type="submit">Save changes </button> or
 <a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
@@ -148,7 +211,7 @@ class EducationPage extends EditProfilePage
 
 
 
-    function handleSubmit()
+    function handleUniSubmit()
     {
         $fieldnames = array( 'school', 'field', 'qualification', 'year_from', 'year_to' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
@@ -156,6 +219,26 @@ class EducationPage extends EditProfilePage
             $item['year_from'] = NULL;
         if( !$item['year_to'] )
             $item['year_to'] = NULL;
+        $fieldnames[] = 'kind';
+        $item['kind'] = 'u';
+        $this->genericStoreItem( "journo_education", $fieldnames, $item );
+        return $item['id'];
+    }
+
+    function handleSchoolSubmit()
+    {
+        $fieldnames = array( 'school', 'year_from', 'year_to' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year_from'] )
+            $item['year_from'] = NULL;
+        if( !$item['year_to'] )
+            $item['year_to'] = NULL;
+        $fieldnames[] = 'field';
+        $item['field'] = '';
+        $fieldnames[] = 'qualification';
+        $item['qualification'] = '';
+        $fieldnames[] = 'kind';
+        $item['kind'] = 's';
         $this->genericStoreItem( "journo_education", $fieldnames, $item );
         return $item['id'];
     }

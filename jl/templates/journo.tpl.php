@@ -370,7 +370,8 @@ $previous_employers = array_unique( $previous_employers );
     <p class="not-known"><?= $prettyname ?> has not entered any education</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="add"  href="/profile_education?ref=<?= $ref ?>&action=new">Add education</a>
+    <a class="add"  href="/profile_education?ref=<?= $ref ?>&action=new_school">Add a school</a>&nbsp;&nbsp;
+    <a class="add"  href="/profile_education?ref=<?= $ref ?>&action=new_uni">Add a university</a>
     <?php } ?>
   </div>
 </div>
