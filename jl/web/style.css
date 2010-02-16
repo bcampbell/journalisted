@@ -985,4 +985,6 @@ a.donate:focus {
 }
 
 
+.register-now { border-top: 1px solid #cccccc; margin-top: 8px; }
+.register-now .get-in-touch { font-size: 150%; }
 

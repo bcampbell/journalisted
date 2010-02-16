@@ -87,27 +87,37 @@ if( $journo )
     $title = "Edit profile for " . $journo['prettyname'];
 page_header( $title );
 
+    $contactemail = OPTION_TEAM_EMAIL;
+
 ?>
+<div class="main">
+
 <?php if( $journo ) { ?>
-<h2>Edit profile for <a href="/<?=$journo['ref'];?>"><?=$journo['prettyname'];?></a></h2>
+<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile!</h2>
 <?php } else { ?>
-<h2>Edit profile</h2>
+<h2>Are you a journalist?</h2>
+
+<p>Would you like a profile on journa<i>listed</i>?</p>
+
 <?php } ?>
 
-<p>already got an account? <a href="/login">log in now!</a>
+<p>Once registered, you can:</p>
+<ul>
+  <li>Add articles (published anywhere on the web)</li>
+  <li>Add biographical information</li>
+  <li>Add contact information</li>
+  <li>Add weblinks (e.g. blog, twitter, facebook)</li>
+</ul>
 
-<p><strong>or...</strong></p>
+<div class="register-now">
+<p class="get-in-touch">
+To register, just <?= SafeMailto( $contactemail, 'get in touch' );?> and let us know who you are.
+</p>
+<p>or if you already have an account, <a href="/login">log in now</a></p>
+</div>
 
-<p>It's easy to get set up to edit your profile! But we need to know you are who you say you are...</p>
-Here's how:
-<ol>
-<li>blah blah</li>
-<li>references</li>
-<li>blah blah</li>
-<li>email us</li>
-<li>blah blah we'll send you a login link blah blah</li>
-</ol>
 
+</div>
 <?php
 
 page_footer();
