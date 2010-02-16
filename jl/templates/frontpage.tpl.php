@@ -48,7 +48,7 @@
 
 <ul>
 <?php foreach( $events as $e ) { ?>
-  <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a>: <?= $e['description'] ?></li>
+  <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a></li>
 <?php } ?>
 </ul>
 
@@ -68,7 +68,7 @@
 </div>
 
 <div style="clear:both;"></div>
-
+<?php /* ?>
 <div class="box thisweek">
 <div class="head"><h3>This Week on Journalisted</h3></div>
 <div class="body">
@@ -80,7 +80,7 @@
  </ul>
 </div>
 </div>
-
+<?php */ ?>
 </div>  <!-- end main -->
 <?php
 
