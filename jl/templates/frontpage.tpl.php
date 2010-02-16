@@ -49,11 +49,9 @@
 <div class="body">
 
 <ul>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
+<?php foreach( $events as $e ) { ?>
+  <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a>: <?= $e['description'] ?></li>
+<?php } ?>
 </ul>
 
 </div>
