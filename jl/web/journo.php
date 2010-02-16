@@ -139,6 +139,8 @@ page_footer();
 function extra_head()
 {
 
+
+    $tab = get_http_var( 'tab', 'work' );
 ?>
 <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
 <!-- <link type="text/css" rel="stylesheet" href="/profile.css" /> -->
@@ -146,9 +148,16 @@ function extra_head()
 <script type="text/javascript">
 $(document).ready(
     function() {
+<?php if( $tab=='bio' ) { ?>
         $('#tab-work').hide();
-//        $('#tab-bio').hide();
         $('#tab-contact').hide();
+<?php } elseif( $tab=='contact' ) { ?>
+        $('#tab-work').hide();
+        $('#tab-bio').hide();
+<?php } else /*work*/ { ?>
+        $('#tab-bio').hide();
+        $('#tab-contact').hide();
+<?php } ?>
         $(".tabs a[href='#tab-work']").click( function() {
             $('.tabs li').removeClass('current');
             $(this).closest('li').addClass('current');

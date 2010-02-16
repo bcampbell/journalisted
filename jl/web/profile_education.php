@@ -52,7 +52,7 @@ class EducationPage extends EditProfilePage
         }
 
         if( $action != 'edit' && $action != 'new' ) {
-            $this->Redirect( "/{$this->journo['ref']}" );
+            $this->Redirect( "/{$this->journo['ref']}?tab=bio" );
         }
     }
 
@@ -135,7 +135,7 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save changes </button> or
-<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
 <?php } ?>

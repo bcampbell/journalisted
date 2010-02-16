@@ -53,7 +53,7 @@ class AwardsPage extends EditProfilePage
         }
 
         if( $action != 'edit' && $action != 'new' ) {
-            $this->Redirect( "/{$this->journo['ref']}" );
+            $this->Redirect( "/{$this->journo['ref']}?tab=bio" );
         }
     }
 
@@ -112,7 +112,7 @@ class AwardsPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit" />
 <button class="submit" type="submit">Save</button>
-<a class="cancel" href="/<?= $this->journo['ref'] ?>">cancel</a>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $award['id']; ?>" />
 <?php } ?>
