@@ -48,10 +48,8 @@ if( get_http_var( 'allarticles' ) == 'yes' ) {
     page_header( $title, $pageparams );
 
 ?>
-<div id="maincolumn">
+<div class="main">
 <?php    journo_emitAllArticles( $journo ); ?>
-</div>
-<div id= "smallcolumn">
 </div>
 <?php
 

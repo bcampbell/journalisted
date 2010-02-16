@@ -369,6 +369,7 @@ function journo_calculateSlowData( &$journo ) {
     foreach( $foo as $f ) {
         $tags[$f['tag']] = $f['freq'];
     }
+    ksort( $tags );
     $slowdata['tags'] = $tags;
 
     $slowdata['guessed_main_org'] = journo_guessMainOrg( $journo['id'] );
@@ -440,9 +441,7 @@ EOT;
     unset($a);
 
 ?>
-<div class="box">
  <h2>Articles by <a href="/<?php echo $journo['ref']; ?>"><?php echo $journo['prettyname']; ?></a></h2>
- <div class="box-content">
   <p><?php echo sizeof($arts); ?> articles:</p>
   <ul class="art-list">
 
@@ -463,8 +462,6 @@ EOT;
 
   <p>Article(s) missing? If you notice an article is missing,
   <a href="/missing?j=<?php echo $journo['ref'];?>">click here</a></p>
- </div>
-</div>
 <?php
 }
 

@@ -118,12 +118,12 @@
  $tags          - list of tags used by this journo
                   as an array of tag=>freq pairs
                   eg array( 'economy'=>65, 'sucks'=>1023 )
-                  in order of freq, descending.
+                  in alphabetical order
 
 */
 
 
-
+$MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
 
 /* build up a list of _current_ employers */
@@ -248,7 +248,7 @@ $previous_employers = array_unique( $previous_employers );
 
   <ul class="art-list">
 
-<?php foreach( $articles as $art ) { ?>
+<?php $n=0; foreach( $articles as $art ) { ?>
     <li class="hentry">
         <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
@@ -256,7 +256,7 @@ $previous_employers = array_unique( $previous_employers );
         <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
         <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
     </li>
-<?php } ?>
+<?php ++$n; if( $n>=$MAX_ARTICLES ) break; } ?>
 <?php if( !$articles ) { ?>
   <p>None known</p>
 <?php } ?>
@@ -569,7 +569,7 @@ blah blah blah blah blah
 
 
 <div class="box">
-  <div class="head"><h3>Most mentioned topics</h3></div>
+  <div class="head"><h3>10 topics mentioned most by <?= $prettyname ?></h3></div>
   <div class="body">
     <div class="tags">
 <?php
@@ -606,8 +606,11 @@ blah blah blah blah blah
 <div class="box">
   <div class="head"><h3>Most blogged-about</h3></div>
   <div class="body">
-    <a href="<?= article_url( $most_blogged['id'] );?>"><?= $most_blogged['title'];?></a>
-    (<?= $most_blogged['total_bloglinks'] ?> blog posts)
+    <ul>
+     <li><a href="<?= article_url( $most_blogged['id'] );?>"><?= $most_blogged['title'];?></a>
+     (<?= $most_blogged['total_bloglinks'] ?> blog posts)
+     </li>
+    <ul>
   </div>
 </div>
 <?php } ?>

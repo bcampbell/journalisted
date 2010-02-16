@@ -72,7 +72,7 @@
 
 <div style="clear:both;"></div>
 
-<div class="box">
+<div class="box thisweek">
 <div class="head"><h3>This Week on Journalisted</h3></div>
 <div class="body">
  <ul>
