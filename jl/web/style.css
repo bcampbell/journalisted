@@ -55,6 +55,16 @@ ul.art-list li {
 
 abbr.published { text-decoration: none; border: none; }
 
+/* lists of biographical items */
+ul.bio-list { padding: 0; list-style: none; }
+ul.bio-list li {
+  padding: 8px 0px;
+  border-bottom: 1px solid #cccccc;
+  list-style: none;
+}
+
+
+
 /* fancify edit links */
 a.edit {
   padding-left: 15px;
@@ -93,6 +103,7 @@ a.edit {
 
 
 
+.bio h4 { color: #222222; font-size: 110% }
 .bio .jobtitle { color: #222222; font-size: 110% }
 .bio .publication { color: #222222; font-size: 110% }
 .bio .daterange { color: #555555; }

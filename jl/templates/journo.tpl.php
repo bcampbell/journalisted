@@ -162,7 +162,7 @@ $previous_employers = array_unique( $previous_employers );
     </div>
 
     <div class="fudge">
-<?php if( $bios ) { ?>
+<?php /* if( $bios ) { ?>
     <div class="section bios">
       <h4>Bio</h4>
 <?php foreach($bios as $bio ) { ?>
@@ -173,7 +173,7 @@ $previous_employers = array_unique( $previous_employers );
       </p>
 <?php } ?>
     </div>
-<?php } ?>
+<?php } */ ?>
 
 
 <?php /* if( !$quick_n_nasty && $writtenfor ) { ?>
@@ -311,7 +311,7 @@ $previous_employers = array_unique( $previous_employers );
   </div>
   <div class="body">
 <?php if( $employers ) { ?>
-    <ul>
+    <ul class="bio-list">
 <?php foreach( $employers as $e ) { ?>
  <?php if( $e['year_to'] ) { ?>
       <li>
@@ -322,7 +322,7 @@ $previous_employers = array_unique( $previous_employers );
         <?php } ?>
       </li>
  <?php } else { ?>
-      <li class="current-employer" ><span class="jobtitle"><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></span><br/>
+      <li class="current-employer" ><h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
         <span class="daterange"><?= $e['year_from'] ?>-Present</span>
         <?php if( $can_edit_page ) { ?>
         <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">edit</a>
@@ -341,17 +341,19 @@ $previous_employers = array_unique( $previous_employers );
 </div>
 
 
-<div class="">
+<div class="education">
   <div class="head">
     <h3>Education</h3>
   </div>
   <div class="body">
 <?php if( $education ) { ?>
-    <ul>
+    <ul class="bio-list">
 <?php foreach( $education as $edu ) { ?>
       <li>
-        <?= $edu['school']; ?><br/>
+        <h4><?= $edu['school']; ?><h4>
+<?php if( $edu['qualification'] && $edu['field'] ) { ?>
         <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
+<?php } ?>
         <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
         <?php if( $can_edit_page ) { ?>
         <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">edit</a>
@@ -369,16 +371,17 @@ $previous_employers = array_unique( $previous_employers );
 </div>
 
 
-<div class="">
+<div class="books">
   <div class="head">
     <h3>Books by <?= $prettyname ?></h3>
   </div>
   <div class="body">
 <?php if( $books ) { ?>
-    <ul>
+    <ul class="bio-list">
 <?php foreach( $books as $b ) { ?>
     <li>
-      <?= $b['title']; ?> (<?= $b['publisher']; ?>, <?= $b['year_published']; ?>)
+      <h4><?= $b['title']; ?></h4>
+      <?= $b['publisher']; ?>, <?= $b['year_published']; ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">edit</a>
       <?php } ?>
@@ -395,16 +398,17 @@ $previous_employers = array_unique( $previous_employers );
 </div>
 
 
-<div class="">
+<div class="awards">
   <div class="head">
     <h3>Awards Won</h3>
   </div>
   <div class="body">
 <?php if( $awards ) { ?>
-    <ul>
+    <ul class="bio-list">
 <?php foreach( $awards as $a ) { ?>
     <li>
-      <?php if( $a['year'] ) { ?><?= $a['year'] ?>: <?php } ?><?= $a['award']; ?>
+      <h4><?= $a['award']; ?></h4>
+      <?php if( $a['year'] ) { ?><?= $a['year'] ?><?php } ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">edit</a>
       <?php } ?>
@@ -436,7 +440,7 @@ $previous_employers = array_unique( $previous_employers );
   </div>
   <div class="body">
 <?php if( $known_email ) { /* we've got a known email address - show it! */ ?>
-    <p>Email <?= $prettyname ?> at: <span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
+    <p><span class="journo-email"><?= SafeMailTo( $known_email['email'] ); ?></span></p>
 <?php if( $known_email['srcurl'] ) { ?>
     <span class="email-source">(from <a class="extlink" href="<?= $known_email['srcurl'] ?>"><?= $known_email['srcurlname'] ?></a>)</span>
 <?php } ?>
@@ -475,7 +479,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $twitter_id ) { ?>
     <p>Direct message <?= $prettyname; ?>: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered any Twitter information</p>
+    <p class="not-known"><?= $prettyname ?> has not entered a Twitter account</p>
 <?php } ?>
   </div>
 </div>
