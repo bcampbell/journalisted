@@ -34,7 +34,7 @@ EOT;
 
     page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
 
-
+/*
     $sql = <<<EOT
 SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, e.event_time, e.event_type, e.context_json
     FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
@@ -47,7 +47,21 @@ EOT;
 //        $ev['context'] = json_decode( $ev['context_json'], TRUE );
         $ev['description'] = eventlog_Describe( $ev );
     }
+*/
 
+    $sql = <<<EOT
+SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, min(now()-e.event_time) as when
+    FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
+    WHERE event_time>NOW()-interval '12 hours'
+    GROUP BY journo_ref, journo_prettyname
+    ORDER BY min( now()-e.event_time) ASC
+    LIMIT 10;
+EOT;
+    $events = db_getAll( $sql );
+    foreach( $events as &$ev ) {
+//        $ev['context'] = json_decode( $ev['context_json'], TRUE );
+        $ev['description'] = $ev['when'];    //eventlog_Describe( $ev );
+    }
 
     $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted LIMIT 5" );
 
@@ -57,6 +71,34 @@ EOT;
     unset( $n );
 
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
+
+
+    // most blogged-about articles TODO: 1 month too long. should shrink.
+    $sql = <<<EOT
+SELECT a.id,a.srcorg,a.title,a.permalink,a.total_bloglinks,o.prettyname as srcorgname
+    FROM article a INNER JOIN organisation o ON a.srcorg=o.id
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '1 month'
+        AND a.total_bloglinks > 0
+    ORDER BY a.total_bloglinks DESC
+    LIMIT 5
+EOT;
+
+    $most_blogged_about = db_getAll( $sql );
+    foreach( $most_blogged_about as &$a ) {
+        article_addJournos( $a );
+    }
+    unset( $a );
+
+
+    // recently-viewed journos
+    // TODO: really not so happy about this... (see web/journo.php too)
+    $sql = <<<EOT
+SELECT j.ref, j.prettyname
+    FROM recently_viewed v INNER JOIN journo j ON j.id=v.journo_id
+    ORDER BY v.view_time DESC
+    LIMIT 5
+EOT;
+    $recently_viewed = db_getAll( $sql );
 
     {
         include "../templates/frontpage.tpl.php";

@@ -57,6 +57,12 @@ if( get_http_var( 'allarticles' ) == 'yes' ) {
     exit;
 }
 
+// UGH!
+db_do( "DELETE FROM recently_viewed WHERE journo_id=?", $journo['id'] );
+db_do( "INSERT INTO recently_viewed (journo_id) VALUES (?)", $journo['id'] );
+db_commit();
+
+
 $title = $journo['prettyname'];
 page_header( $title, $pageparams );
 

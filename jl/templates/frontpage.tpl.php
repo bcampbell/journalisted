@@ -35,11 +35,9 @@
 <div class="body">
 
 <ul>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
+<?php foreach( $recently_viewed as $j ) { ?>
+  <li><a href="/<?= $j['ref'] ?>"><?= $j['prettyname'] ?></a></li>
+<?php } ?>
 </ul>
 </div>
 </div>
@@ -60,13 +58,12 @@
 <div class="box most-blogged">
 <div class="head"><h3>Most blogged-about Articles</h3></div>
 <div class="body">
-<ul>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-<li>blah</li>
-</ul>
+  <ul>
+<?php foreach( $most_blogged_about as $art ) { ?>
+      <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a> (<?php echo $art['total_bloglinks'];?> blogs)
+      </li>
+<?php } ?>
+  </ul>
 </div>
 </div>
 
