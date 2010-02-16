@@ -164,8 +164,7 @@ class WeblinksPage extends EditProfilePage
 
 ?>
 
-<h2>Elsewhere on the web</h2>
-
+<h2><?= $this->journo['prettyname'] ?> on the web</h2>
 <form class="weblink" method="POST" action="<?= $this->pagePath; ?>">
 
 <?php
@@ -181,6 +180,7 @@ class WeblinksPage extends EditProfilePage
     <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
   </div>
 </form>
+<p>Note: journa<i>listed</i> reserves the right to change or remove links</p>
 <?php
     }
 
