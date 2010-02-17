@@ -27,6 +27,10 @@
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
 
+  <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
+  <script type="text/javascript" src="/js/jl-util.js"></script>
+
 <?php foreach( $js_files as $f ) { ?>
   <script type="text/javascript" src="<?= $f ?>"></script>
 <?php } ?>
@@ -35,6 +39,10 @@
 
   <script type="text/javascript" language="JavaScript">
         addLoadEvent( activatePlaceholders );
+
+    $(document).ready( function() {
+            $('#header .search select').sSelect();
+        });
   </script>
 </head>
 
@@ -74,7 +82,7 @@
       <div class="search">
         <form action="/search" method="get">
 <!--        <label for="q">Search articles</label> -->
-          <select name="type">
+          <select id="win-xp" name="type">
             <option value="journo"<?= ($search['type']=='journo')?' selected':'' ?>>Search journalists</option>
             <option value="article"<?= ($search['type']=='article')?' selected':'' ?>>Search articles</option>
           </select>

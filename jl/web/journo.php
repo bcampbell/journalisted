@@ -148,8 +148,6 @@ function extra_head()
 
     $tab = get_http_var( 'tab', 'work' );
 ?>
-<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<!-- <link type="text/css" rel="stylesheet" href="/profile.css" /> -->
 
 <script type="text/javascript">
 $(document).ready(

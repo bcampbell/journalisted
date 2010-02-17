@@ -350,6 +350,37 @@ form dl {
   border: 0;
 }
 
+
+/* jquery-stylish-select plugin */
+
+.stylish-select ul.newList {left:-9999px;}  /* hide while loading page */
+
+ul.newList * {margin:0; padding:0;}
+ul.newList a {color: #666; text-decoration:none; display:block;}
+ul.newList {margin:0; padding:0; list-style:none; color:#666; width:140px; background:#fff; position:absolute;  border:1px solid #ccc; top:22px; left:0; overflow:auto; z-index:9999;}
+
+.newListSelected {
+    margin-right: 4px;
+    width:135px; color:#666; height:22px; padding:3px 0 0 6px; float:left;
+    background: #ffffff url('/img/dropdown.png') no-repeat center right;
+    border: 1px solid #888888;
+}
+
+.newListSelected span {width:134px; display:block;}
+ul.newList li a {padding:3px 8px; display: block;}
+ul.newList li a:focus {-moz-outline-style: none;}
+/*.selectedTxt {width:258px; overflow:hidden; height:16px; padding:0 23px 0 0;} */
+/*
+.hiLite {background:#650101!important; color:#fff!important;}
+.hiLite a {background:#650101!important; color:#fff!important;}
+*/
+.newListHover {background:#ccc!important; color:#000!important; cursor:default;}
+/*.newListSelHover, .newListSelFocus {background-position:0 -22px; cursor:default;} */
+.newListOptionTitle {font-weight:bold;}
+.newListOptionTitle ul {margin:3px 0 0;}
+.newListOptionTitle li {font-weight:normal; border-left:1px solid #ccc;}
+
+
 /* FOOTER */
 
 #footer {

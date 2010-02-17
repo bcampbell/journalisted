@@ -20,11 +20,15 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <head>
 <title>JL admin<?php if( $title ) { print " - $title"; }; ?></title>
 <style type="text/css" media="all">@import "/adm/admin-style.css";</style>
-<script type="text/javascript" src="/adm/jquery.js"></script>
-<script type="text/javascript" src="/adm/jquery.form.js"></script>
-<script type="text/javascript" src="/adm/jquery.autocomplete.js"></script>
-<style type="text/css" media="all">@import "/adm/jquery.autocomplete.css";</style>
-<!-- <script type="text/javascript" src="/adm/jquery.tablesorter.js"></script> -->
+<style type="text/css" media="all">@import "/js/jquery.autocomplete.css";</style>
+
+<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
+<script type="text/javascript" src="/js/jl-util.js"></script>
+
+<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
+<script type="text/javascript" src="/js/jquery.form.js"></script>
+
 <?php
     if( !is_null( $extra_head_fn ) ) {
     	call_user_func( $extra_head_fn );

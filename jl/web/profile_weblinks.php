@@ -40,9 +40,6 @@ class WeblinksPage extends EditProfilePage
     function extra_head()
     {
 ?>
-<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/js/jquery.form.js"></script>
-<script type="text/javascript" src="/js/jl-util.js"></script>
 <script type="text/javascript">
 
     $(document).ready( function() {

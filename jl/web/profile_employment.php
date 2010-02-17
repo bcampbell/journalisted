@@ -27,12 +27,6 @@ class EmploymentPage extends EditProfilePage
         // TODO: use compressed jquery.autocomplete
 
 ?>
-<link type="text/css" rel="stylesheet" href="/css/jquery.autocomplete.css" />
-<script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="/js/jquery.form.js"></script>
-<script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
-<script type="text/javascript" src="/js/jl-fancyforms.js"></script>
-
 <script type="text/javascript">
 
     $(document).ready( function() {
