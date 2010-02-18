@@ -211,6 +211,12 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
             if( array_key_exists( 'oneliner', $j ) )
                 $out .= " <small><em>({$j['oneliner']})</em></small>";
             $out .= " <small>[<a href=\"/adm/{$j['ref']}\">admin</a>]</small>";
+            /* can provide an array of extra links */
+            if( array_key_exists( 'extralinks', $j ) ) {
+                foreach( $j['extralinks'] as $l ) {
+                    $out .= " <small>[<a href=\"{$l['href']}\">{$l['text']}</a>]</small>";
+                }
+            }
             return $out;
         }
 
@@ -706,6 +712,12 @@ class WhosWritingAbout extends CannedQuery {
             /* format */
             $results = array();
             foreach( $journos as $j ) {
+
+                $search_url = "/search?type=article&by=" . $j['ref'] . "&q=" . urlencode( $q );
+
+                $j['extralinks'] = array(
+                    array('href'=>$search_url, 'text'=>'show articles')
+                );
                 $results[] = array( 'journo'=>$j,
                     'articles'=>$j['articles'],
                     'wordcount'=>$j['wordcount'] );
@@ -716,7 +728,6 @@ class WhosWritingAbout extends CannedQuery {
             } else {
                 uasort($results, 'cmp_article_count');
             }
-
 
             Tabulate( $results );
         }
