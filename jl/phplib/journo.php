@@ -91,6 +91,7 @@ function journo_getBioLinks( &$journo )
     foreach( $rows as $r )
     {
         $desc = '';
+        $kind = 'profile';
         if( $r['kind'] == 'guardian-profile' ) {
             $desc = "Biography (from The Guardian)";
         } elseif( $r['kind'] == 'wikipedia-profile' ) {
@@ -98,7 +99,7 @@ function journo_getBioLinks( &$journo )
         } else {
             continue;
         }
-        $links[] = array( 'url'=>$r['srcurl'], 'description'=>$desc );
+        $links[] = array( 'url'=>$r['srcurl'], 'description'=>$desc, 'kind'=>$kind );
     }
 
     return $links;

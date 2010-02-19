@@ -63,9 +63,6 @@ db_do( "INSERT INTO recently_viewed (journo_id) VALUES (?)", $journo['id'] );
 db_commit();
 
 
-$title = $journo['prettyname'];
-page_header( $title, $pageparams );
-
 // just use journo id to index cache... other pages won't clash.
 $cacheid = 'json_' . $journo['id'];
 $data = null;
@@ -127,13 +124,24 @@ $data['can_edit_page'] = $can_edit_page;
 // need to make sure the page template only displayed events which were less than than a day or so old...
 $data['recent_changes'] = journo_fetchRecentEvents( $journo['id'] );
 
-/* all set - invoke the template to render the page! */
-{
+
+/* all set - invoke a template to render the page! */
+$fmt = get_http_var( 'fmt','html' );
+if( $fmt == 'rdf' ) {
     extract( $data );
-    include "../templates/journo.tpl.php";
+
+    header( "Content-Type: application/rdf+xml" );
+    include "../templates/journo.rdf.tpl.php";
+} else {
+    $title = $journo['prettyname'];
+    page_header( $title, $pageparams );
+    {
+        extract( $data );
+        include "../templates/journo.tpl.php";
+    }
+    page_footer();
 }
 
-page_footer();
 
 
 

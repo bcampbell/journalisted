@@ -20,7 +20,7 @@
 
  $writtenfor   - eg "The Sun, The Mirror and The Daily Telegraph"
 
- $known_email  - array of known email details (or null)
+ $known_email  - email address details (or null)
     email      - email address
     srcurl     - source of address (eg a news article)
     srcurlname - description of source (eg "The Guardian")
@@ -29,6 +29,8 @@
     orgname    -
     orgphone   -
     emails     - array of email addresses
+
+ $phone_number - phone number
 
  $twitter_id   - if journo has one, else null
  $twitter_url  - url of journos twitter feed (or null)

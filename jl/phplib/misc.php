@@ -316,10 +316,22 @@ function h_array( $a )
 
 
 
-//
+// shorthand for use in templates
 function h( $s, $enc='UTF-8' )
 {
     return htmlentities( $s, ENT_QUOTES, $enc='UTF-8' );
+}
+
+
+// TODO: do this properly!
+function xmlentities( $s ) {
+    return htmlentities( $s );
+}
+
+// shorthand for use in templates
+function x( $s )
+{
+    return xmlentities($s);
 }
 
 
@@ -427,5 +439,6 @@ function article_Augment( &$a )
         $a['srcorgname'] = $orgs[ $a['srcorg'] ];
     }
 }
+
 
 ?>
