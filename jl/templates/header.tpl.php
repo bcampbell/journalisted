@@ -69,8 +69,8 @@
 <!--    <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"><a href="/list">Journalists A-Z</a></li>
           <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"><a href="/tags">Subject Index</a></li>
 -->
-          <li><a href="/about">About</a></li>
 <?php if( $logged_in_user ) { ?>
+          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"><a href="/about">About</a></li>
           <li><a href="/logout">Log out</a></li>
 <?php } else { ?>
           <li class="alert<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
