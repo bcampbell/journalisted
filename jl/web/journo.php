@@ -156,44 +156,33 @@ function extra_head()
 
     $tab = get_http_var( 'tab', 'work' );
 ?>
-
+<script type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
 <script type="text/javascript">
-$(document).ready(
-    function() {
-<?php if( $tab=='bio' ) { ?>
-        $('#tab-work').hide();
-        $('#tab-contact').hide();
-<?php } elseif( $tab=='contact' ) { ?>
-        $('#tab-work').hide();
-        $('#tab-bio').hide();
-<?php } else /*work*/ { ?>
-        $('#tab-bio').hide();
-        $('#tab-contact').hide();
-<?php } ?>
-        $(".tabs a[href='#tab-work']").click( function() {
-            $('.tabs li').removeClass('current');
-            $(this).closest('li').addClass('current');
-            $('#tab-bio').hide();
-            $('#tab-contact').hide();
-            $('#tab-work').show();
-            return false;
-        });
-        $(".tabs a[href='#tab-bio']").click( function() {
-            $('.tabs li').removeClass('current');
-            $(this).closest('li').addClass('current');
-            $('#tab-work').hide();
-            $('#tab-contact').hide();
-            $('#tab-bio').show();
-            return false;
-        });
-        $(".tabs a[href='#tab-contact']").click( function() {
-            $('.tabs li').removeClass('current');
-            $(this).closest('li').addClass('current');
-            $('#tab-work').hide();
-            $('#tab-bio').hide();
-            $('#tab-contact').show();
-            return false;
-        });
+    $(document).ready(
+    function () {
+        var tabs = $('.tabs li');
+        function setTab( tabname ) {
+            if( tabname != '#tab-bio' && tabname != '#tab-contact' ) {
+                tabname = '#tab-work';
+            }
+            tabs.each( function() {
+                tabid = $('a',this).attr('href');
+                if( tabid == tabname ) {
+                    $(tabid).show();
+                    $(this).addClass( 'current' );
+                } else {
+                    $(tabid).hide();
+                    $(this).removeClass( 'current' );
+                }
+            } );
+        }
+        $(window).bind( 'hashchange', function() {
+            var hash = location.hash;
+            setTab( hash );
+        } );
+        $(window).trigger( 'hashchange' );
+
+        /* */
 
         var searchLabel = $('.journo-profile .search form label').remove().text();
         $('#findarticles').addClass('placeholder').val(searchLabel).focus(function() {

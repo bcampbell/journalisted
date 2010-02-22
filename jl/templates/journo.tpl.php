@@ -143,7 +143,8 @@ foreach( $employers as $emp ) {
 /* list of previous employers (just employer name, nothing else) */
 $previous_employers = array();
 foreach( $employers as $emp ) {
-    $previous_employers[] = $emp['employer'];
+    if( $emp['year_to'] )
+        $previous_employers[] = $emp['employer'];
 }
 $previous_employers = array_unique( $previous_employers );
 
@@ -485,7 +486,7 @@ $previous_employers = array_unique( $previous_employers );
   </div>
   <div class="body">
 <?php if( $twitter_id ) { ?>
-    <p>Direct message <?= $prettyname; ?>: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
+    <p>Find <?= $prettyname; ?> on twitter: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered a Twitter account</p>
 <?php } ?>
