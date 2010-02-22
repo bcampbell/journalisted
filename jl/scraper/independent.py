@@ -169,9 +169,9 @@ def Extract_eScenic( html, context ):
     # Big names have their own sections which makes bylining them easy
     if not byline:
         try:
-            as = soup.find('div', id='breadcrumbs').findAll('a')
-            if as[-2].string in ('Commentators', 'Columnists'):
-                byline = as[-1].string
+            foos = soup.find('div', id='breadcrumbs').findAll('a')
+            if foos[-2].string in ('Commentators', 'Columnists'):
+                byline = foos[-1].string
         except (IndexError, AttributeError):
             pass
     
