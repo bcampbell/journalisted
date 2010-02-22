@@ -31,7 +31,7 @@
 
 
 <div class="box recently-viewed">
-<div class="head"><h3>Recently Viewed</h3></div>
+<div class="head"><h3>Recently viewed</h3></div>
 <div class="body">
 
 <ul>
@@ -43,7 +43,7 @@
 </div>
 
 <div class="box recently-updated">
-<div class="head"><h3>Recently Updated</h3></div>
+<div class="head"><h3>Recently updated</h3></div>
 <div class="body">
 
 <ul>
@@ -56,7 +56,7 @@
 </div>
 
 <div class="box most-blogged">
-<div class="head"><h3>Most blogged-about Articles</h3></div>
+<div class="head"><h3>Most blogged-about articles</h3></div>
 <div class="body">
   <ul>
 <?php foreach( $most_blogged_about as $art ) { ?>

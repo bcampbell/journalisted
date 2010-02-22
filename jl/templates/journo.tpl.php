@@ -408,7 +408,7 @@ $previous_employers = array_unique( $previous_employers );
 
 <div class="awards">
   <div class="head">
-    <h3>Awards Won</h3>
+    <h3>Awards won</h3>
   </div>
   <div class="body">
 <?php if( $awards ) { ?>
