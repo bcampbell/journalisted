@@ -619,6 +619,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .recently-viewed, .recently-updated, .most-blogged {
   float: left;
   width: 314px;   /* = 975 = n + 16 + n + 16 + n */
+  min-height: 150px;
 }
 .recently-updated { margin: 0 16px; }
 
