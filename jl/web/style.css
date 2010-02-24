@@ -480,10 +480,10 @@ ul.newList li a:focus {-moz-outline-style: none;}
   border: 0px;
   margin: 30px 0px 0px 0px;
   padding: 0px 0px 0px 8px;
-
 }
 
 .main .tabs ul li {
+  display: inline;
 }
 
 .main .tabs a {
