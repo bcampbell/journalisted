@@ -17,7 +17,7 @@ $ref = strtolower( get_http_var( 'ref' ) );
 $journo = NULL;
 
 if( $ref ) {
-    $journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
+    $journo = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
     if( !$journo ) {
         header("HTTP/1.0 404 Not Found");
         exit(1);
@@ -35,7 +35,7 @@ $P = person_if_signed_on();
 if( is_null($journo) ) {
     // no journo given - if person is logged on, see if they are associated with a journo (or journos)
     if( $P ) {
-        $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit' AND j.status='a'", $P->id() );
+        $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit'", $P->id() );
 
         if( sizeof( $editables) > 1 ) {
             /* let user pick which one... */
@@ -74,6 +74,11 @@ if( $journo && $P ) {
             exit();
     }
 }
+
+
+/* only be specific about _active_ journos. for inactive ones, be vague. */
+if( $journo['status'] != 'a' )
+    $journo = null;
 
 showRegistration( $journo );
 

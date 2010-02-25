@@ -9,7 +9,9 @@
  $prettyname   - eg "Bob Smith"
  $ref          - eg "bob-smith"
  $oneliner     - oneline description for journo (eg "The Guardian, The Observer")
-
+ $status       - status of this journo:
+                'a'=active, 'i'=inactive, 'h'=hidden
+                 (should be 'a' can be 'i' or 'h' only if $can_edit_page is set)
  $rssurl       - url of RSS feed for this page
 
  $picture      - array with picture of journo (or null)
@@ -148,9 +150,16 @@ foreach( $employers as $emp ) {
 }
 $previous_employers = array_unique( $previous_employers );
 
-
-
 ?>
+
+<?php if( $status != 'a' ) { ?>
+<div class="not-public">
+  <p><strong>Please Note:</strong>
+  Your page is not yet publicly accessible.
+  It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> five articles.
+  </p>
+</div>
+<?php } ?>
 
 
 <div class="main journo-profile">
