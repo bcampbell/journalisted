@@ -654,7 +654,7 @@ EOT;
 //
 function journo_FuzzyFind( $query )
 {
-    $parts = preg_split( '/\s+/', $query );
+    $parts = preg_split( '/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY );
 
     $matches = array();
     if( sizeof( $parts ) == 1 ) {
