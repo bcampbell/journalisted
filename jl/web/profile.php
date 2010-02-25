@@ -24,11 +24,6 @@ if( $ref ) {
     }
 }
 
-$login_reasons = array(
-    'reason_web' => "Edit your page on Journalisted",
-    'reason_email' => "Edit your page on Journalisted",
-    'reason_email_subject' => "Edit your page on Journalisted"
-    );
 
 $P = person_if_signed_on();
 
@@ -80,11 +75,94 @@ if( $journo && $P ) {
 if( $journo['status'] != 'a' )
     $journo = null;
 
-showRegistration( $journo );
+
+$action = strtolower( get_http_var( 'action' ) );
+
+
+if( $action == 'lookup' ) {
+    showLookupPage();
+} else if( $action == 'claim' ) {
+    showClaimPage( $journo );
+} else if( $action == 'create' ) {
+    showCreatePage();
+} else {
+    showInfoPage( $journo );
+}
 
 
 
-function showRegistration( $journo )
+/* page to lookup and see if journo already has an entry */
+function showLookupPage()
+{
+    page_header( "lookup" );
+
+    $fullname = get_http_var( 'fullname','' );
+
+?>
+<div class="main">
+<p>You might already have a page on journa<i>listed</i>. Let's see...</p>
+<form method="get" action="/profile">
+ <label for="fullname">My name is:</label>
+ <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
+ <input type="hidden" name="action" value="lookup" />
+ <input type="submit" value="<?= ($fullname=='')?"Look me up":"Look up again" ?>" />
+</form>
+<?php
+
+    if( $fullname ) {
+        $matching_journos = journo_FuzzyFind( $fullname );
+        $uniq=0;
+
+        if( $matching_journos ) {
+
+?>
+<form method="get" action="/profile">
+<p>Are you one of these people already on journa<i>listed</i>?</p>
+
+
+<?php foreach( $matching_journos as $j ) { ?>
+<input type="radio" id="ref_<?= $uniq ?>" name="ref" value="<?= $j['ref'] ?>" />
+<label for="ref_<?= $uniq ?>"><?= $j['prettyname']; ?> (<?= $j['oneliner'] ?>)</label>
+<br/>
+<?php ++$uniq; } ?>
+<br/>
+<br/>
+<input type="hidden" name="action" value="claim" />
+<input type="submit" value="Yes - that's me!" />
+</form>
+<a href="/profile?action=create&fullname=<?= h( $fullname ) ?>">No... Create a new profile for me</a>
+</div>
+<?php
+
+        } else {
+            /* searched, found no matches */
+?>
+            <p>Couldn't find you.</p>
+            <a href="/profile?action=create&fullname=<?= h( $fullname ) ?>">Create a new profile for me</a>
+<?php
+        }
+    }
+
+    page_footer();
+}
+
+
+
+/*
+    $login_reasons = array(
+        'reason_web' => "Edit your page on Journalisted",
+        'reason_email' => "Edit your page on Journalisted",
+        'reason_email_subject' => "Edit your page on Journalisted"
+    );
+*/
+
+
+
+
+
+
+/* show a page with info on claiming or creating a journo profile */
+function showInfoPage( $journo=null )
 {
 
 $title = "Edit profile";
@@ -116,9 +194,12 @@ page_header( $title );
 
 <div class="register-now">
 <p class="get-in-touch">
-To register, just <?= SafeMailto( $contactemail, 'get in touch' );?> and let us know who you are.
+<?php if( $journo ) { ?>
+<a href="/profile?action=claim&ref=<?= $journo['ref'] ?>">Claim your profile</a>
+<?php } else { ?>
+<a href="/profile?action=lookup">Create your profile</a>
+<?php } ?>
 </p>
-<p>or if you already have an account, <a href="/login">log in now</a></p>
 </div>
 
 
@@ -127,5 +208,44 @@ To register, just <?= SafeMailto( $contactemail, 'get in touch' );?> and let us 
 
 page_footer();
 }
+
+
+
+function showCreatePage()
+{
+    $person = person_signon(array(
+        'reason_web' => "Log in to create a profile",
+        'reason_email' => "Log in to Journalisted to create a profile",
+        'reason_email_subject' => 'Log in to Journalisted'
+    ));
+
+    page_header("");
+?>
+<div class="main">
+<p>TODO: Create a new blank profile here, and associate it with <?= $person->email ?></p>
+</div>
+<?php
+    page_footer();
+}
+
+
+function showClaimPage( $journo )
+{
+    $person = person_signon(array(
+        'reason_web' => "Log in to claim your profile",
+        'reason_email' => "Log in to Journalisted to claim your profile",
+        'reason_email_subject' => 'Log in to Journalisted'
+    ));
+
+    page_header("");
+?>
+<div class="main">
+<p>Claim Page TODO: associate <?= $journo['ref'] ?> with <?= $person->email ?> (unless already taken!)</p>
+</div>
+<?php
+    page_footer();
+}
+
+
 
 ?>
