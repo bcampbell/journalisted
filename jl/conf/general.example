@@ -20,11 +20,19 @@ define('OPTION_TEAM_EMAIL', 'team@' . OPTION_WEB_DOMAIN );
 define('OPTION_BASE_URL', 'http://' . OPTION_WEB_HOST . '.' . OPTION_WEB_DOMAIN);
 
 // root dir on filesystem (use to run scripts), without trailing /
-define('OPTION_JL_FSROOT', '/home/ben/proj/journalisted/jl');
+define('OPTION_JL_FSROOT', '/tmp/jl');
 define('OPTION_JL_IMG_UPLOAD', OPTION_JL_FSROOT . '/web/img');
+
+// location of xapian db (fulltext index)
+define('OPTION_JL_XAPDB', '/tmp/jl-xapdb');
 
 define('OPTION_JL_DISABLE_CACHE', '1');
 
 // set to 1 to enable google analytics (see phplib/page.php)
 define('OPTION_JL_GOOGLE_ANALYTICS_ENABLE', '0');
+
+// no confirmation email for login - show link directly on the
+// "we've sent you an email page" instead
+define('OPTION_JL_BYPASS_LOGIN_EMAIL', '0');
+
 ?>
