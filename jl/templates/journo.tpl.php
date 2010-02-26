@@ -152,7 +152,7 @@ $previous_employers = array_unique( $previous_employers );
 
 ?>
 
-<?php if( $status != 'a' ) { ?>
+<?php if( $can_edit_page && $status != 'a' ) { ?>
 <div class="not-public">
   <p><strong>Please Note:</strong>
   Your page is not yet publicly accessible.

@@ -213,16 +213,40 @@ page_footer();
 
 function showCreatePage()
 {
-    $person = person_signon(array(
+    // we need them logged on first
+    $P = person_signon(array(
         'reason_web' => "Log in to create a profile",
         'reason_email' => "Log in to Journalisted to create a profile",
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
+    $fullname = get_http_var( 'fullname' );
+    if( !$fullname )
+    {
+        showLookupPage();
+        return;
+    }
+
+    $journo = journo_create( $fullname );
+
+    // link user to journo
+    db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
+        $P->id,
+        $journo['id'],
+        'edit' );
+    db_commit();
+
+    // set persons name if blank
+    if( $P->name_or_blank() == '' ) {
+        $P->name( $journo['prettyname'] );  // (does a commit)
+    }
+
+
     page_header("");
 ?>
 <div class="main">
-<p>TODO: Create a new blank profile here, and associate it with <?= $person->email ?></p>
+<p>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?>!</p>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a>!</p>
 </div>
 <?php
     page_footer();
@@ -231,21 +255,107 @@ function showCreatePage()
 
 function showClaimPage( $journo )
 {
-    $person = person_signon(array(
+    // we need them logged on first
+    $P = person_signon(array(
         'reason_web' => "Log in to claim your profile",
         'reason_email' => "Log in to Journalisted to claim your profile",
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
-    page_header("");
+    // has anyone already claimed this journo?
+    $foo = db_getAll( "SELECT journo_id FROM person_permission WHERE journo_id=? AND permission='edit'", $journo['id'] );
+    if( $foo ) {
+        // uhoh...
+        page_header("");
 ?>
 <div class="main">
-<p>Claim Page TODO: associate <?= $journo['ref'] ?> with <?= $person->email ?> (unless already taken!)</p>
+<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>!</p>
+<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know!' );?></p>
+</div>
+<?php
+        page_footer();
+        return;
+    }
+
+
+    // OK - we're set to go!
+    db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
+        $P->id,
+        $journo['id'],
+        'edit' );
+    db_commit();
+
+    // set persons name if blank
+    if( $P->name_or_blank() == '' ) {
+        $P->name( $journo['prettyname'] );  // (does a commit)
+    }
+
+    page_header("");
+
+?>
+<div class="main">
+<p>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?>!</p>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a>!</p>
 </div>
 <?php
     page_footer();
 }
 
 
+function toSlug( $s )
+{
+    $s = trim( $s );
+    $s = preg_replace( '/\s+/', ' ', $s );  // collapse spaces
+    $s = @iconv('UTF-8', 'ASCII//TRANSLIT', $s );  
+    $s = preg_replace("/[^a-zA-Z0-9 -]/", "", $s );  
+    $s = strtolower($s);
+    $s = str_replace(" ", '-', $s );
+    return $s;
+}
+
+
+
+
+// create a new, blank journo entry
+function journo_create( $fullname )
+{
+
+    $fullname = trim( $fullname );
+    $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
+
+    // TODO: should deal with name titles/suffixes ("Dr." etc) but not a big deal
+    $ref = toSlug( $fullname );
+    // make sure ref is unique
+    $i=1;
+    while( db_getOne( "SELECT id FROM journo WHERE ref=?", $ref ) ) {
+        $ref = toSlug( $fullname ) . "-" . $i++;
+    }
+
+
+    // work out firstname and lastname
+    $parts = explode( ' ', $fullname );
+    $firstname = array_shift( $parts );
+    if( is_null( $firstname ) )
+        $firstname = '';
+    $lastname = array_pop( $parts );
+    if( is_null( $lastname ) )
+        $lastname = '';
+
+    $sql = <<<EOT
+INSERT INTO journo (ref,prettyname,firstname,lastname,status,firstname_metaphone,lastname_metaphone,created)
+    VALUES (?,?,?,?,?,?,?,NOW())
+EOT;
+    db_do( $sql,
+        $ref,
+        $fullname,
+        $firstname,
+        $lastname,
+        'i',
+        metaphone( $firstname ),
+        metaphone( $lastname ) );
+    db_commit();
+
+    return db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
+}
 
 ?>
