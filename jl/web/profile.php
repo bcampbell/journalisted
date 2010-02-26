@@ -100,12 +100,12 @@ function showLookupPage()
 
 ?>
 <div class="main">
-<p>You might already have a page on journa<i>listed</i>. Let's see...</p>
+<p>You might already have a profile on journa<i>listed</i>. Let's check...</p>
 <form method="get" action="/profile">
  <label for="fullname">My name is:</label>
  <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
  <input type="hidden" name="action" value="lookup" />
- <input type="submit" value="<?= ($fullname=='')?"Look me up":"Look up again" ?>" />
+ <input type="submit" value="<?= ($fullname=='')?"Search":"Search again" ?>" />
 </form>
 <?php
 
@@ -125,20 +125,26 @@ function showLookupPage()
 <label for="ref_<?= $uniq ?>"><?= $j['prettyname']; ?> (<?= $j['oneliner'] ?>)</label>
 <br/>
 <?php ++$uniq; } ?>
-<br/>
-<br/>
 <input type="hidden" name="action" value="claim" />
-<input type="submit" value="Yes - that's me!" />
+<input type="submit" value="Yes, that's me" />
 </form>
-<a href="/profile?action=create&fullname=<?= h( $fullname ) ?>">No... Create a new profile for me</a>
+or...
+<form method="get" action="/profile">
+  <input type="hidden" name="action" value="create" />
+  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
+  <input type="submit" value="No, create a new profile for me, <?= h($fullname)?>" />
 </div>
 <?php
 
         } else {
             /* searched, found no matches */
 ?>
-            <p>Couldn't find you.</p>
-            <a href="/profile?action=create&fullname=<?= h( $fullname ) ?>">Create a new profile for me</a>
+<p>Couldn't find any profiles matching your name.</p>
+<form method="get" action="/profile">
+  <input type="hidden" name="action" value="create" />
+  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
+  <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
+</div>
 <?php
         }
     }
@@ -176,7 +182,7 @@ page_header( $title );
 <div class="main">
 
 <?php if( $journo ) { ?>
-<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile!</h2>
+<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile</h2>
 <?php } else { ?>
 <h2>Are you a journalist?</h2>
 
@@ -195,7 +201,7 @@ page_header( $title );
 <div class="register-now">
 <p class="get-in-touch">
 <?php if( $journo ) { ?>
-<a href="/profile?action=claim&ref=<?= $journo['ref'] ?>">Claim your profile</a>
+<a href="/profile?action=claim&ref=<?= $journo['ref'] ?>">Edit your profile</a>
 <?php } else { ?>
 <a href="/profile?action=lookup">Create your profile</a>
 <?php } ?>
@@ -226,7 +232,6 @@ function showCreatePage()
         showLookupPage();
         return;
     }
-
     $journo = journo_create( $fullname );
 
     // link user to journo
@@ -245,8 +250,8 @@ function showCreatePage()
     page_header("");
 ?>
 <div class="main">
-<p>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?>!</p>
-<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a>!</p>
+<h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
 </div>
 <?php
     page_footer();
@@ -269,8 +274,8 @@ function showClaimPage( $journo )
         page_header("");
 ?>
 <div class="main">
-<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>!</p>
-<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know!' );?></p>
+<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>...</p>
+<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know' );?></p>
 </div>
 <?php
         page_footer();
@@ -294,8 +299,8 @@ function showClaimPage( $journo )
 
 ?>
 <div class="main">
-<p>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?>!</p>
-<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a>!</p>
+<h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
 </div>
 <?php
     page_footer();
@@ -351,8 +356,9 @@ EOT;
         $firstname,
         $lastname,
         'i',
-        metaphone( $firstname ),
-        metaphone( $lastname ) );
+        substr( metaphone($firstname), 0, 4),
+        substr( metaphone($lastname), 0, 4)
+    );
     db_commit();
 
     return db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
