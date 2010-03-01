@@ -12,7 +12,10 @@ require_once '../phplib/scrapeutils.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
-$state = strtolower( get_http_var('state','initial' ) );
+
+
+$P = person_if_signed_on(); /* (ugly hack to force login processing here, which might involve outputing http headers for cookies) */
+
 $ref = strtolower( get_http_var( 'j' ) );   /* eg 'fred-bloggs' */
 $journo = NULL;
 if( $ref )
@@ -33,11 +36,9 @@ else
 page_header($title);
 
 ?>
-<div id="maincolumn">
+<div class="main">
 
-<div class="box">
 <h2>Tell us about missing articles for <a href="/<?php echo $journo['ref'];?>"><?php echo $journo['prettyname']; ?></a></h2>
-<div class="box-content">
 
 <?php
 
@@ -45,13 +46,14 @@ do_it();
 
 
 ?>
-</div>
-</div>
-</div> <!-- end maincolumn -->
-<div id="smallcolumn">
+</div> <!-- end main -->
+
+<div class="sidebar">
   <div class="box">
+    <div class="head">
     <h3>Why might an article be missing?</h3>
-    <div class="box-content">
+    </div>
+    <div class="body">
       <p>An article may not appear on a journalist's page if:</p>
       <ul>
         <li>It was not published in one of the <a href="/about#whichoutlets">news outlets</a> we cover (but that's OK - tell us anyway so we can list it)</li>
@@ -63,11 +65,27 @@ do_it();
       </ul>
     </div>
   </div>
-</div>  <!-- end smallcolumn -->
+</div>  <!-- end sidebar -->
 <?php
 
 page_footer();
 
+
+// return true if user is logged in and has access to this journo
+function canEditJourno( $journo_id )
+{
+    $P = person_if_signed_on();
+
+    if( is_null( $P ) )
+        return FALSE;
+
+    if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
+        $P->id(), $journo_id ) ) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
 
 
 
@@ -157,7 +175,7 @@ function is_sane_article_url( $url )
 {
     $bits = crack_url( $url );
     if( $bits === FALSE )
-        return "Please enter the full url of the article";
+        return "Please enter the full url of this article";
     // default to http://
     if( $bits['scheme'] == '' ) {
         $bits['scheme'] = 'http';
@@ -169,7 +187,7 @@ function is_sane_article_url( $url )
     $query = trim( $bits['query'] );
 
     if( $host == '' ) {
-        return "Please enter the full url of the article";
+        return "Please enter the full url of this article";
     }
 
     // no ftp: or internal file: links please!
@@ -185,7 +203,7 @@ function is_sane_article_url( $url )
 
     // make sure we've got at least a non-blank path (or a non-blank query)
     if( ($path=='' || $path=='/') && $query=='' ) {
-        return "Please enter the FULL url of the article";
+        return "Please enter the FULL url of this article";
     }
 
     return null;
@@ -248,10 +266,16 @@ function process_item( &$item )
             if( !$item['errs'] ) {
                 $sql = <<<EOT
 INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
-    VALUES ( ?,?,?,?,?,'u' )
+    VALUES ( ?,?,?,?,?,? )
 EOT;
                 $dt = new DateTime( $item['pubdate'] );
-                db_do( $sql, $journo['id'], $item['url'], $item['title'], $dt->format(DateTime::ISO8601), $item['publication'] );
+                db_do( $sql,
+                    $journo['id'],
+                    $item['url'],
+                    $item['title'],
+                    $dt->format(DateTime::ISO8601),
+                    $item['publication'],
+                    canEditJourno( $journo['id'] ) ? 'a':'u' );
                 db_commit();
 
                 $item['state'] = 'ok_extra';
