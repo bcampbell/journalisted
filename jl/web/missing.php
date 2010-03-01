@@ -9,7 +9,9 @@ require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
 require_once '../phplib/scrapeutils.php';
+require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
+require_once '../../phplib/person.php';
 require_once '../../phplib/utility.php';
 
 
@@ -264,19 +266,30 @@ function process_item( &$item )
         if( $item['state'] == 'need_extra' ) {
             $item['errs'] = check_details( $item );
             if( !$item['errs'] ) {
+                $dt = new DateTime( $item['pubdate'] );
+                $art = array(
+                    'journo_id'=>$journo['id'],
+                    'url'=>$item['url'],
+                    'title'=>$item['title'],
+                    'publication'=>$item['publication'],
+                    'status'=>canEditJourno( $journo['id'] ) ? 'a':'u',
+                    'pubdate_iso' => $dt->format(DateTime::ISO8601) );
+
                 $sql = <<<EOT
 INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
     VALUES ( ?,?,?,?,?,? )
 EOT;
-                $dt = new DateTime( $item['pubdate'] );
                 db_do( $sql,
-                    $journo['id'],
-                    $item['url'],
-                    $item['title'],
-                    $dt->format(DateTime::ISO8601),
-                    $item['publication'],
-                    canEditJourno( $journo['id'] ) ? 'a':'u' );
+                    $art['journo_id'],
+                    $art['url'],
+                    $art['title'],
+                    $art['pubdate_iso'],
+                    $art['publication'],
+                    $art['status'] );
+                $art['id'] = db_getOne( "SELECT lastval()" );
                 db_commit();
+
+                eventlog_Add( 'submit-otherarticle', $journo['id'], $art );
 
                 $item['state'] = 'ok_extra';
             }
