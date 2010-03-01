@@ -30,7 +30,7 @@ class EditProfilePage
     function __construct()
     {
         $ref = get_http_var( 'ref' );
-        $this->journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
+        $this->journo = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
         $r = array(
             'reason_web' => "Edit Journalisted profile for {$this->journo['prettyname']}",
             'reason_email' => "Edit Journalisted profile for {$this->journo['prettyname']}",

@@ -47,7 +47,7 @@ class EducationPage extends EditProfilePage
         }
 
         if( $action != 'edit' && $action != 'new_school' && $action != 'new_uni' ) {
-            $this->Redirect( "/{$this->journo['ref']}?tab=bio" );
+            $this->Redirect( "/{$this->journo['ref']}#tab-bio" );
         }
     }
 
@@ -134,7 +134,7 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit_school" />
 <button class="submit" type="submit">Save changes </button> or
-<a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-bio">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
 <?php } ?>
@@ -190,7 +190,7 @@ class EducationPage extends EditProfilePage
 <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
 <input type="hidden" name="action" value="submit_uni" />
 <button class="submit" type="submit">Save changes </button> or
-<a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
+<a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-bio">cancel</a>
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= $edu['id']; ?>" />
 <?php } ?>

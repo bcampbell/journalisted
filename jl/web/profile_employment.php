@@ -64,7 +64,7 @@ class EmploymentPage extends EditProfilePage
         }
 
         if( $action != 'edit' && $action != 'new' ) {
-            $this->Redirect( "/{$this->journo['ref']}?tab=bio" );
+            $this->Redirect( "/{$this->journo['ref']}#tab-bio" );
         }
     }
 
@@ -140,7 +140,7 @@ class EmploymentPage extends EditProfilePage
 <input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
 <?php } ?>
 <input type="hidden" name="action" value="submit" />
-<button class="submit" type="submit">Save changes</button> or <a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=bio">cancel</a>
+<button class="submit" type="submit">Save changes</button> or <a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-bio">cancel</a>
 <div style="clear:both;"></div>
 </form>
 

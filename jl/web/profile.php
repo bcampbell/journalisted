@@ -17,25 +17,20 @@ $ref = strtolower( get_http_var( 'ref' ) );
 $journo = NULL;
 
 if( $ref ) {
-    $journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
+    $journo = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
     if( !$journo ) {
         header("HTTP/1.0 404 Not Found");
         exit(1);
     }
 }
 
-$login_reasons = array(
-    'reason_web' => "Edit your page on Journalisted",
-    'reason_email' => "Edit your page on Journalisted",
-    'reason_email_subject' => "Edit your page on Journalisted"
-    );
 
 $P = person_if_signed_on();
 
 if( is_null($journo) ) {
     // no journo given - if person is logged on, see if they are associated with a journo (or journos)
     if( $P ) {
-        $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit' AND j.status='a'", $P->id() );
+        $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit'", $P->id() );
 
         if( sizeof( $editables) > 1 ) {
             /* let user pick which one... */
@@ -75,11 +70,105 @@ if( $journo && $P ) {
     }
 }
 
-showRegistration( $journo );
+
+/* only be specific about _active_ journos. for inactive ones, be vague. */
+if( $journo['status'] != 'a' )
+    $journo = null;
+
+
+$action = strtolower( get_http_var( 'action' ) );
+
+
+if( $action == 'lookup' ) {
+    showLookupPage();
+} else if( $action == 'claim' ) {
+    showClaimPage( $journo );
+} else if( $action == 'create' ) {
+    showCreatePage();
+} else {
+    showInfoPage( $journo );
+}
 
 
 
-function showRegistration( $journo )
+/* page to lookup and see if journo already has an entry */
+function showLookupPage()
+{
+    page_header( "lookup" );
+
+    $fullname = get_http_var( 'fullname','' );
+
+?>
+<div class="main">
+<p>You might already have a profile on journa<i>listed</i>. Let's check...</p>
+<form method="get" action="/profile">
+ <label for="fullname">My name is:</label>
+ <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
+ <input type="hidden" name="action" value="lookup" />
+ <input type="submit" value="<?= ($fullname=='')?"Search":"Search again" ?>" />
+</form>
+<?php
+
+    if( $fullname ) {
+        $matching_journos = journo_FuzzyFind( $fullname );
+        $uniq=0;
+
+        if( $matching_journos ) {
+
+?>
+<form method="get" action="/profile">
+<p>Are you one of these people already on journa<i>listed</i>?</p>
+
+
+<?php foreach( $matching_journos as $j ) { ?>
+<input type="radio" id="ref_<?= $uniq ?>" name="ref" value="<?= $j['ref'] ?>" />
+<label for="ref_<?= $uniq ?>"><?= $j['prettyname']; ?> (<?= $j['oneliner'] ?>)</label>
+<br/>
+<?php ++$uniq; } ?>
+<input type="hidden" name="action" value="claim" />
+<input type="submit" value="Yes, that's me" />
+</form>
+or...
+<form method="get" action="/profile">
+  <input type="hidden" name="action" value="create" />
+  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
+  <input type="submit" value="No, create a new profile for me, <?= h($fullname)?>" />
+</div>
+<?php
+
+        } else {
+            /* searched, found no matches */
+?>
+<p>Couldn't find any profiles matching your name.</p>
+<form method="get" action="/profile">
+  <input type="hidden" name="action" value="create" />
+  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
+  <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
+</div>
+<?php
+        }
+    }
+
+    page_footer();
+}
+
+
+
+/*
+    $login_reasons = array(
+        'reason_web' => "Edit your page on Journalisted",
+        'reason_email' => "Edit your page on Journalisted",
+        'reason_email_subject' => "Edit your page on Journalisted"
+    );
+*/
+
+
+
+
+
+
+/* show a page with info on claiming or creating a journo profile */
+function showInfoPage( $journo=null )
 {
 
 $title = "Edit profile";
@@ -93,7 +182,7 @@ page_header( $title );
 <div class="main">
 
 <?php if( $journo ) { ?>
-<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile!</h2>
+<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile</h2>
 <?php } else { ?>
 <h2>Are you a journalist?</h2>
 
@@ -111,9 +200,12 @@ page_header( $title );
 
 <div class="register-now">
 <p class="get-in-touch">
-To register, just <?= SafeMailto( $contactemail, 'get in touch' );?> and let us know who you are.
+<?php if( $journo ) { ?>
+<a href="/profile?action=claim&ref=<?= $journo['ref'] ?>">Edit your profile</a>
+<?php } else { ?>
+<a href="/profile?action=lookup">Create your profile</a>
+<?php } ?>
 </p>
-<p>or if you already have an account, <a href="/login">log in now</a></p>
 </div>
 
 
@@ -121,6 +213,155 @@ To register, just <?= SafeMailto( $contactemail, 'get in touch' );?> and let us 
 <?php
 
 page_footer();
+}
+
+
+
+function showCreatePage()
+{
+    // we need them logged on first
+    $P = person_signon(array(
+        'reason_web' => "Log in to create a profile",
+        'reason_email' => "Log in to Journalisted to create a profile",
+        'reason_email_subject' => 'Log in to Journalisted'
+    ));
+
+    $fullname = get_http_var( 'fullname' );
+    if( !$fullname )
+    {
+        showLookupPage();
+        return;
+    }
+    $journo = journo_create( $fullname );
+
+    // link user to journo
+    db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
+        $P->id,
+        $journo['id'],
+        'edit' );
+    db_commit();
+
+    // set persons name if blank
+    if( $P->name_or_blank() == '' ) {
+        $P->name( $journo['prettyname'] );  // (does a commit)
+    }
+
+
+    page_header("");
+?>
+<div class="main">
+<h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
+</div>
+<?php
+    page_footer();
+}
+
+
+function showClaimPage( $journo )
+{
+    // we need them logged on first
+    $P = person_signon(array(
+        'reason_web' => "Log in to claim your profile",
+        'reason_email' => "Log in to Journalisted to claim your profile",
+        'reason_email_subject' => 'Log in to Journalisted'
+    ));
+
+    // has anyone already claimed this journo?
+    $foo = db_getAll( "SELECT journo_id FROM person_permission WHERE journo_id=? AND permission='edit'", $journo['id'] );
+    if( $foo ) {
+        // uhoh...
+        page_header("");
+?>
+<div class="main">
+<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>...</p>
+<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know' );?></p>
+</div>
+<?php
+        page_footer();
+        return;
+    }
+
+
+    // OK - we're set to go!
+    db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
+        $P->id,
+        $journo['id'],
+        'edit' );
+    db_commit();
+
+    // set persons name if blank
+    if( $P->name_or_blank() == '' ) {
+        $P->name( $journo['prettyname'] );  // (does a commit)
+    }
+
+    page_header("");
+
+?>
+<div class="main">
+<h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
+<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
+</div>
+<?php
+    page_footer();
+}
+
+
+function toSlug( $s )
+{
+    $s = trim( $s );
+    $s = preg_replace( '/\s+/', ' ', $s );  // collapse spaces
+    $s = @iconv('UTF-8', 'ASCII//TRANSLIT', $s );  
+    $s = preg_replace("/[^a-zA-Z0-9 -]/", "", $s );  
+    $s = strtolower($s);
+    $s = str_replace(" ", '-', $s );
+    return $s;
+}
+
+
+
+
+// create a new, blank journo entry
+function journo_create( $fullname )
+{
+
+    $fullname = trim( $fullname );
+    $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
+
+    // TODO: should deal with name titles/suffixes ("Dr." etc) but not a big deal
+    $ref = toSlug( $fullname );
+    // make sure ref is unique
+    $i=1;
+    while( db_getOne( "SELECT id FROM journo WHERE ref=?", $ref ) ) {
+        $ref = toSlug( $fullname ) . "-" . $i++;
+    }
+
+
+    // work out firstname and lastname
+    $parts = explode( ' ', $fullname );
+    $firstname = array_shift( $parts );
+    if( is_null( $firstname ) )
+        $firstname = '';
+    $lastname = array_pop( $parts );
+    if( is_null( $lastname ) )
+        $lastname = '';
+
+    $sql = <<<EOT
+INSERT INTO journo (ref,prettyname,firstname,lastname,status,firstname_metaphone,lastname_metaphone,created)
+    VALUES (?,?,?,?,?,?,?,NOW())
+EOT;
+    db_do( $sql,
+        $ref,
+        $fullname,
+        $firstname,
+        $lastname,
+        'i',
+        substr( metaphone($firstname), 0, 4),
+        substr( metaphone($lastname), 0, 4)
+    );
+    db_commit();
+
+    return db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
 }
 
 ?>

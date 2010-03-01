@@ -17,7 +17,7 @@ require_once '../../phplib/utility.php';
 /* get journo identifier (eg 'fred-bloggs') */
 
 $ref = strtolower( get_http_var( 'ref' ) );
-$journo = db_getRow( "SELECT * FROM journo WHERE status='a' AND ref=?", $ref );
+$journo = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
 if(!$journo)
 {
     spew_404( $ref );
@@ -33,6 +33,13 @@ if( !is_null($P) )
         $P->id(), $journo['id'] ) ) {
         $can_edit_page = TRUE;
     }
+}
+
+
+// if journo is not active, only allow viewing if logged-in user can edit page
+if( $journo['status'] != 'a' && !$can_edit_page ) {
+    spew_404( $ref );
+    exit(1);
 }
 
 
@@ -58,9 +65,11 @@ if( get_http_var( 'allarticles' ) == 'yes' ) {
 }
 
 // UGH!
-db_do( "DELETE FROM recently_viewed WHERE journo_id=?", $journo['id'] );
-db_do( "INSERT INTO recently_viewed (journo_id) VALUES (?)", $journo['id'] );
-db_commit();
+if( $journo['status'] == 'a' ) {
+    db_do( "DELETE FROM recently_viewed WHERE journo_id=?", $journo['id'] );
+    db_do( "INSERT INTO recently_viewed (journo_id) VALUES (?)", $journo['id'] );
+    db_commit();
+}
 
 
 // just use journo id to index cache... other pages won't clash.

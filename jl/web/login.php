@@ -255,15 +255,25 @@ function DoLoginViaEmailPage()
         if( !$errs )
         {
             // send the email...
-            DoConfirmationEmail();
+            $confirmation_url = DoConfirmationEmail();
 
             page_header("Now check your email!" );
 ?>
+<div class="main">
 <p class="loudmessage">
 Now check your email!<br/>
 <br/>
 We've sent you an email, and you'll need to click the link in it to log in.
 </p>
+<?php if(OPTION_JL_BYPASS_LOGIN_EMAIL ) { ?>
+<div style="font-weight: bold; border: 1px dashed red; padding: 1em; margin 1em;">
+ <h3>FOR TESTING</h3>
+ <p>No email was really sent. You can log in directly here:<br/>
+  <a href="<?= $confirmation_url ?>"><?= $confirmation_url ?></a>
+ </p>
+</div>
+<?php } ?>
+</div>
 <?php
 
             page_footer();
@@ -329,8 +339,11 @@ function DoConfirmationEmail()
     $subject = $values['reason_email_subject'];
     $from_name = "Journalisted";
     $from_email = OPTION_TEAM_EMAIL;
-    jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+    if( !OPTION_JL_BYPASS_LOGIN_EMAIL ) {
+        jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+    }
 
+    return $url;
 }
 
     

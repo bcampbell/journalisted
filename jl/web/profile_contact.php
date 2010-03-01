@@ -35,7 +35,7 @@ class ContactPage extends EditProfilePage
         if( $action == "submit" ) {
             $this->handleSubmit();
             // back to main profile page now please
-            $this->Redirect( "/{$this->journo['ref']}?tab=contact" );
+            $this->Redirect( "/{$this->journo['ref']}#tab-contact" );
         }
     }
 
@@ -96,7 +96,7 @@ Please do not enter any information wish to keep private.</p>
   <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
   <input type="hidden" name="action" value="submit" />
   <button class="submit" type="submit">Save changes</button> or
-  <a class="cancel" href="/<?= $this->journo['ref'] ?>?tab=contact">cancel</a>
+  <a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-contact">cancel</a>
 
 </form>
 

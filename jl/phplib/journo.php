@@ -654,7 +654,8 @@ EOT;
 
 
 // return a list of journos which match the query text using metaphone
-// algorithm to do approximate matching.
+// algorithm to do approximate matching. result is returned in order
+// of levenstien distance (best match first)
 //
 // Tries to handle these cases:
 // - full firstname and full lastname, eg "Andrew Marr"
@@ -665,33 +666,48 @@ EOT;
 //
 function journo_FuzzyFind( $query )
 {
-    $parts = preg_split( '/\s+/', $query );
+    $parts = preg_split( '/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY );
 
     $matches = array();
     if( sizeof( $parts ) == 1 ) {
         /* single name - match as firstname, then lastname */
         $mph = substr( metaphone( $parts[0] ), 0, 4 );
         $matches =  array_merge(
-            db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? ORDER BY lastname,firstname", $mph ),
-            db_getAll( "SELECT * FROM journo WHERE status='a' AND lastname_metaphone=? ORDER BY lastname,firstname", $mph ) );
+            db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=?", $mph ),
+            db_getAll( "SELECT * FROM journo WHERE status='a' AND lastname_metaphone=?", $mph ) );
     } else if( sizeof($parts) >= 2 ) {
         /* try matching both first and last names */
         $firstname_mph = substr( metaphone( $parts[0] ),0,4 );
         $lastname_mph = substr( metaphone( end( $parts ) ),0,4 );
-        $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname_metaphone=? ORDER BY lastname,firstname",
+        $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname_metaphone=?",
             $firstname_mph, $lastname_mph );
         if( !$matches ) {
             /* if no matches, treat the last name as partially entered and use it as wildcard */
             $lastname = strtolower( end( $parts ) );
-            $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname LIKE ? ORDER BY lastname,firstname",
+            $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname LIKE ?",
             $firstname_mph,
             $lastname . '%' );
         }
-
-
     }
 
+    /* add levenshtein distance and sort */
+    foreach( $matches as &$m ) {
+        $m['levenshtein'] = levenshtein( $query, $m['prettyname'] );
+    }
+    unset( $m );
+
+    usort( $matches, "cmp_levenshtein" );
+
     return $matches;
+}
+
+function cmp_levenshtein( $a, $b ) {
+    if( $a['levenshtein'] == $b['levenshtein'] )
+        return 0;
+    if( $a['levenshtein'] < $b['levenshtein'] )
+        return -1;  // want lowest first
+    else
+        return 1;
 }
 
 
