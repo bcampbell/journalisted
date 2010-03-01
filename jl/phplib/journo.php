@@ -613,7 +613,7 @@ SELECT a.id,a.title,a.description,a.pubdate,a.permalink, o.prettyname as srcorgn
 EOT;
     $arts = db_getAll( $sql, $journo['id'], $limit );
 
-
+    /* merge non scraped articles into the big list */
     $sql = <<<EOT
 SELECT NULL as id, title, NULL as description, pubdate, url as permalink, publication as srcorgname, NULL as srcorg, 0 as total_bloglinks, 0 as total_comments
     FROM journo_other_articles
@@ -622,17 +622,28 @@ SELECT NULL as id, title, NULL as description, pubdate, url as permalink, public
     LIMIT ?
 EOT;
     $others = db_getAll( $sql, $journo['id'], $limit );
+    foreach( $others as &$a ) {
+        if( !$a['srcorgname'] ) {
+            // no publication given? use the url.
+            $bits = crack_url( $a['permalink'] );
+            $a['srcorgname'] = $bits['host'];
+        }
+    }
+    unset($a);
+
 
     $arts = array_merge( $arts, $others );
 
     /* augment results with pretty formatted date and buzz info */
     foreach( $arts as &$a ) {
+
         article_Augment($a);
         if( !is_null( $a['id'] ) )
             $a['buzz'] = BuzzFragment( $a );
         else
             $a['buzz'] = '';
     }
+    unset($a);
 
     usort( $arts, "cmp_isopubdate" );
 
