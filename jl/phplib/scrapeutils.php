@@ -56,4 +56,67 @@ function scrape_ScrapeURL( $url )
 }
 
 
+
+//
+// returns array with results:
+// status - string, one of:
+//    'fail'  Failed to scrape
+//    'new' a new article was added to DB
+//    'already_had' article was already in db
+//
+// article - array with keys:
+//    id - article id
+//    journos - array of attributed journos
+//
+function scrape_ScrapeArticle( $url )
+{
+    global $JLBIN;
+
+	putenv("JL_DEBUG=2");
+
+	$cmd = $JLBIN . "/scrape-tool";
+	$cmd .= ' -u ' . escapeshellarg( $url );
+	$cmd = $cmd . ' 2>/dev/null';
+
+	ob_start();
+    $ret = -1;
+    passthru($cmd, &$ret );
+	$out = ob_get_contents();
+	ob_end_clean();
+
+    $result = array();
+    $result['status'] = 'fail';
+
+    if($ret != 0 ) {
+        return $result;
+    }
+
+
+    preg_match('/: (?P<newcnt>\d+) new, (?P<failcnt>\d+) failed\s*$/', $out, $matches );
+    $newcnt = $matches['newcnt'];
+    $failcnt = $matches['failcnt'];
+
+    if( $failcnt > 0 ) {
+        return $result;
+    }
+
+    preg_match('/\[a(?P<artid>\d+).*?\]/', $out, $matches );
+
+    $art = array();
+
+    $art['id'] = $matches['artid'];
+    $art['journos'] = db_getAll( "SELECT j.* FROM journo j INNER JOIN journo_attr attr ON attr.journo_id=j.id WHERE attr.article_id=?", $art['id'] );
+
+    $result['article'] = $art;
+    if( $newcnt > 0 ) {
+        $result['status'] = 'new';
+    } else {
+        $result['status'] = 'already_had';
+    }
+
+    return $result;
+
+}
+
+
 ?>
