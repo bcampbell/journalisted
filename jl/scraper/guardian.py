@@ -671,7 +671,7 @@ def FindBlogFeeds():
 #    feeds.append( ('All guardian.co.uk blog posts', 'http://blogs.guardian.co.uk/atom.xml') )
 
 
-    bloglist = soup.find( 'div', {'id':'related'} ) 
+    bloglist = soup.find( 'div', {'class':'bd'} ).find( 'ul', {'class':'two-col last'})
 
     for a in bloglist.findAll( 'a', {'class': 'link-text'} ):
         url = a['href']
@@ -1181,6 +1181,8 @@ def DupeCheckFunc( artid, art ):
     if WhichFormat( art['srcurl'] ) != 'storyserver':
         return
 
+    assert( false )    #     oh? DupeCheckFunc _is_ still needed?
+
     srcorg = orgmap[ art['srcorgname'] ]
     pubdatestr = '%s' % (art['pubdate'])
 
@@ -1246,18 +1248,19 @@ def FindArticles():
 
 
 # connection and orgmap used by DupeCheckFunc()
-myconn = DB.Connect()
+if 0:
+    myconn = DB.Connect()
 
-orgmap = {}
-c = myconn.cursor()
-c.execute( "SELECT id,shortname FROM organisation" )
-while 1:
-    row=c.fetchone()
-    if not row:
-        break
-    orgmap[ row[1] ] = row[0]
-c.close()
-c=None
+    orgmap = {}
+    c = myconn.cursor()
+    c.execute( "SELECT id,shortname FROM organisation" )
+    while 1:
+        row=c.fetchone()
+        if not row:
+            break
+        orgmap[ row[1] ] = row[0]
+    c.close()
+    c=None
 
 
 
