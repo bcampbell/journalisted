@@ -251,7 +251,13 @@ $previous_employers = array_unique( $previous_employers );
 <div class="tab-content" id="tab-work">
 
 <div class="previous-articles">
-  <div class="head"><h3>Articles</h3></div>
+  <div class="head">
+<?php if( sizeof($articles)<$MAX_ARTICLES ) { ?>
+    <h3>Articles</h3>
+<?php } else { ?>
+    <h3>Latest <?= $MAX_ARTICLES ?> articles</h3>
+<?php } ?>
+  </div>
   <div class="body">
     <div class="search">
     <form action="/search" method="get">
@@ -271,7 +277,7 @@ $previous_employers = array_unique( $previous_employers );
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
         <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
         <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">See similar articles</a><br/> <?php } ?>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
     </li>
 <?php ++$n; if( $n>=$MAX_ARTICLES ) break; } ?>
 <?php if( !$articles ) { ?>
