@@ -553,10 +553,10 @@ $previous_employers = array_unique( $previous_employers );
 <a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
 <div class="box subscribe-newsletter">
-<div class="head"><h3>Subscribe to journa<i>listed</i> weekly</h3></div>
-<div class="body">
-Weekly digest of previous week's journalism every Tuesday
-</div>
+  <div class="head"><h3>journa<i>listed</i> weekly digest</h3></div>
+  <div class="body">
+    <p>To receive the journa<i>listed</i> digest every Tuesday via email, <a href="/weeklydigest">subscribe here</a></p>
+  </div>
 </div>
 
 <div class="box you-can-also">
