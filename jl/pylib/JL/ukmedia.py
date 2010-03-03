@@ -19,7 +19,7 @@ import urllib2
 import socket
 from datetime import datetime
 import time
-import md5
+import hashlib
 
 import Journo
 import DB
@@ -466,7 +466,7 @@ def BylineOMatic2(para):
 
 def GetCacheFilename(url):
     """ use a md5 hash to cache files, as some urls are waaaaay too long for the filesystem """
-    hash = md5.new()
+    hash = hashlib.md5()
     hash.update(url)
     return hash.hexdigest()
 
