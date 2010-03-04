@@ -123,6 +123,14 @@ a.remove {
 
 .not-known { font-style: italic; color: #888888; }
 
+/* "eg alert added" */
+.infomessage {
+  background-color: #ddddff;
+  border: 1px dashed #8888cc;
+  padding: 8px;
+  font-weight: bold;
+}
+
 /* default form styling */
 
 form {
