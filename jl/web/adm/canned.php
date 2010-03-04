@@ -31,6 +31,7 @@ $canned = array(
     new TopTags(),
     new QueryFight(),
     new WhosWritingAbout(),
+    new NewsletterSubscribers(),
 );
 
 
@@ -753,6 +754,26 @@ function cmp_word_count( $a, $b ) {
         return -1;
 }
 
+
+class NewsletterSubscribers extends CannedQuery {
+    function __construct() {
+        $this->name = "NewsletterSubscribers";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List of users subscribed to the newsletter";
+
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT p.name,p.email
+    FROM person_receives_newsletter n INNER JOIN person p ON p.id=n.person_id
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
 
 
 ?>
