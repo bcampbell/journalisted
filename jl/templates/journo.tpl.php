@@ -311,6 +311,92 @@ $previous_employers = array_unique( $previous_employers );
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
+
+
+
+<div id="placeholder" style="width:600px;height:300px"></div>
+
+<?php
+$d1_bits = array();
+$i=0;
+foreach( $artcounts as $yearmonth=>$cnt ) {
+    // convert to javascript timestamps
+    $dt = new DateTime( "{$yearmonth}-01" );
+    $jsts = (int)($dt->format('U')) * 1000;
+    $d1_bits[] = "[$jsts,$cnt]";
+    ++$i;
+}
+?>
+<script language="javascript" type="text/javascript">
+
+  $(function () {
+
+    var d1 = [ <?= implode( ',', $d1_bits ) ?> ];
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var plot = $.plot($("#placeholder"), [
+            { data: d1,
+              label: "Articles written each month",
+              lines: {show: true },
+              points: {show: true }
+            }
+        ],
+        {
+
+       xaxis: {
+          mode: "time",
+          tickSize: [1, 'month'],
+          tickFormatter: function (val, axis) {
+            var d = new Date(val);
+            if( d.getMonth()==0 ) {
+                return '<div style="border-left: 1px solid black">' + months[ d.getMonth() ] + "<br/>" + d.getFullYear() + "</div>";
+
+            } else {
+                return months[ d.getMonth() ];
+            }
+          }
+
+        },
+        yaxis: { minTickSize: 1, tickDecimals: 0 },
+        grid: { hoverable: true, clickable: true }
+     });
+
+    function showTooltip(x, y, contents) {
+        $('<div id="tooltip">' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y - 25,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    var previousPoint = null;
+    $("#placeholder").bind("plothover", function (event, pos, item) {
+        if (item) {
+            if (previousPoint != item.datapoint) {
+                previousPoint = item.datapoint;
+                    
+                $("#tooltip").remove();
+            //    var x = item.datapoint[0].toFixed(2),
+              //      y = item.datapoint[1].toFixed(2);
+                 
+                var dt = new Date( item.datapoint[0] );
+                var tiptxt = item.datapoint[1] + " articles during " + months[dt.getMonth()] + " " + dt.getFullYear()
+               showTooltip(item.pageX, item.pageY, tiptxt );
+            }
+        }
+        else {
+            $("#tooltip").remove();
+            previousPoint = null;            
+        }
+    });
+  });
+
+</script>
+
 <?php } else { ?>
     <p>(sorry, information not currently available)</p>
 <?php } ?>

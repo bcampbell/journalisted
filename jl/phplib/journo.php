@@ -347,8 +347,50 @@ function journo_calcStats( $journo )
     $row = db_getRow( $sql, $journo_id );
     $stats['toptag_alltime'] = $row ? $row['tag'] : null;
 
+    $stats['artcounts'] = journo_calcMonthlyStats( $journo );
+
     return $stats;
 }
+
+
+function journo_calcMonthlyStats( $journo )
+{
+
+    $num_months = 12;
+
+    $artcounts = array();
+    for( $i=$num_months-1; $i>=0; --$i )
+    {
+        $dt = new DateTime( "-$i months" );
+        $artcounts[ $dt->format('Y-m') ] = 0;
+    }
+
+    // fetch data in range [$start,$end)
+    $start = date_create( "-" . ($num_months-1) . " months" )->format( 'Y-m-01' );
+    $end = date_create( "+1 month" )->format( 'Y-m-01' );
+
+    // TODO: include other_articles!
+    $sql = <<<EOT
+SELECT DATE_TRUNC( 'month', a.pubdate)::date as month, COUNT(*) as num_articles
+    FROM (journo_attr attr INNER JOIN article a ON a.id=attr.article_id)
+    WHERE attr.journo_id=? AND a.pubdate>=?::timestamp AND a.pubdate<?::timestamp
+    GROUP BY month ORDER BY month ASC
+EOT;
+
+    $rows = db_getAll( $sql,
+        $journo['id'],
+        $start,
+        $end );
+
+    foreach( $rows as $row ) {
+        $month = substr( $row['month'], 0,7 ); // "yyyy-mm-dd" => "yyyy-mm"
+        $artcounts[ $month ] = $row['num_articles'];
+    }
+
+    return $artcounts;
+}
+
+
 
 
 

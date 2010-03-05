@@ -165,8 +165,10 @@ function extra_head()
 
     $tab = get_http_var( 'tab', 'work' );
 ?>
-<script type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
-<script type="text/javascript">
+<!--[if IE]><script language="javascript" type="text/javascript" src="excanvas.min.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="/js/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
+<script language="javascript" type="text/javascript">
     $(document).ready(
     function () {
         var tabs = $('.tabs li');
@@ -208,6 +210,7 @@ function extra_head()
                 $('#findarticles').val('');
             }
         });
+
 
 });
 </script>
