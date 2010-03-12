@@ -165,8 +165,7 @@ function extra_head()
 
     $tab = get_http_var( 'tab', 'work' );
 ?>
-<!--[if IE]><script language="javascript" type="text/javascript" src="excanvas.min.js"></script><![endif]-->
-<script language="javascript" type="text/javascript" src="/js/jquery.flot.js"></script>
+<script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
 <script language="javascript" type="text/javascript">
     $(document).ready(

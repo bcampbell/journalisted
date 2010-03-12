@@ -317,48 +317,34 @@ $previous_employers = array_unique( $previous_employers );
 <div id="placeholder" style="width:600px;height:300px"></div>
 
 <?php
-$d1_bits = array();
+// some random colours...
+$colours = array( 'purple', 'orange','yellowgreen','blue','yellow','green','red','skyblue' );
+$data = array();
 $i=0;
 foreach( $artcounts as $yearmonth=>$cnt ) {
     // convert to javascript timestamps
     $dt = new DateTime( "{$yearmonth}-01" );
     $jsts = (int)($dt->format('U')) * 1000;
-    $d1_bits[] = "[$jsts,$cnt]";
-    ++$i;
+    $data[] = array( 'x'=>$jsts, 'y'=>$cnt, 'r'=>rand( 5,50), 'colour'=>$colours[ ($i++) % sizeof($colours)] );
 }
+
+
 ?>
 <script language="javascript" type="text/javascript">
 
   $(function () {
 
-    var d1 = [ <?= implode( ',', $d1_bits ) ?> ];
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var plot = $.plot($("#placeholder"), [
-            { data: d1,
-              label: "Articles written each month",
-              lines: {show: true },
-              points: {show: true }
-            }
-        ],
+    var d = [
+<?php foreach( $data as $d ) { ?>
+        { x: <?= $d['x'] ?>,y: <?= $d['y'] ?>,r: <?= $d['r'] ?>,colour: '<?= $d['colour'] ?>' },
+<?php } ?>
+    ];
+
+    jl.chart( "placeholder", { data: d },
         {
-
-       xaxis: {
-          mode: "time",
-          tickSize: [1, 'month'],
-          tickFormatter: function (val, axis) {
-            var d = new Date(val);
-            if( d.getMonth()==0 ) {
-                return '<div style="border-left: 1px solid black">' + months[ d.getMonth() ] + "<br/>" + d.getFullYear() + "</div>";
-
-            } else {
-                return months[ d.getMonth() ];
-            }
-          }
-
-        },
-        yaxis: { minTickSize: 1, tickDecimals: 0 },
-        grid: { hoverable: true, clickable: true }
-     });
+            xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*7 ], step: "month" },
+            yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
+        } );
 
     function showTooltip(x, y, contents) {
         $('<div id="tooltip">' + contents + '</div>').css( {
@@ -373,26 +359,6 @@ foreach( $artcounts as $yearmonth=>$cnt ) {
         }).appendTo("body").fadeIn(200);
     }
 
-    var previousPoint = null;
-    $("#placeholder").bind("plothover", function (event, pos, item) {
-        if (item) {
-            if (previousPoint != item.datapoint) {
-                previousPoint = item.datapoint;
-                    
-                $("#tooltip").remove();
-            //    var x = item.datapoint[0].toFixed(2),
-              //      y = item.datapoint[1].toFixed(2);
-                 
-                var dt = new Date( item.datapoint[0] );
-                var tiptxt = item.datapoint[1] + " articles during " + months[dt.getMonth()] + " " + dt.getFullYear()
-               showTooltip(item.pageX, item.pageY, tiptxt );
-            }
-        }
-        else {
-            $("#tooltip").remove();
-            previousPoint = null;            
-        }
-    });
   });
 
 </script>
