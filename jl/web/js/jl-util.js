@@ -27,7 +27,7 @@ var jl = function() {
         },
 
 
-        chart: chart,
+        chart: chart
     };
 
 

@@ -165,6 +165,9 @@ function extra_head()
 
     $tab = get_http_var( 'tab', 'work' );
 ?>
+
+<script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
+<script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
 <script language="javascript" type="text/javascript">
@@ -209,6 +212,11 @@ function extra_head()
                 $('#findarticles').val('');
             }
         });
+    jl.chart( "placeholder", { data: d },
+        {
+            xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*7 ], step: "month" },
+            yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
+        } );
 
 
 });

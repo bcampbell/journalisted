@@ -320,31 +320,23 @@ $previous_employers = array_unique( $previous_employers );
 // some random colours...
 $colours = array( 'purple', 'orange','yellowgreen','blue','yellow','green','red','skyblue' );
 $data = array();
+$parts = array();
 $i=0;
 foreach( $artcounts as $yearmonth=>$cnt ) {
     // convert to javascript timestamps
     $dt = new DateTime( "{$yearmonth}-01" );
     $jsts = (int)($dt->format('U')) * 1000;
     $data[] = array( 'x'=>$jsts, 'y'=>$cnt, 'r'=>rand( 5,50), 'colour'=>$colours[ ($i++) % sizeof($colours)] );
+    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s' }",
+	$jsts, $cnt, rand(5,50), $colours[ ($i++) % sizeof($colours)] );
 }
 
 
 ?>
 <script language="javascript" type="text/javascript">
 
-  $(function () {
 
-    var d = [
-<?php foreach( $data as $d ) { ?>
-        { x: <?= $d['x'] ?>,y: <?= $d['y'] ?>,r: <?= $d['r'] ?>,colour: '<?= $d['colour'] ?>' },
-<?php } ?>
-    ];
-
-    jl.chart( "placeholder", { data: d },
-        {
-            xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*7 ], step: "month" },
-            yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
-        } );
+    var d = [ <?= implode( ",\n", $parts ) ?> ];
 
     function showTooltip(x, y, contents) {
         $('<div id="tooltip">' + contents + '</div>').css( {
@@ -359,7 +351,6 @@ foreach( $artcounts as $yearmonth=>$cnt ) {
         }).appendTo("body").fadeIn(200);
     }
 
-  });
 
 </script>
 
