@@ -28,40 +28,61 @@ var jl = function() {
 
 
         chart: chart,
+        readTable: readTable
     };
 
 
+    function readTable(t) {
+
+        $( 'thead tr th',t ).each( function() {
+        });
+
+        $( 'tbody tr',t ).each( function() {
+            var cells = $(this).find( 'td,th' );
+            var foo = [];
+            for( var i=0; i<cells.length; ++i ) {
+                foo[foo.length] = $(cells[i]).text();
+            }
+        } );
+
+    }
 
 
 
 // basic chart-plotting library, uses jquery and raphael
 
-// TODO
+// TODO:
 // tidy up and generalise as a standalone component
 // support multiple series
-// automatically determine sensible tick steps for axes labeling
-// support non-linear axis scapes (via mapx()/mapy()?)
+// support non-linear axis scales
+// rename ticksize and step options
+// rename gutter options
+// add auto-calculation of label sizes
 function chart( placeholder, series_, opts_ ) {
     var R = Raphael( placeholder );
     var series = series_;
     var opts =  {
         xaxis: {
             label: "X Axis",
-            extent: null,   // [xmin,xmax] or null
+            min: null,      // extent of axes, in data units
+            max: null,
             pad: [0,0],     // [left,right] - expands the extent
-            step: null,     // a number, "month" or null
+            step: null,     // tick step interval: a number, "month" or null
             gutter: 40,      // space left for labels, etc...
             ticksize: 5,    // size of interval markers
             tickText: defaultTickFmt,
+            tickDecimals: null, // max num of decimal places on tick steps
             which: 'bottom'
         },
         yaxis: { label: "Y Axis",
             extent: null,
-            pad: [0,0],
+            min: 0,
+            max: null,
             step: null,
             gutter: 40,
             ticksize: 5,
             tickText: defaultTickFmt,
+            tickDecimals: null,
             which: 'left'
         },
         monthNames: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -89,40 +110,74 @@ function chart( placeholder, series_, opts_ ) {
 
     function initData() {
 
-        // work out X extents
-        if( !opts.xaxis.extent ) {
-            var e = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
-            $.each( series.data, function() {
-                e[0] = Math.min(this.x,e[0]);
-                e[1] = Math.max(this.x,e[1]);
-            } );
-            opts.xaxis.extent = e;
-        }
-        opts.xaxis.extent[0] -= opts.xaxis.pad[0];
-        opts.xaxis.extent[1] += opts.xaxis.pad[1];
+        function calcExtents( axis, val ) {
+            if( axis.min === null ) {
+                axis.min = Number.POSITIVE_INFINITY;
+                $.each( series.data, function() { axis.min=Math.min(val(this),axis.min); } );
+            }
+            axis.min -= axis.pad[0];
 
-        // TODO: work out a good default step value
-        if( !opts.xaxis.step ) {
-            opts.xaxis.step = 1;
+            if( axis.max === null ) {
+                axis.max = Number.NEGATIVE_INFINITY;
+                $.each( series.data, function() { axis.max=Math.max(val(this),axis.max); } );
+            }
+            axis.max += axis.pad[1];
         }
 
+        function calcStepInterval( axis ) {
+            if( axis.step !== null ) {
+                return;
+            }
 
-        // Y extents
-        if( !opts.yaxis.extent ) {
-            var e = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
-            $.each( series.data, function() {
-                e[0] = Math.min(this.y,e[0]);
-                e[1] = Math.max(this.y,e[1]);
-            } );
-            opts.yaxis.extent = e;
-        }
-        opts.yaxis.extent[0] -= opts.yaxis.pad[0];
-        opts.yaxis.extent[1] += opts.yaxis.pad[1];
+            // tick interval algorithm pasted from flot
+            var noTicks;
+            if( axis.which == 'bottom' ) {
+                noTicks = 0.3 * Math.sqrt(plotarea.w);
+            }
+            if( axis.which == 'left' ) {
+                noTicks = 0.3 * Math.sqrt(plotarea.h);
+            }
+            var delta = (axis.max - axis.min) / noTicks;
 
-        // TODO: work out a good default step value
-        if( !opts.yaxis.step ) {
-            opts.yaxis.step = 1;
+            // pretty rounding of base-10 numbers
+            var maxDec = axis.tickDecimals;
+            var dec = -Math.floor(Math.log(delta) / Math.LN10);
+            if (maxDec != null && dec > maxDec)
+                dec = maxDec;
+
+            var magn = Math.pow(10, -dec);
+            var norm = delta / magn; // norm is between 1.0 and 10.0
+
+            if (norm < 1.5)
+                size = 1;
+            else if (norm < 3) {
+                size = 2;
+                // special case for 2.5, requires an extra decimal
+                if (norm > 2.25 && (maxDec == null || dec + 1 <= maxDec)) {
+                    size = 2.5;
+                    ++dec;
+                }
+            }
+            else if (norm < 7.5)
+                size = 5;
+            else
+                size = 10;
+
+            size *= magn;
+
+//            if (axisOptions.minTickSize != null && size < axisOptions.minTickSize)
+//                size = axisOptions.minTickSize;
+
+//            if (axisOptions.tickSize != null)
+//                size = axisOptions.tickSize;
+
+            //axis.tickDecimals = Math.max(0, (maxDec != null) ? maxDec : dec);
+            axis.step = size;
+
         }
+
+        calcExtents( opts.xaxis, function(d) { return d.x; } );
+        calcExtents( opts.yaxis, function(d) { return d.y; } );
 
         // set up the plotarea
         plotarea = {
@@ -130,6 +185,11 @@ function chart( placeholder, series_, opts_ ) {
             y: 0,
             w: R.width - opts.yaxis.gutter,
             h: R.height - opts.xaxis.gutter };
+
+
+        calcStepInterval( opts.xaxis );
+        calcStepInterval( opts.yaxis );
+
     }
 
 
@@ -137,14 +197,14 @@ function chart( placeholder, series_, opts_ ) {
         if( axis.step == "month" ) {
             // work out starting year/month, round up to nearest month boundary.
             // (-1 ms to handle border case of starting _exactly_ at month boundary)
-            dstart = new Date( axis.extent[0]-1 );
+            dstart = new Date( axis.min-1 );
             year = dstart.getUTCFullYear();
             month = dstart.getUTCMonth();
             if( ++month > 11 )      // round up to nearest month
                 { month=0; ++year; }
 
             for( var t = (new Date( Date.UTC(year,month,1,0,0,0) )).getTime();
-                t <= axis.extent[1];
+                t <= axis.max;
                 t = (new Date( Date.UTC(year,month,1,0,0,0) )).getTime() )
             {
                 tickfn(t)
@@ -153,9 +213,8 @@ function chart( placeholder, series_, opts_ ) {
             }
         } else {
             // assume numeric
-            var e = axis.extent;
-            for( var t=axis.step * Math.ceil( e[0]/axis.step );
-                t<=e[1];
+            for( var t=axis.step * Math.ceil( axis.min/axis.step );
+                t<=axis.max;
                 t+=axis.step ) {
                 tickfn(t);
             }
@@ -256,16 +315,16 @@ function chart( placeholder, series_, opts_ ) {
 
     // map x coord of a data point to plotarea
     function mapx( x ) {
-        var xext = opts.xaxis.extent;
-        var xs = plotarea.w / (xext[1]-xext[0]);
-        return plotarea.x + (x-xext[0])*xs;
+        var a = opts.xaxis;
+        var xs = plotarea.w / (a.max - a.min);
+        return plotarea.x + (x-opts.xaxis.min)*xs;
     }
 
     // map y coord of a data point to plotarea
     function mapy( y ) {
-        var yext = opts.yaxis.extent;
-        var ys = plotarea.h / (yext[1]-yext[0]);
-        return plotarea.y + (plotarea.h-(y-yext[0])*ys);
+        var a = opts.yaxis;
+        var ys = plotarea.h / (a.max-a.min);
+        return plotarea.y + (plotarea.h-(y-a.min)*ys);
     }
 
     function renderSeries( s ) {
@@ -311,19 +370,22 @@ function chart( placeholder, series_, opts_ ) {
 //            var w=50, h=50;
 //            R.rect( x-w/2,y-(this.radius+h+10),w,h,10);
 
+            // calc and cache radius
+            var radius = 5 + (this.avg_words*15)/1000;
+
             var c = R.circle( x, y, this.r ).attr('stroke','none');
             c.attr('opacity', 0.7);
             c.attr("fill", this.colour );
 //            c.attr("title", this.colour );
 
             var d=this;
-            toolTip( c.node, '' + d.y + ' articles (<a href="">list them</a>)<br/>average ' + Math.round((d.avg_len/30)*10)/10 + ' column inches' );
+            toolTip( c.node, '' + d.y + ' articles (<a href="">list them</a>)<br/>average ' + Math.round((d.avg_words/30)*10)/10 + ' column inches' );
             $(c.node).hover(
                 function() {
-                    c.attr('opacity',1).attr('r',d.r*1.1);
+                    c.attr('opacity',1).attr('r',radius*1.1);
                     var pos = $(c.node).offset();
                 },
-                function() { c.attr('opacity',0.7).attr('r',d.r); }
+                function() { c.attr('opacity',0.7).attr('r',radius); }
             );
         } );
     }

@@ -366,7 +366,7 @@ function journo_calcMonthlyStats( $journo )
     $sql = <<<EOT
 SELECT DATE_TRUNC( 'month', a.pubdate)::date as month,
         COUNT(*) AS num_articles,
-        AVG(a.wordcount) AS avg_length
+        AVG(a.wordcount) AS avg_words
     FROM (journo_attr attr INNER JOIN article a ON a.id=attr.article_id)
     WHERE attr.journo_id=? AND a.pubdate>=?::timestamp AND a.pubdate<?::timestamp
     GROUP BY month ORDER BY month ASC
@@ -382,12 +382,12 @@ EOT;
     for( $i=$num_months-1; $i>=0; --$i )
     {
         $dt = new DateTime( "-$i months" );
-        $stats[ $dt->format('Y-m') ] = array( 'num_articles'=>0, 'avg_length'=>0 );
+        $stats[ $dt->format('Y-m') ] = array( 'num_articles'=>0, 'avg_words'=>0 );
     }
 
     foreach( $rows as $row ) {
         $month = substr( $row['month'], 0,7 ); // "yyyy-mm-dd" => "yyyy-mm"
-        $stats[ $month ] = array( 'num_articles'=>$row['num_articles'], 'avg_length'=>$row['avg_length'] );
+        $stats[ $month ] = array( 'num_articles'=>$row['num_articles'], 'avg_words'=>(int)$row['avg_words'] );
     }
 
     return $stats;

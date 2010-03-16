@@ -325,22 +325,41 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     // convert to javascript timestamps
     $dt = new DateTime( "{$yearmonth}-01" );
     $jsts = (int)($dt->format('U')) * 1000;
-    $avg_length = (int)$row['avg_length'];
-    $r = 5 + ($avg_length*15)/1000;
-    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s', avg_len: '%s' }",
-    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)], $avg_length );
+    $avg_words = (int)$row['avg_words'];
+    $r = 5 + ($avg_words*15)/1000;
+    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s', avg_words: %s }",
+    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)], $avg_words );
 }
 
-
+/* output as a table */
+/*
+?>
+<table id="monthlystats">
+<thead>
+ <tr>
+  <th>month</th><th>num_articles</th><th>avg_words</th>
+ </tr>
+</thead>
+<tbody>
+<?php foreach( $monthly_stats as $yearmonth=>$row ) { ?>
+ <tr>
+   <td><?= $yearmonth ?></td><td><?= $row['num_articles'] ?></td><td><?= $row['avg_words'] ?></td>
+ </tr>
+<?php } ?>
+</tbody>
+</table>
+<?php
+*/
 ?>
 <script language="javascript" type="text/javascript">
     $(document).ready( function() {
+
         var d = [ <?= implode( ",\n", $parts ) ?> ];
 
         jl.chart( "placeholder", { data: d },
             {
-                xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*7 ], step: "month" },
-                yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
+                xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*15 ], step: "month" },
+                yaxis: { label: "Number of articles published", tickDecimals: 0, min: 0, pad: [0,0.5] }
             } );
 
     });
