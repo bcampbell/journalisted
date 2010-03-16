@@ -327,8 +327,8 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     $jsts = (int)($dt->format('U')) * 1000;
     $avg_length = (int)$row['avg_length'];
     $r = 5 + ($avg_length*15)/1000;
-    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s' }",
-    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)] );
+    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s', avg_len: '%s' }",
+    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)], $avg_length );
 }
 
 
@@ -343,18 +343,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
                 yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
             } );
 
-        function showTooltip(x, y, contents) {
-            $('<div id="tooltip">' + contents + '</div>').css( {
-                position: 'absolute',
-                display: 'none',
-                top: y - 25,
-                left: x + 5,
-                border: '1px solid #fdd',
-                padding: '2px',
-                'background-color': '#fee',
-                opacity: 0.80
-            }).appendTo("body").fadeIn(200);
-        }
     });
 
 </script>

@@ -27,8 +27,10 @@ var jl = function() {
         },
 
 
-        chart: chart
+        chart: chart,
     };
+
+
 
 
 
@@ -267,6 +269,41 @@ function chart( placeholder, series_, opts_ ) {
     }
 
     function renderSeries( s ) {
+
+        var toolTip = function( n,content ) {
+            var pos = $(n).offset();
+            var tip = $('<div class="tooltip">' + content + '</div>').css( {
+                position: 'absolute',
+                top: pos.top + 10,
+                left: pos.left + 10,
+                border: '1px solid #fdd',
+                padding: '2px',
+                display: 'none',
+                'background-color': '#fee' }).appendTo( "body" );
+
+            tip.hovered1 = false;
+            tip.hovered2 = false;
+
+            $(n).hover(
+                function() { tip.hovered1=true; check(); },
+                function() { tip.hovered1=false; check(); } );
+
+            tip.hover( 
+                function() { tip.hovered2=true; check(); },
+                function() { tip.hovered2=false; check(); } );
+
+            var check = function() {
+                if( !tip.hovered1 && !tip.hovered2 ) {
+                    tip.hide();
+                } else {
+                    tip.show();
+                }
+            }
+
+
+        }
+
+
         $.each( s.data, function() {
             var x = mapx(this.x);
             var y = mapy(this.y);
@@ -280,10 +317,14 @@ function chart( placeholder, series_, opts_ ) {
 //            c.attr("title", this.colour );
 
             var d=this;
+            toolTip( c.node, '' + d.y + ' articles (<a href="">list them</a>)<br/>average ' + Math.round((d.avg_len/30)*10)/10 + ' column inches' );
             $(c.node).hover(
-                function() { c.attr('opacity',1).attr('r',d.r*1.1); },
+                function() {
+                    c.attr('opacity',1).attr('r',d.r*1.1);
+                    var pos = $(c.node).offset();
+                },
                 function() { c.attr('opacity',0.7).attr('r',d.r); }
-            )
+            );
         } );
     }
 
