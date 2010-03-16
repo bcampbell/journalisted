@@ -327,8 +327,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     $jsts = (int)($dt->format('U')) * 1000;
     $avg_words = (int)$row['avg_words'];
     $r = 5 + ($avg_words*15)/1000;
-    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s', avg_words: %s }",
-    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)], $avg_words );
+
+    $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s', avg_words: %s, search_url: '%s' }",
+    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)], $avg_words, $row['search_url'] );
 }
 
 /* output as a table */

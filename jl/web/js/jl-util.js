@@ -379,12 +379,9 @@ function chart( placeholder, series_, opts_ ) {
 //            c.attr("title", this.colour );
 
             var d=this;
-            toolTip( c.node, '' + d.y + ' articles (<a href="">list them</a>)<br/>average ' + Math.round((d.avg_words/30)*10)/10 + ' column inches' );
+            toolTip( c.node, '' + d.y + ' articles (<a href="' + d.search_url + '">list them</a>)<br/>average ' + Math.round((d.avg_words/30)*10)/10 + ' column inches' );
             $(c.node).hover(
-                function() {
-                    c.attr('opacity',1).attr('r',radius*1.1);
-                    var pos = $(c.node).offset();
-                },
+                function() { c.attr('opacity',1).attr('r',radius*1.1); },
                 function() { c.attr('opacity',0.7).attr('r',radius); }
             );
         } );

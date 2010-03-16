@@ -129,9 +129,27 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
 
 // some stuff we don't cache:
 $data['can_edit_page'] = $can_edit_page;
+
 // recent editing changes (from the eventlog) - would be fine to cache this list, but we'd
 // need to make sure the page template only displayed events which were less than than a day or so old...
 $data['recent_changes'] = journo_fetchRecentEvents( $journo['id'] );
+
+// add some derived fields to the monthly_stats data
+if( !$data[ 'quick_n_nasty' ] && array_key_exists( 'monthly_stats', $data ) ) {
+    foreach( $data['monthly_stats'] as $yearmonth=>&$row ) {
+        $dt = new DateTime( "{$yearmonth}-01" );
+        // javascript timestamp
+        $jsts = (int)($dt->format('U')) * 1000;
+
+        // Dogey assumption that all months have 31 days
+        // (php5.2 has crappy date fns)
+        // xapian range is string-based anyway, so we'll be fine.
+        $range = "{$yearmonth}-01..{$yearmonth}-31";
+        $row['search_url'] = "/search?a=" . urlencode( $range ) . "&by=". $journo['ref'];
+    }
+    unset( $row );
+}
+
 
 
 /* all set - invoke a template to render the page! */

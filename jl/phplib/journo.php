@@ -386,8 +386,10 @@ EOT;
     }
 
     foreach( $rows as $row ) {
-        $month = substr( $row['month'], 0,7 ); // "yyyy-mm-dd" => "yyyy-mm"
-        $stats[ $month ] = array( 'num_articles'=>$row['num_articles'], 'avg_words'=>(int)$row['avg_words'] );
+        $year = substr( $row['month'], 0,4 ); // "yyyy-mm-dd" => "yyyy"
+        $month = substr( $row['month'], 5,2 ); // "yyyy-mm-dd" => "mm"
+
+        $stats[ "$year-$month" ] = array( 'num_articles'=>$row['num_articles'], 'avg_words'=>(int)$row['avg_words'] );
     }
 
     return $stats;
