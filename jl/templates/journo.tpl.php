@@ -319,38 +319,43 @@ $previous_employers = array_unique( $previous_employers );
 <?php
 // some random colours...
 $colours = array( 'purple', 'orange','yellowgreen','blue','yellow','green','red','skyblue' );
-$data = array();
 $parts = array();
 $i=0;
-foreach( $artcounts as $yearmonth=>$cnt ) {
+foreach( $monthly_stats as $yearmonth=>$row ) {
     // convert to javascript timestamps
     $dt = new DateTime( "{$yearmonth}-01" );
     $jsts = (int)($dt->format('U')) * 1000;
-    $data[] = array( 'x'=>$jsts, 'y'=>$cnt, 'r'=>rand( 5,50), 'colour'=>$colours[ ($i++) % sizeof($colours)] );
+    $avg_length = (int)$row['avg_length'];
+    $r = 5 + ($avg_length*15)/1000;
     $parts[] = sprintf("{ x:%s, y:%s, r:%s, colour:'%s' }",
-	$jsts, $cnt, rand(5,50), $colours[ ($i++) % sizeof($colours)] );
+    	$jsts, $row['num_articles'], $r, $colours[ ($i++) % sizeof($colours)] );
 }
 
 
 ?>
 <script language="javascript" type="text/javascript">
+    $(document).ready( function() {
+        var d = [ <?= implode( ",\n", $parts ) ?> ];
 
+        jl.chart( "placeholder", { data: d },
+            {
+                xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*7 ], step: "month" },
+                yaxis: { label: "Number of articles published", pad: [0,2], step: 1 }
+            } );
 
-    var d = [ <?= implode( ",\n", $parts ) ?> ];
-
-    function showTooltip(x, y, contents) {
-        $('<div id="tooltip">' + contents + '</div>').css( {
-            position: 'absolute',
-            display: 'none',
-            top: y - 25,
-            left: x + 5,
-            border: '1px solid #fdd',
-            padding: '2px',
-            'background-color': '#fee',
-            opacity: 0.80
-        }).appendTo("body").fadeIn(200);
-    }
-
+        function showTooltip(x, y, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css( {
+                position: 'absolute',
+                display: 'none',
+                top: y - 25,
+                left: x + 5,
+                border: '1px solid #fdd',
+                padding: '2px',
+                'background-color': '#fee',
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }
+    });
 
 </script>
 
@@ -401,7 +406,7 @@ foreach( $artcounts as $yearmonth=>$cnt ) {
     <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="add"  href="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
+    <a class="add"  hrefArra="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
     <?php } ?>
   </div>
 </div>

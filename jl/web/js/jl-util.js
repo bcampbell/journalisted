@@ -277,13 +277,13 @@ function chart( placeholder, series_, opts_ ) {
             var c = R.circle( x, y, this.r ).attr('stroke','none');
             c.attr('opacity', 0.7);
             c.attr("fill", this.colour );
-            c.attr("title", this.colour );
+//            c.attr("title", this.colour );
 
             var d=this;
             $(c.node).hover(
                 function() { c.attr('opacity',1).attr('r',d.r*1.1); },
                 function() { c.attr('opacity',0.7).attr('r',d.r); }
-            );
+            )
         } );
     }
 
