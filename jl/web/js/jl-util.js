@@ -333,12 +333,9 @@ function chart( placeholder, series_, opts_ ) {
             var pos = $(n).offset();
             var tip = $('<div class="tooltip">' + content + '</div>').css( {
                 position: 'absolute',
-                top: pos.top + 10,
+                top: pos.top - 10,
                 left: pos.left + 10,
-                border: '1px solid #fdd',
-                padding: '2px',
-                display: 'none',
-                'background-color': '#fee' }).appendTo( "body" );
+                display: 'none' }).appendTo( "body" );
 
             tip.hovered1 = false;
             tip.hovered2 = false;

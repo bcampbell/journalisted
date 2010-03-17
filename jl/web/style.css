@@ -224,6 +224,18 @@ form dl {
 }
 
 
+/* popup tooltip */
+.tooltip {
+  -moz-box-shadow: 0 0 5px #888888;
+  -webkit-box-shadow: 0 0 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+
+  padding: 4px;
+  border: 1px solid #444444;
+  background-color: #ffffff;
+}
 
 /* HEADER */
 
