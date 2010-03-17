@@ -124,6 +124,11 @@
                   eg array( 'economy'=>65, 'sucks'=>1023 )
                   in alphabetical order
 
+ $monthly_stats - array of stats for the last 12 months. Indexed by "YYYY-MM".
+                num_articles
+                avg_words
+                search_url  - a /serach url to return that months articles
+
 */
 
 // TODO: move this out of template...
@@ -297,11 +302,11 @@ $previous_employers = array_unique( $previous_employers );
 
 
 
-<div class="bynumbers">
-  <div class="head"><h3><?= $prettyname; ?> by numbers...</h3></div>
+<div class="monthly-stats">
+  <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#monthly-stats-footnote">*</a></sup></h3></div>
   <div class="body">
-
 <?php if( !$quick_n_nasty ) { ?>
+<?php /* ?>
     <ul>
       <li>
         <?= $num_articles ?> articles <?php if( $num_articles>0) { ?> (since <?= $first_pubdate ?>) <?php } ?>
@@ -310,12 +315,12 @@ $previous_employers = array_unique( $previous_employers );
       <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
+</php */ ?>
+    <div id="monthly-stats-placeholder" style="width:600px;height:300px"></div>
+    <div id="monthly-stats-footnote">
+      <sup>*</sup>Based only on article from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
+    </div>
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
-
-
-
-<div id="placeholder" style="width:600px;height:300px"></div>
-
 <?php
 // some random colours...
 $colours = array( 'purple', 'orange','yellowgreen','blue','yellow','green','red','skyblue' );
@@ -354,17 +359,13 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 ?>
 <script language="javascript" type="text/javascript">
     $(document).ready( function() {
-
         var d = [ <?= implode( ",\n", $parts ) ?> ];
-
-        jl.chart( "placeholder", { data: d },
+        jl.chart( "monthly-stats-placeholder", { data: d },
             {
                 xaxis: { label: null, pad: [ 1000*60*60*24*7,1000*60*60*24*15 ], step: "month" },
                 yaxis: { label: "Number of articles published", tickDecimals: 0, min: 0, pad: [0,0.5] }
             } );
-
     });
-
 </script>
 
 <?php } else { ?>

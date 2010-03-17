@@ -363,20 +363,21 @@ function chart( placeholder, series_, opts_ ) {
         $.each( s.data, function() {
             var x = mapx(this.x);
             var y = mapy(this.y);
-
-//            var w=50, h=50;
-//            R.rect( x-w/2,y-(this.radius+h+10),w,h,10);
-
-            // calc and cache radius
             var radius = 5 + (this.avg_words*15)/1000;
-
-            var c = R.circle( x, y, this.r ).attr('stroke','none');
+            var c = R.circle( x, y, radius ).attr('stroke','none');
             c.attr('opacity', 0.7);
             c.attr("fill", this.colour );
-//            c.attr("title", this.colour );
 
-            var d=this;
-            toolTip( c.node, '' + d.y + ' articles (<a href="' + d.search_url + '">list them</a>)<br/>average ' + Math.round((d.avg_words/30)*10)/10 + ' column inches' );
+            var avg_inches = Math.round((this.avg_words/30)*10)/10;
+            if( this.y==0 ) {
+                tipContent = "No articles";
+            } else if( this.y==1){
+                tipContent = '<a href="' + this.search_url + '">1 article</a><br/>' + avg_inches + ' column inches';
+            } else {
+                tipContent = '<a href="' + this.search_url + '">'+ this.y + ' articles</a><br/>average size: ' + Math.round((this.avg_words/30)*10)/10 + ' column inches';
+            }
+
+            toolTip( c.node, tipContent );
             $(c.node).hover(
                 function() { c.attr('opacity',1).attr('r',radius*1.1); },
                 function() { c.attr('opacity',0.7).attr('r',radius); }
