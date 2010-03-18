@@ -211,7 +211,11 @@ $previous_employers = array_unique( $previous_employers );
       <h4>Current</h4>
       <ul>
 <?php   foreach( $current_employment as $e ) { ?>
-        <li class="current-employer"><span class="jobtitle"><?= $e['job_title'] ?></span> at <span class="publication"><?= $e['employer'] ?></span></li>
+<?php       if( $e['kind'] == 'e' ) { /* employment */ ?>
+        <li><span class="jobtitle"><?= $e['job_title'] ?></span> at <span class="publication"><?= $e['employer'] ?></span></li>
+<?php       } else { /* freelance */ ?>
+        <li>Freelance <?= $e['employer'] ? ' (' . $e['employer'] . ')' : '' ?></span></li>
+<?php       } ?>
 <?php   } ?>
       </ul>
     </div>
@@ -393,29 +397,33 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( $employers ) { ?>
     <ul class="bio-list">
 <?php foreach( $employers as $e ) { ?>
- <?php if( $e['year_to'] ) { ?>
+
       <li>
-        <h4><?= $e['job_title'] ?></span>, <span class="publication"><?= $e['employer'] ?></h4>
+  <?php if( $e['kind'] == 'e' ) { ?>
+        <h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
+  <?php } else { ?>
+        <h4>Freelance <?= $e['employer'] ? ' ('.$e['employer'].')' : ''?></h4>
+  <?php } ?>
+  <?php if( $e['year_to'] ) { ?>
         <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
+  <?php } else { ?>
+        <span class="daterange"><?= $e['year_from'] ?>-Present</span>
+  <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
         <?php } ?>
       </li>
- <?php } else { ?>
-      <li class="current-employer" ><h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
-        <span class="daterange"><?= $e['year_from'] ?>-Present</span>
-        <?php if( $can_edit_page ) { ?>
-        <a class="edit" href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
-        <?php } ?>
-      </li>
- <?php } ?>
+
+
+
 <?php } ?>
     </ul>
 <?php } else { ?>
     <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
-    <a class="add"  hrefArra="/profile_employment?ref=<?= $ref ?>&action=new">Add experience</a>
+    <a class="add" href="/profile_employment?ref=<?= $ref ?>&action=new_employment">Add employment</a>&nbsp;&nbsp;
+    <a class="add" href="/profile_employment?ref=<?= $ref ?>&action=new_freelance">Add freelance experience</a>
     <?php } ?>
   </div>
 </div>

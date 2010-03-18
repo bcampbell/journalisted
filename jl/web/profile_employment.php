@@ -31,7 +31,7 @@ class EmploymentPage extends EditProfilePage
 
     $(document).ready( function() {
 
-            var f = $('.employer');
+            var f = $('.experience');
             var current = f.find("input[name=current]");
 
             var year_to = f.find("input[name=year_to]");
@@ -56,14 +56,17 @@ class EmploymentPage extends EditProfilePage
     {
         // submitting new entries?
         $action = get_http_var( "action" );
-        if( $action == "submit" ) {
-            $this->handleSubmit();
+        if( $action == "submit_employment" ) {
+            $this->handleSubmitEmployed();
+        }
+        if( $action == "submit_freelance" ) {
+            $this->handleSubmitFreelance();
         }
         if( get_http_var('remove_id') ) {
             $this->handleRemove();
         }
 
-        if( $action != 'edit' && $action != 'new' ) {
+        if( $action != 'edit' && $action != 'new_freelance' && $action != 'new_employment' ) {
             $this->Redirect( "/{$this->journo['ref']}#tab-bio" );
         }
     }
@@ -79,21 +82,36 @@ class EmploymentPage extends EditProfilePage
             $emp_id = get_http_var('id');
             $emp = db_getRow( "SELECT * FROM journo_employment WHERE journo_id=? AND id=?",
                 $this->journo['id'], $emp_id );
+            if( $emp['kind']=='e' ) {
 ?>
-<h2>Edit experience</h2>
+<h2>Edit employment</h2>
 <?php
-            $this->showForm( $emp );
+                $this->showEmploymentForm( $emp );
+            }
+            if( $emp['kind']=='f' ) {
+?>
+<h2>Edit freelance experience</h2>
+<?php
+                $this->showFreelanceForm( $emp );
+            }
 ?>
 <a class="remove" href="<?= $this->pagePath ?>?ref=<?= $this->journo['ref'] ?>&remove_id=<?= h($emp['id']); ?>">Remove this experience</a>
 <?php
         }
 
-        if( $action=='new' )
+        if( $action=='new_employment' )
         {
 ?>
-<h2>Add experience</h2>
+<h2>Add employment</h2>
 <?php
-            $this->showForm( null );
+            $this->showEmploymentForm( null );
+        }
+        if( $action=='new_freelance' )
+        {
+?>
+<h2>Add freelance experience</h2>
+<?php
+            $this->showFreelanceForm( null );
         }
     }
 
@@ -103,8 +121,9 @@ class EmploymentPage extends EditProfilePage
     }
 
 
+
     /* if $emp is null, then display a fresh form for entering a new entry */
-    function showForm( $emp )
+    function showEmploymentForm( $emp )
     {
         static $uniq=0;
         ++$uniq;
@@ -115,8 +134,7 @@ class EmploymentPage extends EditProfilePage
         }
  
 ?>
-
-<form class="employer" method="POST" action="<?= $this->pagePath; ?>">
+<form class="experience employment" method="POST" action="<?= $this->pagePath; ?>">
 
   <dl>
     <dt><label for="employer_<?= $uniq; ?>">Employer</label></dt>
@@ -139,7 +157,52 @@ class EmploymentPage extends EditProfilePage
 <?php if( $formtype=='edit' ) { ?>
 <input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
 <?php } ?>
-<input type="hidden" name="action" value="submit" />
+<input type="hidden" name="action" value="submit_employment" />
+<button class="submit" type="submit">Save changes</button> or <a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-bio">cancel</a>
+<div style="clear:both;"></div>
+</form>
+
+<?php
+    }
+
+
+
+
+    /* if $emp is null, then display a fresh form for entering a new entry */
+    function showFreelanceForm( $emp )
+    {
+        static $uniq=0;
+        ++$uniq;
+        $formtype = 'edit';
+        if( is_null( $emp ) ) {
+            $formtype = 'new';
+            $emp = array( 'employer'=>'', 'year_from'=>'', 'year_to'=>'' );
+        }
+ 
+?>
+<form class="experience freelance" method="POST" action="<?= $this->pagePath; ?>">
+  <dl>
+    <dt><span class="faux-label">Date</span></dt>
+    <dd>
+      <label for="year_from_<?= $uniq; ?>">Year from:</label>
+      <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
+      <label for="year_to_<?= $uniq; ?>">Year to:</label>
+      <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
+      <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I am currently freelance</label>
+    </dd>
+
+    <dt><label for="employer_<?= $uniq; ?>">Publications</label></dt>
+    <dd>
+      <input type="text" size="60" name="employer" id="employer_<?= $uniq; ?>" value="<?= h($emp['employer']); ?>"/>
+      <span class="explain">optional, comma-seperated</span>
+    </dd>
+  </dl>
+
+<input type="hidden" name="ref" value="<?= $this->journo['ref']; ?>" />
+<?php if( $formtype=='edit' ) { ?>
+<input type="hidden" name="id" value="<?= h($emp['id']); ?>" />
+<?php } ?>
+<input type="hidden" name="action" value="submit_freelance" />
 <button class="submit" type="submit">Save changes</button> or <a class="cancel" href="/<?= $this->journo['ref'] ?>#tab-bio">cancel</a>
 <div style="clear:both;"></div>
 </form>
@@ -150,7 +213,7 @@ class EmploymentPage extends EditProfilePage
 
 
 
-    function handleSubmit()
+    function handleSubmitEmployed()
     {
         $fieldnames = array( 'employer', 'job_title', 'year_from', 'year_to' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
@@ -160,10 +223,34 @@ class EmploymentPage extends EditProfilePage
             $item['year_to'] = NULL;
         if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
+        // fudge
+        $fieldnames[] = 'kind'; $item['kind'] = 'e';
 
         $this->genericStoreItem( "journo_employment", $fieldnames, $item );
         return $item['id'];
     }
+
+
+    function handleSubmitFreelance()
+    {
+        $fieldnames = array( 'employer', 'year_from', 'year_to' );
+        $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        if( !$item['year_from'] )
+            $item['year_from'] = NULL;
+        if( !$item['year_to'] )
+            $item['year_to'] = NULL;
+        if( get_http_var( 'current' ) )
+            $item['year_to'] = NULL;
+
+        // fudge
+        $fieldnames[] = 'kind'; $item['kind'] = 'f';
+
+        $this->genericStoreItem( "journo_employment", $fieldnames, $item );
+        return $item['id'];
+    }
+
+
+
 
     function handleRemove() {
         $id = get_http_var("remove_id");
