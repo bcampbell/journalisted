@@ -13,6 +13,10 @@ require_once '../../phplib/db.php';
 
 
 $s = search_getParams();
+
+
+
+
 if( $s['type']=='article' ) {
     search_articles();
 } else {
@@ -35,21 +39,22 @@ function search_journos() {
 
 ?>
 <div class="main search-results">
+<?php if( $query ) { ?>
   <div class="head">
     <b>Search Results:</b> <span class="count"><?= sizeof($journos) ?> journalists</span> like <span class="query"><?= h($query) ?></span>
   </div>
 
+<?php if( $journos ) { ?>
   <div class="body">
-<?php
-    if( $journos ) {
-?>
 <ul>
 <?php   foreach( $journos as $j ) { ?>
   <li><?= journo_link($j); ?></li>
 <?php   } ?>
 </ul>
-<?php } ?>
   </div>
+<?php } ?>
+
+<?php } // if( $query )?>
 
 <?php search_emit_onpage_form(); ?>
 
@@ -63,6 +68,18 @@ function search_articles()
 {
     $s = search_getParams();
     $query = $s['q'];
+    if( !$query ) {
+        page_header( "Search Articles", array('search_params'=>$s) );
+?>
+<div class="main search-results">
+<?php search_emit_onpage_form(); ?>
+</div> <!-- end main -->
+<?php
+        page_footer();
+        return;
+    }
+
+
     $num_per_page = $s['num'];
     $start = $s['start'];
     $sort_order = $s['sort_order'];
@@ -108,6 +125,7 @@ function search_articles()
 
 <?php } ?>
   </div>
+<?php if( $results ) { ?>
   <div class="body">
     <ul class="art-list">
 <?php
@@ -133,6 +151,7 @@ function search_articles()
         EmitPageControl( $query, $sort_order, $start, $num_per_page, $total );
 ?>
   </div>
+<?php } ?>
 
 <?php search_emit_onpage_form(); ?>
 </div> <!-- end main -->

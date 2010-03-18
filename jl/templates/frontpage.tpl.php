@@ -22,10 +22,10 @@
   <span class="youcan">At journa<i>listed</i> you can:</span>
   <ul class="nav">
    <li><a class="articles" href="#">articles</a></li>
-   <li><a class="link" href="#">link</a></li>
-   <li><a class="rate" href="#">rate</a></li>
-   <li><a class="search" href="#">search</a></li>
-   <li><a class="subjects" href="#">subjects</a></li>
+   <li><a class="edit-profile" href="/profile">edit profile</a></li>
+   <li><a class="search-articles" href="/search?type=article">search articles</a></li>
+   <li><a class="search-journos" href="/search?type=journo">search for journalists</a></li>
+   <li><a class="alerts" href="/alert">alerts</a></li>
   </ul>
 </div>
 
