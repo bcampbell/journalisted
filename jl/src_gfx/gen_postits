@@ -24,7 +24,7 @@ base_box = (16,16,108,103 )  # x,y,w,h
 
 notes = [
     # ( name, radians, text)
-    ( 'articles', 0.01, "Read\n[similar_articles]\nby different\njournalists" ),
+    ( 'subscribe', 0.01, "[Subscribe] to the journa<i>listed</i> weekly digest" ),
     ( 'search-articles', 0.02, "[Search] over 2 million news articles" ),
     ( 'search-journos', 0.012, "[Search for a journalist]\nto contact them" ),
     ( 'edit-profile', 0.023, "Are you a journalist? [Edit your profile]" ),
