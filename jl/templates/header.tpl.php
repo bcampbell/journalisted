@@ -14,34 +14,38 @@
 
 
 
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+/*
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+*/
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
   <title><?=$title ?></title>
   <style type="text/css" media="all">@import "/style.css";</style>
+  <!--[if IE]>
+    <style type="text/css" media="all">@import "/ie/ie.css";</style>
+  <![endif]-->
   <meta name="Content-Type" content="text/html; charset=UTF-8" />
-
   <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-
 <?php foreach( $rss_feeds as $rss_title => $rss_url) { ?>
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
-
   <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+  <script type="text/javascript" src="/js/jquery.pngFix.pack.js"></script>
   <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>
-
 <?php foreach( $js_files as $f ) { ?>
   <script type="text/javascript" src="<?= $f ?>"></script>
 <?php } ?>
-
 <?= $head_extra; ?>
-
   <script type="text/javascript" language="JavaScript">
         addLoadEvent( activatePlaceholders );
 
+
+
     $(document).ready( function() {
-            $('#header .search select').sSelect();
+        //$(document).pngFix(); 
+        $('#header .search select').sSelect();
         });
   </script>
 </head>

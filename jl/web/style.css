@@ -46,6 +46,7 @@ ul {
 ul.art-list {
   padding: 0;
   list-style: none;
+  list-style-image: none;
 }
 
 ul.art-list li {
@@ -56,11 +57,11 @@ ul.art-list li {
 abbr.published { text-decoration: none; border: none; }
 
 /* lists of biographical items */
-ul.bio-list { padding: 0; list-style: none; }
+ul.bio-list { padding: 0; list-style: none; list-style-image: none; }
 ul.bio-list li {
   padding: 8px 0px;
   border-bottom: 1px solid #cccccc;
-  list-style: none;
+  /* list-style: none; */
 }
 
 
@@ -295,7 +296,7 @@ form dl {
 }
 
 #header .nav ul li {
-  list-style-type:none;
+  list-style-type: none;
   display:inline;
   margin: 0;
   padding: 0;
@@ -497,6 +498,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 .main .tabs ul {
   list-style: none;
+  list-style-image: none;
   border: 0px;
   margin: 30px 0px 0px 0px;
   padding: 0px 0px 0px 8px;
@@ -563,8 +565,8 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .sidebar {
   float: right;
   width: 300px;
-  margin: 0;
-  padding: 0;
+  margin: 0px;
+  padding: 0px;
 }
 
 .sidebar h2 { font-size: 150%; }
@@ -834,7 +836,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
   background-color: #f1e3f1;
 }
 
-.box.you-can-also ul { padding: 0px; list-style: none; }
+.box.you-can-also ul { padding: 0px; list-style: none; list-style-image: none; }
 
 .box.you-can-also ul li {
   background-repeat: no-repeat;
@@ -1064,4 +1066,6 @@ a.donate:focus {
 
 .register-now { border-top: 1px solid #cccccc; margin-top: 8px; }
 .register-now .get-in-touch { font-size: 150%; }
+
+
 

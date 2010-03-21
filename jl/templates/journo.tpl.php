@@ -622,6 +622,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="body">
     <p>To receive the journa<i>listed</i> digest every Tuesday via email, <a href="/weeklydigest">subscribe here</a></p>
   </div>
+  <div class="foot"></div>
 </div>
 
 <div class="box you-can-also">
@@ -637,6 +638,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
     </ul>
   </div>
+  <div class="foot"></div>
 </div>
 
 
@@ -676,6 +678,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 ?>
     </div>
   </div>
+  <div class="foot"></div>
 </div>
 
 
@@ -692,6 +695,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     </ul>
 <?php /* journo_emitBasedDisclaimer(); */ ?>
   </div>
+  <div class="foot"></div>
 </div>
 
 
@@ -705,6 +709,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
      </li>
     <ul>
   </div>
+  <div class="foot"></div>
 </div>
 <?php } ?>
 
@@ -715,6 +720,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <a href="<?= article_url( $most_commented['id'] );?>"><?= $most_commented['title'];?></a>
     (<?= $most_commented['total_comments'] ?> comments)
   </div>
+  <div class="foot"></div>
 </div>
 <?php } ?>
 
@@ -731,6 +737,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if(++$n>=5) break; } ?>
     </ul>
   </div>
+  <div class="foot"></div>
 </div>
 
 
@@ -751,13 +758,23 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <span class="not-known"><?= $prettyname ?> has not added any journalists</span>
 <?php } ?>
  </div>
-<?php if( $can_edit_page ) { ?>
  <div class="foot">
+<?php if( $can_edit_page ) { ?>
   <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a>
- </div>
 <?php } ?>
+ </div>
 </div>
 
 </div>
 </div> <!-- end sidebar -->
+
+<?php /*
+<script type="text/javascript" charset="utf-8">
+      if(document.compatMode == 'CSS1Compat'){
+        alert("Standards mode");
+      }else{
+        alert("Quirks mode");
+      }
+    </script>
+*/ ?>
 

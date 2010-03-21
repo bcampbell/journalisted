@@ -1,0 +1,50 @@
+/* style overrides to work around ie badness */
+
+
+ul {
+  list-style: url( "/ie/bullet.gif") disc outside;
+}
+
+.main .tabs ul {
+    width: 100%;
+}
+
+
+.sidebar
+{
+    width: 310px;
+}
+
+
+.sidebar .box .head { 
+    padding: 5px 5px 0px 5px;    /* +5px for left, top, right */
+    width: 300px;
+    border: none;
+    background: transparent url( '/ie/sidebar_head.gif' ) no-repeat top left;
+}
+
+.sidebar .box .body {
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 268px;   /* 310 - 21*2 */
+    background: transparent url( '/ie/sidebar_body.gif' ) repeat-y top left;
+}
+
+
+.sidebar .box .foot { 
+    padding: 0px 5px 5px 5px;
+    width: 300px;
+    height: 5px;
+    background: transparent url( '/ie/sidebar_foot.gif' ) no-repeat bottom left;
+}
+
+
+.sidebar .box.subscribe-newsletter .head { 
+    background: transparent url( '/ie/sidebar_green_head.gif' ) no-repeat top left;
+}
+
+.sidebar .box.you-can-also .head { 
+    background: transparent url( '/ie/sidebar_purple_head.gif' ) no-repeat top left;
+}
+.sidebar .box.admired-journos .head { 
+    background: transparent url( '/ie/sidebar_blue_head.gif' ) no-repeat top left;
+}
