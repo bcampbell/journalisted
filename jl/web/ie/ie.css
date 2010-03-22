@@ -48,3 +48,12 @@ ul {
 .sidebar .box.admired-journos .head { 
     background: transparent url( '/ie/sidebar_blue_head.gif' ) no-repeat top left;
 }
+
+
+/* shuffle frontpage postits about to hide lack of transparent... */
+.box.front .nav a.subscribe { left: 341px; top: 11px; } 
+.box.front .nav a.edit-profile { left: 111px; top: 125px; }
+.box.front .nav a.search-articles { left: 510px; top: 137px; }
+.box.front .nav a.search-journos { left: 640px; top: 64px; }
+.box.front .nav a.alerts { left: 822px; top: 120px; }
+

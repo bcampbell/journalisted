@@ -660,11 +660,12 @@ ul.newList li a:focus {-moz-outline-style: none;}
   left: 25px;
 }
 
-.box.front span.youcan{ 
+.box.front span.youcan { 
   position: absolute;
   top: 40px;
   left: 25px;
-  font-size: 210%;
+  font-size: 25px;
+  line-height: 30px;
   color: #004a80;
 }
 
@@ -672,10 +673,12 @@ ul.newList li a:focus {-moz-outline-style: none;}
   padding: 0px;
   margin: 0px;
   list-style: none;
+  list-style-image: none;
 }
 
 .box.front li {
   position: relative;
+  display: inline;
   list-style: none;
   padding: 0px;
   margin: 0px;
@@ -921,7 +924,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
   width: 88px;
   height: 16px;
   margin-left: -88px;
-
+  display: inline;
   font-size: 100%;
   font-weight: bold;
   color: #555555;
@@ -930,6 +933,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 .overview .section ul {
   list-style: square;
+  list-style-image: none;
 /*  margin-left: 70px; */
 }
 
