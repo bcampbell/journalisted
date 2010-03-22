@@ -60,8 +60,11 @@ var jl = function() {
 // add auto-calculation of label sizes
 function chart( placeholder, series_, opts_ ) {
     var R = Raphael( placeholder );
+
     var series = series_;
     var opts =  {
+        width: 600,         // HACKHACKHACK! - doesn't seem to be a way to get canvas size from Raphael...
+        height: 300,
         xaxis: {
             label: "X Axis",
             min: null,      // extent of axes, in data units
@@ -183,9 +186,8 @@ function chart( placeholder, series_, opts_ ) {
         plotarea = {
             x: opts.yaxis.gutter,
             y: 0,
-            w: R.width - opts.yaxis.gutter,
-            h: R.height - opts.xaxis.gutter };
-
+            w: opts.width - opts.yaxis.gutter,
+            h: opts.height - opts.xaxis.gutter };
 
         calcStepInterval( opts.xaxis );
         calcStepInterval( opts.yaxis );

@@ -170,6 +170,8 @@ $previous_employers = array_unique( $previous_employers );
 <div class="main journo-profile">
 
 
+
+
 <div class="overview">
   <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
   <div class="body">
@@ -371,6 +373,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
             } );
     });
 </script>
+
 
 <?php } else { ?>
     <p>(sorry, information not currently available)</p>
