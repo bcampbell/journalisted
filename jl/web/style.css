@@ -28,7 +28,7 @@ body {
 
 a { color: #cc0000; text-decoration: none; }
 a:hover { text-decoration: underline; }
-a:visited { color: #ee3333; }
+a:visited { color: #cc6666; }
 
 a.extlink { 
   padding-right: 19px;
