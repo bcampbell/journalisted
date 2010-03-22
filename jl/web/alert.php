@@ -222,6 +222,7 @@ function EmitChangePasswordBox()
       <input name="submit" type="submit" value="<?=_('Submit') ?>">
     </form>
   </div>
+ <div class="foot"></div>
 </div>
 
     <?
@@ -316,6 +317,7 @@ EOT;
 <?php } ?>
     </ul>
   </div>
+  <div class="foot"></div>
 </div>
 <?php
 

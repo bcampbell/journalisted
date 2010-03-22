@@ -72,6 +72,7 @@ Gavin Freeguard and Ben Campbell administrate the site.
       <div class="box-action"><a href="/faq">See all FAQs</a></div>
       <div style="clear: both;"></div>
     </div>
+    <div class="foot"></div>
   </div>
 </div> <!-- end sidebar -->
 <?php

@@ -78,7 +78,7 @@
 <div class="box">
   <div class="head"><h3>Similar articles</h3></div>
   <div class="body">
-    <small>(<a class="tooltip" href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
+    <small>(<a href="/faq/how-does-journalisted-work-out-what-articles-are-similar">what's this?</a>)</small>
 
 
     <p>
@@ -114,6 +114,7 @@
     <a href="<?php echo article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all <?php print $sim_total; ?> similar articles.</a>
   </div>
 <?php } ?>
+  <div class="foot"></div>
 </div>
 
 
@@ -152,6 +153,7 @@
     <a class="extlink" href="http://technorati.com">Technorati</a> and
     <a class="extlink" href="http://www.icerocket.com">IceRocket</a></p>
   </div>
+  <div class="foot"></div>
 </div>
 
 
@@ -160,6 +162,7 @@
   <div class="body">
 <?php tag_display_cloud( $tags ); ?>
   </div>
+  <div class="foot"></div>
 </div>
 
 
