@@ -420,7 +420,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered any experience</p>
+    <p class="not-known">No experience entered</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
     <a class="add" href="/profile_employment?ref=<?= $ref ?>&action=new_employment">Add employment</a>&nbsp;&nbsp;
@@ -451,7 +451,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered any education</p>
+    <p class="not-known">No education entered</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
     <a class="add"  href="/profile_education?ref=<?= $ref ?>&action=new_school">Add a school</a>&nbsp;&nbsp;
@@ -479,7 +479,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered any books</p>
+    <p class="not-known">No books entered</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
     <a class="add"  href="/profile_books?ref=<?= $ref ?>&action=new">Add book</a>
@@ -506,7 +506,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
     </ul>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered any awards</p>
+    <p class="not-known">No awards entered</p>
 <?php } ?>
     <?php if( $can_edit_page ) { ?>
     <a class="add"  href="/profile_awards?ref=<?= $ref ?>&action=new">Add award</a>
@@ -569,7 +569,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( $twitter_id ) { ?>
     <p>Find <?= $prettyname; ?> on twitter: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered a Twitter account</p>
+    <p class="not-known">No Twitter account entered</p>
 <?php } ?>
   </div>
 </div>
@@ -584,7 +584,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( $phone_number ) { ?>
     <p>Phone <?= $prettyname; ?> at: <?= h( $phone_number ) ?></p>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered a phone number</p>
+    <p class="not-known">No phone number entered</p>
 <?php } ?>
   </div>
 </div>
@@ -600,7 +600,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <p>Write to <?= $prettyname ?> at:<br/><br/>
     <?= str_replace( "\n", "<br/>", h( $address ) ) ?>
 <?php } else { ?>
-    <p class="not-known"><?= $prettyname ?> has not entered an address</p>
+    <p class="not-known">No address entered</p>
 <?php } ?>
   </div>
 </div>
@@ -656,8 +656,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot">
     <?php if( $can_edit_page ) { ?>
     <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
-    <?php } else { ?>
-    <div class="box-action"><a href="/forjournos?j=<?= $ref ?>">Suggest a link for <?= $prettyname ?></a></div>
     <?php } ?>
   </div>
 </div>
