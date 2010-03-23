@@ -73,11 +73,11 @@ EOT;
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
 
-    // most blogged-about articles TODO: 1 month too long. should shrink.
+    // most blogged-about articles
     $sql = <<<EOT
 SELECT a.id,a.srcorg,a.title,a.permalink,a.total_bloglinks,o.prettyname as srcorgname
     FROM article a INNER JOIN organisation o ON a.srcorg=o.id
-    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '1 month'
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '1 week'
         AND a.total_bloglinks > 0
     ORDER BY a.total_bloglinks DESC
     LIMIT 5
@@ -96,7 +96,7 @@ EOT;
 SELECT j.ref, j.prettyname
     FROM recently_viewed v INNER JOIN journo j ON j.id=v.journo_id
     ORDER BY v.view_time DESC
-    LIMIT 5
+    LIMIT 10
 EOT;
     $recently_viewed = db_getAll( $sql );
 

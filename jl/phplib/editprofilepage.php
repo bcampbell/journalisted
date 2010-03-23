@@ -158,6 +158,8 @@ class EditProfilePage
 ?>
 
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <?php
         if( $this->error_messages ) {
 ?>
@@ -179,7 +181,8 @@ class EditProfilePage
         $this->display();
 
 ?>
-
+</div>
+<div class="foot"></div>
 </div> <!-- end main -->
 
 <div class="sidebar">

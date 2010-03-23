@@ -161,8 +161,12 @@ function DoLoginPage()
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <h3><?php echo $reason; ?></h3>
 <?php loginform_emit( $q_email, $q_stash, $q_rememberme, $errs ); ?>
+</div>
+<div class="foot"></div>
 </div> <!-- end main -->
 <?php
 
@@ -260,6 +264,8 @@ function DoLoginViaEmailPage()
             page_header("Now check your email!" );
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <p class="loudmessage">
 Now check your email!<br/>
 <br/>
@@ -274,6 +280,8 @@ We've sent you an email, and you'll need to click the link in it to log in.
 </div>
 <?php } ?>
 </div>
+<div class="foot"></div>
+</div>
 <?php
 
             page_footer();
@@ -285,6 +293,8 @@ We've sent you an email, and you'll need to click the link in it to log in.
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <?php if( $action =='register' ) { ?>
   <h3>Register new account</h3>
   <p>To register, please tell us your email address.</p>
@@ -295,6 +305,8 @@ We've sent you an email, and you'll need to click the link in it to log in.
   <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
 <?php } ?>
 <?php RegisterForm_Emit( $errs ); ?>
+</div>
+<div class="foot"></div>
 </div>
 <?php
 

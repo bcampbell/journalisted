@@ -81,6 +81,8 @@ function faq_end() {
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 
 <h2>Frequently Asked Questions</h2>
 
@@ -197,7 +199,8 @@ takes a column inch to be 30 words.</p>
 <?php faq_begin("Can I send out a press release via your site to journalists?"); ?>
 <p>No. The site is meant to make it easier for the public to navigate the news – not as a PR tool</p>
 <?php faq_end(); ?>
-
+</div>
+<div class="foot"></div>
 </div> <!-- end main -->
 <?php
 

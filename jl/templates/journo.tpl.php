@@ -168,8 +168,8 @@ $previous_employers = array_unique( $previous_employers );
 
 
 <div class="main journo-profile">
-
-
+<div class="head"></div>
+<div class="body">
 
 
 <div class="overview">
@@ -250,6 +250,7 @@ $previous_employers = array_unique( $previous_employers );
 
 <?php /* TAB SECTIONS START HERE */ ?>
 
+
 <div class="tabs">
 <ul>
 <li class="<?= $tab=='work' ? 'current':'' ?>"><a href="#tab-work">Work</a></li>
@@ -307,7 +308,6 @@ $previous_employers = array_unique( $previous_employers );
 </div>
 
 
-
 <div class="monthly-stats">
   <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#monthly-stats-footnote">*</a></sup></h3></div>
   <div class="body">
@@ -322,7 +322,7 @@ $previous_employers = array_unique( $previous_employers );
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
 </php */ ?>
-    <div id="monthly-stats-placeholder" style="width:600px;height:300px"></div>
+    <div id="monthly-stats-placeholder" style="width:100%;height:300px"></div>
     <div id="monthly-stats-footnote">
       <sup>*</sup>Based only on article from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
     </div>
@@ -380,8 +380,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
   </div>
 </div>
-
-
 
 
 </div> <!-- end work tab -->
@@ -610,7 +608,8 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 
 </div> <!-- end contact tab -->
-
+</div> <?php /* end main body */ ?>
+<div class="foot"></div>
 </div> <!-- end main -->
 
 

@@ -18,6 +18,8 @@
 <div class="main front-page">
 
 <div class="box front">
+ <div class="head"></div>
+ <div class="body">
   <span class="brag">140,000 people used journa<i>listed</i> last month!</span>
   <span class="youcan">At journa<i>listed</i> you can:</span>
   <ul class="nav">
@@ -27,44 +29,49 @@
    <li><a class="search-journos" href="/search?type=journo">search for journalists</a></li>
    <li><a class="alerts" href="/alert">alerts</a></li>
   </ul>
+ </div>
+ <div class="foot"></div>
 </div>
 
 
 <div class="box recently-viewed">
-<div class="head"><h3>Recently viewed</h3></div>
-<div class="body">
+  <div class="head"><h3>Recently viewed</h3></div>
+  <div class="body">
 
-<ul>
+    <ul>
 <?php foreach( $recently_viewed as $j ) { ?>
-  <li><a href="/<?= $j['ref'] ?>"><?= $j['prettyname'] ?></a></li>
+      <li><a href="/<?= $j['ref'] ?>"><?= $j['prettyname'] ?></a></li>
 <?php } ?>
-</ul>
-</div>
+    </ul>
+  </div>
+  <div class="foot"></div>
 </div>
 
 <div class="box recently-updated">
-<div class="head"><h3>Recently updated</h3></div>
-<div class="body">
+  <div class="head"><h3>Recently updated</h3></div>
+  <div class="body">
 
-<ul>
+    <ul>
 <?php foreach( $events as $e ) { ?>
-  <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a></li>
+    <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a></li>
 <?php } ?>
-</ul>
+    </ul>
 
-</div>
+  </div>
+  <div class="foot"></div>
 </div>
 
 <div class="box most-blogged">
-<div class="head"><h3>Most blogged-about articles</h3></div>
-<div class="body">
-  <ul>
+  <div class="head"><h3>Most blogged-about articles</h3></div>
+  <div class="body">
+    <ul>
 <?php foreach( $most_blogged_about as $art ) { ?>
-      <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a> (<?php echo $art['total_bloglinks'];?> blogs)
-      </li>
+        <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a> (<?php echo $art['total_bloglinks'];?> blogs)
+        </li>
 <?php } ?>
-  </ul>
-</div>
+    </ul>
+  </div>
+  <div class="foot"></div>
 </div>
 
 <div style="clear:both;"></div>

@@ -100,6 +100,8 @@ function showLookupPage()
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <p>You might already have a profile on journa<i>listed</i>. Let's check...</p>
 <form method="get" action="/profile">
  <label for="fullname">My name is:</label>
@@ -133,7 +135,7 @@ or...
   <input type="hidden" name="action" value="create" />
   <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
   <input type="submit" value="No, create a new profile for me, <?= h($fullname)?>" />
-</div>
+</form>
 <?php
 
         } else {
@@ -144,11 +146,15 @@ or...
   <input type="hidden" name="action" value="create" />
   <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
   <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
-</div>
+</form>
 <?php
         }
     }
-
+?>
+</div>
+<div class="foot"></div>
+</div> <!-- end main -->
+<?php
     page_footer();
 }
 
@@ -180,6 +186,8 @@ page_header( $title );
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 
 <?php if( $journo ) { ?>
 <h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile</h2>
@@ -208,7 +216,8 @@ page_header( $title );
 </p>
 </div>
 
-
+</div>
+<div class="foot"></div>
 </div>
 <?php
 
@@ -250,8 +259,12 @@ function showCreatePage()
     page_header("");
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
 <p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
+</div>
+<div class="foot"></div>
 </div>
 <?php
     page_footer();

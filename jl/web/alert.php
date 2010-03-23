@@ -64,6 +64,8 @@ page_header( "Alerts", array( 'menupage'=>'my') );
 
 ?>
 <div class="main">
+<div class="head"></div>
+<div class="body">
 <h2>Alerts</h2>
 <p>
 Follow your favourite journalist(s).<br />
@@ -97,6 +99,8 @@ if( $P ) {
 }
 
 ?>
+</div>
+<div class="foot"></div>
 </div>  <!-- end main -->
 <div class="sidebar">
 <?php

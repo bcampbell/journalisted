@@ -44,20 +44,24 @@ function search_journos() {
     <b>Search Results:</b> <span class="count"><?= sizeof($journos) ?> journalists</span> like <span class="query"><?= h($query) ?></span>
   </div>
 
-<?php if( $journos ) { ?>
   <div class="body">
+<?php if( $journos ) { ?>
 <ul>
 <?php   foreach( $journos as $j ) { ?>
   <li><?= journo_link($j); ?></li>
 <?php   } ?>
 </ul>
+<?php } ?>
   </div>
+
+<?php } else { /* blank query */?>
+<div class="head"></div>
+<div class="body"></div>
 <?php } ?>
 
-<?php } // if( $query )?>
-
+<div class="foot">
 <?php search_emit_onpage_form(); ?>
-
+</div>
 </div>  <!-- end main -->
 <?php
     page_footer();
@@ -72,7 +76,11 @@ function search_articles()
         page_header( "Search Articles", array('search_params'=>$s) );
 ?>
 <div class="main search-results">
+ <div class="head"></div>
+ <div class="body"></div>
+ <div class="foot">
 <?php search_emit_onpage_form(); ?>
+ </div>
 </div> <!-- end main -->
 <?php
         page_footer();
@@ -125,8 +133,8 @@ function search_articles()
 
 <?php } ?>
   </div>
-<?php if( $results ) { ?>
   <div class="body">
+<?php if( $results ) { ?>
     <ul class="art-list">
 <?php
     foreach( $results as $art ) {
@@ -145,15 +153,17 @@ function search_articles()
       </li>
 <?php } ?>
     </ul>
-  </div>
   <div class="pager">
 <?php
         EmitPageControl( $query, $sort_order, $start, $num_per_page, $total );
 ?>
-  </div>
 <?php } ?>
+  </div>
 
+  </div>
+  <div class="foot">
 <?php search_emit_onpage_form(); ?>
+  </div>
 </div> <!-- end main -->
 <?php
 

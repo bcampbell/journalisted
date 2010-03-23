@@ -652,6 +652,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
   height: 277px;
   background: url("/img/home-az.png") no-repeat top left;
   position: relative;
+  top:0px;
 }
 
 .box.front span.brag {
@@ -995,9 +996,9 @@ a.donate:focus {
 
 /* TODO: this should be default for .main (ie move padding from .main to .main>.body) */
 .main.search-results { padding: 0px; }
-.main.search-results>.body { padding: 8px 16px 16px 16px; }
+.main.search-results .body { padding: 8px 16px 16px 16px; }
 
-.search-results>.head,
+.main.search-results .head,
 .box .pager {
   padding: 8px 16px;
   margin: 0px;
@@ -1005,14 +1006,14 @@ a.donate:focus {
   line-height: 20px;
   background-color: #eeeeee;
 }
-.search-results>.head {  border-bottom: 1px solid #dddddd; }
+.search-results .head {  border-bottom: 1px solid #dddddd; }
 .box .pager {  border-top: 1px solid #dddddd; }
 
 .search-results .count,
 .search-results .query
 { font-weight: bold; color: #2352a1; }
 
-.search-results ul { list-style: none; padding: 0; }
+.search-results ul { list-style: none; list-style-image: none; padding: 0; }
 
 .pager .page-links { float:right; }
 
