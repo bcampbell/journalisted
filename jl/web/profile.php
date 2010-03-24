@@ -82,7 +82,11 @@ $action = strtolower( get_http_var( 'action' ) );
 if( $action == 'lookup' ) {
     showLookupPage();
 } else if( $action == 'claim' ) {
-    showClaimPage( $journo );
+    if( $journo ) {
+        showClaimPage( $journo );
+    } else {
+        showLookupPage();
+    }
 } else if( $action == 'create' ) {
     showCreatePage();
 } else {
@@ -102,7 +106,7 @@ function showLookupPage()
 <div class="main">
 <div class="head"></div>
 <div class="body">
-<p>You might already have a profile on journa<i>listed</i>. Let's check...</p>
+<p>Let's look for your profile...</p>
 <form method="get" action="/profile">
  <label for="fullname">My name is:</label>
  <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
@@ -119,8 +123,7 @@ function showLookupPage()
 
 ?>
 <form method="get" action="/profile">
-<p>Are you one of these people already on journa<i>listed</i>?</p>
-
+<p>Are you one of these people?</p>
 
 <?php foreach( $matching_journos as $j ) { ?>
 <input type="radio" id="ref_<?= $uniq ?>" name="ref" value="<?= $j['ref'] ?>" />
@@ -130,23 +133,28 @@ function showLookupPage()
 <input type="hidden" name="action" value="claim" />
 <input type="submit" value="Yes, that's me" />
 </form>
+<?php     if( 0 ) { /*DISABLED!*/ ?>
 or...
 <form method="get" action="/profile">
   <input type="hidden" name="action" value="create" />
   <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
   <input type="submit" value="No, create a new profile for me, <?= h($fullname)?>" />
 </form>
+<?php     } /* END DISABLED */ ?>
+
 <?php
 
         } else {
             /* searched, found no matches */
 ?>
-<p>Couldn't find any profiles matching your name.</p>
+<p>Sorry, we couldn't find any profiles matching your name.</p>
+<?php     if( 0 ) { /*DISABLED!*/ ?>
 <form method="get" action="/profile">
   <input type="hidden" name="action" value="create" />
   <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
   <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
 </form>
+<?php     } /* END DISABLED */ ?>
 <?php
         }
     }
@@ -190,15 +198,14 @@ page_header( $title );
 <div class="body">
 
 <?php if( $journo ) { ?>
-<h2>Are you <?=$journo['prettyname'];?>? Register to edit your profile</h2>
+<h2>Are you <?=$journo['prettyname'];?>?</h2>
 <?php } else { ?>
 <h2>Are you a journalist?</h2>
-
-<p>Would you like a profile on journa<i>listed</i>?</p>
-
 <?php } ?>
 
-<p>Once registered, you can:</p>
+<p>Would you like to edit your journa<i>listed</i> profile?</p>
+<p>It's easy and <em>free</em>.</p>
+<p>You'll be able to:</p>
 <ul>
   <li>Add articles (published anywhere on the web)</li>
   <li>Add biographical information</li>
@@ -211,7 +218,7 @@ page_header( $title );
 <?php if( $journo ) { ?>
 <a href="/profile?action=claim&ref=<?= $journo['ref'] ?>">Edit your profile</a>
 <?php } else { ?>
-<a href="/profile?action=lookup">Create your profile</a>
+<a href="/profile?action=lookup">Edit your profile</a>
 <?php } ?>
 </p>
 </div>
@@ -228,6 +235,8 @@ page_footer();
 
 function showCreatePage()
 {
+    return; /* DISABLED! */
+
     // we need them logged on first
     $P = person_signon(array(
         'reason_web' => "Log in to create a profile",

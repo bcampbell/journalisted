@@ -63,9 +63,9 @@
         <ul>
           <li><a href="/">Home</a></li>
 <?php if( $logged_in_user && $can_edit_profile ) { ?>
-          <li><a href="/profile">Profile</a></li>
+          <li><a href="/profile">Edit profile</a></li>
 <?php } else { ?>
-          <li><a href="/profile">Add profile</a></li>
+          <li><a href="/profile">Edit profile</a></li>
 <?php } ?>
 <?php if( $logged_in_user ) { ?>
           <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
