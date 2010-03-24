@@ -20,7 +20,18 @@ if (person_if_signed_on(true)) {
 }
 
 page_header(_('Logged out'));
-print '<p>' . _('You\'re now logged out.  Thanks for using the site!') . '</p>';
+?>
+<div class="main">
+  <div class="head"></div>
+  <div class="body">
+    <p>You are now logged out.</p>
+    <p>Thanks for using the site!</p>
+
+    <a href="/">Home page</a>
+  </div>
+  <div class="foot"></div>
+</div> <!-- end main -->
+<?php
 page_footer();
 
 ?>
