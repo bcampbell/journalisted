@@ -214,7 +214,7 @@ $previous_employers = array_unique( $previous_employers );
       <ul>
 <?php   foreach( $current_employment as $e ) { ?>
 <?php       if( $e['kind'] == 'e' ) { /* employment */ ?>
-        <li><span class="jobtitle"><?= $e['job_title'] ?></span> at <span class="publication"><?= $e['employer'] ?></span></li>
+        <li><?php if($e['job_title']){ ?><span class="jobtitle"><?= $e['job_title'] ?></span> at <?php } ?><span class="publication"><?= $e['employer'] ?></span></li>
 <?php       } else { /* freelance */ ?>
         <li>Freelance <?= $e['employer'] ? ' (' . $e['employer'] . ')' : '' ?></span></li>
 <?php       } ?>
@@ -401,7 +401,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
       <li>
   <?php if( $e['kind'] == 'e' ) { ?>
-        <h4><?= $e['job_title'] ?>, <?= $e['employer'] ?></h4>
+        <h4><?= $e['job_title'] ? $e['job_title'].', ' : '' ?><?= $e['employer'] ?></h4>
   <?php } else { ?>
         <h4>Freelance <?= $e['employer'] ? ' ('.$e['employer'].')' : ''?></h4>
   <?php } ?>
