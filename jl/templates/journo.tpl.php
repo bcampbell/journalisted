@@ -46,9 +46,10 @@
  $employers    - list of employers journo has worked for
    for each one:
     employer   - name eg "Pig Farmer Monthly"
-    job_title
+    job_title  - eg "Political Editor"
     year_from  - eg "2005"
-    year_to    - null if still employed here
+    year_to
+    current    - boolean flag indicating still employed in this job
 
  $education    - list of education entries
    for each one:
@@ -143,14 +144,14 @@ $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 /* build up a list of _current_ employers */
 $current_employment = array();
 foreach( $employers as $emp ) {
-    if( !$emp['year_to'] )
+    if( $emp['current'] )
         $current_employment[] = $emp;
 }
 
 /* list of previous employers (just employer name, nothing else) */
 $previous_employers = array();
 foreach( $employers as $emp ) {
-    if( $emp['year_to'] )
+    if( !$emp['current'] )
         $previous_employers[] = $emp['employer'];
 }
 $previous_employers = array_unique( $previous_employers );
@@ -405,10 +406,11 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <?php } else { ?>
         <h4>Freelance <?= $e['employer'] ? ' ('.$e['employer'].')' : ''?></h4>
   <?php } ?>
-  <?php if( $e['year_to'] ) { ?>
-        <span class="daterange"><?= $e['year_from'] ?>-<?= $e['year_to'] ?></span>
-  <?php } else { ?>
-        <span class="daterange"><?= $e['year_from'] ?>-Present</span>
+
+  <?php $year_from = $e['year_from'] ? $e['year_from'] : ''; ?>
+  <?php $year_to = $e['current']?'present':$e['year_to']; ?>
+  <?php if( $e['year_from'] || $e['year_to'] || $e['current'] ) { ?>
+        <span class="daterange"><?= $year_from ?> - <?= $year_to ?></span>
   <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
@@ -443,7 +445,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( $edu['qualification'] && $edu['field'] ) { ?>
         <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
 <?php } ?>
+        <?php if( $edu['year_from'] || $edu['year_to'] ) { ?>
         <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
+        <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[Edit]</a>
         <?php } ?>
@@ -471,7 +475,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php foreach( $books as $b ) { ?>
     <li>
       <h4><?= $b['title']; ?></h4>
+      <?php if( $b['publisher'] || $b['year_published'] ) { ?>
       <?= $b['publisher']; ?>, <?= $b['year_published']; ?>
+      <?php } ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">[Edit]</a>
       <?php } ?>

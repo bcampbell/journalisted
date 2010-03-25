@@ -82,6 +82,7 @@ class EmploymentPage extends EditProfilePage
             $emp_id = get_http_var('id');
             $emp = db_getRow( "SELECT * FROM journo_employment WHERE journo_id=? AND id=?",
                 $this->journo['id'], $emp_id );
+            $emp['current'] = ($emp['current']=='t')?TRUE:FALSE;
             if( $emp['kind']=='e' ) {
 ?>
 <h2>Edit employment</h2>
@@ -130,7 +131,7 @@ class EmploymentPage extends EditProfilePage
         $formtype = 'edit';
         if( is_null( $emp ) ) {
             $formtype = 'new';
-            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'' );
+            $emp = array( 'employer'=>'', 'job_title'=>'', 'year_from'=>'', 'year_to'=>'', 'current'=>TRUE );
         }
  
 ?>
@@ -149,7 +150,7 @@ class EmploymentPage extends EditProfilePage
       <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
       <label for="year_to_<?= $uniq; ?>">Year to:</label>
       <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
-      <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label>
+      <input type="checkbox" <?php if( $emp['current'] ) { ?>checked <?php } ?>name="current" value="yes" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I currently work here</label>
     </dd>
   </dl>
 
@@ -176,7 +177,7 @@ class EmploymentPage extends EditProfilePage
         $formtype = 'edit';
         if( is_null( $emp ) ) {
             $formtype = 'new';
-            $emp = array( 'employer'=>'', 'year_from'=>'', 'year_to'=>'' );
+            $emp = array( 'employer'=>'', 'year_from'=>'', 'year_to'=>'', 'current'=>TRUE );
         }
  
 ?>
@@ -188,7 +189,7 @@ class EmploymentPage extends EditProfilePage
       <input type="text" class="year" size="4" name="year_from" id="year_from_<?= $uniq; ?>" value="<?= h($emp['year_from']); ?>"/>
       <label for="year_to_<?= $uniq; ?>">Year to:</label>
       <input type="text" class="year" size="4" name="year_to" id="year_to_<?= $uniq; ?>" value="<?= h($emp['year_to']); ?>"/>
-      <input type="checkbox" <?php if( !$emp['year_to'] ) { ?>checked <?php } ?>name="current" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I am currently freelance</label>
+      <input type="checkbox" <?php if( $emp['current'] ) { ?>checked <?php } ?>name="current" value="yes" id="current_<?= $uniq; ?>"/><label for="current_<?= $uniq; ?>">I am currently freelance</label>
     </dd>
 
     <dt><label for="employer_<?= $uniq; ?>">Publications</label></dt>
@@ -215,13 +216,13 @@ class EmploymentPage extends EditProfilePage
 
     function handleSubmitEmployed()
     {
-        $fieldnames = array( 'employer', 'job_title', 'year_from', 'year_to' );
+        $fieldnames = array( 'employer', 'job_title', 'year_from', 'year_to', 'current' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        $item['current'] = (bool)$item['current'];
+
         if( !$item['year_from'] )
             $item['year_from'] = NULL;
         if( !$item['year_to'] )
-            $item['year_to'] = NULL;
-        if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
         // fudge
         $fieldnames[] = 'kind'; $item['kind'] = 'e';
@@ -233,13 +234,12 @@ class EmploymentPage extends EditProfilePage
 
     function handleSubmitFreelance()
     {
-        $fieldnames = array( 'employer', 'year_from', 'year_to' );
+        $fieldnames = array( 'employer', 'year_from', 'year_to', 'current' );
         $item = $this->genericFetchItemFromHTTPVars( $fieldnames );
+        $item['current'] = (bool)$item['current'];
         if( !$item['year_from'] )
             $item['year_from'] = NULL;
         if( !$item['year_to'] )
-            $item['year_to'] = NULL;
-        if( get_http_var( 'current' ) )
             $item['year_to'] = NULL;
 
         // fudge

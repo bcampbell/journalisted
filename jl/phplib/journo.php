@@ -559,9 +559,14 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
 
     /* assorted bio things */
-    $data['employers'] = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
-    $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC", $journo['id'] );
+    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC", $journo['id'] );
+    foreach( $employers as &$emp ) { $emp['current'] = ($emp['current']=='t') ? TRUE:FALSE; } unset( $emp );
+    $data['employers'] = $employers;
+
+    $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC, (kind='u') DESC", $journo['id'] );
+
     $data['awards'] = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY year DESC", $journo['id'] );
+
     $data['books'] = db_getAll( "SELECT * FROM journo_books WHERE journo_id=? ORDER BY year_published DESC", $journo['id'] );
 
     /* admired journos */

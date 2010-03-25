@@ -39,7 +39,10 @@ def cook( r ):
     employment = []
     # current job?
     if r['job title'] or r['employer']:
-        employment.append( {'employer': r['employer'], 'job_title': r['job title'], 'current': True } )
+        if 'freelance' in r['job title']:
+            employment.append( {'kind':'f', 'employer': '', 'job_title': '', 'current': True } )
+        else:
+            employment.append( {'kind':'e', 'employer': r['employer'], 'job_title': r['job title'], 'current': True } )
     # previous jobs?
     if r['previous job title'] or r['previous employer']:
         employment.append( {'employer': r['previous employer'], 'job_title': r['previous job title'], 'current': False } )
@@ -133,17 +136,14 @@ def load_journo_data( j ):
         for emp in j['employment']:
             employer = emp['employer']
             job_title = emp['job_title']
-            # TODO add "current" field to journo_employment
-            year_from = 1979
-            year_to = 1996
-            if emp['current'] == True:
-                year_to = None
+            year_from = None
+            year_to = None
+            current = emp['current']
 
-            c.execute( "DELETE FROM journo_employment WHERE journo_id=%s AND lower(employer)=lower(%s) AND lower(job_title)=lower(%s) AND ((year_from=%s) OR (year_from IS NULL AND %s IS NULL)) AND ((year_to=%s) OR (year_to IS NULL AND %s IS NULL))",
-                (j['id'], employer, job_title, year_from, year_from, year_to, year_to ) )
-            c.execute( "INSERT INTO journo_employment (journo_id,employer,job_title,year_from,year_to) VALUES (%s,%s,%s,%s,%s)",
-                (j['id'], employer, job_title, year_from, year_to ) )
-
+            c.execute( "DELETE FROM journo_employment WHERE journo_id=%s AND lower(employer)=lower(%s) AND lower(job_title)=lower(%s) AND ((year_from=%s) OR (year_from IS NULL AND %s IS NULL)) AND ((year_to=%s) OR (year_to IS NULL AND %s IS NULL)) AND current=%s",
+                (j['id'], employer, job_title, year_from, year_from, year_to, year_to,current ) )
+            c.execute( "INSERT INTO journo_employment (journo_id,employer,job_title,year_from,year_to,current) VALUES (%s,%s,%s,%s,%s,%s)",
+                (j['id'], employer, job_title, year_from, year_to, current ) )
 
     if 'education' in j:
         for edu in j['education']:
