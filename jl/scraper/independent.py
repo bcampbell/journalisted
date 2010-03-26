@@ -24,6 +24,17 @@
 # are interchangable.
 #
 
+# ===========================================================================
+# NOTE: sgmllib in python2.5 is buggy, and causes at least this scraper to
+# bork.
+# http://bugs.python.org/issue1651995
+#
+# Quick fix: patch /usr/lib/python2.5/sgmllib.py
+# in  convert_charref(self, name), change:
+#        if not 0 <= n <= 255:
+# to:
+#        if not 0 <= n <= 127:
+#
 
 import getopt
 import re
@@ -33,7 +44,7 @@ import urlparse
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
 
@@ -211,9 +222,21 @@ def Extract_eScenic( html, context ):
         art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
 
     # article text is in "body" div
-    bodydiv = articlediv.find( 'div',{'class':'body'} )
+
+    # which, of course, doesn't parse properly...
+#    bodydiv = articlediv.find( 'div',{'class':'body'} )
+    m = re.compile( r'<div class="body">.*<!-- end body -->', re.DOTALL ).search( html )
+
+
+    bodydiv = BeautifulSoup( m.group(0) ).find('div',{'class':'body'} )
+
+
 
     # Kill cruft:
+    for cruft in bodydiv.findAll( 'script' ):
+        cruft.extract()
+    for cruft in bodydiv.findAll( 'div' ):
+        cruft.extract()
 
     #"<a href="http://indyblogs.typepad.com/openhouse/have_your_say/index.html" target="new"> Click here to have your say</a>"
     for cruft in bodydiv.findAll( 'a', {'href':'http://indyblogs.typepad.com/openhouse/have_your_say/index.html'} ):

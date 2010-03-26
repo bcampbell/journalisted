@@ -28,4 +28,5 @@ Log changes made due to website changes here!
 2009-09-09 dailymail: rss feed page changed, so updated FindRSSFeeds()
 2009-09-09 mirror: thier rss feeds got so bad that maxerrors had to be increased.
 2009-09-10 herald: new heraldscotland website
+2010-03-26 independent: fix truncated-content issue
 
