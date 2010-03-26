@@ -12,6 +12,7 @@ from JL import DB
 
 _conn = None
 _verbose = True
+_dryrun = False
 
 def csv_into_dict( f ):
     """ read a csv file in as an array of dictionaries (one per row, indexed by column name) """
@@ -186,7 +187,7 @@ def load_journo_data( j ):
             (j['id'],email,srcurl,srctype,approved) )
 
     if _verbose:
-        print "imported data for %s" % ( j['ref'] )
+        print "imported data to http://staging.journalisted.com/%s" % ( j['ref'] )
 
 
 
@@ -200,5 +201,11 @@ for d in data:
     j = cook(d)
     load_journo_data( j )
 
-_conn.commit()
+if _dryrun:
+	print "dry run - ROLLING BACK"
+	_conn.rollback()
+else:
+	if _verbose:
+		print "commmitting"
+	_conn.commit()
 
