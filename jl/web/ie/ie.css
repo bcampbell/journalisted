@@ -17,6 +17,9 @@ ul {
 }
 
 
+.foot { zoom: 1; } /* force hasLayout */
+
+
 .sidebar
 { width: 310px; }
 
@@ -37,7 +40,7 @@ ul {
 .sidebar .box .foot { 
     padding: 0px 5px 5px 5px;
     width: 300px;
-    height: 5px;
+    min-height: 5px;
     background: transparent url( '/ie/sidebar_foot.gif' ) no-repeat bottom left;
 }
 

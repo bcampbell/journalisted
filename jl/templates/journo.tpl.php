@@ -735,7 +735,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 <div class="box similar-journos">
   <div class="head"><h3>Journalists who write similar articles</h3></div>
-  <small>(<a href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
   <div class="body">
     <ul>
 <?php $n=0; foreach( $similar_journos as $j ) { ?>
@@ -743,7 +742,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if(++$n>=5) break; } ?>
     </ul>
   </div>
-  <div class="foot"></div>
+  <div class="foot">
+    <small>(<a href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
+  </div>
 </div>
 
 

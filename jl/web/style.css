@@ -92,7 +92,7 @@ a.remove {
 .foot a.edit,
 .head a.edit,
 .overview .photo a.edit {
-  margin: 0px;
+  margin: 4px;
   padding: 0px 0px 0px 26px;
   display: inline-block;
   height: 21px;
@@ -619,6 +619,14 @@ ul.newList li a:focus {-moz-outline-style: none;}
   padding: 8px 16px;
 }
 
+/* force foot sections to expand to enclose floated elements */
+.foot:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
 
 /* PAGE-SPECIFIC STUFF (everything below here is page-specific) */
 
@@ -980,14 +988,17 @@ a.donate:focus {
 }
 
 /* position edit buttons in sidebar boxes */
-.sidebar .foot { position: relative; height: 29px; }
+.sidebar .foot { position: relative; /* height: 29px; */ }
 
 .sidebar .foot a.edit,
 .sidebar .foot .box-action {
-  position: absolute;
+/*  position: absolute;
   right: 8px;
   bottom: 8px;
+*/
+    float: right;
 }
+
 
 
 
