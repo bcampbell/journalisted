@@ -30,18 +30,18 @@ page_header( $post['title'] );
     unset( $n );
 
 ?>
-<div class="maincolumn">
-<div class="box">
- <div class="head"><h2><?= $post['title']; ?></h2></div>
- <div class="body">
- <?= $html ?>
- <small>(posted by <em><?= $post['author']; ?></em> on <em><?= $prettydate; ?></em>)</small>
- </div>
- </div>
-</div> <!-- end maincolumn -->
+<div class="main">
+<div class="head"><h2><?= $post['title']; ?></h2></div>
+<div class="body">
+<?= $html ?>
+</div>
+<div class="foot">
+  <small>(posted by <em><?= $post['author']; ?></em> on <em><?= $prettydate; ?></em>)</small>
+</div>
+</div> <!-- end main -->
 
 
-<div class="smallcolumn">
+<div class="sidebar">
 <div class="box">
  <div class="head"><h3>Site News</h3></div>
  <div class="body">
@@ -52,9 +52,10 @@ page_header( $post['title'] );
 <?php } ?>
  </ul>
  </div>
+<div class="foot"></div>
 </div>
 
-</div> <!-- end smallcolumn -->
+</div> <!-- end sidebar -->
 <?php
 
 

@@ -149,7 +149,7 @@ function newsEdit($post) {
 <label for="slug">Slug:</label>
 <input type="text" size="80" name="slug" id="slug" value="<?= $post['slug'] ?>" /><br /><br />
 <label for="content">Content:</label><br/>
-<textarea rows=20 cols=80 name="content" id="content">
+<textarea rows="120" cols="100" name="content" id="content">
 <?= $post['content'] ?>
 </textarea>
 <br />
