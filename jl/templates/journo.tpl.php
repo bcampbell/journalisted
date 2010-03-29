@@ -313,7 +313,11 @@ $previous_employers = array_unique( $previous_employers );
   <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#monthly-stats-footnote">*</a></sup></h3></div>
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
-<?php /* ?>
+    <div id="monthly-stats-placeholder" style="width:100%;height:300px"></div>
+    <div id="monthly-stats-footnote">
+      <sup>*</sup>Based only on article from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
+    </div>
+
     <ul>
       <li>
         <?= $num_articles ?> articles <?php if( $num_articles>0) { ?> (since <?= $first_pubdate ?>) <?php } ?>
@@ -322,11 +326,6 @@ $previous_employers = array_unique( $previous_employers );
       <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
-</php */ ?>
-    <div id="monthly-stats-placeholder" style="width:100%;height:300px"></div>
-    <div id="monthly-stats-footnote">
-      <sup>*</sup>Based only on article from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
-    </div>
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
 <?php
 // some random colours...
