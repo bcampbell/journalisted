@@ -638,7 +638,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <ul>
       <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add <?= $prettyname ?>'s articles to my daily alerts</a></li>
       <li class="print-page"><a href="#" onclick="javascript:window.print(); return false;" >Print this page</a></li>
-      <li class="forward-profile"><a href="#">Forward profile to a friend</a></li>
+<?php /*      <li class="forward-profile"><a href="#">Forward profile to a friend</a></li> */ ?>
 <?php if( !$can_edit_page ) { ?>
       <li class="claim-profile">
         <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
