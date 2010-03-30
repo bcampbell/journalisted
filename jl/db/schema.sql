@@ -9,22 +9,137 @@ SET client_min_messages = warning;
 SET escape_string_warning = off;
 
 --
--- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: postgres
+-- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: -
 --
 
 CREATE PROCEDURAL LANGUAGE plpgsql;
 
 
-ALTER PROCEDURAL LANGUAGE plpgsql OWNER TO postgres;
-
 SET search_path = public, pg_catalog;
+
+--
+-- Name: article_setjournomodified_onupdate(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION article_setjournomodified_onupdate() RETURNS trigger
+    AS $$
+BEGIN
+    -- whenever article is modified, set the modified flag on any attributed jounos
+    UPDATE journo SET modified=true WHERE id IN (SELECT journo_id FROM journo_attr WHERE article_id=NEW.id);
+    return NULL;
+END;
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: article_update_total_bloglinks(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
+    AS $$
+    BEGIN
+        IF TG_OP = 'INSERT' THEN
+            UPDATE article SET total_bloglinks=total_bloglinks+1 WHERE id=new.article_id;
+        END IF;
+
+        IF TG_OP = 'DELETE' THEN
+            UPDATE article SET total_bloglinks=total_bloglinks-1 WHERE id=old.article_id;
+        END IF;
+
+        RETURN new;
+    END
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: article_update_total_comments(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION article_update_total_comments() RETURNS trigger
+    AS $$
+    BEGIN
+        IF TG_OP = 'INSERT' THEN
+            UPDATE article SET total_comments=total_comments+new.num_comments WHERE id=new.article_id;
+        END IF;
+
+        IF TG_OP = 'DELETE' THEN
+            UPDATE article SET total_comments=total_comments-old.num_comments WHERE id=old.article_id;
+        END IF;
+
+        IF TG_OP = 'UPDATE' THEN
+            UPDATE article SET total_comments=total_comments+new.num_comments-old.num_comments WHERE id=old.article_id;
+        END IF;
+
+        RETURN new;
+    END
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: journo_setmodified_ondelete(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION journo_setmodified_ondelete() RETURNS trigger
+    AS $$
+BEGIN
+    UPDATE journo SET modified=true WHERE id=OLD.journo_id;
+    return NULL;
+END;
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: journo_setmodified_oninsert(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION journo_setmodified_oninsert() RETURNS trigger
+    AS $$
+BEGIN
+    UPDATE journo SET modified=true WHERE id=NEW.journo_id;
+    return NULL;
+END;
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: journo_setmodified_onupdate(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION journo_setmodified_onupdate() RETURNS trigger
+    AS $$
+BEGIN
+    UPDATE journo SET modified=true WHERE id=NEW.journo_id;
+    UPDATE journo SET modified=true WHERE id=OLD.journo_id;
+    return NULL;
+END;
+$$
+    LANGUAGE plpgsql;
+
+
+--
+-- Name: ms_current_timestamp(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION ms_current_timestamp() RETURNS timestamp without time zone
+    AS $$
+    begin
+        return current_timestamp;
+    end;
+$$
+    LANGUAGE plpgsql;
+
 
 SET default_tablespace = '';
 
 SET default_with_oids = false;
 
 --
--- Name: alert; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: alert; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE alert (
@@ -34,10 +149,26 @@ CREATE TABLE alert (
 );
 
 
-ALTER TABLE public.alert OWNER TO mst;
+--
+-- Name: alert_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE alert_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: article; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: alert_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE alert_id_seq OWNED BY alert.id;
+
+
+--
+-- Name: article; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article (
@@ -65,10 +196,8 @@ CREATE TABLE article (
 );
 
 
-ALTER TABLE public.article OWNER TO mst;
-
 --
--- Name: article_bloglink; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_bloglink; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_bloglink (
@@ -84,10 +213,26 @@ CREATE TABLE article_bloglink (
 );
 
 
-ALTER TABLE public.article_bloglink OWNER TO mst;
+--
+-- Name: article_bloglink_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_bloglink_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: article_commentlink; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_bloglink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE article_bloglink_id_seq OWNED BY article_bloglink.id;
+
+
+--
+-- Name: article_commentlink; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_commentlink (
@@ -99,10 +244,8 @@ CREATE TABLE article_commentlink (
 );
 
 
-ALTER TABLE public.article_commentlink OWNER TO mst;
-
 --
--- Name: article_dupe; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_dupe; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_dupe (
@@ -111,10 +254,19 @@ CREATE TABLE article_dupe (
 );
 
 
-ALTER TABLE public.article_dupe OWNER TO mst;
+--
+-- Name: article_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: article_image; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_image; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_image (
@@ -126,10 +278,35 @@ CREATE TABLE article_image (
 );
 
 
-ALTER TABLE public.article_image OWNER TO mst;
+--
+-- Name: article_image_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_image_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: article_similar; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE article_image_id_seq OWNED BY article_image.id;
+
+
+--
+-- Name: article_needs_indexing; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE article_needs_indexing (
+    article_id integer NOT NULL
+);
+
+
+--
+-- Name: article_similar; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_similar (
@@ -139,10 +316,8 @@ CREATE TABLE article_similar (
 );
 
 
-ALTER TABLE public.article_similar OWNER TO mst;
-
 --
--- Name: article_tag; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_tag; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE article_tag (
@@ -153,10 +328,8 @@ CREATE TABLE article_tag (
 );
 
 
-ALTER TABLE public.article_tag OWNER TO mst;
-
 --
--- Name: custompaper; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE custompaper (
@@ -168,10 +341,8 @@ CREATE TABLE custompaper (
 );
 
 
-ALTER TABLE public.custompaper OWNER TO mst;
-
 --
--- Name: custompaper_criteria_journo; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_criteria_journo; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE custompaper_criteria_journo (
@@ -181,10 +352,27 @@ CREATE TABLE custompaper_criteria_journo (
 );
 
 
-ALTER TABLE public.custompaper_criteria_journo OWNER TO mst;
+--
+-- Name: custompaper_criteria_journo_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE custompaper_criteria_journo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: custompaper_criteria_text; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_criteria_journo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE custompaper_criteria_journo_id_seq OWNED BY custompaper_criteria_journo.id;
+
+
+--
+-- Name: custompaper_criteria_text; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE custompaper_criteria_text (
@@ -194,10 +382,44 @@ CREATE TABLE custompaper_criteria_text (
 );
 
 
-ALTER TABLE public.custompaper_criteria_text OWNER TO mst;
+--
+-- Name: custompaper_criteria_text_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE custompaper_criteria_text_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: error_articlescrape; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_criteria_text_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE custompaper_criteria_text_id_seq OWNED BY custompaper_criteria_text.id;
+
+
+--
+-- Name: custompaper_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE custompaper_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: custompaper_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE custompaper_id_seq OWNED BY custompaper.id;
+
+
+--
+-- Name: error_articlescrape; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE error_articlescrape (
@@ -213,10 +435,40 @@ CREATE TABLE error_articlescrape (
 );
 
 
-ALTER TABLE public.error_articlescrape OWNER TO mst;
+--
+-- Name: event_log; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE event_log (
+    id integer NOT NULL,
+    event_type text NOT NULL,
+    event_time timestamp without time zone DEFAULT now() NOT NULL,
+    journo_id integer,
+    context_json text DEFAULT ''::text NOT NULL
+);
+
 
 --
--- Name: htmlcache; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: event_log_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE event_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: event_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE event_log_id_seq OWNED BY event_log.id;
+
+
+--
+-- Name: htmlcache; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE htmlcache (
@@ -226,10 +478,40 @@ CREATE TABLE htmlcache (
 );
 
 
-ALTER TABLE public.htmlcache OWNER TO mst;
+--
+-- Name: image; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE image (
+    id integer NOT NULL,
+    filename text NOT NULL,
+    width integer,
+    height integer,
+    created timestamp without time zone DEFAULT now() NOT NULL
+);
+
 
 --
--- Name: journo; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: image_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE image_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE image_id_seq OWNED BY image.id;
+
+
+--
+-- Name: journo; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo (
@@ -241,15 +523,77 @@ CREATE TABLE journo (
     created timestamp without time zone NOT NULL,
     status character(1) DEFAULT 'i'::bpchar,
     oneliner text DEFAULT ''::text NOT NULL,
-    last_similar timestamp without time zone DEFAULT '1970-01-01 00:00:00'::timestamp without time zone NOT NULL,
+    last_similar timestamp without time zone,
+    modified boolean DEFAULT true NOT NULL,
+    firstname_metaphone character varying(4) DEFAULT ''::character varying NOT NULL,
+    lastname_metaphone character varying(4) DEFAULT ''::character varying NOT NULL,
     CONSTRAINT journo_status_check CHECK ((((status = 'a'::bpchar) OR (status = 'h'::bpchar)) OR (status = 'i'::bpchar)))
 );
 
 
-ALTER TABLE public.journo OWNER TO mst;
+--
+-- Name: journo_address; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_address (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    address text DEFAULT ''::text NOT NULL
+);
+
 
 --
--- Name: journo_alias; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_address_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_address_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_address_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_address_id_seq OWNED BY journo_address.id;
+
+
+--
+-- Name: journo_admired; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_admired (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    admired_name text,
+    admired_id integer
+);
+
+
+--
+-- Name: journo_admired_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_admired_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_admired_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_admired_id_seq OWNED BY journo_admired.id;
+
+
+--
+-- Name: journo_alias; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_alias (
@@ -258,10 +602,8 @@ CREATE TABLE journo_alias (
 );
 
 
-ALTER TABLE public.journo_alias OWNER TO mst;
-
 --
--- Name: journo_attr; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_attr; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_attr (
@@ -270,10 +612,8 @@ CREATE TABLE journo_attr (
 );
 
 
-ALTER TABLE public.journo_attr OWNER TO mst;
-
 --
--- Name: journo_average_cache; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_average_cache; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_average_cache (
@@ -286,27 +626,135 @@ CREATE TABLE journo_average_cache (
 );
 
 
-ALTER TABLE public.journo_average_cache OWNER TO mst;
+--
+-- Name: journo_awards; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_awards (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    award text DEFAULT ''::text NOT NULL,
+    year smallint
+);
+
 
 --
--- Name: journo_bio; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_awards_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_awards_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_awards_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_awards_id_seq OWNED BY journo_awards.id;
+
+
+--
+-- Name: journo_bio; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_bio (
-    context text NOT NULL,
     bio text NOT NULL,
     approved boolean DEFAULT false,
     id integer NOT NULL,
     journo_id integer NOT NULL,
-    type text DEFAULT 'manual-edit'::text NOT NULL,
-    srcurl text NOT NULL
+    srcurl text NOT NULL,
+    kind text DEFAULT ''::text NOT NULL
 );
 
 
-ALTER TABLE public.journo_bio OWNER TO mst;
+--
+-- Name: journo_bio_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_bio_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: journo_email; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_bio_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_bio_id_seq OWNED BY journo_bio.id;
+
+
+--
+-- Name: journo_books; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_books (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    title text DEFAULT ''::text NOT NULL,
+    publisher text DEFAULT ''::text NOT NULL,
+    year_published smallint
+);
+
+
+--
+-- Name: journo_books_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_books_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_books_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_books_id_seq OWNED BY journo_books.id;
+
+
+--
+-- Name: journo_education; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_education (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    school text DEFAULT ''::text NOT NULL,
+    field text DEFAULT ''::text NOT NULL,
+    qualification text DEFAULT ''::text NOT NULL,
+    year_from smallint,
+    year_to smallint,
+    kind character(1) DEFAULT 'u'::bpchar NOT NULL
+);
+
+
+--
+-- Name: journo_education_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_education_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_education_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_education_id_seq OWNED BY journo_education.id;
+
+
+--
+-- Name: journo_email; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_email (
@@ -319,10 +767,71 @@ CREATE TABLE journo_email (
 );
 
 
-ALTER TABLE public.journo_email OWNER TO mst;
+--
+-- Name: journo_email_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_email_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: journo_jobtitle; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_email_id_seq OWNED BY journo_email.id;
+
+
+--
+-- Name: journo_employment; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_employment (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    employer text DEFAULT ''::text NOT NULL,
+    job_title text DEFAULT ''::text NOT NULL,
+    year_from smallint,
+    year_to smallint,
+    kind character(1) DEFAULT 'e'::bpchar NOT NULL,
+    current boolean DEFAULT false NOT NULL
+);
+
+
+--
+-- Name: journo_employment_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_employment_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_employment_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_employment_id_seq OWNED BY journo_employment.id;
+
+
+--
+-- Name: journo_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_jobtitle; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_jobtitle (
@@ -335,10 +844,120 @@ CREATE TABLE journo_jobtitle (
 );
 
 
-ALTER TABLE public.journo_jobtitle OWNER TO mst;
+--
+-- Name: journo_jobtitle_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_jobtitle_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: journo_similar; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_jobtitle_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_jobtitle_id_seq OWNED BY journo_jobtitle.id;
+
+
+--
+-- Name: journo_other_articles; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_other_articles (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    url text NOT NULL,
+    title text NOT NULL,
+    pubdate timestamp without time zone NOT NULL,
+    publication text,
+    status character(1) DEFAULT 'u'::bpchar NOT NULL
+);
+
+
+--
+-- Name: journo_other_articles_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_other_articles_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_other_articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_other_articles_id_seq OWNED BY journo_other_articles.id;
+
+
+--
+-- Name: journo_phone; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_phone (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    phone_number text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- Name: journo_phone_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_phone_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_phone_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_phone_id_seq OWNED BY journo_phone.id;
+
+
+--
+-- Name: journo_photo; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_photo (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    image_id integer NOT NULL,
+    is_thumbnail boolean NOT NULL
+);
+
+
+--
+-- Name: journo_photo_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_photo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_photo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_photo_id_seq OWNED BY journo_photo.id;
+
+
+--
+-- Name: journo_similar; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_similar (
@@ -348,10 +967,8 @@ CREATE TABLE journo_similar (
 );
 
 
-ALTER TABLE public.journo_similar OWNER TO mst;
-
 --
--- Name: journo_weblink; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_weblink; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE journo_weblink (
@@ -359,16 +976,88 @@ CREATE TABLE journo_weblink (
     journo_id integer NOT NULL,
     url text NOT NULL,
     description text NOT NULL,
-    source text,
     approved boolean DEFAULT false NOT NULL,
-    type text DEFAULT 'manual-edit'::text NOT NULL
+    kind text DEFAULT ''::text NOT NULL,
+    rank integer DEFAULT 100 NOT NULL
 );
 
 
-ALTER TABLE public.journo_weblink OWNER TO mst;
+--
+-- Name: journo_weblink_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_weblink_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: organisation; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: missing_articles; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE missing_articles (
+    id integer NOT NULL,
+    journo_id integer,
+    url text NOT NULL,
+    submitted timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: missing_articles_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE missing_articles_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: missing_articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE missing_articles_id_seq OWNED BY missing_articles.id;
+
+
+--
+-- Name: news; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE news (
+    id integer NOT NULL,
+    status character(1) DEFAULT 'u'::bpchar NOT NULL,
+    title text DEFAULT ''::text NOT NULL,
+    author text DEFAULT ''::text NOT NULL,
+    slug text DEFAULT ''::text NOT NULL,
+    posted timestamp without time zone DEFAULT now() NOT NULL,
+    content text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- Name: news_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE news_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: news_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE news_id_seq OWNED BY news.id;
+
+
+--
+-- Name: organisation; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE organisation (
@@ -383,10 +1072,20 @@ CREATE TABLE organisation (
 );
 
 
-ALTER TABLE public.organisation OWNER TO mst;
+--
+-- Name: organisation_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE organisation_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: person; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: person; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE person (
@@ -399,10 +1098,94 @@ CREATE TABLE person (
 );
 
 
-ALTER TABLE public.person OWNER TO mst;
+--
+-- Name: person_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE person_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
 
 --
--- Name: requeststash; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: person_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE person_id_seq OWNED BY person.id;
+
+
+--
+-- Name: person_permission; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE person_permission (
+    id integer NOT NULL,
+    person_id integer NOT NULL,
+    journo_id integer,
+    permission text
+);
+
+
+--
+-- Name: person_permission_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE person_permission_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: person_permission_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE person_permission_id_seq OWNED BY person_permission.id;
+
+
+--
+-- Name: person_receives_newsletter; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE person_receives_newsletter (
+    person_id integer NOT NULL
+);
+
+
+--
+-- Name: recently_viewed; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE recently_viewed (
+    id integer NOT NULL,
+    journo_id integer,
+    view_time timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: recently_viewed_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE recently_viewed_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: recently_viewed_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE recently_viewed_id_seq OWNED BY recently_viewed.id;
+
+
+--
+-- Name: requeststash; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE requeststash (
@@ -412,15 +1195,14 @@ CREATE TABLE requeststash (
     url text NOT NULL,
     post_data bytea,
     extra text,
+    email text DEFAULT ''::text,
     CONSTRAINT requeststash_check CHECK ((((post_data IS NULL) AND (method = 'GET'::text)) OR ((post_data IS NOT NULL) AND (method = 'POST'::text)))),
     CONSTRAINT requeststash_method_check CHECK (((method = 'GET'::text) OR (method = 'POST'::text)))
 );
 
 
-ALTER TABLE public.requeststash OWNER TO mst;
-
 --
--- Name: secret; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: secret; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE secret (
@@ -428,10 +1210,8 @@ CREATE TABLE secret (
 );
 
 
-ALTER TABLE public.secret OWNER TO mst;
-
 --
--- Name: tag_blacklist; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: tag_blacklist; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE tag_blacklist (
@@ -439,10 +1219,8 @@ CREATE TABLE tag_blacklist (
 );
 
 
-ALTER TABLE public.tag_blacklist OWNER TO mst;
-
 --
--- Name: tag_synonym; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: tag_synonym; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE tag_synonym (
@@ -451,10 +1229,8 @@ CREATE TABLE tag_synonym (
 );
 
 
-ALTER TABLE public.tag_synonym OWNER TO mst;
-
 --
--- Name: token; Type: TABLE; Schema: public; Owner: mst; Tablespace: 
+-- Name: token; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE token (
@@ -465,399 +1241,183 @@ CREATE TABLE token (
 );
 
 
-ALTER TABLE public.token OWNER TO mst;
-
 --
--- Name: article_update_total_bloglinks(); Type: FUNCTION; Schema: public; Owner: mst
---
-
-CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
-    AS $$
-    BEGIN
-        IF TG_OP = 'INSERT' THEN
-            UPDATE article SET total_bloglinks=total_bloglinks+1 WHERE id=new.article_id;
-        END IF;
-
-        IF TG_OP = 'DELETE' THEN
-            UPDATE article SET total_bloglinks=total_bloglinks-1 WHERE id=old.article_id;
-        END IF;
-
-        RETURN new;
-    END
-$$
-    LANGUAGE plpgsql;
-
-
-ALTER FUNCTION public.article_update_total_bloglinks() OWNER TO mst;
-
---
--- Name: article_update_total_comments(); Type: FUNCTION; Schema: public; Owner: mst
---
-
-CREATE FUNCTION article_update_total_comments() RETURNS trigger
-    AS $$
-    BEGIN
-        IF TG_OP = 'INSERT' THEN
-            UPDATE article SET total_comments=total_comments+new.num_comments WHERE id=new.article_id;
-        END IF;
-
-        IF TG_OP = 'DELETE' THEN
-            UPDATE article SET total_comments=total_comments-old.num_comments WHERE id=old.article_id;
-        END IF;
-
-        IF TG_OP = 'UPDATE' THEN
-            UPDATE article SET total_comments=total_comments+new.num_comments-old.num_comments WHERE id=old.article_id;
-        END IF;
-
-        RETURN new;
-    END
-$$
-    LANGUAGE plpgsql;
-
-
-ALTER FUNCTION public.article_update_total_comments() OWNER TO mst;
-
---
--- Name: ms_current_timestamp(); Type: FUNCTION; Schema: public; Owner: mst
---
-
-CREATE FUNCTION ms_current_timestamp() RETURNS timestamp without time zone
-    AS $$
-    begin
-        return current_timestamp;
-    end;
-$$
-    LANGUAGE plpgsql;
-
-
-ALTER FUNCTION public.ms_current_timestamp() OWNER TO mst;
-
---
--- Name: alert_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE alert_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.alert_id_seq OWNER TO mst;
-
---
--- Name: alert_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE alert_id_seq OWNED BY alert.id;
-
-
---
--- Name: article_bloglink_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE article_bloglink_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.article_bloglink_id_seq OWNER TO mst;
-
---
--- Name: article_bloglink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE article_bloglink_id_seq OWNED BY article_bloglink.id;
-
-
---
--- Name: article_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE article_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.article_id_seq OWNER TO mst;
-
---
--- Name: article_image_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE article_image_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.article_image_id_seq OWNER TO mst;
-
---
--- Name: article_image_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE article_image_id_seq OWNED BY article_image.id;
-
-
---
--- Name: custompaper_criteria_journo_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE custompaper_criteria_journo_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.custompaper_criteria_journo_id_seq OWNER TO mst;
-
---
--- Name: custompaper_criteria_journo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE custompaper_criteria_journo_id_seq OWNED BY custompaper_criteria_journo.id;
-
-
---
--- Name: custompaper_criteria_text_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE custompaper_criteria_text_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.custompaper_criteria_text_id_seq OWNER TO mst;
-
---
--- Name: custompaper_criteria_text_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE custompaper_criteria_text_id_seq OWNED BY custompaper_criteria_text.id;
-
-
---
--- Name: custompaper_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE custompaper_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.custompaper_id_seq OWNER TO mst;
-
---
--- Name: custompaper_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE custompaper_id_seq OWNED BY custompaper.id;
-
-
---
--- Name: journo_bio_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE journo_bio_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.journo_bio_id_seq OWNER TO mst;
-
---
--- Name: journo_bio_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE journo_bio_id_seq OWNED BY journo_bio.id;
-
-
---
--- Name: journo_email_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE journo_email_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.journo_email_id_seq OWNER TO mst;
-
---
--- Name: journo_email_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE journo_email_id_seq OWNED BY journo_email.id;
-
-
---
--- Name: journo_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE journo_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.journo_id_seq OWNER TO mst;
-
---
--- Name: journo_jobtitle_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE journo_jobtitle_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.journo_jobtitle_id_seq OWNER TO mst;
-
---
--- Name: journo_jobtitle_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE journo_jobtitle_id_seq OWNED BY journo_jobtitle.id;
-
-
---
--- Name: journo_weblink_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE journo_weblink_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.journo_weblink_id_seq OWNER TO mst;
-
---
--- Name: organisation_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE organisation_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.organisation_id_seq OWNER TO mst;
-
---
--- Name: person_id_seq; Type: SEQUENCE; Schema: public; Owner: mst
---
-
-CREATE SEQUENCE person_id_seq
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.person_id_seq OWNER TO mst;
-
---
--- Name: person_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mst
---
-
-ALTER SEQUENCE person_id_seq OWNED BY person.id;
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE alert ALTER COLUMN id SET DEFAULT nextval('alert_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_bloglink_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE article_image ALTER COLUMN id SET DEFAULT nextval('article_image_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE custompaper ALTER COLUMN id SET DEFAULT nextval('custompaper_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE custompaper_criteria_journo ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_journo_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE custompaper_criteria_text ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_text_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE event_log ALTER COLUMN id SET DEFAULT nextval('event_log_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE image ALTER COLUMN id SET DEFAULT nextval('image_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_address ALTER COLUMN id SET DEFAULT nextval('journo_address_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_admired ALTER COLUMN id SET DEFAULT nextval('journo_admired_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_awards ALTER COLUMN id SET DEFAULT nextval('journo_awards_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE journo_bio ALTER COLUMN id SET DEFAULT nextval('journo_bio_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_books ALTER COLUMN id SET DEFAULT nextval('journo_books_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_education ALTER COLUMN id SET DEFAULT nextval('journo_education_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE journo_email ALTER COLUMN id SET DEFAULT nextval('journo_email_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_employment ALTER COLUMN id SET DEFAULT nextval('journo_employment_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE journo_jobtitle ALTER COLUMN id SET DEFAULT nextval('journo_jobtitle_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: mst
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_other_articles ALTER COLUMN id SET DEFAULT nextval('journo_other_articles_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_phone ALTER COLUMN id SET DEFAULT nextval('journo_phone_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE journo_photo ALTER COLUMN id SET DEFAULT nextval('journo_photo_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE missing_articles ALTER COLUMN id SET DEFAULT nextval('missing_articles_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE news ALTER COLUMN id SET DEFAULT nextval('news_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE person ALTER COLUMN id SET DEFAULT nextval('person_id_seq'::regclass);
 
 
 --
--- Name: alert_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE person_permission ALTER COLUMN id SET DEFAULT nextval('person_permission_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE recently_viewed ALTER COLUMN id SET DEFAULT nextval('recently_viewed_id_seq'::regclass);
+
+
+--
+-- Name: alert_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY alert
@@ -865,7 +1425,7 @@ ALTER TABLE ONLY alert
 
 
 --
--- Name: article_bloglink_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_bloglink_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_bloglink
@@ -873,7 +1433,7 @@ ALTER TABLE ONLY article_bloglink
 
 
 --
--- Name: article_commentlink_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_commentlink_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_commentlink
@@ -881,7 +1441,7 @@ ALTER TABLE ONLY article_commentlink
 
 
 --
--- Name: article_dupe_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_dupe_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_dupe
@@ -889,7 +1449,7 @@ ALTER TABLE ONLY article_dupe
 
 
 --
--- Name: article_image_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_image_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_image
@@ -897,7 +1457,15 @@ ALTER TABLE ONLY article_image
 
 
 --
--- Name: article_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_needs_indexing_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY article_needs_indexing
+    ADD CONSTRAINT article_needs_indexing_pkey PRIMARY KEY (article_id);
+
+
+--
+-- Name: article_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article
@@ -905,7 +1473,7 @@ ALTER TABLE ONLY article
 
 
 --
--- Name: article_similar_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_similar_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_similar
@@ -913,7 +1481,7 @@ ALTER TABLE ONLY article_similar
 
 
 --
--- Name: article_srcid_key; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_srcid_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article
@@ -921,7 +1489,7 @@ ALTER TABLE ONLY article
 
 
 --
--- Name: article_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_tag_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY article_tag
@@ -929,7 +1497,7 @@ ALTER TABLE ONLY article_tag
 
 
 --
--- Name: custompaper_criteria_journo_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_criteria_journo_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY custompaper_criteria_journo
@@ -937,7 +1505,7 @@ ALTER TABLE ONLY custompaper_criteria_journo
 
 
 --
--- Name: custompaper_criteria_text_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_criteria_text_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY custompaper_criteria_text
@@ -945,7 +1513,7 @@ ALTER TABLE ONLY custompaper_criteria_text
 
 
 --
--- Name: custompaper_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: custompaper_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY custompaper
@@ -953,7 +1521,7 @@ ALTER TABLE ONLY custompaper
 
 
 --
--- Name: error_articlescrape_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: error_articlescrape_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY error_articlescrape
@@ -961,7 +1529,15 @@ ALTER TABLE ONLY error_articlescrape
 
 
 --
--- Name: htmlcache_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: event_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY event_log
+    ADD CONSTRAINT event_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: htmlcache_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY htmlcache
@@ -969,7 +1545,31 @@ ALTER TABLE ONLY htmlcache
 
 
 --
--- Name: journo_alias_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: image_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY image
+    ADD CONSTRAINT image_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_address_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_address
+    ADD CONSTRAINT journo_address_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_admired_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_admired
+    ADD CONSTRAINT journo_admired_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_alias_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo_alias
@@ -977,7 +1577,7 @@ ALTER TABLE ONLY journo_alias
 
 
 --
--- Name: journo_attr_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_attr_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo_attr
@@ -985,7 +1585,39 @@ ALTER TABLE ONLY journo_attr
 
 
 --
--- Name: journo_jobtitle_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_awards_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_awards
+    ADD CONSTRAINT journo_awards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_books_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_books
+    ADD CONSTRAINT journo_books_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_education_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_education
+    ADD CONSTRAINT journo_education_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_employment_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_employment
+    ADD CONSTRAINT journo_employment_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_jobtitle_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo_jobtitle
@@ -993,7 +1625,31 @@ ALTER TABLE ONLY journo_jobtitle
 
 
 --
--- Name: journo_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_other_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_other_articles
+    ADD CONSTRAINT journo_other_articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_phone_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_phone
+    ADD CONSTRAINT journo_phone_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_photo_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_photo
+    ADD CONSTRAINT journo_photo_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo
@@ -1001,15 +1657,15 @@ ALTER TABLE ONLY journo
 
 
 --
--- Name: journo_similar_journo_id_key; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_similar_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo_similar
-    ADD CONSTRAINT journo_similar_journo_id_key UNIQUE (journo_id, other_id);
+    ADD CONSTRAINT journo_similar_pkey PRIMARY KEY (journo_id, other_id);
 
 
 --
--- Name: journo_uniquename_key; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_uniquename_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo
@@ -1017,7 +1673,7 @@ ALTER TABLE ONLY journo
 
 
 --
--- Name: journo_weblink_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_weblink_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY journo_weblink
@@ -1025,7 +1681,23 @@ ALTER TABLE ONLY journo_weblink
 
 
 --
--- Name: organisation_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: missing_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY missing_articles
+    ADD CONSTRAINT missing_articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: news_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY news
+    ADD CONSTRAINT news_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: organisation_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY organisation
@@ -1033,7 +1705,15 @@ ALTER TABLE ONLY organisation
 
 
 --
--- Name: person_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: person_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY person_permission
+    ADD CONSTRAINT person_permission_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: person_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY person
@@ -1041,7 +1721,23 @@ ALTER TABLE ONLY person
 
 
 --
--- Name: requeststash_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: person_receives_newsletter_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY person_receives_newsletter
+    ADD CONSTRAINT person_receives_newsletter_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: recently_viewed_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY recently_viewed
+    ADD CONSTRAINT recently_viewed_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: requeststash_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY requeststash
@@ -1049,7 +1745,7 @@ ALTER TABLE ONLY requeststash
 
 
 --
--- Name: tag_blacklist_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: tag_blacklist_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY tag_blacklist
@@ -1057,7 +1753,7 @@ ALTER TABLE ONLY tag_blacklist
 
 
 --
--- Name: tag_synonym_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: tag_synonym_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY tag_synonym
@@ -1065,7 +1761,7 @@ ALTER TABLE ONLY tag_synonym
 
 
 --
--- Name: token_pkey; Type: CONSTRAINT; Schema: public; Owner: mst; Tablespace: 
+-- Name: token_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY token
@@ -1073,105 +1769,161 @@ ALTER TABLE ONLY token
 
 
 --
--- Name: alert_person_id_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: alert_person_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX alert_person_id_idx ON alert USING btree (person_id);
 
 
 --
--- Name: article_lastscraped_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_bloglink_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_bloglink_article_id_idx ON article_bloglink USING btree (article_id);
+
+
+--
+-- Name: article_image_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_image_article_id_idx ON article_image USING btree (article_id);
+
+
+--
+-- Name: article_lastscraped_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_lastscraped_idx ON article USING btree (lastscraped);
 
 
 --
--- Name: article_pubdate_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_pubdate_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_pubdate_idx ON article USING btree (pubdate);
 
 
 --
--- Name: article_similar_article_id_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_similar_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_similar_article_id_idx ON article_similar USING btree (article_id);
 
 
 --
--- Name: article_srcid_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_similar_other_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_similar_other_id_idx ON article_similar USING btree (other_id);
+
+
+--
+-- Name: article_srcid_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_srcid_idx ON article USING btree (srcid);
 
 
 --
--- Name: article_tag_article_id_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_tag_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_tag_article_id_idx ON article_tag USING btree (article_id);
 
 
 --
--- Name: article_tag_tag_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_tag_tag_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_tag_tag_idx ON article_tag USING btree (tag);
 
 
 --
--- Name: article_title_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: article_title_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX article_title_idx ON article USING btree (title);
 
 
 --
--- Name: journo_bio_idkey; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: articles_needs_indexing_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX articles_needs_indexing_idx ON article USING btree (needs_indexing);
+
+
+--
+-- Name: journo_attr_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_attr_article_id_idx ON journo_attr USING btree (article_id);
+
+
+--
+-- Name: journo_attr_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_attr_journo_id_idx ON journo_attr USING btree (journo_id);
+
+
+--
+-- Name: journo_bio_idkey; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE UNIQUE INDEX journo_bio_idkey ON journo_bio USING btree (id);
 
 
 --
--- Name: journo_email_idkey; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_bio_idx_journo_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_bio_idx_journo_id ON journo_bio USING btree (journo_id);
+
+
+--
+-- Name: journo_email_idkey; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE UNIQUE INDEX journo_email_idkey ON journo_email USING btree (id);
 
 
 --
--- Name: journo_weblink_idx_journo_id; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: journo_other_articles_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_other_articles_journo_id_idx ON journo_other_articles USING btree (journo_id);
+
+
+--
+-- Name: journo_similar_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_similar_journo_id_idx ON journo_similar USING btree (journo_id);
+
+
+--
+-- Name: journo_weblink_idx_journo_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX journo_weblink_idx_journo_id ON journo_weblink USING btree (journo_id);
 
 
 --
--- Name: journo_weblink_idx_url; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
---
-
-CREATE INDEX journo_weblink_idx_url ON journo_weblink USING btree (url);
-
-
---
--- Name: person_email_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: person_email_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE UNIQUE INDEX person_email_idx ON person USING btree (email);
 
 
 --
--- Name: requeststash_whensaved_idx; Type: INDEX; Schema: public; Owner: mst; Tablespace: 
+-- Name: requeststash_whensaved_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX requeststash_whensaved_idx ON requeststash USING btree (whensaved);
 
 
 --
--- Name: article_update_total_bloglinks_on_delete; Type: TRIGGER; Schema: public; Owner: mst
+-- Name: article_update_total_bloglinks_on_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER article_update_total_bloglinks_on_delete
@@ -1181,7 +1933,7 @@ CREATE TRIGGER article_update_total_bloglinks_on_delete
 
 
 --
--- Name: article_update_total_bloglinks_on_insert; Type: TRIGGER; Schema: public; Owner: mst
+-- Name: article_update_total_bloglinks_on_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER article_update_total_bloglinks_on_insert
@@ -1191,7 +1943,7 @@ CREATE TRIGGER article_update_total_bloglinks_on_insert
 
 
 --
--- Name: article_update_total_comments_on_delete; Type: TRIGGER; Schema: public; Owner: mst
+-- Name: article_update_total_comments_on_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER article_update_total_comments_on_delete
@@ -1201,7 +1953,7 @@ CREATE TRIGGER article_update_total_comments_on_delete
 
 
 --
--- Name: article_update_total_comments_on_insert; Type: TRIGGER; Schema: public; Owner: mst
+-- Name: article_update_total_comments_on_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER article_update_total_comments_on_insert
@@ -1211,7 +1963,7 @@ CREATE TRIGGER article_update_total_comments_on_insert
 
 
 --
--- Name: article_update_total_comments_on_update; Type: TRIGGER; Schema: public; Owner: mst
+-- Name: article_update_total_comments_on_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER article_update_total_comments_on_update
@@ -1221,7 +1973,427 @@ CREATE TRIGGER article_update_total_comments_on_update
 
 
 --
--- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_address_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_address_delete
+    AFTER DELETE ON journo_address
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_address_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_address_insert
+    AFTER INSERT ON journo_address
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_address_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_address_update
+    AFTER UPDATE ON journo_address
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_admired_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_admired_delete
+    AFTER DELETE ON journo_admired
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_admired_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_admired_insert
+    AFTER INSERT ON journo_admired
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_admired_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_admired_update
+    AFTER UPDATE ON journo_admired
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_attr_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_attr_delete
+    AFTER DELETE ON journo_attr
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_attr_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_attr_insert
+    AFTER INSERT ON journo_attr
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_attr_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_attr_update
+    AFTER UPDATE ON journo_attr
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_awards_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_awards_delete
+    AFTER DELETE ON journo_awards
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_awards_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_awards_insert
+    AFTER INSERT ON journo_awards
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_awards_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_awards_update
+    AFTER UPDATE ON journo_awards
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_bio_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_bio_delete
+    AFTER DELETE ON journo_bio
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_bio_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_bio_insert
+    AFTER INSERT ON journo_bio
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_bio_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_bio_update
+    AFTER UPDATE ON journo_bio
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_books_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_books_delete
+    AFTER DELETE ON journo_books
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_books_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_books_insert
+    AFTER INSERT ON journo_books
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_books_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_books_update
+    AFTER UPDATE ON journo_books
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_education_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_education_delete
+    AFTER DELETE ON journo_education
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_education_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_education_insert
+    AFTER INSERT ON journo_education
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_education_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_education_update
+    AFTER UPDATE ON journo_education
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_email_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_email_delete
+    AFTER DELETE ON journo_email
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_email_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_email_insert
+    AFTER INSERT ON journo_email
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_email_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_email_update
+    AFTER UPDATE ON journo_email
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_employment_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_employment_delete
+    AFTER DELETE ON journo_employment
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_employment_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_employment_insert
+    AFTER INSERT ON journo_employment
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_employment_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_employment_update
+    AFTER UPDATE ON journo_employment
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_other_articles_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_other_articles_delete
+    AFTER DELETE ON journo_other_articles
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_other_articles_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_other_articles_insert
+    AFTER INSERT ON journo_other_articles
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_other_articles_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_other_articles_update
+    AFTER UPDATE ON journo_other_articles
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_phone_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_phone_delete
+    AFTER DELETE ON journo_phone
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_phone_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_phone_insert
+    AFTER INSERT ON journo_phone
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_phone_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_phone_update
+    AFTER UPDATE ON journo_phone
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_photo_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_photo_delete
+    AFTER DELETE ON journo_photo
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_photo_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_photo_insert
+    AFTER INSERT ON journo_photo
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_photo_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_photo_update
+    AFTER UPDATE ON journo_photo
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_similar_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_similar_delete
+    AFTER DELETE ON journo_similar
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_similar_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_similar_insert
+    AFTER INSERT ON journo_similar
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_similar_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_similar_update
+    AFTER UPDATE ON journo_similar
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: journo_weblink_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_weblink_delete
+    AFTER DELETE ON journo_weblink
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_ondelete();
+
+
+--
+-- Name: journo_weblink_insert; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_weblink_insert
+    AFTER INSERT ON journo_weblink
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_oninsert();
+
+
+--
+-- Name: journo_weblink_update; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER journo_weblink_update
+    AFTER UPDATE ON journo_weblink
+    FOR EACH ROW
+    EXECUTE PROCEDURE journo_setmodified_onupdate();
+
+
+--
+-- Name: $1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article
@@ -1229,7 +2401,7 @@ ALTER TABLE ONLY article
 
 
 --
--- Name: alert_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: alert_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY alert
@@ -1237,7 +2409,7 @@ ALTER TABLE ONLY alert
 
 
 --
--- Name: alert_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: alert_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY alert
@@ -1245,7 +2417,7 @@ ALTER TABLE ONLY alert
 
 
 --
--- Name: article_bloglink_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_bloglink_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_bloglink
@@ -1253,7 +2425,7 @@ ALTER TABLE ONLY article_bloglink
 
 
 --
--- Name: article_commentlink_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_commentlink_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_commentlink
@@ -1261,7 +2433,7 @@ ALTER TABLE ONLY article_commentlink
 
 
 --
--- Name: article_dupe_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_dupe_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_dupe
@@ -1269,7 +2441,7 @@ ALTER TABLE ONLY article_dupe
 
 
 --
--- Name: article_dupe_dupeof_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_dupe_dupeof_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_dupe
@@ -1277,7 +2449,7 @@ ALTER TABLE ONLY article_dupe
 
 
 --
--- Name: article_image_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_image_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_image
@@ -1285,7 +2457,15 @@ ALTER TABLE ONLY article_image
 
 
 --
--- Name: article_similar_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_needs_indexing_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_needs_indexing
+    ADD CONSTRAINT article_needs_indexing_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
+-- Name: article_similar_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_similar
@@ -1293,7 +2473,7 @@ ALTER TABLE ONLY article_similar
 
 
 --
--- Name: article_similar_other_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_similar_other_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_similar
@@ -1301,7 +2481,7 @@ ALTER TABLE ONLY article_similar
 
 
 --
--- Name: article_tag_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: article_tag_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY article_tag
@@ -1309,7 +2489,7 @@ ALTER TABLE ONLY article_tag
 
 
 --
--- Name: custompaper_criteria_journo_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: custompaper_criteria_journo_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY custompaper_criteria_journo
@@ -1317,7 +2497,7 @@ ALTER TABLE ONLY custompaper_criteria_journo
 
 
 --
--- Name: custompaper_criteria_journo_paper_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: custompaper_criteria_journo_paper_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY custompaper_criteria_journo
@@ -1325,7 +2505,7 @@ ALTER TABLE ONLY custompaper_criteria_journo
 
 
 --
--- Name: custompaper_criteria_text_paper_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: custompaper_criteria_text_paper_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY custompaper_criteria_text
@@ -1333,7 +2513,7 @@ ALTER TABLE ONLY custompaper_criteria_text
 
 
 --
--- Name: custompaper_owner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: custompaper_owner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY custompaper
@@ -1341,7 +2521,39 @@ ALTER TABLE ONLY custompaper
 
 
 --
--- Name: journo_alias_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: event_log_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY event_log
+    ADD CONSTRAINT event_log_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_address_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_address
+    ADD CONSTRAINT journo_address_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_admired_admired_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_admired
+    ADD CONSTRAINT journo_admired_admired_id_fkey FOREIGN KEY (admired_id) REFERENCES journo(id);
+
+
+--
+-- Name: journo_admired_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_admired
+    ADD CONSTRAINT journo_admired_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_alias_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_alias
@@ -1349,7 +2561,7 @@ ALTER TABLE ONLY journo_alias
 
 
 --
--- Name: journo_attr_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_attr_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_attr
@@ -1357,7 +2569,7 @@ ALTER TABLE ONLY journo_attr
 
 
 --
--- Name: journo_attr_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_attr_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_attr
@@ -1365,7 +2577,15 @@ ALTER TABLE ONLY journo_attr
 
 
 --
--- Name: journo_bio_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_awards_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_awards
+    ADD CONSTRAINT journo_awards_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_bio_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_bio
@@ -1373,7 +2593,23 @@ ALTER TABLE ONLY journo_bio
 
 
 --
--- Name: journo_email_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_books_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_books
+    ADD CONSTRAINT journo_books_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_education_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_education
+    ADD CONSTRAINT journo_education_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_email_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_email
@@ -1381,7 +2617,15 @@ ALTER TABLE ONLY journo_email
 
 
 --
--- Name: journo_jobtitle_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_employment_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_employment
+    ADD CONSTRAINT journo_employment_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_jobtitle_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_jobtitle
@@ -1389,7 +2633,7 @@ ALTER TABLE ONLY journo_jobtitle
 
 
 --
--- Name: journo_jobtitle_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_jobtitle_org_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_jobtitle
@@ -1397,7 +2641,39 @@ ALTER TABLE ONLY journo_jobtitle
 
 
 --
--- Name: journo_similar_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_other_articles_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_other_articles
+    ADD CONSTRAINT journo_other_articles_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_phone_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_phone
+    ADD CONSTRAINT journo_phone_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_photo_image_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_photo
+    ADD CONSTRAINT journo_photo_image_id_fkey FOREIGN KEY (image_id) REFERENCES image(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_photo_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_photo
+    ADD CONSTRAINT journo_photo_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_similar_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_similar
@@ -1405,15 +2681,15 @@ ALTER TABLE ONLY journo_similar
 
 
 --
--- Name: journo_similar_other_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_similar_other_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_similar
-    ADD CONSTRAINT journo_similar_other_fkey FOREIGN KEY (other_id) REFERENCES journo(id) ON DELETE CASCADE;
+    ADD CONSTRAINT journo_similar_other_id_fkey FOREIGN KEY (other_id) REFERENCES journo(id) ON DELETE CASCADE;
 
 
 --
--- Name: journo_weblink_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mst
+-- Name: journo_weblink_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY journo_weblink
@@ -1421,7 +2697,47 @@ ALTER TABLE ONLY journo_weblink
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: postgres
+-- Name: missing_articles_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY missing_articles
+    ADD CONSTRAINT missing_articles_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: person_permission_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY person_permission
+    ADD CONSTRAINT person_permission_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id);
+
+
+--
+-- Name: person_permission_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY person_permission
+    ADD CONSTRAINT person_permission_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(id);
+
+
+--
+-- Name: person_receives_newsletter_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY person_receives_newsletter
+    ADD CONSTRAINT person_receives_newsletter_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: recently_viewed_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY recently_viewed
+    ADD CONSTRAINT recently_viewed_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: -
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
