@@ -1,7 +1,7 @@
 #!/bin/sh
 echo "Dumping schema.sql..."
-pg_dump -s -U mst mst >schema.sql
+pg_dump -O -s >schema.sql
 echo "dumping to basedata.sql"
-pg_dump -a -t organisation -U mst mst >basedata.sql
+pg_dump -O -a -t organisation >basedata.sql
 echo "done"
 
