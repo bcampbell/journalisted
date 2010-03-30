@@ -40,7 +40,7 @@ def cook( r ):
     employment = []
     # current job?
     if r['job title'] or r['employer']:
-        if 'freelance' in r['job title']:
+        if 'freelance' in r['job title'].lower():
             employment.append( {'kind':'f', 'employer': '', 'job_title': '', 'current': True } )
         else:
             employment.append( {'kind':'e', 'employer': r['employer'], 'job_title': r['job title'], 'current': True } )
