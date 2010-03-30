@@ -12,11 +12,79 @@ require_once '../phplib/adm.php';
 
 $action = get_http_var( 'action' );
 
+
+function extra_head()
+{
+?>
+    <script type="text/javascript" src="/js/jquery-fieldselection.js"></script>
+    <script language="javascript" type="text/javascript">
+       $(document).ready(
+       function () {
+
+         function markdownSearch( query, daterange ) {
+           var q = $.trim(query);
+                    
+           if( q.search(' ')!=-1 ) {
+              q = '"' + q + '"';
+           }
+           if( daterange ) {
+               q = q + " " + daterange;
+           }
+           var url = "/search?a=" + escape(q);
+           var out = "[" + query + "](" + url + ")";
+            return out;
+          }
+
+          $("#linkify-journo").click( function(e) {
+              var journo = $("#content").getSelection().text;
+              if( journo ) {
+                  var ref = journo.toLowerCase();
+                  ref = ref.replace(/\s+/g, "-")
+                  var out = "[" + journo + "](/" + ref + ")";
+                  $('#content').replaceSelection( out,true );
+              }
+   	          e.preventDefault();
+           } );
+
+           $("#linkify-search").click( function(e) {
+             var txt = $("#content").getSelection().text;
+             if( txt ) {
+               txt = markdownSearch( txt );
+               $("#content").replaceSelection( txt, true );
+             }
+   		     e.preventDefault();
+           } );
+
+    
+           $("#linkify-searchdaterange").click( function(e) {
+             var from = $("#linkify-rangefrom").val();
+             var to = $("#linkify-rangeto").val();
+             if( from=="" || to=="" ) {
+                 alert("Bad range - fill it out!");
+   		         e.preventDefault();
+                 return;
+             }
+             var txt = $("#content").getSelection().text;
+             if( txt ) {
+                 txt = markdownSearch( txt, from+".."+to );
+                 $('#content').replaceSelection( txt,true );
+             }
+   		     e.preventDefault();
+           } );
+       } );
+    </script>
+<?php
+
+}
+
+
+
+
 // handy default
 if( $action == '' && get_http_var( 'id' ) )
     $action = 'edit';
 
-admPageHeader();
+admPageHeader( "Edit news", "extra_head" );
 
 switch( $action ) {
     case 'create':
@@ -137,7 +205,6 @@ function newsEdit($post) {
 
 ?>
 <form method="POST" action="/adm/news">
-
 <label for="status">Publish?</label>
 <input type="checkbox" name="status" value='a' <?= $post['status']=='a'?'checked':'' ?> />
 <br />
@@ -148,8 +215,16 @@ function newsEdit($post) {
 <input type="text" size="80" name="author" id="author" value="<?= $post['author'] ?>" /><br />
 <label for="slug">Slug:</label>
 <input type="text" size="80" name="slug" id="slug" value="<?= $post['slug'] ?>" /><br /><br />
-<label for="content">Content:</label><br/>
-<textarea rows="120" cols="100" name="content" id="content">
+<div class="news-toolbar">
+ <a title="Convert selected text to a journo link" id="linkify-journo" href="#">journo</a>
+ <a title="Convert selected text to a search link" id="linkify-search" href="#">search</a>
+ <a title="Convert selected text to a search link with date range" id="linkify-searchdaterange" href="#">search within daterange</a>
+ <label for="linkify-rangefrom">from</label>
+ <input title="yyyy-mm-dd" type="text" id="linkify-rangefrom" name="linkify-rangefrom" value="<?= h(get_http_var( "linkify-rangefrom" )) ?>" />
+ <label for="linkify-rangeto">to</label>
+ <input title="yyyy-mm-dd" type="text" id="linkify-rangeto" name="linkify-rangeto" value="<?= h(get_http_var( "linkify-rangeto" )) ?>" />
+</div>
+<textarea rows="40" cols="100" name="content" id="content">
 <?= $post['content'] ?>
 </textarea>
 <br />

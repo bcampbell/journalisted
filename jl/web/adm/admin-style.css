@@ -38,3 +38,16 @@ blockquote {
     padding: 0.5em;
 }
 
+/* toolbar for news editing */
+.news-toolbar {
+    padding: 0.2em 0.5em;
+    background-color: #cccccc;
+}
+#content {
+    width: 100%;
+}
+.news-toolbar a {
+    border: 1px solid #888888;
+    text-decoration: none;
+    padding: 0.1em;
+}
