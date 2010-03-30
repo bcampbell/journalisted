@@ -181,7 +181,6 @@ function extra_head()
 {
 
 
-    $tab = get_http_var( 'tab', 'work' );
 ?>
 
 <!-- <script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
