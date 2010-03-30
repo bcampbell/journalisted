@@ -31,7 +31,6 @@
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
   <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-  <script type="text/javascript" src="/js/jquery.pngFix.pack.js"></script>
   <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>
 <?php foreach( $js_files as $f ) { ?>
@@ -41,10 +40,7 @@
   <script type="text/javascript" language="JavaScript">
         addLoadEvent( activatePlaceholders );
 
-
-
     $(document).ready( function() {
-        //$(document).pngFix(); 
         $('#header .search select').sSelect();
         });
   </script>
