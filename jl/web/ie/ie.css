@@ -2,6 +2,10 @@
  * main issue is box shadowing and rounded corners
  * - because we have to use images to do this, we need
  * to alter all the padding to include the shadow area
+ * Box frame is 10 pixels wide all around, (Shadow is 5 pixels, and we allow
+ * another 5 to handle the curved corners).
+ * For box-shadow supporting browsers, the 5px shadown appears _outside_
+ * the box, but for ie we have to allow for it using padding.
  */
 
 ul {
@@ -64,7 +68,7 @@ ul {
 
 
 .main {
-  width: 628px;
+  width: 670px;
   padding: 0px;
 }
 
@@ -117,8 +121,8 @@ ul {
 }
 
 .main.front-page .front {
-  width: 982px;
-  height: 288px;    /* 5+277+5 */
+  width: 992px;
+  height: 287px;    /* 5+277+5 */
   background: #ffffff url("/img/home-az.png") no-repeat 5px 5px;
   padding: 0px;
 }
@@ -126,13 +130,13 @@ ul {
 .main.front-page .front .head {
     width: 984px;
     height: 5px;
-    padding: 0px 5px 0px 5px;
+    padding: 5px 5px 0px 5px;
     background: transparent url( '/ie/full_head.gif' ) no-repeat top left;
 }
 
 .main.front-page .front .body {
     width: 984px;
-    height: 257px; /* 10 + 277 + 10 */
+    height: 267px;  /* 277 = 5+267+5 */
     padding: 0px 5px 0px 5px;
     background: transparent url( '/ie/full_body.gif' ) repeat-y top left;
 }
@@ -171,7 +175,7 @@ ul {
 .recently-updated .head,
 .most-blogged .head
 {
-    padding: 0px 21px 0px 21px;    /* +5px for left, top, right */
+    padding: 5px 21px 0px 21px;    /* +5px for left, top, right */
     width: 282px;      /* 324 = 5+16+ 282 +16+5 */
     background: transparent url( '/ie/frontbox_head.gif' ) no-repeat top left;
 }
@@ -182,7 +186,6 @@ ul {
 {
     padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
     width: 282px;
-    height: 150px;
     background: transparent url( '/ie/frontbox_body.gif' ) repeat-y top left;
 }
 
@@ -191,7 +194,7 @@ ul {
 .recently-updated .foot,
 .most-blogged .foot
 { 
-    padding: 0px 21px 0px 21px;    /* +5 on left, right, bottom */
+    padding: 0px 21px 5px 21px;    /* +5 on left, right, bottom */
     width: 282px;
     background: transparent url( '/ie/frontbox_foot.gif' ) no-repeat bottom left;
 }
