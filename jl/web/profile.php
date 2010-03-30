@@ -184,11 +184,13 @@ or...
 /* show a page with info on claiming or creating a journo profile */
 function showInfoPage( $journo=null )
 {
+    $P =  person_if_signed_on();
 
-$title = "Edit profile";
-if( $journo )
-    $title = "Edit profile for " . $journo['prettyname'];
-page_header( $title );
+    $title = "Edit profile";
+    if( $journo )
+        $title = "Edit profile for " . $journo['prettyname'];
+
+    page_header( $title );
 
     $contactemail = OPTION_TEAM_EMAIL;
 
@@ -222,6 +224,18 @@ page_header( $title );
 <?php } ?>
 </p>
 </div>
+
+
+<?php
+    if( !is_null($P) ) {
+        if( db_getOne( "SELECT person_id FROM person_permission WHERE person_id=? AND permission='claimed'", $P->id() ) ) {
+?>
+  <strong>NOTE: Your registration request is pending</strong>
+<?php
+        }
+    }
+?>
+
 
 </div>
 <div class="foot"></div>
@@ -289,6 +303,26 @@ function showClaimPage( $journo )
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
+    // make them click a meaningless tickbox to make sure they _are_ who they say they are...
+    $flag = get_http_var( "iamwhoisay" );
+    if( !$flag ) {
+        page_header("");
+?>
+<div class="main">
+<form method="get" action="/profile">
+ <input type="checkbox" name="iamwhoisay" id="iamwhoisay" value="yes" />
+ <label for="iamwhoisay">I confirm that I am the <?= $journo['prettyname'] ?> on journa<i>listed</i> (on <a href="/<?= $journo['ref'] ?>">this page</a>)</label><br/>
+ <input type="hidden" name="action" value="claim" />
+ <input type="hidden" name="ref" value="<?= $journo['ref'] ?>" />
+<p>To complete your registration, please agree to the above statement by ticking the box</p>
+ <input type="submit" value="Submit" />
+</form>
+</div>  <!-- end main -->
+<?php
+        page_footer();
+        return;
+    }
+
     // has anyone already claimed this journo?
     $foo = db_getAll( "SELECT journo_id FROM person_permission WHERE journo_id=? AND permission='edit'", $journo['id'] );
     if( $foo ) {
@@ -304,25 +338,28 @@ function showClaimPage( $journo )
         return;
     }
 
-
-    // OK - we're set to go!
+    // OK - _claim_ the profile!
     db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
         $P->id,
         $journo['id'],
-        'edit' );
+        'claimed' );
     db_commit();
 
     // set persons name if blank
+
     if( $P->name_or_blank() == '' ) {
         $P->name( $journo['prettyname'] );  // (does a commit)
     }
 
     page_header("");
-
 ?>
 <div class="main">
 <h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
-<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
+
+<p>To avoid mix ups - deliberate or otherwise - registrations are manually examined before being activated.</p>
+<p>We will email you when your profile is available for editing.</p>
+<p>Thanks,<br/>
+- the journa<i>listed</i> team</p>
 </div>
 <?php
     page_footer();
