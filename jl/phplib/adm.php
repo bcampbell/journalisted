@@ -52,7 +52,11 @@ function admPageHeader( $title = '', $extra_head_fn=null )
  <a href="journo-create">Create</a>
  </small>) |
 <a href="canned">Canned Queries</a> |
+<a href="news">News</a> |
 <a href="useraccounts">User Accounts</a>
+ (<small>
+ <a href="claims">Claims</a>
+ </small>) |
 <hr>
 <?php
 

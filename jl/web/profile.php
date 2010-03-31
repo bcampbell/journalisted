@@ -346,10 +346,9 @@ function showClaimPage( $journo )
     db_commit();
 
     // set persons name if blank
-
-    if( $P->name_or_blank() == '' ) {
-        $P->name( $journo['prettyname'] );  // (does a commit)
-    }
+//    if( $P->name_or_blank() == '' ) {
+//        $P->name( $journo['prettyname'] );  // (does a commit)
+//    }
 
     page_header("");
 ?>

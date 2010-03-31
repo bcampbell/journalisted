@@ -26,7 +26,22 @@ if(!$journo)
 
 // is logged in, and with edit rights to this journo?
 $can_edit_page = FALSE;
-$P = person_if_signed_on();
+
+$P = null;
+if( get_http_var( 'login' ) ) {
+    /* force a login (so we can send edit links out to journos
+       without explaining that they have to log in before the 'edit'
+       buttons appear) */
+    $r = array(
+        'reason_web' => "Edit your journalisted profile",
+        'reason_email' => "Edit your journalisted profile",
+        'reason_email_subject' => "Edit your journalisted profile"
+        );
+    $P = person_signon($r);
+} else {
+    $P = person_if_signed_on();
+}
+
 if( !is_null($P) )
 {
     if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
