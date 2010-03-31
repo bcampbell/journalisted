@@ -314,9 +314,6 @@ $previous_employers = array_unique( $previous_employers );
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder" style="width:100%;height:300px"></div>
-    <div id="monthly-stats-footnote">
-      <sup>*</sup>Based only on article from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
-    </div>
 
     <ul>
       <li>
@@ -327,6 +324,10 @@ $previous_employers = array_unique( $previous_employers );
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
+
+    <div id="monthly-stats-footnote">
+      <sup>*</sup>Based only on articles from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
+    </div>
 <?php
 // some random colours...
 $colours = array( 'purple', 'orange','yellowgreen','blue','yellow','green','red','skyblue' );
