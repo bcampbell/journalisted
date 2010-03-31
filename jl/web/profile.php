@@ -311,7 +311,7 @@ function showClaimPage( $journo )
 <div class="main">
 <form method="get" action="/profile">
  <input type="checkbox" name="iamwhoisay" id="iamwhoisay" value="yes" />
- <label for="iamwhoisay">I confirm that I am the <?= $journo['prettyname'] ?> on journa<i>listed</i> (on <a href="/<?= $journo['ref'] ?>">this page</a>)</label><br/>
+ <label for="iamwhoisay">I confirm that I <strong>am</strong> the <?= $journo['prettyname'] ?> listed <a href="/<?= $journo['ref'] ?>">here</a> on journa<i>listed</i></label><br/>
  <input type="hidden" name="action" value="claim" />
  <input type="hidden" name="ref" value="<?= $journo['ref'] ?>" />
 <p>To complete your registration, please agree to the above statement by ticking the box</p>
