@@ -77,7 +77,7 @@ EOT;
     $sql = <<<EOT
 SELECT a.id,a.srcorg,a.title,a.permalink,a.total_bloglinks,o.prettyname as srcorgname
     FROM article a INNER JOIN organisation o ON a.srcorg=o.id
-    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '1 week'
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '48 hours'
         AND a.total_bloglinks > 0
     ORDER BY a.total_bloglinks DESC
     LIMIT 5
