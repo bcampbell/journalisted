@@ -29,4 +29,5 @@ Log changes made due to website changes here!
 2009-09-09 mirror: thier rss feeds got so bad that maxerrors had to be increased.
 2009-09-10 herald: new heraldscotland website
 2010-03-26 independent: fix truncated-content issue
+2010-03-31 notw: FindArticles() was being thwarted by 404s
 
