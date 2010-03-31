@@ -18,6 +18,31 @@ require_once '../phplib/offline_frontpage.php';
 
 NEW_version();
 
+
+function extra_head()
+{
+?>
+<script language="javascript" type="text/javascript">
+    $(document).ready( function () {
+        // equalHeight() by Rob Glazebrook
+        function equalHeight(group) {
+            var tallest = 0;
+            group.each(function() {
+                var thisHeight = $(this).height();
+                if(thisHeight > tallest) {
+                    tallest = thisHeight;
+                }
+            });
+            group.height(tallest);
+        }
+        equalHeight( $(".recently-viewed .body,.recently-updated .body,.most-blogged .body") );
+    });
+</script>
+<?php
+}
+
+
+
 function NEW_version()
 {
 
@@ -32,7 +57,7 @@ function NEW_version()
 EOT;
 
 
-    page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
+    page_header( "", array( 'menupage'=>'cover', 'head_extra_fn'=>"extra_head" ) );
 
 /*
     $sql = <<<EOT

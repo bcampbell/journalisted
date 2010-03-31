@@ -21,7 +21,7 @@
  <div class="head"></div>
  <div class="body">
   <span class="brag">140,000 people used journa<i>listed</i> last month!</span>
-  <span class="youcan">At journa<i>listed</i> you can:</span>
+  <span class="youcan">On journa<i>listed</i> you can:</span>
   <ul class="nav">
    <li><a class="subscribe" href="/weeklydigest">Subscribe to the journa<i>listed</i> weekly digest</a></li>
    <li><a class="edit-profile" href="/profile">edit profile</a></li>
@@ -32,7 +32,6 @@
  </div>
  <div class="foot"></div>
 </div>
-
 
 <div class="box recently-viewed">
   <div class="head"><h3>Recently viewed</h3></div>
@@ -66,7 +65,7 @@
   <div class="body">
     <ul>
 <?php foreach( $most_blogged_about as $art ) { ?>
-        <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a> (<?php echo $art['total_bloglinks'];?> blogs)
+        <li><a href="<?php echo article_url( $art['id'] ); ?>"><?php echo $art['title']; ?></a><br/>(<?php echo $art['total_bloglinks'];?> blogs)
         </li>
 <?php } ?>
     </ul>
@@ -75,6 +74,7 @@
 </div>
 
 <div style="clear:both;"></div>
+
 <?php /* ?>
 <div class="box thisweek">
 <div class="head"><h3>This Week on Journalisted</h3></div>
