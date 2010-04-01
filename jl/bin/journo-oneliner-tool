@@ -37,7 +37,11 @@ def BuildOneLiner( conn, journo_id ):
         FROM (( article a INNER JOIN organisation o ON o.id=a.srcorg )
             INNER JOIN journo_attr attr ON attr.article_id=a.id )
         WHERE a.status='a' AND attr.journo_id=%s""", journo_id )
-    desc = u', '.join( row[0].decode('utf-8') for row in c.fetchall() )
+    rows = c.fetchall()
+
+    desc = u''
+    if len( rows ) <=2:
+        desc = u', '.join( row[0].decode('utf-8') for row in rows )
     c.close()
     return desc
 
