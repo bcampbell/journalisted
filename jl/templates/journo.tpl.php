@@ -313,7 +313,7 @@ $previous_employers = array_unique( $previous_employers );
   <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#monthly-stats-footnote">*</a></sup></h3></div>
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
-    <div id="monthly-stats-placeholder" style="width:100%;height:300px"></div>
+    <div id="monthly-stats-placeholder"></div>
 
     <ul>
       <li>
