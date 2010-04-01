@@ -379,7 +379,7 @@ form dl {
 
 ul.newList * {margin:0; padding:0;}
 ul.newList a {color: #666; text-decoration:none; display:block;}
-ul.newList {margin:0; padding:0; list-style:none; color:#666; width:160px; background:#fff; position:absolute;  border:1px solid #ccc; top:22px; left:0; overflow:auto; z-index:9999;}
+ul.newList {margin:0; padding:0; list-style:none; color:#666; width:160px; background:#fff; position:absolute;  border:1px solid #ccc; top:22px; left:0; overflow:hidden; z-index:9999;}
 
 .newListSelected {
     margin-right: 4px;
