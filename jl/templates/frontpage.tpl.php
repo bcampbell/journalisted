@@ -80,7 +80,7 @@
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/>
+  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a>
     <small><?= $n['prettydate'] ?></small></li>
 <?php } ?>
  </ul>

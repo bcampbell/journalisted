@@ -224,7 +224,7 @@ function newsEdit($post) {
  <label for="linkify-rangeto">to</label>
  <input title="yyyy-mm-dd" type="text" id="linkify-rangeto" name="linkify-rangeto" value="<?= h(get_http_var( "linkify-rangeto" )) ?>" />
 </div>
-<textarea rows="40" cols="100" name="content" id="content">
+<textarea rows="20" cols="100" name="content" id="content">
 <?= $post['content'] ?>
 </textarea>
 <br />
