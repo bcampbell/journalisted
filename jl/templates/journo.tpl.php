@@ -653,11 +653,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <div class="box links">
   <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
   <div class="body">
+<?php if( $links ) { ?>
     <ul>
 <?php foreach( $links as $l ) { ?>
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
     </ul>
+<?php } else { ?>
+  <span class="not-known">No links known</span>
+<?php } ?>
   </div>
   <div class="foot">
     <?php if( $can_edit_page ) { ?>

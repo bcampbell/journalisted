@@ -88,7 +88,7 @@ EOT;
         $ev['description'] = $ev['when'];    //eventlog_Describe( $ev );
     }
 
-    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted LIMIT 5" );
+    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted DESC LIMIT 5" );
 
     foreach( $news as &$n ) {
         $n['prettydate'] = pretty_date( strtotime($n['posted']) );
@@ -118,7 +118,7 @@ EOT;
     // recently-viewed journos
     // TODO: really not so happy about this... (see web/journo.php too)
     $sql = <<<EOT
-SELECT j.ref, j.prettyname
+SELECT j.ref, j.prettyname, j.oneliner
     FROM recently_viewed v INNER JOIN journo j ON j.id=v.journo_id
     ORDER BY v.view_time DESC
     LIMIT 10

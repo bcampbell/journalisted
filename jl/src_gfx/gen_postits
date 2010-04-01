@@ -27,7 +27,7 @@ notes = [
     ( 'subscribe', 0.01, "[Subscribe] to the journa<i>listed</i> weekly digest" ),
     ( 'search-articles', 0.02, "[Search] over 2 million news articles" ),
     ( 'search-journos', 0.012, "[Search for a journalist]\nto contact them" ),
-    ( 'edit-profile', 0.023, "Are you a journalist? [Edit your profile]" ),
+    ( 'edit-profile', 0.023, "[Edit your profile]\nif you are a journalist" ),
     ( 'alerts', 0.014, "[Sign up for daily alerts] from your favourite journalists" ),
     ]
 

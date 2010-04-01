@@ -39,7 +39,7 @@
 
     <ul>
 <?php foreach( $recently_viewed as $j ) { ?>
-      <li><a href="/<?= $j['ref'] ?>"><?= $j['prettyname'] ?></a></li>
+      <li><?= journo_link( $j ) ?></li>
 <?php } ?>
     </ul>
   </div>
@@ -61,7 +61,7 @@
 </div>
 
 <div class="box most-blogged">
-  <div class="head"><h3>Most blogged-about articles</h3></div>
+  <div class="head"><h3>Most blogged about articles</h3></div>
   <div class="body">
     <ul>
 <?php foreach( $most_blogged_about as $art ) { ?>
@@ -75,9 +75,8 @@
 
 <div style="clear:both;"></div>
 
-<?php /* ?>
 <div class="box thisweek">
-<div class="head"><h3>This Week on Journalisted</h3></div>
+<div class="head"><h3>Site news</h3></div>
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
@@ -87,7 +86,7 @@
  </ul>
 </div>
 </div>
-<?php */ ?>
+
 </div>  <!-- end main -->
 <?php
 

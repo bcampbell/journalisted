@@ -656,7 +656,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 }
 .recently-updated { margin: 0 16px; }
 
-
+.recently-viewed ul { line-height: 120%; }
 
 .box.front {
   width: 971px;
