@@ -59,7 +59,7 @@
         <ul>
           <li><a href="/">Home</a></li>
 <?php if( $logged_in_user && $can_edit_profile ) { ?>
-          <li><a href="/profile">Edit profile</a></li>
+          <li><a href="/profile">My profile</a></li>
 <?php } else { ?>
           <li><a href="/profile">Edit profile</a></li>
 <?php } ?>
