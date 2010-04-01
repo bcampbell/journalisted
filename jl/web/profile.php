@@ -297,10 +297,10 @@ function showCreatePage()
 function showClaimPage( $journo )
 {
     // we need them logged on first
-    $P = person_signon(array(
-        'reason_web' => "Log in to claim your profile",
-        'reason_email' => "Log in to Journalisted to claim your profile",
-        'reason_email_subject' => 'Log in to Journalisted'
+    $P = person_register(array(
+        'reason_web' => "Register to claim your profile",
+        'reason_email' => "Register on Journalisted to claim your profile",
+        'reason_email_subject' => 'Register on Journalisted'
     ));
 
     // make them click a meaningless tickbox to make sure they _are_ who they say they are...
@@ -420,6 +420,41 @@ EOT;
     db_commit();
 
     return db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
+}
+
+
+/* CHEESYHACK! */
+function person_register($template_data, $email = null, $name = null, $person_if_signed_on_function = null) {
+    $P = person_already_signed_on($email, $name, $person_if_signed_on_function);
+    if ($P)
+        return $P;
+
+    /* Get rid of any previous cookie -- if user is logging in again under a
+     * different email, we don't want to remember the old one. */
+    person_signoff();
+
+    if (headers_sent())
+        err("Headers have already been sent in person_signon without cookie being present");
+
+    if (array_key_exists('instantly_send_email', $template_data)) {
+        $send_email_part = "&SendEmail=1";
+        unset($template_data['instantly_send_email']);
+    } else
+        $send_email_part = '';
+    /* No or invalid cookie. We will need to redirect the user via another
+     * page, either to log in or to prove their email address. */
+    $st = stash_request(rabx_serialise($template_data), $email);
+    db_commit();
+    if ($email)
+        $email_part = "&email=" . urlencode($email);
+    else
+        $email_part = "";
+    if ($name) 
+        $name_part = "&name=" . urlencode($name);
+    else
+        $name_part = "";
+    header("Location: /login?action=register&stash=$st$send_email_part$email_part$name_part");
+    exit();
 }
 
 ?>

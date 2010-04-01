@@ -56,6 +56,9 @@ importparams(
 
 
 /* General purpose login, asks for email also. */
+
+if(0) { // CRUFT???
+
 if( get_http_var("now")) {
     $P = person_signon(array(
         'reason_web' => "Log in",
@@ -68,6 +71,7 @@ if( get_http_var("now")) {
     exit;
 }
 
+}
 
 
 /* is there a token? (i.e. user coming in via a confirmation email) */
@@ -118,7 +122,16 @@ function RedirectToOriginalDest( $stash ) {
         stash_redirect($stash);
         /* NOTREACHED */
     } else {
-	    // alerts is closest thing we have to a user page
+        $P = person_if_signed_on();
+        if( $P ) {
+            $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit'", $P->id() );
+            if( sizeof( $editables) >= 1 ) {
+                header("Location: /" . $editables[0]['ref'] );
+                exit;
+            }
+        }
+
+	    // alerts is closest thing we have to a default user page, atm
         header("Location: /alert");
         exit;
     }
@@ -326,7 +339,7 @@ function DoConfirmationEmail()
             'reason_email' => "Log in to Journalisted",
             'reason_email_subject' => 'Log in to Journalisted' );
 
-        $q_stash = stash_new_request( "POST", "/alert", null, rabx_serialise($template_data), null );
+        $q_stash = stash_new_request( "POST", "/login", null, rabx_serialise($template_data), null );
     }
 
 
