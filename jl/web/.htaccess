@@ -1,0 +1,50 @@
+DirectoryIndex index.php
+
+RewriteEngine on
+
+# badly-kludged rules to take site offline for now
+#RewriteRule ^style.css$ - [L]
+#RewriteRule ^text.css$ - [L]
+#RewriteRule ^images/title_beta.png$ - [L]
+#RewriteRule !down.html$ /down.html [R,L]
+
+# API
+RewriteRule ^api/(get.*)$ api.php?method=$1 [QSA]
+RewriteRule ^api/docs/?$            api.php [QSA]
+RewriteRule ^api/docs/(.*)$         api.php?docs=1&method=$1 [QSA]
+
+
+# PHP files can be referred without PHP
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.php -f
+RewriteRule (.+) $1.php [PT]
+
+RewriteRule ^adm/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ adm/journo.php?ref=$1$2 [PT,QSA]
+# spare admin pages any further friggery
+RewriteRule ^adm/.* - [L]
+
+# /news/<slug or id>
+RewriteRule ^news/([-a-zA-Z0-9]+)([?][^/]*)?$ news.php?id=$1$2 [PT,QSA]
+
+# /tags/<tag>
+RewriteRule ^tags/([^/]*)$ tags.php?tag=$1 [PT,QSA]
+
+# /tags/<period>/<tag>
+RewriteRule ^tags/([^/]*)/([^/]*)$ tags.php?period=$1&tag=$2 [PT,QSA]
+
+# /faq/why-is-the-sky-blue
+RewriteRule ^faq/([-a-zA-Z0-9]+)$ faq.php?q=$1 [PT,QSA]
+
+# fred-bloggs
+# freg-bloggs?blah=foo
+RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ journo.php?ref=$1$2 [PT,QSA]
+
+# /<journo-ref>/rss
+RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)/rss([?][^/]*)?$ journo_rss.php?ref=$1$2 [PT,QSA]
+
+
+# /<journo-ref>/<tag>
+RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)/([^?/]*)$ journo_tags.php?ref=$1&tag=$2 [PT,QSA]
+
+# /L/<token>
+RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
+
