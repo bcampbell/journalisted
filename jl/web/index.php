@@ -75,10 +75,10 @@ EOT;
 */
 
     $sql = <<<EOT
-SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, min(now()-e.event_time) as when
+SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, j.oneliner as journo_oneliner, min(now()-e.event_time) as when
     FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
-    WHERE event_time>NOW()-interval '12 hours'
-    GROUP BY journo_ref, journo_prettyname
+    WHERE event_time>NOW()-interval '7 days'
+    GROUP BY journo_ref, journo_prettyname, journo_oneliner
     ORDER BY min( now()-e.event_time) ASC
     LIMIT 10;
 EOT;
@@ -86,6 +86,10 @@ EOT;
     foreach( $events as &$ev ) {
 //        $ev['context'] = json_decode( $ev['context_json'], TRUE );
         $ev['description'] = $ev['when'];    //eventlog_Describe( $ev );
+        $ev['journo'] = array( 'ref'=> $ev['journo_ref'], 'prettyname'=>$ev['journo_prettyname'], 'oneliner'=>$ev['journo_oneliner'] );
+        unset( $ev['journo_ref'] );
+        unset( $ev['journo_prettyname'] );
+        unset( $ev['journo_oneliner'] );
     }
 
     $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted DESC LIMIT 5" );

@@ -52,7 +52,7 @@
 
     <ul>
 <?php foreach( $events as $e ) { ?>
-    <li><a href="/<?= $e['journo_ref'] ?>"><?= $e['journo_prettyname'] ?></a></li>
+    <li><?= journo_link( $e['journo'] ) ?></li>
 <?php } ?>
     </ul>
 
