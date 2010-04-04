@@ -124,8 +124,12 @@ class WeblinksPage extends EditProfilePage
                 'id'=>array_shift($ids) );
 
             // only use non-blank ones
-            if( $w['url'] || ($w['kind']=='' && $w['description']!='' ) )
+            if( $w['url'] || ($w['kind']=='' && $w['description']!='' ) ) {
+                if( preg_match( "%^https?://%i", $w['url'] ) == 0 ) {
+                    $w['url'] = 'http://' . $w['url'];
+                }
                 $weblinks[] = $w;
+            }
         }
 
         return $weblinks;
