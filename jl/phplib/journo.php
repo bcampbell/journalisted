@@ -514,6 +514,42 @@ EOT;
 }
 
 
+// return a friendly, standardised description for weblink $l
+function journo_describeWeblink( $journo, $l )
+{
+    $prettyname = $journo['prettyname'];
+
+    $desc = '';
+    // 'kind' corresponds to the dropdown on the profile editing page
+    switch( $l['kind'] ) {
+        case 'blog':
+            $desc = "{$prettyname}'s blog";
+            break;
+        case 'website':
+            $desc = "{$prettyname}'s website";
+            break;
+        case 'twitter':
+            $desc = "Follow {$prettyname} on Twitter";
+            break;
+        case 'profile':
+            $parts = crack_url( $l['url'] );
+            if( $parts ) {
+                // get site name without www. prefix
+                $sitename = preg_replace( '/^www[.]/', '', $parts['host'] );
+                $desc = "Biography/Profile (at {$sitename})";
+            }
+            else
+                $desc = "{$prettyname}'s profile";
+            break;
+        case '':    // (other)
+            // could be anything - use the free text description the user entered
+            $desc = $l['description'];
+            break;
+    }
+    return $desc;
+}
+
+
 
 
 /* collect all the info needed for the journo page */
@@ -588,32 +624,7 @@ EOT;
 
     $links = db_getAll( $sql, $journo['id'] );
     foreach( $links as &$l ) {
-        $desc = $l['kind'];
-        switch( $l['kind'] ) {
-            case 'blog':
-                $desc = "{$journo['prettyname']}'s blog";
-                break;
-            case 'website':
-                $desc = "{$journo['prettyname']}'s website";
-                break;
-            case 'twitter':
-                $desc = "{$journo['prettyname']}'s twitter feed";
-                break;
-            case 'profile':
-                $parts = crack_url( $l['url'] );
-                if( $parts ) {
-                    $host = preg_replace( '/^www[.]/', '', $parts['host'] );
-                    $desc = "{$journo['prettyname']}'s profile at {$host}";
-                }
-                else
-                    $desc = "{$journo['prettyname']}'s profile";
-                break;
-            case '':
-                $desc = $l['description'];
-                break;
-        }
-
-        $l['description'] = $desc;
+        $l['description'] = journo_describeWeblink( $journo, $l );
     }
     unset( $l );
 
