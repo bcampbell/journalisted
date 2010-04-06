@@ -17,13 +17,21 @@ admPageHeader( "Profile claims" );
 $action = get_http_var( 'action' );
 
 
-if( $action == 'approve' ) {
-    do_ApproveClaim();
+switch( $action ) {
+    case 'approve':
+        do_ApproveClaim();
+        do_ComposeWelcomeEmail();
+        break;
+    case 'deny':
+        do_DenyClaim();
+        break;
+    case 'edit_welcome_email':
+        do_ComposeWelcomeEmail();
+        break;
+    case 'send_welcome_email':
+        do_SendWelcomeEmail();
+        break;
 }
-if( $action == 'deny' ) {
-    do_DenyClaim();
-}
-
 ShowPendingClaims();
 
 
@@ -128,13 +136,84 @@ EOT;
 ?>
 <div class="action_summary">
 <p><a href="mailto:<?= $person['email'] ?>"><?= $person['email'] ?></a> can now edit profile: <?= journo_link( $journo); ?></p>
-<p>Now send them an email and let them know. Suggested text:</p>
-<pre>
-<?= h( $suggested_text ); ?>
-</pre>
 </div>
 <?php
 }
+
+
+function do_ComposeWelcomeEmail()
+{
+    $person_id = get_http_var( 'person_id' );
+    $journo_id = get_http_var( 'journo_id' );
+    $emailtext = get_http_var( 'emailtext' );
+    $subject = get_http_var( 'subject', "Your journalisted profile" );
+
+    $journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
+    $person = db_getRow( "SELECT * FROM person WHERE id=?", $person_id );
+
+    if( !$emailtext ) {
+        /* suggested email text */
+        $firstname = ucwords( $journo['firstname'] );
+        $profile_url = OPTION_BASE_URL . "/" . $journo['ref'] . "?login=1";
+        $emailtext = <<<EOT
+Hi {$firstname},
+Your account at journalisted has been activated, and you can now edit your profile page at:
+
+{$profile_url}
+
+Best wishes
+The journalisted team
+EOT;
+
+    }
+?>
+    <h3>Send a little welcome email to <?= h($person['email']) ?></h3>
+    <form method="POST" action="/adm/claims">
+    <input type="hidden" name="person_id" value="<?= h($person_id) ?>" />
+    <input type="hidden" name="journo_id" value="<?= h($journo_id) ?>" />
+    <label for="subject">subject:</label><br/>
+    <input type="text" id="subject" name="subject" value="<?= h($subject) ?>" />
+    <br/>
+    <label for="emailtext">message:</label><br/>
+    <textarea id="emailtext" name="emailtext" cols="80" rows="15">
+<?= h( $emailtext ) ?>
+    </textarea>
+    <input type="hidden" name="action" value="send_welcome_email" />
+    <br/>
+    <button type="submit">Send This Email</button>
+    </form>
+<?php
+}
+
+
+
+function do_SendWelcomeEmail()
+{
+    $person_id = get_http_var( 'person_id' );
+    $journo_id = get_http_var( 'journo_id' );
+    $emailtext = get_http_var( 'emailtext' );
+    $subject = get_http_var( 'subject' );
+
+    $journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
+    $person = db_getRow( "SELECT * FROM person WHERE id=?", $person_id );
+    $from_name = "Journalisted";
+    $from_email = OPTION_TEAM_EMAIL;
+    if( jl_send_text_email($person['email'], $from_name, $from_email, $subject, $emailtext ) ) {
+?>
+<div class="action_summary">
+Sent welcome email to <?= h($person['email']) ?>.
+<div>
+<?php
+    } else {
+?>
+<div class="action_error">
+<p>Oops... sending the email to <?= h($person['email']) ?> failed.</p>
+<p>You probably want to try and send one manually instead...</p>
+</div>
+<?php
+    }
+}
+
 
 
 function do_DenyClaim()
