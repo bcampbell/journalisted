@@ -633,13 +633,25 @@ class QueryFight extends CannedQuery {
 
 
     function perform($params) {
-        $from = date_create( $params['from_date'])->format('Ymd');
-        $to = date_create( $params['to_date'])->format('Ymd');
-        $range = " $from..$to";
+        $q1 = $params['q1'];
+        $q2 = $params['q2'];
 
-        if( $params['q1'] && $params['q2'] ) {
-            $q1 = $params['q1'] . $range;
-            $q2 = $params['q2'] . $range;
+        if( $q1 && $q2 ) {
+            $q1 = $params['q1'];
+            $q2 = $params['q2'];
+            if( $params['from_date'] || $params['to_date'] ) {
+                $from = date_create( $params['from_date'])->format('Ymd');
+                $to = date_create( $params['to_date'])->format('Ymd');
+                $range = " $from..$to";
+                $q1 .= $range;
+                $q2 .= $range;
+            }
+?>
+<pre>
+q1: [<?= $q1 ?>]
+q2: [<?= $q2 ?>]
+</pre>
+<?php
 
             $result = array();
             {
