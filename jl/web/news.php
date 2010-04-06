@@ -22,7 +22,7 @@ $prettydate = pretty_date(strtotime($post['posted']));
 
 page_header( $post['title'] );
 
-    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted LIMIT 50" );
+    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted DESC LIMIT 50" );
 
     foreach( $news as &$n ) {
         $n['prettydate'] = pretty_date( strtotime($n['posted']) );
