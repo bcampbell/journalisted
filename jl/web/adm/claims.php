@@ -102,7 +102,7 @@ function do_ApproveClaim()
     }
 
     /* update permissions */
-    db_do( "DELETE FROM person_permission WHERE permission='claimed' OR permission='edit' AND person_id=? AND journo_id=?", $person_id, $journo_id );
+    db_do( "DELETE FROM person_permission WHERE permission IN ('claimed','edit') AND person_id=? AND journo_id=?", $person_id, $journo_id );
     db_do( "INSERT INTO person_permission (person_id,journo_id,permission) VALUES (?,?,'edit')", $person_id, $journo_id ); 
 
     /* set the person's name if blank */
