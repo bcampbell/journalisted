@@ -76,7 +76,7 @@
 <div style="clear:both;"></div>
 
 <div class="box thisweek">
-<div class="head"><h3>Site news</h3></div>
+<div class="head"><h3>journa<i>listed</i> weekly</h3></div>
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
