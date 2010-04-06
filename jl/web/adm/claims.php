@@ -45,17 +45,26 @@ SELECT p.id as person_id,p.name,p.email,perm.created,perm.permission,j.id as jou
         INNER JOIN person_permission perm ON perm.person_id=p.id)
             INNER JOIN journo j ON perm.journo_id=j.id
     WHERE perm.permission='claimed'
+    ORDER BY perm.created ASC;
 EOT;
     $pending = db_getAll( $sql );
 
 
     if( $pending ) {
+
+        foreach( $pending as &$p ) {
+            $d = new datetime( $p['created'] );
+            $p['pretty_created'] = $d->format('Y-m-d' );
+        }
+        unset( $p );
+
 ?>
 <p><?= sizeof( $pending ) ?> claims pending: </p>
 <ul>
 <?php foreach( $pending as $p ) { ?>
   <li>
-    <?= $p['email'] ?>
+    <?= $p['pretty_created'] ?>:
+    <a href="mailto:<?= $p['email'] ?>"><?= $p['email'] ?></a>
     <?php if($p['name']) { ?> ( <?= $p['name'] ?>) <?php } ?>
     claims to be
     <?= journo_link( $p ) ?>
