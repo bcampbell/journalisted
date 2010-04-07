@@ -179,7 +179,11 @@ if( $fmt == 'rdf' ) {
     page_header( $title, $pageparams );
     {
         extract( $data );
-        include "../templates/journo.tpl.php";
+        if( $journo['ref'] == 'tobias-grubbe' ) {
+            include "../templates/tobias.tpl.php";
+        } else {
+            include "../templates/journo.tpl.php";
+        }
     }
     page_footer();
 }
