@@ -525,7 +525,7 @@ function journo_describeWeblink( $journo, $l )
         case 'blog':
             $desc = "{$prettyname}'s blog";
             break;
-        case 'website':
+        case 'homepage':
             $desc = "{$prettyname}'s website";
             break;
         case 'twitter':
