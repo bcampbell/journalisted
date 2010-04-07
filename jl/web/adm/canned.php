@@ -32,6 +32,8 @@ $canned = array(
     new QueryFight(),
     new WhosWritingAbout(),
     new NewsletterSubscribers(),
+#    new RecentChanges(),
+    new RegisteredJournos()
 );
 
 
@@ -787,5 +789,51 @@ EOT;
     }
 }
 
+# select j.ref,e.* from event_log e INNER join journo j on j.id=e.journo_id where event_time > now() - interval '1 day';
 
+class RecentChanges extends CannedQuery {
+    function __construct() {
+        $this->name = "RecentChanges";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Recent changes to journo profiles";
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT j.ref,j.prettyname,j.oneliner,e.*
+    FROM event_log e INNER join journo j on j.id=e.journo_id
+    WHERE e.event_time >= date ? AND e.event_time < (date ? + interval '24 hours')
+    ORDER BY e.event_time DESC
+EOT;
+        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+class RegisteredJournos extends CannedQuery {
+    function __construct() {
+        $this->name = "RegisteredJournos";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List journo pages which have been claimed";
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner, p.email, p.name FROM (person p INNER JOIN person_permission perm ON perm.person_id=p.id) INNER JOIN journo j ON j.id=perm.journo_id WHERE perm.permission='edit';
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
 ?>
