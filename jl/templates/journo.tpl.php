@@ -132,11 +132,6 @@
 
 */
 
-// TODO: move this out of template...
-$tab = get_http_var( 'tab', 'work' );
-if( $tab != 'bio' && $tab != 'contact' )
-    $tab = 'work';
-
 
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
@@ -254,9 +249,9 @@ $previous_employers = array_unique( $previous_employers );
 
 <div class="tabs">
 <ul>
-<li class="<?= $tab=='work' ? 'current':'' ?>"><a href="#tab-work">Work</a></li>
-<li class="<?= $tab=='bio' ? 'current':'' ?>"><a href="#tab-bio">Biography</a></li>
-<li class="<?= $tab=='contact' ? 'current':'' ?>"><a href="#tab-contact">Contact</a></li>
+<li><a href="#tab-work">Work</a></li>
+<li><a href="#tab-bio">Biography</a></li>
+<li><a href="#tab-contact">Contact</a></li>
 </ul>
 </div>
 
