@@ -119,20 +119,6 @@ function do_ApproveClaim()
     }
     db_commit();
 
-
-    /* suggested email text */
-    $firstname = ucwords( $journo['firstname'] );
-    $profile_url = OPTION_BASE_URL . "/" . $journo['ref'] . "?login=1";
-    $suggested_text = <<<EOT
-Hi {$firstname},
-Your account at journalisted has been activated, and you can now edit your profile page at:
-
-{$profile_url}
-
-Have fun!
-- The journalisted team
-EOT;
-
 ?>
 <div class="action_summary">
 <p><a href="mailto:<?= $person['email'] ?>"><?= $person['email'] ?></a> can now edit profile: <?= journo_link( $journo); ?></p>
@@ -167,7 +153,8 @@ EOT;
 
     }
 ?>
-    <h3>Send a little welcome email to <?= h($person['email']) ?></h3>
+    <h3>Send a welcome email to <?= h($person['email']) ?></h3>
+    <p>Let them know their account has been approved...</p>
     <form method="POST" action="/adm/claims">
     <input type="hidden" name="person_id" value="<?= h($person_id) ?>" />
     <input type="hidden" name="journo_id" value="<?= h($journo_id) ?>" />
@@ -202,7 +189,7 @@ function do_SendWelcomeEmail()
 ?>
 <div class="action_summary">
 Sent welcome email to <?= h($person['email']) ?>.
-<div>
+</div>
 <?php
     } else {
 ?>
