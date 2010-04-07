@@ -41,6 +41,7 @@ blockquote {
 /* toolbar for news editing */
 .news-toolbar {
     padding: 0.2em 0.5em;
+    margin-top: 0.5em;
     background-color: #cccccc;
 }
 #content {

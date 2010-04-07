@@ -57,8 +57,8 @@ function extra_head()
 
     
            $("#linkify-searchdaterange").click( function(e) {
-             var from = $("#linkify-rangefrom").val();
-             var to = $("#linkify-rangeto").val();
+             var from = $("#date_from").val();
+             var to = $("#date_to").val();
              if( from=="" || to=="" ) {
                  alert("Bad range - fill it out!");
    		         e.preventDefault();
@@ -174,6 +174,9 @@ function newsFromHTTPVars() {
         'author'=>get_http_var('author'),
         'slug'=>get_http_var('slug'),
         'content'=>get_http_var('content'),
+        'kind'=>get_http_var('kind'),
+        'date_from'=>get_http_var('date_from'),
+        'date_to'=>get_http_var('date_to'),
     );
 
     if( $post['slug'] == '' ) {
@@ -196,33 +199,44 @@ function newsBlankPost() {
         'title'=>'',
         'author'=>'',
         'slug'=>'',
-        'content'=>'' );
+        'content'=>'',
+        'kind'=>'',
+        'date_from'=>null,
+        'date_to'=>null );
 }
 
 
 function newsEdit($post) {
 
+    $news_kinds = array( 'newsletter' => 'Newsletter', ''=>'Generic News' );
 
 ?>
 <form method="POST" action="/adm/news">
-<label for="status">Publish?</label>
+<label for="status">Published?</label>
 <input type="checkbox" name="status" value='a' <?= $post['status']=='a'?'checked':'' ?> />
 <br />
 
+<label for="kind">Kind:</label>
+<select name="kind" id="kind">
+<?php foreach( $news_kinds as $k=>$kdesc ) { ?>
+ <option <?= $post['kind']==$k ? 'selected ':'' ?>value="<?= $k ?>"><?= $kdesc ?></option>
+<?php } ?>
+</select><br />
 <label for="title">Title:</label>
 <input type="text" size="80" name="title" id="title" value="<?= $post['title'] ?>" /><br />
 <label for="author">Author:</label>
 <input type="text" size="80" name="author" id="author" value="<?= $post['author'] ?>" /><br />
 <label for="slug">Slug:</label>
-<input type="text" size="80" name="slug" id="slug" value="<?= $post['slug'] ?>" /><br /><br />
+<input type="text" size="80" name="slug" id="slug" value="<?= $post['slug'] ?>" /><br />
+<label for="date_from">from (yyyy-mm-dd):</label>
+<input title="yyyy-mm-dd" type="text" id="date_from" name="date_from" value="<?= $post['date_from'] ?>" /><br />
+<label for="date_to">to (yyyy-mm-dd):</label>
+<input title="yyyy-mm-dd" type="text" id="date_to" name="date_to" value="<?= $post['date_to'] ?>" /><br />
+
 <div class="news-toolbar">
  <a title="Convert selected text to a journo link" id="linkify-journo" href="#">journo</a>
  <a title="Convert selected text to a search link" id="linkify-search" href="#">search</a>
  <a title="Convert selected text to a search link with date range" id="linkify-searchdaterange" href="#">search within daterange</a>
- <label for="linkify-rangefrom">from</label>
- <input title="yyyy-mm-dd" type="text" id="linkify-rangefrom" name="linkify-rangefrom" value="<?= h(get_http_var( "linkify-rangefrom" )) ?>" />
- <label for="linkify-rangeto">to</label>
- <input title="yyyy-mm-dd" type="text" id="linkify-rangeto" name="linkify-rangeto" value="<?= h(get_http_var( "linkify-rangeto" )) ?>" />
 </div>
 <textarea rows="20" cols="100" name="content" id="content">
 <?= $post['content'] ?>
@@ -246,12 +260,12 @@ function newsSave( &$post )
 
     if( array_key_exists( 'id', $post ) ) {
         // update existing post
-        db_do( "UPDATE news SET status=?, title=?, author=?, slug=?, content=? WHERE id=?",
-            $post['status'],$post['title'],$post['author'],$post['slug'],$post['content'],$post['id'] );
+        db_do( "UPDATE news SET status=?, title=?, author=?, slug=?, content=?, kind=?, date_from=?, date_to=? WHERE id=?",
+            $post['status'],$post['title'],$post['author'],$post['slug'],$post['content'], $post['kind'], $post['date_from'], $post['date_to'], $post['id'] );
 
     } else {
-        db_do( "INSERT INTO news (status, title, author, posted, slug, content) VALUES (?,?,?,NOW(),?,?)",
-            $post['status'],$post['title'],$post['author'],$post['slug'],$post['content'] );
+        db_do( "INSERT INTO news (status, title, author, posted, slug, content,kind,date_from,date_to) VALUES (?,?,?,NOW(),?,?,?,?,?)",
+            $post['status'],$post['title'],$post['author'],$post['slug'],$post['content'], $post['kind'], $post['date_from'], $post['date_to'] );
         $post['id'] = db_getOne( "SELECT lastval()" );
     }
     db_commit();
@@ -261,6 +275,9 @@ Saved <a href="/news/<?= $post['slug']?>"><?= $post['title'] ?></a>
 </div>
 <?php
 }
+
+
+
 
 function newsPreview( $post )
 {
