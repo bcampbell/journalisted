@@ -243,15 +243,17 @@ His photo a secret nature. However it is a truth that it is easier to find
 <div class="box actions">
   <div class="head"><h3>What can you do on Journalisted?</h3></div>
   <div class="body">
+  <br />
   <ul>
   <li>Build your journalist CV</li>
   <li><a href="/search?type=journo">Find</a> contact details for a journalist</li>
   <li><a href="/search?type=article">Search</a> over 2 million news articles</li>
   </div>
+  <br />
   <div class="foot"></div>
 </div>
 
-<div class="box actions you-can-also">
+<div class="box you-can-also">
   <div class="head"><h3>You can also...</h3></div>
   <div class="body">
     <ul>
