@@ -771,16 +771,16 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
  </div>
 </div>
 
-</div>
-</div> <!-- end sidebar -->
 
-<?php /*
-<script type="text/javascript" charset="utf-8">
-      if(document.compatMode == 'CSS1Compat'){
-        alert("Standards mode");
-      }else{
-        alert("Quirks mode");
-      }
-    </script>
-*/ ?>
+
+<div class="box mistake">
+ <div class="head"><h3>Spotted a mistake?</h3></div>
+ <div class="body">
+ Have we got the wrong information about this journalist?
+ <?= SafeMailTo( OPTION_TEAM_EMAIL, 'Let us know' ) ?>
+ </div>
+ <div class="foot"></div>
+</div>
+
+</div> <!-- end sidebar -->
 

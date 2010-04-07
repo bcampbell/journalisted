@@ -900,6 +900,17 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.admired-journos .head h4
 { color: #ffffff; }
 
+
+.box.mistake .head
+{
+    background: none;
+    border-bottom: none;
+}
+
+.box.mistake {
+  background: #ebebeb url( "/img/box_bg_hatched.png" ) repeat;
+}
+
 /* overview section on journo page */
 
 .overview {
