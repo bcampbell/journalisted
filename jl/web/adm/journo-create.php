@@ -128,12 +128,21 @@ class CreateJourno {
 
 
     function create_journo( $params ) {
-        db_do( "INSERT INTO journo (ref,prettyname,firstname,lastname,status,created) VALUES (?,?,?,?,?,NOW())",
+        $f = substr( metaphone($params['firstname']), 0, 4);
+        $l = substr( metaphone($params['lastname']), 0, 4);
+        if(!$f)
+            $f='';
+        if(!$l)
+            $l='';
+
+        db_do( "INSERT INTO journo (ref,prettyname,firstname,lastname,status,firstname_metaphone, lastname_metaphone,created) VALUES (?,?,?,?,?,?,?,NOW())",
             $params['ref'],
             $params['prettyname'],
             $params['firstname'],
             $params['lastname'],
-            'a' );
+            'a',
+            $f,
+            $l );
             db_commit();
 ?>
         <p>Created new journo: <a href="/<?php echo $params['ref'];?>"><?php echo $params['ref'];?></a>
