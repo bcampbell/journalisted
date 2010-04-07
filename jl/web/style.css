@@ -837,18 +837,18 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 
 /* some non-default journo page boxes */
-.box.you-can-also .head
+.box.actions .head
 {
   background: #7f2284 url( "/img/box_head_bg_purple.png" ) repeat-x top;
   border-bottom: 1px solid #630460;
 }
 
-.box.you-can-also .head h2,
-.box.you-can-also .head h3,
-.box.you-can-also .head h4
+.box.actions .head h2,
+.box.actions .head h3,
+.box.actions .head h4
 { color: #ffffff; }
 
-.box.you-can-also {
+.box.actions {
   background-color: #f1e3f1;
 }
 

@@ -628,7 +628,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot"></div>
 </div>
 
-<div class="box you-can-also">
+<div class="box actions you-can-also">
   <div class="head"><h3>You can also...</h3></div>
   <div class="body">
     <ul>

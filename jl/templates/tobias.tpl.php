@@ -235,7 +235,7 @@ His photo a secret nature. However it is a truth that it is easier to find
 </div>
 
 
-<div class="box you-can-also">
+<div class="box actions">
   <div class="head"><h3>What can you do on Journalisted?</h3></div>
   <div class="body">
   <ul>
@@ -246,7 +246,7 @@ His photo a secret nature. However it is a truth that it is easier to find
   <div class="foot"></div>
 </div>
 
-<div class="box you-can-also">
+<div class="box actions you-can-also">
   <div class="head"><h3>You can also...</h3></div>
   <div class="body">
     <ul>

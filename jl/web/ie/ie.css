@@ -53,7 +53,7 @@ ul {
     background: transparent url( '/ie/sidebar_green_head.gif' ) no-repeat top left;
 }
 
-.sidebar .box.you-can-also .head { 
+.sidebar .box.actions .head { 
     background: transparent url( '/ie/sidebar_purple_head.gif' ) no-repeat top left;
 }
 .sidebar .box.admired-journos .head { 
