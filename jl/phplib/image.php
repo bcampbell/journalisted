@@ -88,7 +88,7 @@ function image_path( $filename ) {
 
 
 function image_url( $filename ) {
-    return "/upload/" . $filename;
+    return "/uploads/" . $filename;
 }
 
 // delete an uploaded image. commits the db change before deleting image file.
