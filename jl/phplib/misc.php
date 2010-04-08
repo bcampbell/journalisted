@@ -462,12 +462,10 @@ function news_AugmentItem( &$n ) {
     if( $n['date_to'] ) {
         $n['date_to'] = new DateTime( $n['date_to'] );
     } 
-    // use date range to generate alt title
-    $n['alt_title'] = '';
-    if( $n['date_from'] && $n['date_to'] ) {
-        $n['alt_title'] = sprintf( "%s - %s",
-            $n['date_from']->format('d-m-Y'),
-            $n['date_to']->format('d-m-Y') );
+    // generate a pretty "from" for newsletters
+    $n['pretty_from'] = '';
+    if( $n['date_from'] ) {
+        $n['pretty_from'] = pretty_date( $n['date_from'] );
     }
 }
 

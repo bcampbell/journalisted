@@ -137,7 +137,7 @@ admPageFooter();
 
 function newsList() {
 
-    $posts = db_getAll( "SELECT id,status,title,slug,posted,author FROM news ORDER BY posted DESC" );
+    $posts = db_getAll( "SELECT id,status,title,slug,posted,author,kind,date_from,date_to FROM news ORDER BY posted DESC" );
 
 ?>
 <h2>News Posts</h2>
@@ -188,6 +188,9 @@ function newsFromHTTPVars() {
         $slug = strtolower( $post['title'] );
         $slug = preg_replace("/[^a-zA-Z0-9 ]/", "", $slug );
         $slug = str_replace(" ", "-", $slug);
+        if( $post['kind']=='newsletter' && $post['date_from'] ) {
+            $slug = $post['date_from'] . '-' . $slug;
+        }
         $post['slug'] = $slug;
     }
 
@@ -205,7 +208,7 @@ function newsBlankPost() {
         'author'=>'',
         'slug'=>'',
         'content'=>'',
-        'kind'=>'',
+        'kind'=>'newsletter',
         'date_from'=>null,
         'date_to'=>null );
 }

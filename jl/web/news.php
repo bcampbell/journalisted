@@ -39,10 +39,9 @@ if( $post['kind'] == 'newsletter' ) {
 ?>
 <div class="main">
 <div class="head">
-<?php if( $post['kind']=='newsletter' ) { ?>
- <h2>journa<i>listed</i> weekly: <?= $post['alt_title']; ?></h2>
-<?php } else { ?>
  <h2><?= $post['title']; ?></h2>
+<?php if( $post['kind']=='newsletter' ) { ?>
+ for the week commencing <?= $post['pretty_from']; ?>
 <?php } ?>
 </div>
 <div class="body">
@@ -68,9 +67,9 @@ if( $post['kind'] == 'newsletter' ) {
  <ul>
 <?php foreach( $news as $n ) { ?>
   <?php if( $n['slug']==$post['slug'] ) { ?>
-  <li><em><?= $n['alt_title'] ?></em></li>
+  <li><em><?= $n['title'] ?></em><br/><small>(week commencing <?= $n['pretty_from'] ?>)</small></li>
   <?php } else { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['alt_title'] ?></a></li>
+  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/><small>(week commencing <?= $n['pretty_from'] ?>)</small></li>
   <?php } ?>
 <?php } ?>
  </ul>
