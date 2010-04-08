@@ -659,6 +659,26 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 .recently-viewed ul { line-height: 120%; }
 
+
+.box.thisweek {
+    float: left;
+    width: 644px;   /* 2/3rd width */
+}
+
+.box.tobias  {
+    float: right;
+    margin-left: 16px;
+    width: 314px;   /* 1/3rd width */
+}
+
+.box.tobias .body { padding-left: 8px; }
+.box.tobias img {
+    float: left;
+    margin: 0px 8px 8px 0px;
+}
+
+
+
 .box.front {
   width: 971px;
   height: 277px;
@@ -724,6 +744,9 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.front .nav a.edit-profile:hover { background-position: -157px -450px; }
 .box.front .nav a.alerts { background-position: 0px -600px; }
 .box.front .nav a.alerts:hover { background-position: -157px -600px; }
+
+
+
 
 
 /* JOURNO PAGE */

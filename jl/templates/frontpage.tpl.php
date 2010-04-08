@@ -86,6 +86,14 @@
 </div>
 </div>
 
+<div class="box tobias">
+<div class="head"></div>
+<div class="body">
+<img src="/img/tobias.png" alt="Tobias Grubbe" />
+<p>Read the articles and opinions of <a href="/tobias-grubbe">Tobias Grubbe</a> at journa<i>listed</i>.com</p>
+</div>
+</div>
+
 </div>  <!-- end main -->
 <?php
 
