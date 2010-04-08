@@ -32,7 +32,7 @@ $canned = array(
     new QueryFight(),
     new WhosWritingAbout(),
     new NewsletterSubscribers(),
-#    new RecentChanges(),
+    new EventLog(),
     new RegisteredJournos()
 );
 
@@ -358,8 +358,13 @@ class CannedQuery {
 
     function get_params() {
         $params = array();
-        foreach( $this->param_spec as $p ) {
-            $params[$p['name']] = get_http_var( $p['name'], $p['default'] );
+        foreach( $this->param_spec as $spec ) {
+            $value = get_http_var( $spec['name'], $spec['default'] );
+            if( arr_get('type',$spec)=='date' ) {
+                if( $value )
+                    $value = new DateTime( $value );
+            }
+            $params[$spec['name']] = $value;
         }
         return $params;
     }
@@ -369,16 +374,20 @@ class CannedQuery {
 ?>
 <form method="get">
 <input type="hidden" name="action" value="<?php echo $this->ident; ?>" />
-<?php foreach( $this->param_spec as $p ) { ?>
-<label for="<?= $p['name'] ?>"><?= $p['label'] ?></label>
-<?php if( array_key_exists( 'options', $p ) ) { /* SELECT element */ ?>
- <select name="<?= $p['name'] ?>" id="<?= $p['name'] ?>">
- <?php foreach( $p['options'] as $value=>$desc ) { ?>
-  <option <?= ($params[$p['name']]==$value)?'selected':'' ?> value="<?= h($value) ?>"><?= $desc ?></option>
+<?php foreach( $this->param_spec as $spec ) { ?>
+<label for="<?= $spec['name'] ?>"><?= $spec['label'] ?></label>
+<?php if( array_key_exists( 'options', $spec ) ) { /* SELECT element */ ?>
+ <select name="<?= $spec['name'] ?>" id="<?= $spec['name'] ?>">
+ <?php foreach( $spec['options'] as $value=>$desc ) { ?>
+  <option <?= ($params[$spec['name']]==$value)?'selected':'' ?> value="<?= h($value) ?>"><?= $desc ?></option>
  <?php } ?>
  </select>
 <?php } else { /* just use a generic text input element */ ?>
- <input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo h($params[$p['name']]); ?>"/>
+ <?php if( arr_get('type',$spec) == 'date' ) { ?>
+ <input type="text" name="<?= $spec['name']; ?>" id="<?= $spec['name'] ?>" value="<?= $params[$spec['name']]->format('Y-m-d') ?>"/>
+ <?php } else { ?>
+ <input type="text" name="<?= $spec['name']; ?>" id="<?= $spec['name'] ?>" value="<?= h($params[$spec['name']]); ?>"/>
+ <?php } ?>
 <?php } ?>
 <br />
 <?php } ?>
@@ -791,15 +800,15 @@ EOT;
 
 # select j.ref,e.* from event_log e INNER join journo j on j.id=e.journo_id where event_time > now() - interval '1 day';
 
-class RecentChanges extends CannedQuery {
+class EventLog extends CannedQuery {
     function __construct() {
-        $this->name = "RecentChanges";
+        $this->name = "EventLog";
         $this->ident = strtolower( $this->name );
-        $this->desc = "Recent changes to journo profiles";
+        $this->desc = "Recent events (journo profile modifications, etc)";
 
         $this->param_spec = array(
-            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
-            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'type'=>'date', 'default'=>'1 week ago' ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'type'=>'date', 'default'=>'today' )
         );
     }
 
@@ -807,12 +816,21 @@ class RecentChanges extends CannedQuery {
     function perform($params) {
 
         $sql = <<<EOT
-SELECT j.ref,j.prettyname,j.oneliner,e.*
+SELECT e.event_type,e.event_time,e.context_json,j.ref,j.prettyname,j.oneliner
     FROM event_log e INNER join journo j on j.id=e.journo_id
     WHERE e.event_time >= date ? AND e.event_time < (date ? + interval '24 hours')
     ORDER BY e.event_time DESC
 EOT;
-        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
+        $rows = db_getAll( $sql, $params['from_date']->format('Y-m-d'), $params['to_date']->format('Y-m-d') );
+        foreach( $rows as &$r ) {
+            $r['description'] = $r['event_type'] . ' ("' . eventlog_Describe( $r ) . '")';
+            unset( $r['event_type'] );
+            unset( $r['context'] );
+            unset( $r['context_json'] );
+
+            $r['event_time'] = date_create( $r['event_time'] )->format( 'Y-m-d h:i:s' );
+        }
+
         collectColumns( $rows );
         Tabulate( $rows );
     }
