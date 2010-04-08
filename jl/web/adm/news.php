@@ -179,6 +179,11 @@ function newsFromHTTPVars() {
         'date_to'=>get_http_var('date_to'),
     );
 
+    if( !$post['date_from'] )
+        $post['date_from'] = null;
+    if( !$post['date_to'] )
+        $post['date_to'] = null;
+
     if( $post['slug'] == '' ) {
         $slug = strtolower( $post['title'] );
         $slug = preg_replace("/[^a-zA-Z0-9 ]/", "", $slug );

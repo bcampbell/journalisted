@@ -441,4 +441,34 @@ function article_Augment( &$a )
 }
 
 
+function news_RecentNewsletters( $limit=5 )
+{
+    // recent newsletters
+    $news = db_getAll( "SELECT id,slug,title,posted,date_from,date_to FROM news WHERE status='a' AND kind='newsletter' ORDER BY date_from DESC LIMIT 5" );
+    foreach( $news as &$n ) {
+        news_AugmentItem($n);
+    }
+    unset( $n );
+
+    return $news;
+}
+
+function news_AugmentItem( &$n ) {
+    $n['prettydate'] = pretty_date( strtotime($n['posted']) );
+
+    if( $n['date_from'] ) {
+        $n['date_from'] = new DateTime( $n['date_from'] );
+    } 
+    if( $n['date_to'] ) {
+        $n['date_to'] = new DateTime( $n['date_to'] );
+    } 
+    // use date range to generate alt title
+    $n['alt_title'] = '';
+    if( $n['date_from'] && $n['date_to'] ) {
+        $n['alt_title'] = sprintf( "%s - %s",
+            $n['date_from']->format('d-m-Y'),
+            $n['date_to']->format('d-m-Y') );
+    }
+}
+
 ?>

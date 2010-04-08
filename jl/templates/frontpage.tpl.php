@@ -9,7 +9,7 @@
 //   shortname   - the internal name eg 'thesun'
 //   prettyname  - eg "The Sun"
 //
-// $news - list of recent news entries
+// $news - list of recent newsletter entries
 //
 //
 
@@ -80,8 +80,7 @@
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a>
-    <small><?= $n['prettydate'] ?></small></li>
+  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['alt_title'] ?></a>
 <?php } ?>
  </ul>
 </div>

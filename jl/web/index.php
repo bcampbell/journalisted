@@ -92,12 +92,8 @@ EOT;
         unset( $ev['journo_oneliner'] );
     }
 
-    $news = db_getAll( "SELECT id,slug,title,posted FROM news WHERE status='a' ORDER BY posted DESC LIMIT 5" );
-
-    foreach( $news as &$n ) {
-        $n['prettydate'] = pretty_date( strtotime($n['posted']) );
-    }
-    unset( $n );
+    // recent newsletters
+    $news = news_RecentNewsletters(5);
 
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
