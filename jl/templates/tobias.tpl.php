@@ -56,9 +56,8 @@ $previous_employers = array_unique( $previous_employers );
     <div class="fudge">
           Born - 1667. I am fully occupied writing Essays for the
           broadsheets and news webs, as well as in certain Speculative
-                                                                           Journalisted weekly digest
           Undertakings, and in missions for Her Majestie’s Government of
-His photo a secret nature. However it is a truth that it is easier to find
+          a secret nature. However it is a truth that it is easier to find
           Commissions than to be paid afterward for them
     </div> <!-- end fudge -->
     <div style="clear: both;"></div>
@@ -200,18 +199,22 @@ His photo a secret nature. However it is a truth that it is easier to find
     <h3>The authors of Tobias Grubbe</h3>
   </div>
   <div class="body">
-    <p>...details here...</p>
+    <p>
+        Matthew Buck and Michael Cross<br/>
+        &copy; All rights reserved
+    </p>
   </div>
 </div>
 
 
 <div class="">
   <div class="head">
-    <h3>The patrons of Tobias Grubbe</h3>
+    <h3>The patron of Tobias Grubbe</h3>
   </div>
   <div class="body">
       <p>
-    <?= SafeMailto( "martin.moore@mediastandardstrust.org" );?>
+    journa<i>listed</i>.com<br/>
+    For more information contact <?= SafeMailto( "martin.moore@mediastandardstrust.org", "Martin Moore" );?>
       <br/>
       +44 20 7727 5252
     </p>
@@ -245,7 +248,7 @@ His photo a secret nature. However it is a truth that it is easier to find
   <div class="body">
   <br />
   <ul>
-  <li>Build your journalist CV</li>
+  <li><a href="/profile">Edit</a> your journa<i>listed</i> profile</li>
   <li><a href="/search?type=journo">Find</a> contact details for a journalist</li>
   <li><a href="/search?type=article">Search</a> over 2 million news articles</li>
   </div>

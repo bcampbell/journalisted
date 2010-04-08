@@ -156,7 +156,8 @@ ul {
 .front .nav a.alerts { left: 822px; top: 110px; }
 
 
-/* three-in-a-row boxes on front page */
+/* 1/3rd-width boxes on front page */
+.front-page .box.tobias,
 .recently-updated,
 .recently-viewed,
 .most-blogged
@@ -171,6 +172,7 @@ ul {
 }
 
 
+.box.tobias .head,
 .recently-viewed .head,
 .recently-updated .head,
 .most-blogged .head
@@ -180,6 +182,8 @@ ul {
     background: transparent url( '/ie/frontbox_head.gif' ) no-repeat top left;
 }
 
+
+.box.tobias .body,
 .recently-viewed .body,
 .recently-updated .body,
 .most-blogged .body
@@ -190,13 +194,43 @@ ul {
 }
 
 
+.box.tobias .foot,
 .recently-viewed .foot,
 .recently-updated .foot,
 .most-blogged .foot
-{ 
+{
+    clear: both;
     padding: 0px 21px 5px 21px;    /* +5 on left, right, bottom */
     width: 282px;
     background: transparent url( '/ie/frontbox_foot.gif' ) no-repeat bottom left;
 }
 
+.front-page .box.tobias { float: left; margin-left: 16px; }
+.box.tobias .head { height: 8px; }
+
+
+.thisweek.box {
+  width: 654px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.thisweek.box .head {
+    padding: 5px 21px 0px 21px;    /* +5px for left, top, right */
+    width: 612px;      /* 354 = 5+16+ 282 +16+5 */
+    background: transparent url( '/ie/twothirdsbox_head.gif' ) no-repeat top left;
+}
+
+.thisweek.box .body {
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 612px;
+    background: transparent url( '/ie/twothirdsbox_body.gif' ) repeat-y top left;
+    min-height: 102px;
+}
+
+.thisweek.box .foot {
+    padding: 0px 21px 5px 21px;    /* +5 on left, right, bottom */
+    width: 612px;
+    background: transparent url( '/ie/twothirdsbox_foot.gif' ) no-repeat bottom left;
+}
 

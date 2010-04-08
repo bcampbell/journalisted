@@ -663,12 +663,14 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.thisweek {
     float: left;
     width: 644px;   /* 2/3rd width */
+    min-height: 150px;
 }
 
 .box.tobias  {
-    float: right;
+    float: left;
     margin-left: 16px;
     width: 314px;   /* 1/3rd width */
+    min-height: 150px;
 }
 
 .box.tobias .body { padding-left: 8px; }

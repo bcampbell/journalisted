@@ -36,7 +36,7 @@ function extra_head()
             group.height(tallest);
         }
         equalHeight( $(".recently-viewed .body,.recently-updated .body,.most-blogged .body") );
-        equalHeight( $(".box.thisweek .body,.box.tobias .body") );
+/*        equalHeight( $(".box.thisweek,.box.tobias") ); */
     });
 </script>
 <?php

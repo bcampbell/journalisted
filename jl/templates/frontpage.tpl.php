@@ -84,14 +84,17 @@
 <?php } ?>
  </ul>
 </div>
+<div class="foot"></div>
 </div>
 
 <div class="box tobias">
 <div class="head"></div>
 <div class="body">
 <img src="/img/tobias.png" alt="Tobias Grubbe" />
-<p>Read the articles and opinions of <a href="/tobias-grubbe">Tobias Grubbe</a> at journa<i>listed</i>.com</p>
+<p>Read the opinions of <a href="/tobias-grubbe">Tobias Grubbe</a> at journa<i>listed</i>.com</p>
+<div style="clear:both;"></div>
 </div>
+<div class="foot"></div>
 </div>
 
 </div>  <!-- end main -->
