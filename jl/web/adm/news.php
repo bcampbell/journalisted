@@ -189,7 +189,8 @@ function newsFromHTTPVars() {
         $slug = preg_replace("/[^a-zA-Z0-9 ]/", "", $slug );
         $slug = str_replace(" ", "-", $slug);
         if( $post['kind']=='newsletter' && $post['date_from'] ) {
-            $slug = $post['date_from'] . '-' . $slug;
+            $dt = new DateTime( $post['date_from'] );
+            $slug = "weekly-digest-" . $dt->format( 'd-m-Y' );
         }
         $post['slug'] = $slug;
     }
