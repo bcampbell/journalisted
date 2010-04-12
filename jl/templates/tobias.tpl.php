@@ -214,7 +214,7 @@ $previous_employers = array_unique( $previous_employers );
   <div class="body">
       <p>
     journa<i>listed</i>.com<br/>
-    For more information contact <?= SafeMailto( "martin.moore@mediastandardstrust.org", "Martin Moore" );?>
+    For more information contact <?= SafeMailto( "team@journalisted.com", "the journa<i>listed</i> team" );?>
       <br/>
       +44 20 7727 5252
     </p>

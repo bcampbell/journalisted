@@ -47,12 +47,13 @@ The site allows you to:
 <h3>Credits</h3>
 
 <p>
-The site was built by <a class="extlink" href="http://www.scumways.com">Ben Campbell</a> and designed by James Williamson.
-Julian Todd and <a class="extlink" href="http://www.flourish.org">Francis Irving</a> have provided hosting and admin support.
+The site was built by <a class="extlink" href="http://www.scumways.com">Ben Campbell</a>.
 <a class="extlink" href="http://mediastandardstrust.blogspot.com">Martin Moore</a> has led the initiative on behalf of the Media Standards Trust.
 Gavin Freeguard and Ben Campbell administrate the site.
 </p>
-<p>Thanks to Gavin Buttimore, Tom Lynn, Ayesha Garrett, Gary Jones and Simon Roe, who have all contributed to development.</p>
+<p>The site design is by <a class="extlink" href="http://www.double-sided.com">Double Sided</a>.</p>
+<p>Thanks to Gavin Buttimore, Tom Lynn, Ayesha Garrett, Gary Jones, Simon Roe and James Williamson, who have all contributed to development.</p>
+<p>Many thanks to <a class="extlink" href="http://www.goatchurch.org.uk">Julian Todd</a> and <a class="extlink" href="http://www.flourish.org">Francis Irving</a>, who generously provided hosting and admin support for a long time.</p>
 <p>Thanks also to Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and everyone else who offered invaluable ideas and advice.</p>
 <p>Journalisted reuses some code from the wonderful <a class="extlink" href="http://mysociety.org">mySociety</a> websites.</p>
 </div>
