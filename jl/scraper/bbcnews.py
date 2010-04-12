@@ -549,86 +549,79 @@ def Extract_hi( html, context ):
     return art
 
 
-
 def Extract_blog( html, context ):
     """Parse the html of a bbc blog post page"""
 
     art = context
-
-    # hmm, for some blogs BeautifulSoup chooses window-1532 encoding (should be utf-8) not sure why...
     soup = BeautifulSoup( html )
-
-#    print soup.originalEncoding, context['srcurl']
-    entry_div = soup.find( 'div', {'id':re.compile(r'entry-\d+')} )
-    if entry_div is None:
-        # different on some blogs (eg worldtonight)
-        entry_div = soup.find( 'div', {'class':'entry'} )
-
-    headline_hx = entry_div.find( re.compile(r'h\d') )
+    post_div = soup.find( 'div', {'class':'post'} )
+    headline_hx = post_div.find( re.compile(r'h\d') )
     art['title'] = ukmedia.FromHTMLOneLine( headline_hx.renderContents(None) )
 
+    meta_div = post_div.find('div', {'class':'meta'} )
 
-    # author/date varies a little by blog (eg northern ireland one has author after article text, in "entryextras")
-    for details_ul in entry_div.findAll('ul', {'class':('entrydetails','authorship_details','entryextras')}):
-        author_li = details_ul.find( 'li', {'class':('author','authorLast')} )
-        if author_li is not None:
-            art['byline'] = ukmedia.FromHTMLOneLine( author_li.renderContents(None) )
-        date_li = details_ul.find( 'li', {'class':'date'} )
-        if date_li is not None:
-            art['pubdate'] = ukmedia.ParseDateTime( date_li.renderContents(None) )
+    author = meta_div.find('span', {'class':'vcard author'} )
+    art['byline'] = ukmedia.FromHTMLOneLine( author.renderContents(None) )
 
-        details_ul.extract()
+    # <abbr class="published" title="2010-04-02T12:35:44+00:00">12:35 UK time, Friday,  2 April 2010</abbr>
+    pub = meta_div.find('abbr', {'class':'published'} )
+    art['pubdate'] = ukmedia.ParseDateTime( pub['title'] )
 
-    if art['byline'] == u'Nick' and '/nickrobinson/' in context['srcurl']:
-        art['byline'] = u'Nick Robinson';
+    #if art['byline'] == u'Nick' and '/nickrobinson/' in context['srcurl']:
+    #    art['byline'] = u'Nick Robinson';
 
+    content_div = post_div.find( 'div', {'class':"post_content"} )
 
 
-    # strip the content down to just the text
 
-    # some blogs have author photo in main body, before the heading
-    for cruft in headline_hx.findPreviousSiblings():
-        cruft.extract()
-    headline_hx.extract()
-    for cruft in entry_div.findAll( ('div','ul'), {'class':("social_bookmarks","ami_social_bookmarks")} ):
-        cruft.extract()
-    # kill video
-    for cruft in entry_div.findAll( 'div', {'class':"player"} ):
-        cruft.extract()
-    for cruft in entry_div.findAll( 'script' ):
-        cruft.extract()
-    for cruft in entry_div.findAll( 'object' ):
-        cruft.extract()
-    for cruft in entry_div.findAll( 'style' ):
-        cruft.extract()
-
-    art['content'] = entry_div.renderContents(None)
-    art['description'] = ukmedia.FirstPara( art['content'] )
-
-    # images (TODO: try and pull description out of caption)
+    # images
     art['images'] = []
-    for img in entry_div.findAll( 'img' ):
-        img_caption = ukmedia.FromHTMLOneLine( img.get( 'alt',u'' ) )
+    for mt in content_div.findAll( 'div',{'class':re.compile('mt-image-enclosure' )} ):
+        img = mt.img
+        img_caption = u'' #ukmedia.FromHTMLOneLine( img.get( 'alt',u'' ) )
         # occasional image is just broken (usually because of a bad alt, eg alt="that isn"t cricket")
-        if not 'src' in img:
-            continue
+        #if not 'src' in img:
+        #    continue
         img_url = img['src']
         img_credit = u''
         art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
 
+
     # comments
     comment_div = soup.find( 'div', {'id':'comments'} )
-    num_comments = None
-    comment_id_pat = re.compile( r'comment(\d+)' )
-    # no easy total on page, so look for highest numbered comment
-    for comment_li in comment_div.findAll( 'li', {'id': comment_id_pat} ):
-        num_comments = int( comment_id_pat.match( comment_li['id'] ).group(1) )
+    if comment_div is not None:
+        num_comments = 0
+        # no easy total on page, so look for highest numbered comment
+        comment_num_pat = re.compile( r'\s*(\d+)\s*[.]\s*');
+        for c in comment_div.findAll( 'span', {'class':'comment-number'} ):
+            m = comment_num_pat.match( ukmedia.FromHTMLOneLine( c.renderContents(None) ) )
+            num = int( m.group(1) )
+            if num > num_comments:
+                num_comments = num
 
-    if num_comments is not None:
         comment_url = art['srcurl'] + "#comments"
         art['commentlinks'] = [ {'num_comments':num_comments, 'comment_url':comment_url} ]
 
+
+    # get the text, minus assorted cruft
+    for cruft in content_div.findAll( 'ul', {'class':'ami_social_bookmarks'} ):
+        cruft.extract()
+    for cruft in content_div.findAll( 'span', {'class':re.compile( 'mt-enclosure')} ):
+        cruft.extract()
+    for cruft in content_div.findAll( 'object' ):
+        cruft.extract()
+
+    # embedded bbc players are a div placeholder, followed by script
+    for cruft in content_div.findAll( 'div', {'class':'player'} ):
+        cruft.extract()
+    for cruft in content_div.findAll( 'script' ):
+        cruft.extract()
+
+    art['content'] = content_div.renderContents(None)
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
     return art
+
 
 
 
