@@ -643,6 +643,23 @@ class QueryFight extends CannedQuery {
     }
 
 
+    function q_count( $q ) {
+        $n = 0;
+        $batchsize = 1000;
+
+        $xap = new XapSearch();
+        $xap->set_query( $q );
+        while(1) {
+            $rows = $xap->run($n,$batchsize,'relevance');
+            $n += sizeof( $rows );
+            if( sizeof( $rows ) < $batchsize )
+                break;
+        }
+
+        return $n;
+    }
+
+
     function perform($params) {
         $q1 = $params['q1'];
         $q2 = $params['q2'];
@@ -665,18 +682,10 @@ q2: [<?= $q2 ?>]
 <?php
 
             $result = array();
-            {
-                $xap = new XapSearch();
-                $xap->set_query( $q1 );
-                $rows = $xap->run(0,999999,'date');
-                $result[ "q1: {$params['q1']}" ] = sizeof( $rows );
-            }
-            {
-                $xap = new XapSearch();
-                $xap->set_query( $q2 );
-                $rows = $xap->run(0,999999,'date');
-                $result[ "q2: {$params['q2']}" ] = sizeof( $rows );
-            }
+            $n1 = $this->q_count( $q1 );
+            $result[ "q1: {$params['q1']}" ] = $n1;
+            $n2 = $this->q_count( $q2 );
+            $result[ "q2: {$params['q2']}" ] = $n2;
 
             Tabulate( array( $result ) );
         }
