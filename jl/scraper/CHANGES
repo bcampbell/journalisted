@@ -30,4 +30,8 @@ Log changes made due to website changes here!
 2009-09-10 herald: new heraldscotland website
 2010-03-26 independent: fix truncated-content issue
 2010-03-31 notw: FindArticles() was being thwarted by 404s
+2010-03-12 bbc: new blog scraper
+2010-03-12 skynews: new scraper for blogs
+2010-03-14 mirror: trim advertising cruft
+
 
