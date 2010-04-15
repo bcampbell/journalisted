@@ -169,12 +169,19 @@ if( !$data[ 'quick_n_nasty' ] && array_key_exists( 'monthly_stats', $data ) ) {
 
 /* all set - invoke a template to render the page! */
 $fmt = get_http_var( 'fmt','html' );
-if( $fmt == 'rdf' ) {
+if( $fmt == 'text' ) {
+    /* plaintext version */
+    extract( $data );
+
+    header( "Content-Type: text/plain" );
+    include "../templates/journo_text.tpl.php";
+} else if( $fmt == 'rdf' ) {
     extract( $data );
 
     header( "Content-Type: application/rdf+xml" );
     include "../templates/journo.rdf.tpl.php";
 } else {
+    /* normal html version */
     $title = $journo['prettyname'];
     page_header( $title, $pageparams );
     {
