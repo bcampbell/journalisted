@@ -1,5 +1,5 @@
 ;; keys for recaptcha
 
 ; fill these in:
-publickey = blahblahblahblahblahblahblahblahblahblah
-privatekey = blahblahblahblahblahblahblahblahblahblah
+public = blahblahblahblahblahblahblahblahblahblah
+private = blahblahblahblahblahblahblahblahblahblah
