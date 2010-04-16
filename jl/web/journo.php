@@ -175,11 +175,11 @@ if( $fmt == 'text' ) {
 
     header( "Content-Type: text/plain" );
     include "../templates/journo_text.tpl.php";
-} else if( $fmt == 'rdf' ) {
+} else if( $fmt == 'rdfxml' ) {
     extract( $data );
 
     header( "Content-Type: application/rdf+xml" );
-    include "../templates/journo.rdf.tpl.php";
+    include "../templates/journo_rdfxml.tpl.php";
 } else {
     /* normal html version */
     $title = $journo['prettyname'];
