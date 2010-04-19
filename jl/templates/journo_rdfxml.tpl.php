@@ -81,10 +81,5 @@
 
   </foaf:Person>
 
-
-<rdf:Description rdf:about="">
-<foaf:primaryTopic rdf:resource="http://webscience.org/person/2"/>
-</rdf:Description>s
-
 </rdf:RDF>
 
