@@ -467,6 +467,10 @@ function news_AugmentItem( &$n ) {
     if( $n['date_from'] ) {
         $n['pretty_from'] = pretty_date( $n['date_from'] );
     }
+    $n['pretty_to'] = '';
+    if( $n['date_to'] ) {
+        $n['pretty_to'] = pretty_date( $n['date_to'] );
+    }
 }
 
 ?>
