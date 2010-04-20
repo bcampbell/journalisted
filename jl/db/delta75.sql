@@ -1,0 +1,4 @@
+BEGIN;
+ALTER TABLE journo ADD COLUMN admin_notes text NOT NULL DEFAULT '';
+ALTER TABLE journo ADD COLUMN admin_tags text NOT NULL DEFAULT '';
+COMMIT;
