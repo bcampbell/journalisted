@@ -45,9 +45,11 @@
 
  $employers    - list of employers journo has worked for
    for each one:
-    employer   - name eg "Pig Farmer Monthly"
-    job_title  - eg "Political Editor"
-    year_from  - eg "2005"
+    kind       - 'e'=employment, 'f'=freelance
+    employer   - kind=='e': name eg "Pig Farmer Monthly"
+                       'f': publications written for
+    job_title  - eg "Political Editor" (undefined if kind='f')
+    year_from  - eg 2005
     year_to
     current    - boolean flag indicating still employed in this job
 
@@ -634,7 +636,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <ul>
       <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add <?= $prettyname ?>'s articles to my daily alerts</a></li>
       <li class="print-page"><a href="#" onclick="javascript:window.print(); return false;" >Print this page</a></li>
-<?php /*      <li class="forward-profile"><a href="#">Forward profile to a friend</a></li> */ ?>
+      <li class="forward-profile"><a href="/forward?journo=<?= $ref ?>">Forward profile to a friend</a></li>
 <?php if( !$can_edit_page ) { ?>
       <li class="claim-profile">
         <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
