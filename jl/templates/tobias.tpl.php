@@ -4,6 +4,24 @@
  * special case version of journo.tpl.php for Tobias Grubbe
  */
 
+$tg_objs = array(
+<<<EOT
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
+<param name="movie" value="TG_GU_No1_120410.swf">
+<param name="quality" value="high"><embed src="http://www.tobiasgrubbe.com/TG_GU_No1_120410.swf" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="400"></embed></object>
+EOT
+,
+<<<EOT
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
+<param name="movie" value="TG_GU_No2_190410.swf">
+<param name="quality" value="high"><embed src="http://www.tobiasgrubbe.com/TG_GU_No2_190410.swf" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="400"></embed></object>
+EOT
+
+);
+
+$episode = get_http_var( 'episode', sizeof($tg_objs) );
+if( $episode<1 || $episode > sizeof($tg_objs) )
+    $episode = sizeof($tg_objs);
 
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
@@ -83,21 +101,20 @@ $previous_employers = array_unique( $previous_employers );
 <div class="">
   <div class="head"><h3>Tobias Grubbe's latest adventures</h3></div>
   <div class="body">
-<?php /* TRAILER
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="484">
-<param name="movie" value="/tobias/TG_Journalisted_trail.swf">
-<param name="quality" value="high"><embed src="/tobias/TG_Journalisted_trail.swf" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="484"></embed></object>
-*/ ?>
-
-<?php /* 1
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
-<param name="movie" value="TG_GU_No1_120410.swf">
-<param name="quality" value="high"><embed src="http://www.tobiasgrubbe.com/TG_GU_No1_120410.swf" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="400"></embed></object>
-*/ ?>
-
-<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="484">
-<param name="movie" value="TG_GU_No2_190410.swf">
-<param name="quality" value="high"><embed src="http://www.tobiasgrubbe.com/TG_GU_No2_190410.swf" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="484"></embed></object>
+    <br/>
+<?= $tg_objs[ $episode-1 ] ?>
+    <div style="font-size: 150%;">
+<?php
+for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
+    if( $i==$episode ) {
+?><?= $i ?>&nbsp;<?php
+    } else {
+?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;<?php
+    }
+}
+?>
+    </div>
+    <br/>
 
   </div>
   <div class="foot"></div>
