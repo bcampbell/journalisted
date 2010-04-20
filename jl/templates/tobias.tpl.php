@@ -99,17 +99,17 @@ $previous_employers = array_unique( $previous_employers );
 <div class="tab-content" id="tab-work">
 
 <div class="">
-  <div class="head"><h3>Tobias Grubbe's latest adventures</h3></div>
+  <div class="head"><h3>Tobias Grubbe's latest adventures - episode <?= $episode ?></h3></div>
   <div class="body">
     <br/>
 <?= $tg_objs[ $episode-1 ] ?>
-    <div style="font-size: 150%;">
+    <div>
 <?php
 for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
     if( $i==$episode ) {
-?><?= $i ?>&nbsp;<?php
+?>Episode <?= $i ?>&nbsp;&nbsp;&nbsp;<?php
     } else {
-?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;<?php
+?><a href="/<?= $ref ?>?episode=<?= $i ?>">Episode <?= $i ?></a>&nbsp;&nbsp;&nbsp;<?php
     }
 }
 ?>
