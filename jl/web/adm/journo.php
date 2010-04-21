@@ -308,9 +308,7 @@ function EmitJourno( $journo_id )
   <input type="hidden" name="action" value="update_admin_notes" />
   <input type="hidden" name="journo_id" value="<?= $j['id'] ?>" />
   <strong>admin_notes:</strong><br/>
-  <textarea name="admin_notes" cols="80" rows="5">
-  <?= h( $j['admin_notes'] ) ?>
-  </textarea><br/>
+  <textarea name="admin_notes" cols="80" rows="5"><?= h( $j['admin_notes'] ) ?></textarea><br/>
   <input type="submit" value="Update" />
 </form>
 <?php
