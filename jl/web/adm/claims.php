@@ -8,7 +8,7 @@ require_once '../conf/general';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
-//require_once '../../phplib/person.php';
+require_once '../../phplib/person.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/journo.php';
 
@@ -137,15 +137,26 @@ function do_ComposeWelcomeEmail()
     $journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
     $person = db_getRow( "SELECT * FROM person WHERE id=?", $person_id );
 
+
     if( !$emailtext ) {
         /* suggested email text */
         $firstname = ucwords( $journo['firstname'] );
-        $profile_url = OPTION_BASE_URL . "/" . $journo['ref'] . "?login=1";
+        //$profile_url = OPTION_BASE_URL . "/" . $journo['ref'] . "?login=1";
+        // generate a link that'll log them in and take them to their profile
+        $template_data = array();
+        $login_link = person_make_signon_url(
+            rabx_serialise( $template_data ),
+            $person['email'],
+            "GET",
+            '/' . $journo['ref'],
+            null );
+        db_commit();
+
         $emailtext = <<<EOT
 Hi {$firstname},
 Your account at journalisted has been activated, and you can now edit your profile page at:
 
-{$profile_url}
+{$login_link}
 
 Best wishes
 The journalisted team
