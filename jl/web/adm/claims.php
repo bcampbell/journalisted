@@ -158,6 +158,8 @@ Your account at journalisted has been activated, and you can now edit your profi
 
 {$login_link}
 
+You can also contact us via Twitter @journalisted
+
 Best wishes
 The journalisted team
 EOT;
