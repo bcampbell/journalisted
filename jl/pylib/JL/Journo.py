@@ -717,6 +717,9 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
     """
 
     rawname = rawname.lower()
+    if rawname == "kelly rose bradford":
+        # normal journo lookup strips "bradford" off as a placename.
+        return GetJournoIdFromRef( conn, 'kelly-rose-bradford' )
 
     if rawname == "paul evans":
         # guardian has two Paul Evans'
