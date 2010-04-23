@@ -130,7 +130,7 @@ def Extract_article( html, context ):
 
     headerdiv = soup.find( 'div', {'class':'ft-story-header'} )
     
-    h = headerdiv.find( ['h2','h3' ] )
+    h = headerdiv.find( ['h1','h2','h3' ] )
     headline = h.renderContents( None )
     headline = ukmedia.FromHTML( headline )
 
@@ -282,12 +282,13 @@ def Extract_blog( html, context ):
 
 def ScrubFunc( context, entry ):
 
-
     url = context['srcurl']
     o = urlparse.urlparse( url )
 
-
-    if o[1] == 'feeds.feedburner.com':
+    if o[1] == 'traxfer.ft.com':
+        url = entry.guid
+        o = urlparse.urlparse(url)
+    elif o[1] == 'feeds.feedburner.com':
         # some of the FT feeds (the blogs?) redirect to feedburner.
         # Luckily, the feedburner feeds have a special entry
         # which contains the original link
