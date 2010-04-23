@@ -194,12 +194,14 @@ def Extract_eScenic( html, context ):
         # a lot of stories (particularly comment pieces) have
         # name in title...
         # eg "Janet Street-Porter: Our politicians know nothing of real life"
-        m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
-        if m:
-            byline = m.group(1)
-            # cull out duds
-            if byline.lower() in dudbylines:
-                byline = u''
+        # (but not for obituaries!)
+        if u'/obituaries/' not in art['srcurl']:
+            m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
+            if m:
+                byline = m.group(1)
+                # cull out duds
+                if byline.lower() in dudbylines:
+                    byline = u''
 
 
     art['byline'] = ukmedia.FromHTML( byline )
