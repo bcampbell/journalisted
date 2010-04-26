@@ -66,8 +66,8 @@ if( get_http_var("now")) {
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
-	// alerts is closest thing we have to an account management page
-    header("Location: /alert");
+	// account management page
+    header("Location: /account");
     exit;
 }
 
@@ -131,8 +131,7 @@ function RedirectToOriginalDest( $stash ) {
             }
         }
 
-	    // alerts is closest thing we have to a default user page, atm
-        header("Location: /alert");
+        header("Location: /account");
         exit;
     }
 }
@@ -313,7 +312,7 @@ We've sent you an email, and you'll need to click the link in it to log in.
   <p>To register, please tell us your email address.</p>
   <p>We'll send you an email, click the link in it to confirm your email is working.</p>
 <?php } else { ?>
-  <h3>Lost/forgotten/missing password</h3>
+  <h3>No password</h3>
   <p>To log in, please tell us your email address.</p>
   <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
 <?php } ?>
@@ -332,8 +331,7 @@ function DoConfirmationEmail()
     global $q_stash, $q_email, $q_name, $q_rememberme;
 
     if( is_null( $q_stash ) ) {
-        // create a default stashed request to take returning user to "/alert",
-        // the closest thing we have to a user profile page
+        // create a default stashed request
         $template_data = array(
             'reason_web' => "Log in",
             'reason_email' => "Log in to Journalisted",

@@ -53,13 +53,16 @@ else
     $r = array(
         'reason_web' => "Manage your email alerts",
         'reason_email' => "Manage your email alerts",
-        'reason_email_subject' => 'Journalisted log in: email confirmation'
+        'reason_email_subject' => 'Journalisted: manage your email alerts'
         );
-    $P = person_if_signed_on();
+    if( strtolower( get_http_var('dologin','no') ) == 'yes' )
+        // insist that user logs in before going any further
+        $P = person_signon($r);
+    else
+        $P = person_if_signed_on();
 }
 
 
-/* OK, if we get here, we've got a logged-in user and can start our output! */ 
 page_header( "Alerts", array( 'menupage'=>'my') );
 
 ?>
@@ -95,7 +98,11 @@ if( $P ) {
     EmitLookupForm();
 } else {
     // the non logged-in version:
-    loginform_emit();
+?>
+    <p>If you already have an account, just <a href="/alert?dologin=yes">log in here</a></p>
+    <p>Otherwise, <a href="/login?action=register">register here</a></p>
+<?php
+    //loginform_emit();
 }
 
 ?>

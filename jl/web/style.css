@@ -188,6 +188,8 @@ form input[type="password"] {
 
 form input[type="text"].year { width: 4em; }
 
+.sidebar form input[type="text"] { width: 200px; }
+
 form textarea { border: 1px solid #d9d9d9; }
 form textarea[name="address"] { width: 300px; }
 
