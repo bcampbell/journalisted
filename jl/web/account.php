@@ -9,11 +9,6 @@ require_once '../../phplib/person.php';
 require_once '../phplib/passwordbox.php';
 
 
-$P = NULL;
-$r = array( 'reason_web' => "Log in",
-        'reason_email' => "Log in to Journalisted",
-        'reason_email_subject' => 'Log in to Journalisted' );
-$P = person_signon($r);
 
 
 account_page();
@@ -23,8 +18,11 @@ account_page();
 
 function account_page()
 {
-    global $P;
 
+    $r = array( 'reason_web' => "Log in",
+        'reason_email' => "Log in to Journalisted",
+        'reason_email_subject' => 'Log in to Journalisted' );
+    $P = person_signon($r);
 
     $passwordbox = new PasswordBox();
 
