@@ -7,9 +7,14 @@ chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 require_once "../conf/general";
 require_once '../../phplib/db.php';
 
-
-$q = db_query( "SELECT id,firstname,lastname FROM journo" );
-
+$q=null;
+if( sizeof( $argv) > 1 )
+{
+    $ref = $argv[1];
+    $q = db_query( "SELECT id,firstname,lastname FROM journo WHERE ref=?", $ref );
+} else {
+    $q = db_query( "SELECT id,firstname,lastname FROM journo" );
+}
 
 
 while( $j = db_fetch_array($q) ) {
