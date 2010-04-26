@@ -241,7 +241,9 @@ function BuzzFragment( &$r )
 }
 
 
-
+// unhappy about having this here. Should be in web/login.php
+// it's here because alert page wants an embedded login form...
+// TODO: improve this situation.
 function loginform_emit( $email='', $stash='', $rememberme='', $errs = array())
 {
     $h_email = htmlspecialchars($email);
@@ -280,7 +282,7 @@ If you already have a Journa<i>listed</i> account, log in here
   </dd>
 </dl>
 
-<a href="<?php echo $nopass_url; ?>">forgot password?</a>
+<a href="<?php echo $nopass_url; ?>">forgot password, or didn't set one?</a>
 <p>
 <input type="submit" name="loginsubmit" value="Continue" />
 </p>

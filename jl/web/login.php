@@ -312,7 +312,7 @@ We've sent you an email, and you'll need to click the link in it to log in.
   <p>To register, please tell us your email address.</p>
   <p>We'll send you an email, click the link in it to confirm your email is working.</p>
 <?php } else { ?>
-  <h3>Lost/forgotten/missing password</h3>
+  <h3>No password</h3>
   <p>To log in, please tell us your email address.</p>
   <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
 <?php } ?>
