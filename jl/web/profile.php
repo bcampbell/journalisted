@@ -6,6 +6,7 @@ require_once '../phplib/journo.php';
 require_once '../phplib/misc.php';
 require_once '../phplib/gatso.php';
 require_once '../phplib/cache.php';
+require_once '../phplib/passwordbox.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -339,16 +340,26 @@ function showClaimPage( $journo )
     }
 
     // OK - _claim_ the profile!
+    db_do( "DELETE FROM person_permission WHERE person_id=? AND journo_id=? AND permission='claimed'",
+        $P->id,
+        $journo['id'] );
+
     db_do( "INSERT INTO person_permission ( person_id,journo_id,permission) VALUES(?,?,?)",
         $P->id,
         $journo['id'],
         'claimed' );
+
     db_commit();
 
     // set persons name if blank
 //    if( $P->name_or_blank() == '' ) {
 //        $P->name( $journo['prettyname'] );  // (does a commit)
 //    }
+
+    if( !$P->has_password() ) {
+        // we'll use an password from which submits to /account instead of here.
+        $passwordbox = new PasswordBox( '/account' );
+    }
 
     page_header("");
 ?>
@@ -359,6 +370,11 @@ function showClaimPage( $journo )
 <p>We will email you when your profile is available for editing.</p>
 <p>Thanks,<br/>
 - the journa<i>listed</i> team</p>
+
+<?php if( !$P->has_password() ) { ?>
+<h3><?= $passwordbox->title() ?></h3>
+<?php $passwordbox->emit(); ?>
+<?php } ?>
 </div>
 <?php
     page_footer();

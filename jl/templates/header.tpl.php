@@ -54,7 +54,7 @@
       <a class="mst-logo" href="http://www.mediastandardstrust.org"><img src="/img/mst_logo.png" alt="Media Standards Trust" /></a>
       <div class="nav">
 <?php if( $logged_in_user ) { ?>
-          <span class="hellouser">Hello, <em><?= $logged_in_user ?></em></span>
+          <span class="hellouser">Hello, <a href="/account"><em><?= $logged_in_user ?></em></a></span>
 <?php } ?>
         <ul>
           <li><a href="/">Home</a></li>

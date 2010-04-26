@@ -66,8 +66,8 @@ if( get_http_var("now")) {
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
-	// alerts is closest thing we have to an account management page
-    header("Location: /alert");
+	// account management page
+    header("Location: /account");
     exit;
 }
 
@@ -131,8 +131,7 @@ function RedirectToOriginalDest( $stash ) {
             }
         }
 
-	    // alerts is closest thing we have to a default user page, atm
-        header("Location: /alert");
+        header("Location: /account");
         exit;
     }
 }
@@ -332,8 +331,7 @@ function DoConfirmationEmail()
     global $q_stash, $q_email, $q_name, $q_rememberme;
 
     if( is_null( $q_stash ) ) {
-        // create a default stashed request to take returning user to "/alert",
-        // the closest thing we have to a user profile page
+        // create a default stashed request
         $template_data = array(
             'reason_web' => "Log in",
             'reason_email' => "Log in to Journalisted",
