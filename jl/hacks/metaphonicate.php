@@ -11,12 +11,19 @@ $q=null;
 if( sizeof( $argv) > 1 )
 {
     $ref = $argv[1];
-    $q = db_query( "SELECT id,firstname,lastname FROM journo WHERE ref=?", $ref );
+    if( $ref=='--all' ) {
+        print "do ALL journos...\n";
+        $q = db_query( "SELECT id,ref,firstname,lastname FROM journo" );
+    } else {
+        print "do single journo...\n";
+        $q = db_query( "SELECT id,ref,firstname,lastname FROM journo WHERE ref=?", $ref );
+    }
 } else {
-    $q = db_query( "SELECT id,firstname,lastname FROM journo" );
+    print "look for journos with missing metaphones...\n";
+    $q = db_query( "SELECT id,ref,firstname,lastname FROM journo WHERE firstname_metaphone='' OR lastname_metaphone=''" );
 }
 
-
+$cnt = 0;
 while( $j = db_fetch_array($q) ) {
 
     $f = substr( metaphone($j['firstname']), 0, 4);
@@ -27,15 +34,19 @@ while( $j = db_fetch_array($q) ) {
     if(!$l)
         $l='';
 
-    print "$f,$l\n";
+    print "'{$j['firstname']}', '{$j['lastname']}' ({$j['ref']}): $f,$l\n";
 
     db_do( "UPDATE journo SET firstname_metaphone=?, lastname_metaphone=? WHERE id=?",
         $f,
         $l,
         $j['id'] );
+    $cnt++;
 }
 
 db_commit();
+
+print "done. set metaphones on $cnt journos\n";
+
 
 ?>
 
