@@ -26,12 +26,12 @@ function account_page()
 
     $passwordbox = new PasswordBox();
 
-    // linked to a journo for editing?
+    // linked to a journo for editing (or claim pending)?
     $sql = <<<EOT
-SELECT j.*
+SELECT j.*, perm.permission
     FROM journo j INNER JOIN person_permission perm
         ON perm.journo_id=j.id
-    WHERE perm.permission='edit' AND perm.person_id=?
+    WHERE perm.permission in ('edit','claimed') AND perm.person_id=?
     LIMIT 1
 EOT;
 
@@ -52,9 +52,21 @@ EOT;
 <p>Hello, <?= $name_or_email ?></p>
 
 <ul>
-<?php if( !is_null( $journo ) ) { ?>
+<?php
+    if( !is_null( $journo ) ) {
+        if( $journo['permission'] == 'edit' ) {
+?>
 <li>Your profile page can be edited <a href="/<?= $journo['ref'] ?>">here</a></li>
-<?php } ?>
+<?php
+        } else {
+?>
+<li>You have applied to edit <?= $journo['prettyname'] ?>'s <a href="/<?= $journo['ref'] ?>">profile page</a><br/>
+(To avoid mix ups - deliberate or otherwise - registrations are manually examined before being activated. We will email you when your profile is available for editing)
+</li>
+<?php
+        }
+    }
+?>
 <li>You have <?= $alert_cnt ?> <a href="/alert">email alerts</a> set up</li>
 <?php if( $newsletter ) { ?>
 <li>You are subscribed to the weekly digest (<a href="/weeklydigest">unsubscribe here</a>)</li>
