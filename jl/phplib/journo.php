@@ -466,27 +466,9 @@ EOT;
 function journo_emitAllArticles( &$journo )
 {
 
-    $sql = <<<EOT
-SELECT a.id,a.title,a.description,a.pubdate,a.permalink, o.prettyname as srcorgname, a.srcorg,a.total_bloglinks,a.total_comments
-    FROM article a
-        INNER JOIN journo_attr attr ON a.id=attr.article_id
-        INNER JOIN organisation o ON o.id=a.srcorg
-    WHERE a.status='a' AND attr.journo_id=?
-    ORDER BY a.pubdate DESC
-EOT;
-
-    $arts = db_getAll( $sql, $journo['id'] );
-
-    /* augment results with pretty formatted date and buzz info */
-    foreach( $arts as &$a ) {
-        article_Augment( $a );
-        $a['buzz'] = BuzzFragment( $a );
-    }
-    /* sigh... php trainwreck. without this unset, the last element in array gets blatted-over
-      if we again use $a in a foreach loop. Which we do.
-      Because $a is still referencing last element. Gah.
-      see  http://bugs.php.net/bug.php?id=29992 for gory details. */
-    unset($a);
+    $artificial_limit = 5000;
+    // TODO: use paging to remove artificial 5000 limit
+    $arts = journo_collectArticles( $journo, $artificial_limit, 0 );
 
 ?>
  <h2>Articles by <a href="/<?php echo $journo['ref']; ?>"><?php echo $journo['prettyname']; ?></a></h2>
@@ -650,69 +632,53 @@ EOT;
 
 
 
+function journo_collectArticles( &$journo, $limit=10, $offset=0 ) {
 
-function cmp_isopubdate( $a, $b ) {
-    if( $a['iso_pubdate'] == $b['iso_pubdate'] )
-        return 0;
-    if( $a['iso_pubdate'] < $b['iso_pubdate'] )
-        return 1;
-    else
-        return -1;
-}
-
-
-function journo_collectArticles( &$journo) {
-
-    $limit = 10;
-
+    // union to merge results from "articles" and "journo_other_articles"
+    // into one query... NOTE: union doesn't use column names, so
+    // the order is important.
     $sql = <<<EOT
-SELECT a.id,a.title,a.description,a.pubdate,a.permalink, o.prettyname as srcorgname, a.srcorg,a.total_bloglinks,a.total_comments
-    FROM article a
-        INNER JOIN journo_attr attr ON a.id=attr.article_id
-        INNER JOIN organisation o ON o.id=a.srcorg
-    WHERE a.status='a' AND attr.journo_id=?
-    ORDER BY a.pubdate DESC
-    LIMIT ?
+(
+    SELECT a.id,a.title,a.description,a.pubdate,a.permalink, o.prettyname as srcorgname, a.srcorg,a.total_bloglinks,a.total_comments
+        FROM article a
+            INNER JOIN journo_attr attr ON a.id=attr.article_id
+            INNER JOIN organisation o ON o.id=a.srcorg
+        WHERE a.status='a' AND attr.journo_id=?
+UNION ALL
+    SELECT NULL as id, title, NULL as description, pubdate, url as permalink, publication as srcorgname, NULL as srcorg, 0 as total_bloglinks, 0 as total_comments
+        FROM journo_other_articles
+        WHERE status='a' AND journo_id=?
+)
+ORDER BY pubdate DESC
+LIMIT ?
+OFFSET ?
 EOT;
-    $arts = db_getAll( $sql, $journo['id'], $limit );
 
-    /* merge non scraped articles into the big list */
-    $sql = <<<EOT
-SELECT NULL as id, title, NULL as description, pubdate, url as permalink, publication as srcorgname, NULL as srcorg, 0 as total_bloglinks, 0 as total_comments
-    FROM journo_other_articles
-    WHERE journo_id=? AND status='a'
-    ORDER BY pubdate DESC
-    LIMIT ?
-EOT;
-    $others = db_getAll( $sql, $journo['id'], $limit );
-    foreach( $others as &$a ) {
+    $arts = db_getAll( $sql,$journo['id'], $journo['id'], $limit, $offset );
+
+    // now do a pass over to pretty up the results
+    foreach( $arts as &$a ) {
+        // add pretty pubdate etc...
+        article_Augment($a);
+        if( !is_null( $a['id'] ) )
+            $a['buzz'] = BuzzFragment( $a );
+        else
+            $a['buzz'] = '';
+
+        // no publication given? use the hostname from the url
         if( !$a['srcorgname'] ) {
-            // no publication given? use the url.
             $bits = crack_url( $a['permalink'] );
             $a['srcorgname'] = $bits['host'];
         }
     }
     unset($a);
 
-
-    $arts = array_merge( $arts, $others );
-
-    /* augment results with pretty formatted date and buzz info */
-    foreach( $arts as &$a ) {
-
-        article_Augment($a);
-        if( !is_null( $a['id'] ) )
-            $a['buzz'] = BuzzFragment( $a );
-        else
-            $a['buzz'] = '';
-    }
-    unset($a);
-
-    usort( $arts, "cmp_isopubdate" );
-
     return $arts;
 
 }
+
+
+
 
 
 
