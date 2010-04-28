@@ -61,7 +61,7 @@
 </div>
 
 <div class="box most-blogged">
-  <div class="head"><h3>Most blogged about articles</h3></div>
+  <div class="head"><h3>Most blogged about today</h3></div>
   <div class="body">
     <ul>
 <?php foreach( $most_blogged_about as $art ) { ?>
