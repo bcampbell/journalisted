@@ -679,9 +679,6 @@ EOT;
 
 
 
-
-
-
 // return a list of journos which match the query text using metaphone
 // algorithm to do approximate matching. result is returned in order
 // of levenstien distance (best match first)
@@ -700,14 +697,14 @@ function journo_FuzzyFind( $query )
     $matches = array();
     if( sizeof( $parts ) == 1 ) {
         /* single name - match as firstname, then lastname */
-        $mph = substr( metaphone( $parts[0] ), 0, 4 );
+        $mph = metaphone( $parts[0],4 );
         $matches =  array_merge(
             db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=?", $mph ),
             db_getAll( "SELECT * FROM journo WHERE status='a' AND lastname_metaphone=?", $mph ) );
     } else if( sizeof($parts) >= 2 ) {
         /* try matching both first and last names */
-        $firstname_mph = substr( metaphone( $parts[0] ),0,4 );
-        $lastname_mph = substr( metaphone( end( $parts ) ),0,4 );
+        $firstname_mph = metaphone($parts[0],4);
+        $lastname_mph = metaphone(end($parts),4);
         $matches = db_getAll( "SELECT * FROM journo WHERE status='a' AND firstname_metaphone=? AND lastname_metaphone=?",
             $firstname_mph, $lastname_mph );
         if( !$matches ) {
@@ -789,5 +786,4 @@ function journo_fetchTwitterID( $journo_id ) {
     }
     return $twitter_id;
 }
-
 

@@ -6,6 +6,7 @@
 chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 require_once "../conf/general";
 require_once '../../phplib/db.php';
+require_once '../phplib/journo.php';
 
 $q=null;
 if( sizeof( $argv) > 1 )
@@ -26,13 +27,8 @@ if( sizeof( $argv) > 1 )
 $cnt = 0;
 while( $j = db_fetch_array($q) ) {
 
-    $f = substr( metaphone($j['firstname']), 0, 4);
-    $l = substr( metaphone($j['lastname']), 0, 4);
-
-    if(!$f)
-        $f='';
-    if(!$l)
-        $l='';
+    $f = metaphone($j['firstname'],4);
+    $l = metaphone($j['lastname'],4);
 
     print "'{$j['firstname']}', '{$j['lastname']}' ({$j['ref']}): $f,$l\n";
 
