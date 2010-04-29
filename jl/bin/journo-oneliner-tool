@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # (oneliners are short description for journos, mainly to be
 # displayed after their name in lists)
@@ -24,20 +24,43 @@ def run():
     for j in journos:
         desc = BuildOneLiner( conn, j['id'] )
         desc = desc.encode( 'utf-8' )
-#        c.execute( """BEGIN""" )
         c.execute( """UPDATE journo SET oneliner=%s WHERE id=%s""", desc, j['id'] )
-#        c.execute( """COMMIT""" )
         conn.commit()
         ukmedia.DBUG( u"%s: %s\n" % ( j['prettyname'].decode('utf-8'), desc.decode('utf-8') ) )
 
 def BuildOneLiner( conn, journo_id ):
-    """ returns a unicode string listing all the outlets a journo has articles for """
+    """ builds a short description for journo """
+
+    desc = u''
     c = conn.cursor()
+
+    # any current employment?
+    c.execute( """SELECT kind,employer FROM journo_employment WHERE current=true AND journo_id=%s ORDER BY year_from DESC""", journo_id )
+    rows = c.fetchall()
+
+    if len(rows) > 0:
+        employers = []
+        for r in rows:
+            if r['kind'] == 'f':
+                employers.append( u'Freelance' )
+            else:
+                employers.append( r['employer'].decode('utf-8'))
+
+        # clip to 3 employers max
+        employers = employers[:3]
+        if len(employers) > 0:
+            desc = u', '.join( employers )
+            return desc
+
+    # no employement info - guess using papers they've written for
     c.execute( """SELECT DISTINCT o.prettyname
         FROM (( article a INNER JOIN organisation o ON o.id=a.srcorg )
             INNER JOIN journo_attr attr ON attr.article_id=a.id )
         WHERE a.status='a' AND attr.journo_id=%s""", journo_id )
-    desc = u', '.join( row[0].decode('utf-8') for row in c.fetchall() )
+    rows = c.fetchall()
+
+    if len( rows ) <=2:
+        desc = u', '.join( row[0].decode('utf-8') for row in rows )
     c.close()
     return desc
 

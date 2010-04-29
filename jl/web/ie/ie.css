@@ -1,0 +1,236 @@
+/* style overrides to work around ie badness
+ * main issue is box shadowing and rounded corners
+ * - because we have to use images to do this, we need
+ * to alter all the padding to include the shadow area
+ * Box frame is 10 pixels wide all around, (Shadow is 5 pixels, and we allow
+ * another 5 to handle the curved corners).
+ * For box-shadow supporting browsers, the 5px shadown appears _outside_
+ * the box, but for ie we have to allow for it using padding.
+ */
+
+ul {
+  list-style: url( "/ie/bullet.gif") disc outside;
+}
+
+.main {
+    display:inline; /* fix double-margin bug */
+}
+
+.main .tabs ul {
+    width: 80%;    /* fixes _vertical_ spacing bug */
+}
+
+
+.foot { zoom: 1; } /* force hasLayout */
+
+
+.sidebar
+{ width: 310px; }
+
+.sidebar .box .head { 
+    padding: 5px 5px 0px 5px;    /* +5px for left, top, right */
+    width: 300px;
+    border: none;
+    background: transparent url( '/ie/sidebar_head.gif' ) no-repeat top left;
+}
+
+.sidebar .box .body {
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 268px;   /* 310 - 21*2 */
+    background: transparent url( '/ie/sidebar_body.gif' ) repeat-y top left;
+}
+
+
+.sidebar .box .foot { 
+    padding: 0px 5px 5px 5px;
+    width: 300px;
+    min-height: 5px;
+    background: transparent url( '/ie/sidebar_foot.gif' ) no-repeat bottom left;
+}
+
+
+.sidebar .box.subscribe-newsletter .head { 
+    background: transparent url( '/ie/sidebar_green_head.gif' ) no-repeat top left;
+}
+
+.sidebar .box.actions .head { 
+    background: transparent url( '/ie/sidebar_purple_head.gif' ) no-repeat top left;
+}
+.sidebar .box.admired-journos .head { 
+    background: transparent url( '/ie/sidebar_blue_head.gif' ) no-repeat top left;
+}
+
+
+#content {
+  padding 12px 5px;
+  width: 985px; /* = 5+975+5 */
+}
+
+
+.main {
+  width: 670px;
+  padding: 0px;
+}
+
+.main.journo-profile {
+}
+
+.main .tab-content {
+}
+
+
+.main .head {
+    padding: 13px 21px 0px 21px;  /* +5px for left, top, right */
+    width: 628px;      /* 670 = 5+16+ x +16+5 */
+    border: none;
+    background: transparent url( '/ie/main_head.gif' ) no-repeat top left;
+}
+
+.main .body {
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 628px;
+    background: transparent url( '/ie/main_body.gif' ) repeat-y top left;
+}
+
+
+.main .foot {
+    padding: 0px 21px 21px 21px;    /* +5 on left, right, bottom */
+    width: 628px;
+    height: 5px;
+    background: transparent url( '/ie/main_foot.gif' ) no-repeat bottom left;
+}
+
+.main.search-results .foot {
+    padding: 0px 5px 5px 5px;    /* +5 on left, right, bottom */
+    width: 660px;
+}
+
+
+.main * .head,
+.main * .body,
+.main * .foot
+{
+    padding: 0px;
+    width: 586px;   /* =628-21-21 */
+    background-image: none;
+}
+
+/* FRONT PAGE */
+.main.front-page {
+  width: 994px;
+}
+
+.main.front-page .front {
+  width: 992px;
+  height: 287px;    /* 5+277+5 */
+  background: #ffffff url("/img/home-az.png") no-repeat 5px 5px;
+  padding: 0px;
+}
+
+.main.front-page .front .head {
+    width: 984px;
+    height: 5px;
+    padding: 5px 5px 0px 5px;
+    background: transparent url( '/ie/full_head.gif' ) no-repeat top left;
+}
+
+.main.front-page .front .body {
+    width: 984px;
+    height: 267px;  /* 277 = 5+267+5 */
+    padding: 0px 5px 0px 5px;
+    background: transparent url( '/ie/full_body.gif' ) repeat-y top left;
+}
+
+.main.front-page .front .foot {
+    width: 984px;
+    height: 5px;
+    padding: 0px 5px 5px 5px;
+    background: transparent url( '/ie/full_foot.gif' ) no-repeat bottom left;
+}
+
+/* shuffle frontpage postits about to hide lack of transparency... */
+.front .nav a.subscribe { left: 341px; top: 1px; } 
+.front .nav a.edit-profile { left: 111px; top: 115px; }
+.front .nav a.search-articles { left: 510px; top: 127px; }
+.front .nav a.search-journos { left: 640px; top: 54px; }
+.front .nav a.alerts { left: 822px; top: 110px; }
+
+
+/* 1/3rd-width boxes on front page */
+.front-page .box.tobias,
+.recently-updated,
+.recently-viewed,
+.most-blogged
+{
+  width: 324px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.recently-updated {
+    margin: 0px 10px;
+}
+
+
+.box.tobias .head,
+.recently-viewed .head,
+.recently-updated .head,
+.most-blogged .head
+{
+    padding: 5px 21px 0px 21px;    /* +5px for left, top, right */
+    width: 282px;      /* 324 = 5+16+ 282 +16+5 */
+    background: transparent url( '/ie/frontbox_head.gif' ) no-repeat top left;
+}
+
+
+.box.tobias .body,
+.recently-viewed .body,
+.recently-updated .body,
+.most-blogged .body
+{
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 282px;
+    background: transparent url( '/ie/frontbox_body.gif' ) repeat-y top left;
+}
+
+
+.box.tobias .foot,
+.recently-viewed .foot,
+.recently-updated .foot,
+.most-blogged .foot
+{
+    clear: both;
+    padding: 0px 21px 5px 21px;    /* +5 on left, right, bottom */
+    width: 282px;
+    background: transparent url( '/ie/frontbox_foot.gif' ) no-repeat bottom left;
+}
+
+.front-page .box.tobias { float: left; margin-left: 16px; }
+.box.tobias .head { height: 8px; }
+
+
+.thisweek.box {
+  width: 654px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.thisweek.box .head {
+    padding: 5px 21px 0px 21px;    /* +5px for left, top, right */
+    width: 612px;      /* 354 = 5+16+ 282 +16+5 */
+    background: transparent url( '/ie/twothirdsbox_head.gif' ) no-repeat top left;
+}
+
+.thisweek.box .body {
+    padding: 8px 21px;    /* +5px on left and right to accomdate shadow */
+    width: 612px;
+    background: transparent url( '/ie/twothirdsbox_body.gif' ) repeat-y top left;
+    min-height: 102px;
+}
+
+.thisweek.box .foot {
+    padding: 0px 21px 5px 21px;    /* +5 on left, right, bottom */
+    width: 612px;
+    background: transparent url( '/ie/twothirdsbox_foot.gif' ) no-repeat bottom left;
+}
+

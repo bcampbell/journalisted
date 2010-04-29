@@ -1,0 +1,243 @@
+/*
+Based on CSS Tabs by Joshua Kaufman, http://unraveled.com/publications/css_tabs/
+(licensed under Creative Commons Attribution 3.0.)
+*/
+
+ul.tabs {
+  text-align: left; /* set to left, right or center */
+  margin: 1em 0 1em 0; /* set margins as desired */
+  border-bottom: 1px solid black; /* set border COLOR as desired */
+  list-style-type: none;
+  padding: 3px 10px 3px 10px; /* THIRD number must change with respect to padding-top (X) below */
+}
+
+ul.tabs li { /* do not change */
+  display: inline;
+}
+
+ul.tabs li.current {
+  border-bottom: 1px solid #fff; /* set border color to page background color */
+  background-color: #fff; /* set background color to match above border color */
+
+}
+
+ul.tabs li.current a {
+  background-color: #fff; /* set selected tab background color as desired */
+  color: #000; /* set selected tab link color as desired */
+  position: relative;
+  top: 1px;
+  padding-top: 4px; /* must change with respect to padding (X) above and below */
+  border: 1px solid black;
+  border-bottom: none;
+}
+
+ul.tabs li a { /* settings for all tab links */
+  padding: 3px 4px; /* set padding (tab size) as desired; FIRST number must change with respect to padding-top (X) above */
+  border: 1px solid #666;
+  background-color: #eee; /* set unselected tab background color as desired */
+  color: #666; /* set unselected tab link color as desired */
+  margin-right: 0px; /* set additional spacing between tabs as desired */
+  text-decoration: none;
+  border-bottom: none;
+}
+
+ul.tabs a:hover { /* settings for hover effect */
+  background: #fff; /* set desired hover color */
+}
+
+
+/* end of tabs */
+
+
+/* pipeline bar */
+div.pipeline {
+}
+
+div.pipeline span{
+    display: inline-block;
+    margin: 0.5em;
+    padding: 0.5em;
+/*    font-size: larger; */
+    border: 1px solid white;
+}
+   
+
+div.pipeline span.active {
+    border: 1px solid black;
+}
+
+
+.profile-nav {
+/*  border: 1px solid #DDDDDD; */
+  background-color: #ffffff;
+  display:inline;
+}
+
+.profile-nav ul {
+  list-style-type: none;
+   display: inline;
+}
+
+.profile-nav li {
+   display: inline;
+   padding: 0.2em;
+}
+.profile-nav li a {
+    font-size: 75%;
+/*    color: #888888; */
+}
+ 
+.profile-nav li a.current {
+    font-size: larger;
+/*    color: #000000; */
+}
+
+.profile-nav td {
+    text-align: center;
+}
+
+
+.profile-nav a {
+    padding: 0.4em;
+    background-color: #eeeeee;
+    border: 1px solid #eeeeee;
+}
+
+.profile-nav a:hover {
+    background-color: #cccccc;
+    border: 1px solid #cccccc;
+}
+
+
+
+/* form styles */
+
+form input {
+    border: 1px solid black;
+}
+
+form {
+    border: 1px solid #cccccc;
+    margin: 0.5em;
+    padding: 0.5em;
+}
+
+form.frozen {
+    background-color: white;
+    border: 1px solid #cccccc;
+}
+
+form.frozen input {
+/*    border: 1px solid #eeeeee; */
+    border-style: none;
+    background-color: white;
+    color: black;
+}
+
+
+form .field {
+clear:both;
+list-style:none;
+padding-bottom:10px;
+}
+
+form .explain {
+/*    display: block; */
+    font-style: italic;
+    font-size: smaller;
+    font-weight: lighter;
+    margin-bottom: 0.2em;
+    color: #222222;
+}
+
+
+fieldset {
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+
+th {
+    text-align: right;
+}
+
+/*
+  fieldset a {
+    float:right;
+}
+*/
+
+/* the "now give us more info!" box */
+.exhort {
+    font-family: sans-serif;
+    font-weight: normal;
+}
+
+.exhort a {
+    float: right;
+    text-decoration: underline;
+}
+
+
+
+
+/* add icons to various profile-page buttons */
+a.edit {
+    padding-left: 18px;
+    background: transparent url(images/edit_16x16.png) no-repeat center left;
+}
+
+a.remove {
+    padding-left: 18px;
+    margin-left: 2em;
+    background: transparent url(images/delete_16x16.gif) no-repeat center left;
+}
+
+a.plus {
+    display:block;
+    margin: 1em;
+    padding-left: 18px;
+    background: transparent url(images/add_16x16.gif) no-repeat center left;
+}
+
+
+
+.profile div.picture { float:none; }
+
+.profile.maincolumn {
+  float:right;
+  width:77%;
+}
+
+.profile.smallcolumn {
+  margin:0 0 0 10px;
+  float:left;
+  width:20%;
+}
+
+.profile.maincolumn .box {
+    background-color: #DDDDFF;
+    border: none;
+    height: 100em;
+    
+}
+.profile.smallcolumn .box {
+  border: none;
+}
+
+
+.profile li.current {
+    background-color: #DDDDFF;
+    width: 50em;
+}
+
+.profile-box {
+    float:left;
+    background-color: #ffffff;
+    border: solid #4D4D4D 1px;
+    padding: 0.5em;
+    margin: 0.5em;
+    width: 20em;
+}
+
+.profile-box div.picture { float:none; }

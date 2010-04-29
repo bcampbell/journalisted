@@ -1,0 +1,25 @@
+#maincolumn .box .maximised
+{
+  background: url('/images/minimise_icon.png') center left no-repeat;
+  padding-left:24px;
+}
+
+#maincolumn .box .minimised
+{
+  background: url('/images/maximise_icon.png') center left no-repeat;
+  padding-left:24px; 
+}
+
+form .field {
+clear:both;
+list-style:none;
+padding-bottom:10px;
+}
+
+
+
+form .field label:first-child {
+width:140px;
+float:left;
+}
+

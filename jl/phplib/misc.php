@@ -101,15 +101,14 @@ function tag_gen_link( $tag, $journo_ref=null, $period=null )
 //    $query = (strpos($tag, ' ') === FALSE ) ? $tag: '"'.$tag.'"';
     $query = $tag;
 
-    $l = '/search?q=' . urlencode( $query );
+    $l = '/search?a=' . urlencode( $query );
     if( $journo_ref )
-        $l .= '&j=' . $journo_ref;
+        $l .= '&by=' . $journo_ref;
 	return $l;
 }
 
 
 
-// TODO: merge with tag_cloud_from_getall()
 function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 {
 	$minsize = 10;
@@ -138,7 +137,7 @@ function tag_display_cloud( &$tags, $journo_ref=null, $period=null )
 }
 
 
-// TEMP for journo page - TODO: tidy up all the tag functions
+// TODO: KILL THIS ONE (used only in the offline_ pages)
 function tag_cloud_from_getall( &$tags, $journo_ref=null, $period=null )
 {
     $sorted_tags = array();
@@ -150,7 +149,7 @@ function tag_cloud_from_getall( &$tags, $journo_ref=null, $period=null )
 	tag_display_cloud( $sorted_tags, $journo_ref, $period );
 }
 
-// TODO: KILL THIS ONE
+// TODO: KILL THIS ONE (used only in the offline_ pages)
 function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 {
 	$tags = array();
@@ -242,7 +241,9 @@ function BuzzFragment( &$r )
 }
 
 
-
+// unhappy about having this here. Should be in web/login.php
+// it's here because alert page wants an embedded login form...
+// TODO: improve this situation.
 function loginform_emit( $email='', $stash='', $rememberme='', $errs = array())
 {
     $h_email = htmlspecialchars($email);
@@ -258,31 +259,30 @@ function loginform_emit( $email='', $stash='', $rememberme='', $errs = array())
 
 
 <strong>New users: <a href="<?php echo $register_url; ?>">REGISTER HERE</a></strong><br/>
-If you already have a Journa<i>listed</i> account, login below
+If you already have a Journa<i>listed</i> account, log in here
 
 <input type="hidden" name="stash" value="<?=$h_stash?>" />
 
 
 <?php if(array_key_exists('badpass',$errs) ) { ?><p class="errhint"><?php echo $errs['badpass'];?></p><?php } ?>
 
-<p>
-<?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
-<label for="email">Email address</label>
-<input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
-</p>
+<dl>
+  <dt><label for="email">Email address</label></dt>
+  <dd>
+    <input type="text" size="30" name="email" id="email" value="<?php echo $h_email; ?>" />
+    <?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
+  </dd>
 
-<p>
-<label for="password">Password</label>
-<input type="password" size="30" name="password" id="password" value="" />
-</p>
+  <dt><label for="password">Password</label></dt>
+  <dd><input type="password" size="30" name="password" id="password" value="" /></dd>
+  <dd>
+    <input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
+    <label for="rememberme">Remember me</label>
+    <span class="explain">(don't use this on a public or shared computer)</span>
+  </dd>
+</dl>
 
-<p>
-<label for="rememberme">Remember me</label>
-<input type="checkbox" name="rememberme" id="rememberme" <?php echo $rememberme ? "checked" : ""; ?> />
-<small>(don't use this on a public or shared computer)</small>
-</p>
-
-<a href="<?php echo $nopass_url; ?>">forgot password?</a>
+<a href="<?php echo $nopass_url; ?>">forgot password, or didn't set one?</a>
 <p>
 <input type="submit" name="loginsubmit" value="Continue" />
 </p>
@@ -296,24 +296,10 @@ If you already have a Journa<i>listed</i> account, login below
 }
 
 
-function donatebutton_emit( $txt='Donate', $href='/donate' )
-{
-
-?>
-<div class="donate-box">
- <div class="donate-box_top"><div></div></div>
-  <div class="donate-box_content">
-    <a class="donatebutton" href="<?php echo $href; ?>"><?php echo $txt; ?></a>
-  </div>
- <div class="donate-box_bottom"><div></div></div>
-</div>
-<?php
-
-}
-
 
 // htmlentities()-encode any strings in the array, adding them under
 // new values with an "h_"-prefixed key
+// DEPRECATED - use h() instead...
 function h_array( $a )
 {
     $out = array();
@@ -328,6 +314,26 @@ function h_array( $a )
     }
 
     return $out;
+}
+
+
+
+// shorthand for use in templates
+function h( $s, $enc='UTF-8' )
+{
+    return htmlentities( $s, ENT_QUOTES, $enc='UTF-8' );
+}
+
+
+// TODO: do this properly!
+function xmlentities( $s ) {
+    return htmlentities( $s );
+}
+
+// shorthand for use in templates
+function x( $s )
+{
+    return xmlentities($s);
 }
 
 
@@ -383,6 +389,90 @@ function glue_url($parsed) {
 }
 
 
+/* param processing for search forms
+ * (shared by site header, and also on various pages)
+ */
+function search_getParams()
+{
+	static $s=null;
+	if( $s )
+		return $s;
+    
+    $s = array();
+    $art_q = get_http_var( 'a' );
+    $journo_q = get_http_var( 'j' );
+    if( $art_q ) {
+        $s['type'] = 'article';
+        $s['q'] = $art_q;
+    } else if( $journo_q ) {
+        $s['type'] = 'journo';
+        $s['q'] = $journo_q;
+    } else {
+        // need this one to handle search forms with dropdown to select type of query
+        $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
+        $s['q'] = get_http_var( 'q', '' );
+    }
+    $s['num'] = (int)get_http_var('num', 20 );
+    $s['start'] = (int)get_http_var('start', '0' );
+    if( $s['type'] == 'article' ) {
+        $s['sort_order'] = get_http_var( 'o', 'date' );
+    }
 
+    $s['by'] = get_http_var( 'by' );    // a journo ref
+    $s['q_original'] = '';
+    if( $s['by'] ) {
+        $s['q_original'] = $s['q'];
+        $s['q'] .= " author:" . $s['by'];
+    }
+    return $s;
+}
+
+
+
+// prepare an article for display by adding a few derived fields...
+function article_Augment( &$a )
+{
+    $d = new datetime( $a['pubdate'] );
+    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
+    $a['iso_pubdate'] = $d->format('c');
+    // fill in prettyname of publisher, if possible
+    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
+        $orgs = get_org_names();
+        $a['srcorgname'] = $orgs[ $a['srcorg'] ];
+    }
+}
+
+
+function news_RecentNewsletters( $limit=5 )
+{
+    // recent newsletters
+    $news = db_getAll( "SELECT id,slug,title,posted,date_from,date_to FROM news WHERE status='a' AND kind='newsletter' ORDER BY date_from DESC LIMIT 5" );
+    foreach( $news as &$n ) {
+        news_AugmentItem($n);
+    }
+    unset( $n );
+
+    return $news;
+}
+
+function news_AugmentItem( &$n ) {
+    $n['prettydate'] = pretty_date( strtotime($n['posted']) );
+
+    if( $n['date_from'] ) {
+        $n['date_from'] = new DateTime( $n['date_from'] );
+    } 
+    if( $n['date_to'] ) {
+        $n['date_to'] = new DateTime( $n['date_to'] );
+    } 
+    // generate a pretty "from" for newsletters
+    $n['pretty_from'] = '';
+    if( $n['date_from'] ) {
+        $n['pretty_from'] = pretty_date( $n['date_from'] );
+    }
+    $n['pretty_to'] = '';
+    if( $n['date_to'] ) {
+        $n['pretty_to'] = pretty_date( $n['date_to'] );
+    }
+}
 
 ?>

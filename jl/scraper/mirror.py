@@ -214,9 +214,9 @@ def Extract_MainSite( html, context ):
     for cruft in contentdiv.findAll( 'link' ):
         cruft.extract()
 
+    # kill advertising crud appended to article... Gaaaah
     for cruft in contentdiv.findAll( 'p', {'class':'append-html'} ):
         cruft.extract()
-
 
     content = contentdiv.renderContents(None)
 

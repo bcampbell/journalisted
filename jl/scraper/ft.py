@@ -282,12 +282,13 @@ def Extract_blog( html, context ):
 
 def ScrubFunc( context, entry ):
 
-
     url = context['srcurl']
     o = urlparse.urlparse( url )
 
-
-    if o[1] == 'feeds.feedburner.com':
+    if o[1] == 'traxfer.ft.com':
+        url = entry.guid
+        o = urlparse.urlparse(url)
+    elif o[1] == 'feeds.feedburner.com':
         # some of the FT feeds (the blogs?) redirect to feedburner.
         # Luckily, the feedburner feeds have a special entry
         # which contains the original link

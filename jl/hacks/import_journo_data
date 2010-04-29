@@ -1,0 +1,211 @@
+#!/usr/bin/env python
+#
+# Assumes utf-8 the whole way through!
+#
+
+INFILE = './journo_data.csv'
+
+import csv
+import sys
+sys.path.append("../pylib")
+from JL import DB
+
+_conn = None
+_verbose = True
+_dryrun = False
+
+def csv_into_dict( f ):
+    """ read a csv file in as an array of dictionaries (one per row, indexed by column name) """
+    out = []
+    reader = csv.reader( f )
+    fields = reader.next()
+    fields = [ f.lower() for f in fields ]
+    for row in reader:
+        record = {}
+        for col in range( len(fields) ):
+            record[ fields[col] ] = row[col]
+        out.append(record)
+    return out
+
+
+
+def cook( r ):
+    """ extract journo data from a raw record """
+    journo = {}
+
+    journo['ref'] = r['url']
+    journo['prettyname'] = r['name']
+
+
+    employment = []
+    # current job?
+    if r['job title'] or r['employer']:
+        if 'freelance' in r['job title'].lower():
+            employment.append( {'kind':'f', 'employer': '', 'job_title': '', 'current': True } )
+        else:
+            employment.append( {'kind':'e', 'employer': r['employer'], 'job_title': r['job title'], 'current': True } )
+    # previous jobs?
+    if r['previous job title'] or r['previous employer']:
+        employment.append( {'employer': r['previous employer'], 'job_title': r['previous job title'], 'current': False } )
+    if r['previous job title_2'] or r['previous employer_2']:
+        employment.append( {'employer': r['previous employer_2'], 'job_title': r['previous job title_2'], 'current': False } )
+    journo['employment'] = employment
+
+    #
+
+    edu = []
+    if r['university']:
+        edu.append( {'kind': 'u', 'school': r['university']} )
+    if r['university 2']:
+        edu.append( {'kind': 'u', 'school': r['university 2']} )
+    journo['education'] = edu
+
+    #
+
+    weblinks = []
+    if r[ 'personal blog' ]:
+        weblinks.append( { 'kind': 'blog', 'url': r['personal blog'] } )
+    if r[ 'wikipedia entry' ]:
+        weblinks.append( { 'kind': 'profile', 'url': r['wikipedia entry'] } )
+    if r[ 'twitter' ]:
+        weblinks.append( { 'kind': 'twitter', 'url': r['twitter'] } )
+    journo['weblinks'] = weblinks
+
+    #
+
+    books = []
+    for title in r['book'].split(','):
+        title = title.strip()
+        if title:
+            books.append( {'title': title} )
+    journo['books'] = books
+
+    #
+
+    awards = []
+    foo_awards = [ a.strip() for a in r['awards'].split('|') if a.strip() ]
+    foo_years= [y.strip() for y in r['year'].split(',') if y.strip() ]
+    if len(foo_awards) != len( foo_years ):
+        print >>sys.stderr, "WARNING: award/year mismatch - discarding awards! (for %s)" % (journo['ref'] )
+    else:
+        for i in range(len(foo_awards) ):
+            awards.append( { 'award': foo_awards[i], 'year': foo_years[i] } )
+
+    journo['awards'] = awards
+
+    if r['email']:
+        journo['email'] = r['email']
+    return journo
+
+
+
+
+def load_journo_data( j ):
+    global _conn,_verbose
+
+    c = _conn.cursor()
+
+    # get id of journo
+    c.execute( "SELECT id FROM journo WHERE ref=%s",( j['ref'] ) )
+    row = c.fetchone()
+    if row is None:
+        print >>sys.stderr, "SKIP JOURNO: %s not in db" % ( j['ref'] )
+        return
+    j['id'] = row['id']
+
+
+    if 'awards' in j:
+        for a in j['awards']:
+            award = a['award']
+            year = int(a['year'])
+            c.execute( "DELETE FROM journo_awards WHERE journo_id=%s AND lower(award)=lower(%s) AND ((year=%s) OR (year IS NULL AND %s IS NULL))",
+                (j['id'], award, year, year) )
+            c.execute( "INSERT INTO journo_awards (journo_id,award,year) VALUES (%s,%s,%s)",
+                (j['id'], award, year) )
+
+    if 'books' in j:
+        for b in j['books']:
+            title = b['title']
+            publisher = ''
+            year_published = None
+            c.execute( "DELETE FROM journo_books WHERE journo_id=%s AND lower(title)=lower(%s) AND lower(publisher)=lower(%s) AND ((year_published=%s) OR (year_published IS NULL AND %s IS NULL))",
+                (j['id'], title, publisher, year_published,year_published) )
+            c.execute( "INSERT INTO journo_books (journo_id, title, publisher, year_published) VALUES (%s,%s,%s,%s)",
+                (j['id'], title, publisher, year_published) )
+
+    if 'employment' in j:
+        for emp in j['employment']:
+            employer = emp['employer']
+            job_title = emp['job_title']
+            year_from = None
+            year_to = None
+            current = emp['current']
+
+            c.execute( "DELETE FROM journo_employment WHERE journo_id=%s AND lower(employer)=lower(%s) AND lower(job_title)=lower(%s) AND ((year_from=%s) OR (year_from IS NULL AND %s IS NULL)) AND ((year_to=%s) OR (year_to IS NULL AND %s IS NULL)) AND current=%s",
+                (j['id'], employer, job_title, year_from, year_from, year_to, year_to,current ) )
+            c.execute( "INSERT INTO journo_employment (journo_id,employer,job_title,year_from,year_to,current) VALUES (%s,%s,%s,%s,%s,%s)",
+                (j['id'], employer, job_title, year_from, year_to, current ) )
+
+    if 'education' in j:
+        for edu in j['education']:
+            school = edu['school']
+            # TODO use years, if present
+            year_from = None
+            year_to = None
+            field = edu.get('field','')
+            qualification = edu.get('field','')
+            kind = edu['kind']
+
+            c.execute( "DELETE FROM journo_education WHERE journo_id=%s AND lower(school)=lower(%s) AND lower(field)=lower(%s) AND qualification=%s AND ((year_from=%s) OR (year_from IS NULL AND %s IS NULL)) AND ((year_to=%s) OR (year_to IS NULL AND %s IS NULL)) AND kind=%s",
+                (j['id'],school,field,qualification,year_from,year_from,year_to,year_to,kind) )
+            c.execute( "INSERT INTO journo_education (journo_id,school,field,qualification,year_from,year_to,kind) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                (j['id'],school,field,qualification,year_from,year_to,kind) )
+
+
+
+    if 'weblinks' in j:
+        for link in j['weblinks']:
+            url = link['url']
+            description = link.get('description','')
+            kind = link['kind']
+            approved = True
+
+            c.execute( "DELETE FROM journo_weblink WHERE journo_id=%s AND lower(url)=lower(%s)",
+                (j['id'],url) )
+            c.execute( "INSERT INTO journo_weblink (journo_id, url, description, approved, kind) VALUES (%s,%s,%s,%s,%s)",
+                (j['id'],url,description,approved,kind) )
+
+    #email
+    if 'email' in j:
+        email = j['email']
+        srcurl=''
+        srctype=''
+        approved=True
+        c.execute( "DELETE FROM journo_email WHERE journo_id=%s AND lower(email)=lower(%s)",
+            (j['id'],email) )
+        c.execute( "INSERT INTO journo_email (journo_id,email,srcurl, srctype,approved) VALUES (%s,%s,%s,%s,%s)",
+            (j['id'],email,srcurl,srctype,approved) )
+
+    if _verbose:
+        print "imported data to http://staging.journalisted.com/%s" % ( j['ref'] )
+
+
+
+
+
+data = csv_into_dict( open( INFILE ) )
+
+_conn= DB.Connect()
+
+for d in data:
+    j = cook(d)
+    load_journo_data( j )
+
+if _dryrun:
+	print "dry run - ROLLING BACK"
+	_conn.rollback()
+else:
+	if _verbose:
+		print "commmitting"
+	_conn.commit()
+

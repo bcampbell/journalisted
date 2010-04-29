@@ -13,7 +13,9 @@ $contactemail = OPTION_TEAM_EMAIL;
 $subject = "Suggestions for site";
 
 ?>
-<div id="maincolumn">
+<div class="main">
+<div class="head"></div>
+<div class="body">
 <h2>About Journalisted</h2>
 
 <p>Journalisted is an independent, not-for-profit website built to make it easier for you, the public, to find out more about journalists and what they write about. It is run by the Media Standards Trust, a registered charity set up to foster high standards in news on behalf of the public, and funded by donations from charitable foundations.</p>
@@ -45,24 +47,26 @@ The site allows you to:
 <h3>Credits</h3>
 
 <p>
-The site was built by <a class="extlink" href="http://www.scumways.com">Ben Campbell</a> and designed by James Williamson.
-Julian Todd and <a class="extlink" href="http://www.flourish.org">Francis Irving</a> have provided hosting and admin support.
+The site was built by <a class="extlink" href="http://www.scumways.com">Ben Campbell</a>.
 <a class="extlink" href="http://mediastandardstrust.blogspot.com">Martin Moore</a> has led the initiative on behalf of the Media Standards Trust.
 Gavin Freeguard and Ben Campbell administrate the site.
 </p>
-<p>Thanks to Gavin Buttimore, Tom Lynn, Ayesha Garrett, Gary Jones and Simon Roe, who have all contributed to development.</p>
+<p>The site design is by <a class="extlink" href="http://www.double-sided.com">Double Sided</a>.</p>
+<p>Thanks to Gavin Buttimore, Tom Lynn, Ayesha Garrett, Gary Jones, Simon Roe and James Williamson, who have all contributed to development.</p>
+<p>Many thanks to <a class="extlink" href="http://www.goatchurch.org.uk">Julian Todd</a> and <a class="extlink" href="http://www.flourish.org">Francis Irving</a>, who generously provided hosting and admin support for a long time.</p>
 <p>Thanks also to Tom Steinberg, Phil Gyford, Louise Crow, Tom Loosemore, Matt Cain and everyone else who offered invaluable ideas and advice.</p>
 <p>Journalisted reuses some code from the wonderful <a class="extlink" href="http://mysociety.org">mySociety</a> websites.</p>
-</div>  <!-- end maincolumn -->
+</div>
+<div class="foot"></div>
+</div>  <!-- end main -->
 
-<div id="smallcolumn">
+<div class="sidebar">
 
-<?php donatebutton_emit(); ?>
-  <br/>
+  <a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
   <div class="box">
-    <h3>FAQs</h3>
-    <div class="box-content">
+    <div class="head"><h3>FAQs</h3></div>
+    <div class="body">
       <ul>
         <li><a href="/faq/what-news-outlets-does-journalisted-cover">What news outlets does Journalisted cover?</a></li>
         <li><a href="/faq/why-doesnt-journalisted-cover-more-news-outlets">Why doesn’t Journalisted cover more news outlets?</a></li>
@@ -73,8 +77,9 @@ Gavin Freeguard and Ben Campbell administrate the site.
       <div class="box-action"><a href="/faq">See all FAQs</a></div>
       <div style="clear: both;"></div>
     </div>
+    <div class="foot"></div>
   </div>
-</div> <!-- end smallcolumn -->
+</div> <!-- end sidebar -->
 <?php
 
 page_footer();

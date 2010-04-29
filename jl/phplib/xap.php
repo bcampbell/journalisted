@@ -110,9 +110,11 @@ class XapSearch {
 
             /* (use DateTime::createFromFormat instead of preg_match() if we upgrade to php 5.3) */
             preg_match('/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/', $doc->get_value(XAP_PUBDATETIME_ID), $m);
-            $pubdate = new DateTime();
-            $pubdate->setDate( $m[1], $m[2], $m[3] );   // YYYY MM DD
-            $pubdate->setTime( $m[4], $m[5], $m[6] );   // HH MM SS
+#            $pubdate = new DateTime();
+#            $pubdate->setDate( $m[1], $m[2], $m[3] );   // YYYY MM DD
+#            $pubdate->setTime( $m[4], $m[5], $m[6] );   // HH MM SS
+
+            $pubdate = "{$m[1]}-{$m[2]}-{$m[3]} {$m[4]}:{$m[5]}:{$m[6]}";
 
             $doc_data = $doc->get_data();
             $d = json_decode( $doc_data, TRUE );

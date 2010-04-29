@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Script to run sanity checks on the JL database.
 # eg newspapers getting the pubdate of articles wrong
@@ -15,10 +15,11 @@ import site
 site.addsitedir("../pylib")
 from JL import DB
 
-options = None
+__options = None
+_conn = None
 
 
-def IsSpecialCase( a ):
+def IsSpecialCaseDate( a ):
     """ a whole bunch of special cases - a lot of old dates are valid after all """
 
     o = urlparse.urlparse( a['permalink'] )
@@ -35,36 +36,78 @@ def IsSpecialCase( a ):
     return False
 
 
-def SanityCheckDates( conn ):
-    global options
+def SanityCheckDates():
+    """ Look for articles with suspect-looking pubdates (ie far into past or future)"""
+    global _options,_conn
 
-    if options.verbose:
+    if _options.verbose:
         print "checking dates"
 
-    c=conn.cursor()
+    c=_conn.cursor()
     c.execute( "SELECT id,pubdate,title,permalink FROM article WHERE pubdate<'1990-01-01' OR pubdate>NOW()+interval '2 days'" )
     badones = c.fetchall()
 
     # filter out special cases
-    badones = [b for b in badones if not IsSpecialCase(b) ]
+    badones = [b for b in badones if not IsSpecialCaseDate(b) ]
 
     for b in badones:
         print( "Dodgy Date: %s [a%d %s] - %s" % ( b['pubdate'], b['id'], b['title'], b['permalink'] ) )
     c.close()
-    if options.verbose:
+    if _options.verbose:
         print "found %d dodgy dates" % (len(badones))
 
 
 
+def db_getone( sql, params=None ):
+    global _conn
+    c = _conn.cursor()
+    c.execute( sql, params )
+    return c.fetchone()[0]
+
+
+
+def GeneralInfo():
+    n = db_getone( "SELECT count(*) from person_receives_newsletter" )
+    print "%d newsletter subscribers" % (n)
+
+    n = db_getone( "SELECT COUNT( DISTINCT journo_id) FROM person_permission WHERE permission='edit'" )
+    print "%d journos have signed up to edit their profile" % (n)
+
+    n = db_getone( "SELECT COUNT( DISTINCT journo_id) FROM journo_photo" )
+    print " %d have set photos" % (n)
+
+    n = db_getone( "SELECT COUNT( DISTINCT journo_id) FROM person_permission WHERE permission='claimed'" )
+    print " %d claims are outstanding" % (n)
+
+    n = db_getone( "SELECT COUNT( DISTINCT journo_id) FROM person_permission WHERE permission='claim_denied'" )
+    print " %d claims were denied" % (n)
+
+    # number of journos (active and inactive)
+    # number of articles (+hidden)
+    # articles awaiting indexing
+
+    # otherarticles awaiting approval
+    # scrape errors
+    # articles scraped over the last 24 hours
+
+
+
+
+
+
 def main():
-    global options
+    global _options,_conn
+
     parser = OptionParser()
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
 
-    (options, args) = parser.parse_args()
+    (_options, args) = parser.parse_args()
 
-    conn = DB.Connect()
-    SanityCheckDates( conn )
+    _conn = DB.Connect()
+
+    GeneralInfo()
+
+    SanityCheckDates()
 
 if __name__ == "__main__":
     main()

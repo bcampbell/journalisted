@@ -19,7 +19,7 @@ import urllib2
 import socket
 from datetime import datetime
 import time
-import md5
+import hashlib
 
 import Journo
 import DB
@@ -70,6 +70,8 @@ def MonthNumber( name ):
 
 # various different datetime formats
 datecrackers = [
+    # "2010-04-02T12:35:44+00:00" (iso8601, bbc blogs)
+    re.compile( r"(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)T(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)", re.UNICODE ),
     # "2008-03-10 13:21:36 GMT" (technorati api)
     re.compile( """(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)\s+(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
     # "9 Sep 2009 12.33" (heraldscotland blogs)
@@ -466,7 +468,7 @@ def BylineOMatic2(para):
 
 def GetCacheFilename(url):
     """ use a md5 hash to cache files, as some urls are waaaaay too long for the filesystem """
-    hash = md5.new()
+    hash = hashlib.md5()
     hash.update(url)
     return hash.hexdigest()
 

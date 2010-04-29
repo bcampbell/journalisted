@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
@@ -24,6 +24,17 @@
 # are interchangable.
 #
 
+# ===========================================================================
+# NOTE: sgmllib in python2.5 is buggy, and causes at least this scraper to
+# bork.
+# http://bugs.python.org/issue1651995
+#
+# Quick fix: patch /usr/lib/python2.5/sgmllib.py
+# in  convert_charref(self, name), change:
+#        if not 0 <= n <= 255:
+# to:
+#        if not 0 <= n <= 127:
+#
 
 import getopt
 import re
@@ -33,7 +44,7 @@ import urlparse
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
 
@@ -169,9 +180,9 @@ def Extract_eScenic( html, context ):
     # Big names have their own sections which makes bylining them easy
     if not byline:
         try:
-            as = soup.find('div', id='breadcrumbs').findAll('a')
-            if as[-2].string in ('Commentators', 'Columnists'):
-                byline = as[-1].string
+            foos = soup.find('div', id='breadcrumbs').findAll('a')
+            if foos[-2].string in ('Commentators', 'Columnists'):
+                byline = foos[-1].string
         except (IndexError, AttributeError):
             pass
     
@@ -183,12 +194,14 @@ def Extract_eScenic( html, context ):
         # a lot of stories (particularly comment pieces) have
         # name in title...
         # eg "Janet Street-Porter: Our politicians know nothing of real life"
-        m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
-        if m:
-            byline = m.group(1)
-            # cull out duds
-            if byline.lower() in dudbylines:
-                byline = u''
+        # (but not for obituaries!)
+        if u'/obituaries/' not in art['srcurl']:
+            m = re.match( "([\\w\\-']+\\s+[\\w\\-']+(\\s+[\\w\\-']+)?\\s*):", art['title'], re.UNICODE )
+            if m:
+                byline = m.group(1)
+                # cull out duds
+                if byline.lower() in dudbylines:
+                    byline = u''
 
 
     art['byline'] = ukmedia.FromHTML( byline )
@@ -211,9 +224,21 @@ def Extract_eScenic( html, context ):
         art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
 
     # article text is in "body" div
-    bodydiv = articlediv.find( 'div',{'class':'body'} )
+
+    # which, of course, doesn't parse properly...
+#    bodydiv = articlediv.find( 'div',{'class':'body'} )
+    m = re.compile( r'<div class="body">.*<!-- end body -->', re.DOTALL ).search( html )
+
+
+    bodydiv = BeautifulSoup( m.group(0) ).find('div',{'class':'body'} )
+
+
 
     # Kill cruft:
+    for cruft in bodydiv.findAll( 'script' ):
+        cruft.extract()
+    for cruft in bodydiv.findAll( 'div' ):
+        cruft.extract()
 
     #"<a href="http://indyblogs.typepad.com/openhouse/have_your_say/index.html" target="new"> Click here to have your say</a>"
     for cruft in bodydiv.findAll( 'a', {'href':'http://indyblogs.typepad.com/openhouse/have_your_say/index.html'} ):

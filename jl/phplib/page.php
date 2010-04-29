@@ -19,159 +19,51 @@ function page_header( $title, $params=array() )
     $datestring = date( 'l d.m.Y' );
 
     $mnpage = array_key_exists('menupage', $params) ? $params['menupage'] : '';
-?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-  <title><?=$title ?></title>
-  <style type="text/css" media="all">@import "/style.css";</style>
-  <meta name="Content-Type" content="text/html; charset=UTF-8" />
-<?php
 
-    print "<!-- menupage: '$mnpage' -->\n";
+    $rss_feeds = array();
     if (array_key_exists('rss', $params))
-    {
-        foreach ($params['rss'] as $rss_title => $rss_url)
-        {
-            printf( "  <link rel=\"alternate\" type=\"application/rss+xml\" title=\"%s\" href=\"%s\" />\n", $rss_title, $rss_url );
-        }
-    }
+        $rss_feeds = $params['rss'];
 
-    $js = array( "/jl.js" );
+    $js_files = array( "/jl.js" );
     if (array_key_exists('js_extra', $params))
-    {
-        //print_r( $params['js_extra'] );
-        $js = array_merge( $js, $params['js_extra'] );
+        $js_files = array_merge( $js_files, $params['js_extra'] );
+
+    $head_extra = '';
+    if (array_key_exists('head_extra', $params))
+        $head_extra .= $params['head_extra'];
+
+    if (array_key_exists('head_extra_fn', $params)) {
+        ob_start();
+        call_user_func( $params['head_extra_fn'] );
+        $head_extra .= ob_get_contents();
+        ob_end_clean();
     }
 
-    foreach( $js as $s ) {
-//      print $s;
-        printf("  <script type=\"text/javascript\" src=\"%s\"></script>\n",$s);
-    }
-
-    if (array_key_exists('head_extra', $params)) {
-        print $params['head_extra'];
-    }
-/*
-    <script type="text/javascript" language="JavaScript">
-      window.onload=function() {
-        activatePlaceholders();
-      }
-    </script>
-*/
-?>
-    <script type="text/javascript" language="JavaScript">
-        addLoadEvent( activatePlaceholders );
-    </script>
-
-</head>
-
-<body>
-
-  <div id="head">
-    <div class="inner">
-      <h1><a href="/"><span></span>Journalisted</a></h1>
-
-      <div id="tagline">&#8230;read all about them!</div>
-<!--      <div id="today"><?php echo date( 'l, d.m.Y' ); ?></div>
-      <div id="mst"><a href="http://www.mediastandardstrust.org">Media Standards Trust</a></div> -->
-      <div id="menu">
-        <ul>
-          <li class="cover<?php echo $mnpage=='cover' ? ' active' :''; ?>"> <a href="/">Home</a> </li>
-          <li class="all<?php echo $mnpage=='all' ? ' active' :''; ?>"> <a href="/list">Journalists A-Z</a> </li>
-          <li class="subject<?php echo $mnpage=='subject' ? ' active' :''; ?>"> <a href="/tags">Subject Index</a> </li>
-          <li class="my<?php echo $mnpage=='my' ? ' active' :''; ?>"> <a href="/alert">Alerts</a> </li>
-          <li class="about<?php echo $mnpage=='about' ? ' active' :''; ?>"> <a href="/about">About</a> </li>
-<!--
-          <li class="donate<?php echo $mnpage=='donate' ? ' active' :''; ?>"> <a href="/donate">Donate</a> </li>
-        </ul>
--->
-      </div>
-      <form action="/search" method="get" id="headsearch">
-<!--        <label for="q">Search articles</label> -->
-        <input type="text" value="" title="search articles" id="q" name="q" class="text" placeholder="search articles"/>
-      <input type="submit" alt="find" value="Find" />
-   </form>
-<div style="clear:both;"></div>
-    </div>
-  </div>
-
-<div id="dateline">
-<?php
-
+    $logged_in_user = null;
+    $can_edit_profile = FALSE;
     if( $P )
     {
         if ($P->name_or_blank())
-            $name = $P->name;
+            $logged_in_user = $P->name;
         else
-            $name = $P->email;
+            $logged_in_user = $P->email;
 
-?>
-<span id="hellouser">
-    Hello, <?php echo $name; ?> [<a href="/logout">log out</a>]<br/>
-</span>
-<?php
-
-    } else {
-
-?>
-      <span id="today"><?php echo date( 'l d F Y' ); ?></span>
-<?php
-
+        if( db_getOne( "SELECT * FROM person_permission WHERE person_id=? AND permission='edit'", $P->id() ) )
+            $can_edit_profile = TRUE;
     }
 
-?>
-      <span id="mst"><a href="http://www.mediastandardstrust.org">Media Standards Trust</a></span>
-<div style="clear:both;"></div>
-</div>
+    $search = array( 'q'=>'', 'type'=>'journo' );
+    if (array_key_exists('search_params', $params))
+        $search = $params['search_params'];
 
-<div id="content" class="home">
-<?php
+    include "../templates/header.tpl.php";
 }
 
 
-function page_footer( $params=array() )
+
+function page_footer()
 {
-
-?>
-<br clear="all" />
-</div>
-<div id="footer">
-<div class="inner">
-<?php
-
-    gatso_report_html();
-
-    $contactemail = OPTION_TEAM_EMAIL;
-?>
-<a href="/development">Development</a> |
-<?php echo SafeMailto( $contactemail, 'Contact us' );?> | <a href="/faq">FAQs</a> | <a href="/api">API</a> | <a href="/faq/what-is-your-privacy-policy">Privacy Policy</a>
-<br />
-&copy; 2007 <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
-
-</div>
-</div>
-
-<?php if( OPTION_JL_GOOGLE_ANALYTICS_ENABLE ) { ?>
-
-<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("UA-10908611-1");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-
-<?php } ?>
-
-</body>
-</html>
-<?php
-
-//  debug_comment_timestamp();
-
+    include "../templates/footer.tpl.php";
 }
 
 ?>

@@ -30,4 +30,10 @@ Log changes made due to website changes here!
 2009-09-10 herald: new heraldscotland website
 2009-10-06 indy: new rss feeds
 2009-11-06 scotsman: minor rearrangement of h1 caused scraper to bail
+2010-03-26 independent: fix truncated-content issue
+2010-03-31 notw: FindArticles() was being thwarted by 404s
+2010-03-12 bbc: new blog scraper
+2010-03-12 skynews: new scraper for blogs
+2010-03-14 mirror: trim advertising cruft
+2010-04-23 ft: headline formatting changed
 

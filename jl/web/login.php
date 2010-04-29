@@ -56,6 +56,9 @@ importparams(
 
 
 /* General purpose login, asks for email also. */
+
+if(0) { // CRUFT???
+
 if( get_http_var("now")) {
     $P = person_signon(array(
         'reason_web' => "Log in",
@@ -63,11 +66,12 @@ if( get_http_var("now")) {
         'reason_email_subject' => 'Log in to Journalisted'
     ));
 
-	// alerts is closest thing we have to an account management page
-    header("Location: /alert");
+	// account management page
+    header("Location: /account");
     exit;
 }
 
+}
 
 
 /* is there a token? (i.e. user coming in via a confirmation email) */
@@ -118,8 +122,16 @@ function RedirectToOriginalDest( $stash ) {
         stash_redirect($stash);
         /* NOTREACHED */
     } else {
-	    // alerts is closest thing we have to a user page
-        header("Location: /alert");
+        $P = person_if_signed_on();
+        if( $P ) {
+            $editables = db_getAll( "SELECT j.* FROM ( journo j INNER JOIN person_permission p ON p.journo_id=j.id) WHERE p.person_id=? AND p.permission='edit'", $P->id() );
+            if( sizeof( $editables) >= 1 ) {
+                header("Location: /" . $editables[0]['ref'] );
+                exit;
+            }
+        }
+
+        header("Location: /account");
         exit;
     }
 }
@@ -160,12 +172,14 @@ function DoLoginPage()
     page_header( "Logging in" );
 
 ?>
-<div class="box">
+<div class="main">
+<div class="head"></div>
+<div class="body">
 <h3><?php echo $reason; ?></h3>
-<div class="box-content">
 <?php loginform_emit( $q_email, $q_stash, $q_rememberme, $errs ); ?>
 </div>
-</div>
+<div class="foot"></div>
+</div> <!-- end main -->
 <?php
 
     page_footer();
@@ -257,15 +271,29 @@ function DoLoginViaEmailPage()
         if( !$errs )
         {
             // send the email...
-            DoConfirmationEmail();
+            $confirmation_url = DoConfirmationEmail();
 
             page_header("Now check your email!" );
 ?>
+<div class="main">
+<div class="head"></div>
+<div class="body">
 <p class="loudmessage">
 Now check your email!<br/>
 <br/>
 We've sent you an email, and you'll need to click the link in it to log in.
 </p>
+<?php if(OPTION_JL_BYPASS_LOGIN_EMAIL ) { ?>
+<div style="font-weight: bold; border: 1px dashed red; padding: 1em; margin 1em;">
+ <h3>FOR TESTING</h3>
+ <p>No email was really sent. You can log in directly here:<br/>
+  <a href="<?= $confirmation_url ?>"><?= $confirmation_url ?></a>
+ </p>
+</div>
+<?php } ?>
+</div>
+<div class="foot"></div>
+</div>
 <?php
 
             page_footer();
@@ -276,19 +304,21 @@ We've sent you an email, and you'll need to click the link in it to log in.
     page_header( "Register" );
 
 ?>
-<div class="box">
+<div class="main">
+<div class="head"></div>
+<div class="body">
 <?php if( $action =='register' ) { ?>
   <h3>Register new account</h3>
   <p>To register, please tell us your email address.</p>
   <p>We'll send you an email, click the link in it to confirm your email is working.</p>
 <?php } else { ?>
-  <h3>Lost/forgotten/missing password</h3>
+  <h3>No password</h3>
   <p>To log in, please tell us your email address.</p>
   <p>We'll send you an email containing a link.<br/>Click that link to log in.</p>
 <?php } ?>
-<div class="box-content">
 <?php RegisterForm_Emit( $errs ); ?>
 </div>
+<div class="foot"></div>
 </div>
 <?php
 
@@ -301,14 +331,13 @@ function DoConfirmationEmail()
     global $q_stash, $q_email, $q_name, $q_rememberme;
 
     if( is_null( $q_stash ) ) {
-        // create a default stashed request to take returning user to "/alert",
-        // the closest thing we have to a user profile page
+        // create a default stashed request
         $template_data = array(
             'reason_web' => "Log in",
             'reason_email' => "Log in to Journalisted",
             'reason_email_subject' => 'Log in to Journalisted' );
 
-        $q_stash = stash_new_request( "POST", "/alert", null, rabx_serialise($template_data), null );
+        $q_stash = stash_new_request( "POST", "/login", null, rabx_serialise($template_data), null );
     }
 
 
@@ -333,8 +362,11 @@ function DoConfirmationEmail()
     $subject = $values['reason_email_subject'];
     $from_name = "Journalisted";
     $from_email = OPTION_TEAM_EMAIL;
-    jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+    if( !OPTION_JL_BYPASS_LOGIN_EMAIL ) {
+        jl_send_text_email($q_email, $from_name, $from_email, $subject, $body);
+    }
 
+    return $url;
 }
 
     
@@ -349,11 +381,13 @@ function RegisterForm_Emit($errs = array())
 <input type="hidden" name="stash" value="<?=$q_h_stash?>" />
 <input type="hidden" name="action" value="<?php echo $action; ?>" />
 
-<p>
+<dl>
+  <dt><label for="email">Email address</label></dt>
+  <dd>
+    <input type="text" size="30" name="email" id="email" value="<?php echo $q_h_email; ?>" />
 <?php if(array_key_exists('email',$errs) ) { ?><span class="errhint"><?php echo $errs['email'];?></span><br/><?php } ?>
-<label for="email">Email address</label>
-<input type="text" size="30" name="email" id="email" value="<?php echo $q_h_email; ?>" />
-</p>
+  </dd>
+</dl>
 
 <p>
 <input type="submit" name="registersubmit" value="Continue" />

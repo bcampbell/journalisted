@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Scraper for NewsOfTheWorld
 #
@@ -105,7 +105,15 @@ def FindArticles():
         if url == 'http://www.newsoftheworld.co.uk/':
             prim_soup = soup
         else:
-            html2 = ukmedia.FetchURL( url )
+            try:
+                html2 = ukmedia.FetchURL( url )
+            except urllib2.HTTPError, e:
+                # continue even if we get http errors (bound to be a borked
+                # link or two)
+                traceback.print_exc()
+                print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
+                continue
+
             prim_soup = BeautifulSoup( html2 )
 
         found = found + ScanPrimary( prim_soup )
@@ -143,7 +151,15 @@ def ScanPrimary( soup ):
 
         ukmedia.DBUG2( "  scan %s [%s]..." % (name,url) )
 
-        html = ukmedia.FetchURL( url )
+        try:
+            html = ukmedia.FetchURL( url )
+        except urllib2.HTTPError, e:
+            # continue even if we get http errors (bound to be a borked
+            # link or two)
+            traceback.print_exc()
+            print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
+            continue
+
         soup_sec = BeautifulSoup( html )
         found_sec = ArticlesFromSoup( soup_sec )
         ukmedia.DBUG2(" %d articles\n" % ( len(found_sec) ) )

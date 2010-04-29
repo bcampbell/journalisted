@@ -10,7 +10,21 @@
 .action_summary {
     border: thin dashed blue;
     background-color: silver;
-    padding: 1em; }
+    font-weight: bold;
+    font-size: larger;
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+.action_error {
+    border: thin dashed red;
+    padding: 0.5em;
+    margin: 0.5em;
+    font-weight: bold;
+    font-size: larger;
+    color: red;
+}
+
 
 .widget-container {
     margin: 0.5em;
@@ -24,3 +38,17 @@ blockquote {
     padding: 0.5em;
 }
 
+/* toolbar for news editing */
+.news-toolbar {
+    padding: 0.2em 0.5em;
+    margin-top: 0.5em;
+    background-color: #cccccc;
+}
+#content {
+    width: 100%;
+}
+.news-toolbar a {
+    border: 1px solid #888888;
+    text-decoration: none;
+    padding: 0.1em;
+}

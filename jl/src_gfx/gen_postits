@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+#
+# hacky little tool to generate postit note buttons for front page
+# Multiple notes, stored on same png to save http requests.
+#
+# overkill, but hey. There'll always be annoying image-based crud
+# with text on it that needs changing....
+#
+
+import cairo
+import pango
+import pangocairo
+
+FONT = "Keerthana 11"
+REDPEN = "#cc0e0e"
+BLUEPEN = "#004a80"
+base_img = "blank-post-it.png"
+base_hover_img = "blank-post-it.png"
+dest_img = "../web/img/postits.png"
+LINE_SPACING = 3
+
+# size of box on base img to plonk text in
+base_box = (16,16,108,103 )  # x,y,w,h
+
+notes = [
+    # ( name, radians, text)
+    ( 'subscribe', 0.01, "[Subscribe] to the journa<i>listed</i> weekly digest" ),
+    ( 'search-articles', 0.02, "[Search] over 2 million news articles" ),
+    ( 'search-journos', 0.012, "[Search for a journalist]\nto contact them" ),
+    ( 'edit-profile', 0.023, "[Edit your profile]\nif you are a journalist" ),
+    ( 'alerts', 0.014, "[Sign up for daily alerts] from your favourite journalists" ),
+    ]
+
+# adapted from code posted at:
+# from http://www.gossamer-threads.com/lists/python/dev/703972
+def draw_text( context, box, txt, font=FONT,
+    position=None,
+    box_width=None,
+    underline = 0 ):
+
+    if underline:
+        txt = txt.replace( '[', '<span underline="single" color="' + REDPEN + '">' )
+    else:
+        txt = txt.replace( '[', '<span color="' + REDPEN + '">' )
+    txt = txt.replace( ']', '</span>' )
+    txt = '<span weight="550" color="'+BLUEPEN+'">' + txt + '</span>'
+
+
+    pc = pangocairo.CairoContext(context)
+    layout = pc.create_layout()
+    layout.set_markup(txt)
+    layout.set_font_description(pango.FontDescription(font))
+
+    layout.set_spacing( LINE_SPACING*pango.SCALE );
+
+    # centre vertically
+    layout.set_width(pango.SCALE*box[2])
+    w,h = layout.get_pixel_size()
+    x = box[0]  # + (box[2]-w)/2.0
+    y = box[1] + (box[3]-h)/2.0
+    context.move_to( x,y )
+    pc.show_layout(layout)
+
+
+
+postit = cairo.ImageSurface.create_from_png( base_img );
+postit_hover = cairo.ImageSurface.create_from_png( base_hover_img );
+target = cairo.ImageSurface( cairo.FORMAT_ARGB32, postit.get_width()*2, postit.get_height()*len(notes) )
+
+context = cairo.Context(target)
+
+w = postit.get_width();
+h = postit.get_height();
+
+i=0;
+for name,rot,txt in notes:
+    context.save()
+    context.translate( 0, h*i )
+    context.rotate( rot )
+    context.set_source_surface( postit )
+    context.paint()
+    draw_text( context, base_box, txt );
+    context.restore()
+
+    context.save()
+    context.translate( w, h*i )
+    context.rotate( rot )
+    context.set_source_surface( postit_hover )
+    context.paint()
+    draw_text( context, base_box, txt, underline=1 );
+    context.restore()
+
+    print( ".box.front .nav a.%s { background-position: %dpx %dpx; }" % (name,0,-h*i) )
+    print( ".box.front .nav a.%s:hover { background-position: %dpx %dpx; }" % (name,-w,-h*i) )
+    i=i+1
+
+target.write_to_png( dest_img )
+

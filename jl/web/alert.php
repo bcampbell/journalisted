@@ -53,20 +53,23 @@ else
     $r = array(
         'reason_web' => "Manage your email alerts",
         'reason_email' => "Manage your email alerts",
-        'reason_email_subject' => 'Journalisted log in: email confirmation'
+        'reason_email_subject' => 'Journalisted: manage your email alerts'
         );
-    $P = person_if_signed_on();
+    if( strtolower( get_http_var('dologin','no') ) == 'yes' )
+        // insist that user logs in before going any further
+        $P = person_signon($r);
+    else
+        $P = person_if_signed_on();
 }
 
 
-/* OK, if we get here, we've got a logged-in user and can start our output! */ 
 page_header( "Alerts", array( 'menupage'=>'my') );
 
 ?>
-<div id="maincolumn">
-<div class="box">
+<div class="main">
+<div class="head"></div>
+<div class="body">
 <h2>Alerts</h2>
-<div class="box-content">
 <p>
 Follow your favourite journalist(s).<br />
 Just enter your email address and you’ll be able to pick
@@ -95,21 +98,25 @@ if( $P ) {
     EmitLookupForm();
 } else {
     // the non logged-in version:
-    loginform_emit();
+?>
+    <p>If you already have an account, just <a href="/alert?dologin=yes">log in here</a></p>
+    <p>Otherwise, <a href="/login?action=register">register here</a></p>
+<?php
+    //loginform_emit();
 }
 
 ?>
 </div>
-</div>
-</div>  <!-- end maincolumn -->
-<div id="smallcolumn">
+<div class="foot"></div>
+</div>  <!-- end main -->
+<div class="sidebar">
 <?php
 if( $P ) {
     EmitChangePasswordBox();
 }
 emit_popularalertsbox();
 ?>
-</div>  <!-- end smallcolumn -->
+</div>  <!-- end sidebar -->
 <?php
 
 page_footer();
@@ -177,8 +184,10 @@ function EmitChangePasswordBox()
 
 ?>
 <div class="box">
+ <div class="head">
   <h3><?=$has_password ? _('Change your password') : _('Set a password') ?></h3>
-  <div class="box-content">
+ </div>
+  <div class="body">
 <?php
     if( !$q_UpdateDetails && !$has_password ) {
 ?>
@@ -213,15 +222,18 @@ function EmitChangePasswordBox()
     if (!is_null($error))
         print "<p class=\"errhint\">$error</p>";
     ?>
-      <p>
-        <label for="pw1">New password:</label>
-        <input type="password" name="pw1" id="pw1" size="15" /><br/>
-        <label for="pw2">New password, again:</label>
+      <div class="field">
+        <label for="pw1">New password</label>
+        <input type="password" name="pw1" id="pw1" size="15" />
+      </div>
+      <div class="field">
+        <label for="pw2">and again...</label>
         <input type="password" name="pw2" id="pw2" size="15" />
-      </p>
+      </div>
       <input name="submit" type="submit" value="<?=_('Submit') ?>">
     </form>
   </div>
+ <div class="foot"></div>
 </div>
 
     <?
@@ -305,8 +317,8 @@ EOT;
 
 ?>
 <div class="box">
-  <h3>Popular alerts</h3>
-  <div class="box-content">
+  <div class="head"><h3>Popular alerts</h3></div>
+  <div class="body">
     <ul>
 <?php foreach( $popular as $j ) { ?>
       <li>
@@ -316,6 +328,7 @@ EOT;
 <?php } ?>
     </ul>
   </div>
+  <div class="foot"></div>
 </div>
 <?php
 

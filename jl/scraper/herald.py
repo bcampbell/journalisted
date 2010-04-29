@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Scraper for The Herald (http://www.theherald.co.uk)
 #

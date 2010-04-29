@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Tool to scrape journalist bios from wikipedia
 # (core wikipedia scraper written by Tom Lynn)

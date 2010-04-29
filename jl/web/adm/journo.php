@@ -111,6 +111,27 @@ switch( $action )
 		DisapproveOtherArticle( $journo_id, get_http_var('otherarticle_id') );
 		EmitJourno( $journo_id );
 		break;
+	case "update_admin_notes":
+        {
+            $admin_notes = get_http_var( 'admin_notes' );
+            db_do( "UPDATE journo SET admin_notes=? WHERE id=?", $admin_notes,$journo_id );
+            db_commit();
+	        EmitActionMsg( "Admin notes changed\n" );
+        }
+	    EmitJourno( $journo_id );
+        break;
+	case "update_admin_tags":
+        {
+            $admin_tags = strtolower( get_http_var( 'admin_tags' ) );
+            $admin_tags = preg_replace( "/[^a-z0-9_]/", " ", $admin_tags );
+            $admin_tags = preg_replace( '/\s+/', " ", $admin_tags );
+
+            db_do( "UPDATE journo SET admin_tags=? WHERE id=?", $admin_tags,$journo_id );
+            db_commit();
+	        EmitActionMsg( "Admin tags changed\n" );
+        }
+	    EmitJourno( $journo_id );
+        break;
 
 	default:
 		if( $journo_id )
@@ -144,6 +165,8 @@ function EmitJournoFilterForm()
  with status:
  <?= form_element_select( "status", $s, get_http_var( 'status' ) ); ?><br />
  name containing: <input type="text" name="name" size="40" /><br />
+ matching admin_tags: <input type="text" name="admin_tags" size="40" /><br />
+ <label for="claimed">Claimed profiles only?</label><input id="claimed" type="checkbox" name="claimed" value="1" /><br/>
  <input type="submit" name="submit" value="Find" />
 </form>
 <?php
@@ -153,13 +176,15 @@ function EmitJournoFilterForm()
 function EmitJournoList()
 {
 ?>
-<table>
+<table border="1">
 <thead>
  <tr>
   <th>id</th>
   <th>status</th>
   <th>prettyname</th>
   <th>ref</th>
+  <th>email (if claimed)</th>
+  <th>admin_tags</th>
  </tr>
 </thead>
 <tbody>
@@ -167,6 +192,8 @@ function EmitJournoList()
 
 	$status = get_http_var( 'status', 'any' );
 	$name = get_http_var( 'name' );
+	$claimed = get_http_var( 'claimed', FALSE );
+	$admin_tags = strtolower( get_http_var( 'admin_tags' ) );
 
 	$conds = array();
 	$params = array();
@@ -178,13 +205,31 @@ function EmitJournoList()
 
 	if( $name ) {
 		$conds[] = "prettyname ilike ?";
-		$params[] = '%' . $name . '%';
+		$params[] = '%' . h($name) . '%';
 	}
 
-	$sql = "SELECT * FROM journo";
+    if( $admin_tags ) {
+        $tags = preg_split( '/\s+/', $admin_tags );
+        foreach( $tags as $t ) {
+            $conds[] = "admin_tags like ?";
+            $params[] = '%'.h($t).'%';
+        }
+    }
+
+    if( $claimed ) {
+        $conds[] = "email IS NOT NULL";
+    }
+
+	$sql = <<<EOT
+SELECT j.*, p.email as person_email,p.id as person_id
+    FROM journo j LEFT JOIN (person_permission perm INNER JOIN person p ON perm.person_id=p.id)
+        ON perm.journo_id=j.id AND perm.permission='edit'
+EOT;
     if( $conds ) {
         $sql .= ' WHERE ' . implode( ' AND ', $conds );
     }
+
+    print "<pre>".$sql."</pre>";
 
 	$q = db_query( $sql, $params );
 
@@ -195,6 +240,12 @@ function EmitJournoList()
 		printf( "  <td>%s</td>\n", $r['status'] );
 		printf( "  <td><a href=\"%s\">%s</a></td>\n", $link, $r['prettyname'] );
 		printf( "  <td>%s</td>\n", $r['ref'] );
+        if( $r['person_email'] ) {
+            ?><td><?= $r['person_email'] ?> <small>(<a href="/adm/useraccounts?person_id=<?= $r['person_id']?>">useraccount</a>)</small></td><?php
+        } else {
+            printf(" <td></td>\n" );
+        }
+		printf( "  <td>%s</td>\n", $r['admin_tags'] );
 		printf( " </tr>\n" );
 	}
 
@@ -214,7 +265,7 @@ function EmitJourno( $journo_id )
 
 ?>
 <h2><?php echo $j['prettyname']; ?></h2>
-<a href="/<?php echo $j['ref'];?>?full=yes">Jump to their page</a>
+<a href="/<?php echo $j['ref'];?>">Jump to their page</a>
 (<a href="/<?php echo $j['ref'];?>?full=yes">Force a page rebuild</a>)
 <h3>General</h3>
 <?php
@@ -241,6 +292,27 @@ function EmitJourno( $journo_id )
 	printf("<strong>firstname:</strong> %s<br />\n", $j['firstname'] );
 	printf("<strong>lastname:</strong> %s<br />\n", $j['lastname'] );
 	printf("<strong>created:</strong> %s<br />\n", $j['created'] );
+
+?>
+<form method="post" action="/adm/journo">
+  <input type="hidden" name="action" value="update_admin_tags" />
+  <input type="hidden" name="journo_id" value="<?= $j['id'] ?>" />
+  <strong>admin_tags:</strong> <small>(lowercase, space seperated, [a-z0-9_] only)</small><br/>
+  <input type="text" size="80" name="admin_tags" value="<?= h($j['admin_tags']) ?>" />
+  <input type="submit" value="Update" />
+</form>
+<?php
+
+?>
+<form method="post" action="/adm/journo">
+  <input type="hidden" name="action" value="update_admin_notes" />
+  <input type="hidden" name="journo_id" value="<?= $j['id'] ?>" />
+  <strong>admin_notes:</strong><br/>
+  <textarea name="admin_notes" cols="80" rows="5"><?= h( $j['admin_notes'] ) ?></textarea><br/>
+  <input type="submit" value="Update" />
+</form>
+<?php
+
 
 	EmitEmailAddresses( $journo_id );
 	EmitWebLinks( $journo_id );
@@ -709,7 +781,7 @@ EOT;
 			<a href="?action=remove_otherarticle_confirmed&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">remove</a>
 <?php if( $row['status'] == 'a' ) { ?>
 			<a href="?action=disapprove_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">disapprove</a>
-<?php } else { /* 'h'idden or 'u'napproved */ ?>
+<?php } else { ?>
 			<a href="?action=approve_otherarticle&journo_id=<?php echo $journo_id;?>&otherarticle_id=<?php echo $row['id']; ?>">approve</a>
 <?php } ?>
         <td>

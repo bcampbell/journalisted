@@ -18,10 +18,35 @@ require_once '../phplib/offline_frontpage.php';
 
 NEW_version();
 
+
+function extra_head()
+{
+?>
+<script language="javascript" type="text/javascript">
+    $(document).ready( function () {
+        // equalHeight() by Rob Glazebrook
+        function equalHeight(group) {
+            var tallest = 0;
+            group.each(function() {
+                var thisHeight = $(this).height();
+                if(thisHeight > tallest) {
+                    tallest = thisHeight;
+                }
+            });
+            group.height(tallest);
+        }
+        equalHeight( $(".recently-viewed .body,.recently-updated .body,.most-blogged .body") );
+/*        equalHeight( $(".box.thisweek,.box.tobias") ); */
+    });
+</script>
+<?php
+}
+
+
+
 function NEW_version()
 {
 
-    $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
     // setup for placeholder text in input forms
     $head_extra = <<<EOT
@@ -32,54 +57,80 @@ function NEW_version()
       </script>
 EOT;
 
-    page_header( "", array( 'menupage'=>'cover', 'head_extra'=>$head_extra ) );
 
-?>
+    page_header( "", array( 'menupage'=>'cover', 'head_extra_fn'=>"extra_head" ) );
 
-<div class="greenbox">
-Journa<i>listed</i> is an independent, non-profit site run by the <a class="extlink" href="http://www.mediastandardstrust.org">Media Standards Trust</a> to help the public navigate the news
-</div>
+/*
+    $sql = <<<EOT
+SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, e.event_time, e.event_type, e.context_json
+    FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
+    WHERE event_time>NOW()-interval '12 hours'
+    ORDER BY event_time DESC
+    LIMIT 10;
+EOT;
+    $events = db_getAll( $sql );
+    foreach( $events as &$ev ) {
+//        $ev['context'] = json_decode( $ev['context_json'], TRUE );
+        $ev['description'] = eventlog_Describe( $ev );
+    }
+*/
 
-<div class="action-box">
- <div class="action-box_top"><div></div></div>
-  <div class="action-box_content">
+    $sql = <<<EOT
+SELECT j.ref AS journo_ref, j.prettyname as journo_prettyname, j.oneliner as journo_oneliner, min(now()-e.event_time) as when
+    FROM event_log e LEFT JOIN journo j ON j.id=e.journo_id
+    WHERE event_time>NOW()-interval '7 days' AND j.status='a'
+    GROUP BY journo_ref, journo_prettyname, journo_oneliner
+    ORDER BY min( now()-e.event_time) ASC
+    LIMIT 10;
+EOT;
+    $events = db_getAll( $sql );
+    foreach( $events as &$ev ) {
+//        $ev['context'] = json_decode( $ev['context_json'], TRUE );
+        $ev['description'] = $ev['when'];    //eventlog_Describe( $ev );
+        $ev['journo'] = array( 'ref'=> $ev['journo_ref'], 'prettyname'=>$ev['journo_prettyname'], 'oneliner'=>$ev['journo_oneliner'] );
+        unset( $ev['journo_ref'] );
+        unset( $ev['journo_prettyname'] );
+        unset( $ev['journo_oneliner'] );
+    }
 
-   <form action="/list" method="get" class="frontform">
-    <label for="name">Find a journalist</label>
-    <input type="text" value="" title="type journalist name here" id="name" name="name" placeholder="type journalist name here" class="text" />
-    <input type="submit" value="Find" alt="find" />
-<!--    <input type="image" src="images/white_arrow.png" alt="find" /> -->
-   </form>
+    // recent newsletters
+    $news = news_RecentNewsletters(5);
 
-   <form action="/list" method="get" class="frontform">
-    <label for="outlet">See journalists by news outlet</label>
-
-     <select id="outlet" name="outlet" class="select" >
-<?php foreach( $orgs as $o ) { ?>
-		<option value="<?php echo $o['shortname'];?>"><?php echo $o['prettyname']; ?></option>
-<?php } ?>
-     </select>
-    <input type="submit" value="Find" alt="find" />
-   </form>
+    $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
 
-   <form action="/search" method="get" class="frontform">
-    <label for="q">Search articles</label>
-    <input type="text" value="" title="type subject here" id="q" name="q" class="text" placeholder="type subject here"/>
-<!--    <input type="submit" value="Find" /><br /> -->
-    <input type="submit" value="Find" alt="find" />
-   </form>
+    // most blogged-about articles
+    $sql = <<<EOT
+SELECT a.id,a.srcorg,a.title,a.permalink,a.total_bloglinks,o.prettyname as srcorgname
+    FROM article a INNER JOIN organisation o ON a.srcorg=o.id
+    WHERE a.pubdate <= NOW() AND a.pubdate > NOW()-interval '48 hours'
+        AND a.total_bloglinks > 0
+    ORDER BY a.total_bloglinks DESC
+    LIMIT 5
+EOT;
 
-  </div>
- <div class="action-box_bottom"><div></div></div>
-</div>
+    $most_blogged_about = db_getAll( $sql );
+    foreach( $most_blogged_about as &$a ) {
+        article_addJournos( $a );
+    }
+    unset( $a );
 
-<p>Journa<i>listed</i> is also for: &nbsp;&nbsp;&nbsp;<a href="/forjournos">journalists</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/pressofficers">press officers</a></p>
 
-</p>
-<?php
+    // recently-viewed journos
+    // TODO: really not so happy about this... (see web/journo.php too)
+    $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner
+    FROM recently_viewed v INNER JOIN journo j ON j.id=v.journo_id
+    ORDER BY v.view_time DESC
+    LIMIT 10
+EOT;
+    $recently_viewed = db_getAll( $sql );
 
-page_footer();
+    {
+        include "../templates/frontpage.tpl.php";
+    }
+
+    page_footer();
 }
 
 

@@ -14,13 +14,30 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/journo.php';    // for journo_link()
+require_once '../phplib/xap.php';
 
 /* two sets of buttons/action selectors */
 $action = get_http_var( 'action' );
 
 admPageHeader( "Canned Queries" );
 
-$canned = array(  new KnownEmailAddresses(), new OrgList(), new ArticleCount(), new AlertUsers(), new ProlificJournos(), new MostIndepthJournos(), new TopTags() );
+$canned = array(
+    new KnownEmailAddresses(),
+    new OrgList(),
+    new ArticleCount(),
+    new AlertUsers(),
+    new ProlificJournos(),
+    new MostIndepthJournos(),
+    new TopTags(),
+    new QueryFight(),
+    new WhosWritingAbout(),
+    new NewsletterSubscribers(),
+    new EventLog(),
+    new RegisteredJournos()
+);
+
+
+
 
 function ShowMenu()
 {
@@ -187,19 +204,27 @@ function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
 
 
 function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
-
-    if( is_array( $row[$col] ) ) {
+    $cell = $row[$col];
+    if( $cell instanceof DateTime ) {
+        return $cell->format( 'Y-m-d' );
+    } else if( is_array( $cell ) ) {
         if( $col=='journo' ) {
-            $j = $row[$col];
+            $j = $cell;
             $out = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
             if( array_key_exists( 'oneliner', $j ) )
                 $out .= " <small><em>({$j['oneliner']})</em></small>";
             $out .= " <small>[<a href=\"/adm/{$j['ref']}\">admin</a>]</small>";
+            /* can provide an array of extra links */
+            if( array_key_exists( 'extralinks', $j ) ) {
+                foreach( $j['extralinks'] as $l ) {
+                    $out .= " <small>[<a href=\"{$l['href']}\">{$l['text']}</a>]</small>";
+                }
+            }
             return $out;
         }
 
         if( $col=='article' ) {
-            $a = $row[$col];
+            $a = $cell;
 
             // assume we've got title and id at least
             $out = "<a href=\"/article?id={$a['id']}\">{$a['title']}</a>";
@@ -222,10 +247,10 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
 
     } else {
         if( $col=='ref' ) {
-            $ref = $row[$col];
+            $ref = $cell;
             return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
         }
-        return admMarkupPlainText( $row[$col] );
+        return admMarkupPlainText( $cell );
     }
 }
 
@@ -281,7 +306,7 @@ function Tabulate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 }
 
 
-//
+// compress certain groups of columns into a single one for better formatting
 function collectColumns( &$rows )
 {
     $orgs = get_org_names();
@@ -333,8 +358,13 @@ class CannedQuery {
 
     function get_params() {
         $params = array();
-        foreach( $this->param_spec as $p ) {
-            $params[$p['name']] = get_http_var( $p['name'], $p['default'] );
+        foreach( $this->param_spec as $spec ) {
+            $value = get_http_var( $spec['name'], $spec['default'] );
+            if( arr_get('type',$spec)=='date' ) {
+                if( $value )
+                    $value = new DateTime( $value );
+            }
+            $params[$spec['name']] = $value;
         }
         return $params;
     }
@@ -344,16 +374,20 @@ class CannedQuery {
 ?>
 <form method="get">
 <input type="hidden" name="action" value="<?php echo $this->ident; ?>" />
-<?php foreach( $this->param_spec as $p ) { ?>
-<label for="<?= $p['name'] ?>"><?= $p['label'] ?></label>
-<?php if( array_key_exists( 'options', $p ) ) { /* SELECT element */ ?>
- <select name="<?= $p['name'] ?>" id="<?= $p['name'] ?>">
- <?php foreach( $p['options'] as $value=>$desc ) { ?>
-  <option <?= ($params[$p['name']]==$value)?'selected':'' ?> value="<?= $value ?>"><?= $desc ?></option>
+<?php foreach( $this->param_spec as $spec ) { ?>
+<label for="<?= $spec['name'] ?>"><?= $spec['label'] ?></label>
+<?php if( array_key_exists( 'options', $spec ) ) { /* SELECT element */ ?>
+ <select name="<?= $spec['name'] ?>" id="<?= $spec['name'] ?>">
+ <?php foreach( $spec['options'] as $value=>$desc ) { ?>
+  <option <?= ($params[$spec['name']]==$value)?'selected':'' ?> value="<?= h($value) ?>"><?= $desc ?></option>
  <?php } ?>
  </select>
 <?php } else { /* just use a generic text input element */ ?>
- <input type="text" name="<?php echo $p['name']; ?>" id="<?php echo $p['name']; ?>" value="<?php echo $params[$p['name']]; ?>"/>
+ <?php if( arr_get('type',$spec) == 'date' ) { ?>
+ <input type="text" name="<?= $spec['name']; ?>" id="<?= $spec['name'] ?>" value="<?= $params[$spec['name']]->format('Y-m-d') ?>"/>
+ <?php } else { ?>
+ <input type="text" name="<?= $spec['name']; ?>" id="<?= $spec['name'] ?>" value="<?= h($params[$spec['name']]); ?>"/>
+ <?php } ?>
 <?php } ?>
 <br />
 <?php } ?>
@@ -548,7 +582,7 @@ class MostIndepthJournos extends CannedQuery {
 
         $sql = <<<EOT
 SELECT a.wordcount,a.id,a.title,a.srcorg,a.pubdate,a.permalink,j.prettyname, j.ref
-    FROM article a LEFT JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
+    FROM article a INNER JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
     ORDER BY a.wordcount DESC
     LIMIT 100
@@ -578,9 +612,9 @@ class TopTags extends CannedQuery {
     function perform($params) {
 
         $sql = <<<EOT
-SELECT t.tag, sum(t.freq) as tag_total
+SELECT t.tag, sum(t.freq) as tag_total, count(*) as num_articles
     FROM article a INNER JOIN article_tag t ON a.id=t.article_id
-    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
+    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') AND t.kind=' '
     GROUP BY tag
     ORDER BY tag_total DESC
     LIMIT 100
@@ -592,5 +626,242 @@ EOT;
     }
 }
 
+
+
+class QueryFight extends CannedQuery {
+    function __construct() {
+        $this->name = "QueryFight";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Compare fulltext queries side-by-side over time";
+
+        $this->param_spec = array(
+            array( 'name'=>'q1', 'label'=>'Query one', 'default'=>'' ),
+            array( 'name'=>'q2', 'label'=>'Query two', 'default'=>'' ),
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function q_count( $q ) {
+        $n = 0;
+        $batchsize = 1000;
+
+        $xap = new XapSearch();
+        $xap->set_query( $q );
+        while(1) {
+            $rows = $xap->run($n,$batchsize,'relevance');
+            $n += sizeof( $rows );
+            if( sizeof( $rows ) < $batchsize )
+                break;
+        }
+
+        return $n;
+    }
+
+
+    function perform($params) {
+        $q1 = $params['q1'];
+        $q2 = $params['q2'];
+
+        if( $q1 && $q2 ) {
+            $q1 = $params['q1'];
+            $q2 = $params['q2'];
+            if( $params['from_date'] || $params['to_date'] ) {
+                $from = date_create( $params['from_date'])->format('Ymd');
+                $to = date_create( $params['to_date'])->format('Ymd');
+                $range = " $from..$to";
+                $q1 .= $range;
+                $q2 .= $range;
+            }
+?>
+<pre>
+q1: [<?= $q1 ?>]
+q2: [<?= $q2 ?>]
+</pre>
+<?php
+
+            $result = array();
+            $n1 = $this->q_count( $q1 );
+            $result[ "q1: {$params['q1']}" ] = $n1;
+            $n2 = $this->q_count( $q2 );
+            $result[ "q2: {$params['q2']}" ] = $n2;
+
+            Tabulate( array( $result ) );
+        }
+    }
+}
+
+
+class WhosWritingAbout extends CannedQuery {
+    function __construct() {
+        $this->name = "WhosWritingAbout";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List journos writing about a certain topic";
+
+        $this->param_spec = array(
+            array( 'name'=>'q', 'label'=>'Topic', 'default'=>'' ),
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') ),
+            array( 'name'=>'orderby',
+                'label'=>'Order by',
+                'options'=>array( 'articles'=>'articles', 'wordcount'=>'wordcount'),
+                'default'=>'articles' ),
+        );
+    }
+
+
+    function perform($params) {
+        $from = date_create( $params['from_date'])->format('Ymd');
+        $to = date_create( $params['to_date'])->format('Ymd');
+        $range = " $from..$to";
+
+        if( $params['q'] ) {
+            $q = $params['q'] . $range;
+
+
+            $xap = new XapSearch();
+            $xap->set_query( $q );
+            $rows = $xap->run(0,999999,'date');
+
+            /* collect journos */
+            $journos = array();
+            foreach( $rows as $r ) {
+                foreach( $r['journos'] as $j ) {
+                    $journo_id = $j['id'];
+                    if( array_key_exists( $journo_id, $journos ) ) {
+                        $journos[$journo_id]['articles'] += 1;
+                        $wc = db_getOne( "SELECT wordcount FROM article WHERE id=?", $r['id'] );
+                        $journos[$journo_id]['wordcount'] += $wc;
+                    } else {
+                        $j['articles'] = 1;
+                        $wc = db_getOne( "SELECT wordcount FROM article WHERE id=?", $r['id'] );
+                        $j['wordcount'] = $wc;
+                        $journos[ $journo_id ] = $j;
+                    }
+                }
+            }
+
+            /* format */
+            $results = array();
+            foreach( $journos as $j ) {
+
+                $search_url = "/search?type=article&by=" . $j['ref'] . "&q=" . urlencode( $q );
+
+                $j['extralinks'] = array(
+                    array('href'=>$search_url, 'text'=>'show articles')
+                );
+                $results[] = array( 'journo'=>$j,
+                    'articles'=>$j['articles'],
+                    'wordcount'=>$j['wordcount'] );
+            }
+
+            if( $params['orderby'] == 'wordcount' ) {
+                uasort($results, 'cmp_word_count');
+            } else {
+                uasort($results, 'cmp_article_count');
+            }
+
+            Tabulate( $results );
+        }
+    }
+}
+
+
+function cmp_article_count( $a, $b ) {
+    if( $a['articles'] == $b['articles'] )
+        return 0;
+    if( $a['articles'] < $b['articles'] )
+        return 1;
+    else
+        return -1;
+}
+
+function cmp_word_count( $a, $b ) {
+    if( $a['wordcount'] == $b['wordcount'] )
+        return 0;
+    if( $a['wordcount'] < $b['wordcount'] )
+        return 1;
+    else
+        return -1;
+}
+
+
+class NewsletterSubscribers extends CannedQuery {
+    function __construct() {
+        $this->name = "NewsletterSubscribers";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List of users subscribed to the newsletter";
+
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT p.name,p.email
+    FROM person_receives_newsletter n INNER JOIN person p ON p.id=n.person_id
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+# select j.ref,e.* from event_log e INNER join journo j on j.id=e.journo_id where event_time > now() - interval '1 day';
+
+class EventLog extends CannedQuery {
+    function __construct() {
+        $this->name = "EventLog";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Recent events (journo profile modifications, etc)";
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'type'=>'date', 'default'=>'1 week ago' ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'type'=>'date', 'default'=>'today' )
+        );
+    }
+
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT e.event_type,e.event_time,e.context_json,j.ref,j.prettyname,j.oneliner
+    FROM event_log e INNER join journo j on j.id=e.journo_id
+    WHERE e.event_time >= date ? AND e.event_time < (date ? + interval '24 hours')
+    ORDER BY e.event_time DESC
+EOT;
+        $rows = db_getAll( $sql, $params['from_date']->format('Y-m-d'), $params['to_date']->format('Y-m-d') );
+        foreach( $rows as &$r ) {
+            $r['description'] = $r['event_type'] . ' ("' . eventlog_Describe( $r ) . '")';
+            unset( $r['event_type'] );
+            unset( $r['context'] );
+            unset( $r['context_json'] );
+
+            $r['event_time'] = date_create( $r['event_time'] )->format( 'Y-m-d h:i:s' );
+        }
+
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+class RegisteredJournos extends CannedQuery {
+    function __construct() {
+        $this->name = "RegisteredJournos";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "List journo pages which have been claimed";
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner, p.email, p.name FROM (person p INNER JOIN person_permission perm ON perm.person_id=p.id) INNER JOIN journo j ON j.id=perm.journo_id WHERE perm.permission='edit';
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
 
 ?>

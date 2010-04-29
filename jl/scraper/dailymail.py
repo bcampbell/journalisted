@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License

@@ -80,7 +80,7 @@ function DoIt()
 				print "sending.\n";
 			if( !jl_send_html_email( $person->email(), $from_name, $from_email, $subject, $msg ) )
 			{
-				fprintf( STDERR, "send failed for {$email}\n" );
+				fprintf( STDERR, "send failed for {$person->email()}\n" );
 			}
 		}
 	}

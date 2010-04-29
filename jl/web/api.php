@@ -86,7 +86,7 @@ function api_documentation_front($method, $explorer) {
 
     $api_url = OPTION_BASE_URL . '/api/' . $method;
 ?>
-<div id="maincolumn">
+<div class="main">
 <h2>Journa<i>listed</i> API - <code><?php echo $method; ?></code></h2>
 
 <code><?php echo $api_url; ?></code>
@@ -133,23 +133,23 @@ Output:
         print '<pre>' . htmlspecialchars($explorer) . '</pre>';
     }
 ?>
-</div>
-<div id="smallcolumn">
+</div>  <!-- end main -->
+<div class="sidebar">
 <?php
-    $sidebar = api_sidebar();
-    print $sidebar['content'];
+    api_sidebar();
 ?>
-</div>
+</div> <!-- end sidebar -->
 <?php
-    $sidebar = api_sidebar();
     page_footer();
 }
+
+
 
 function api_front_page($error = '') {
     global $methods;
     page_header('API');
 ?>
-<div id="maincolumn">
+<div class="main">
 <h2>Journa<i>listed</i> API - Overview</h2>
 
 <p>All requests take a number of parameters. <em>output</em> is optional, and defaults to <kbd>js</kbd>.</p>
@@ -185,50 +185,35 @@ If there's an error, either in the arguments provided or in trying to perform th
 
 
 </div>
-<div id="smallcolumn">
+<div class="sidebar">
 <?php
-    $sidebar = api_sidebar();
-    print $sidebar['content'];
+    api_sidebar();
 ?>
 </div>
 <?php
     page_footer();
 }
 
+
 function api_sidebar() {
     global $methods;
-    $sidebar = '<div class="box"><h3>API Functions</h3> <div class="box-content">';
-    $sidebar .= '<ul>';
-    $sidebar .= '<li><a href="/api">Overview</a></li>';
-    foreach ($methods as $method => $data){
-        $sidebar .= '<li';
-        if (isset($data['new']))
-            $sidebar .= ' style="border-top: solid 1px #999999;"';
-        $sidebar .= '>';
-        if (!isset($data['working']) || $data['working'])
-            $sidebar .= '<a href="/api/docs/' . $method . '">';
-        $sidebar .= $method;
-        if (!isset($data['working']) || $data['working'])
-            $sidebar .= '</a>';
-        else
-            $sidebar .= ' - <em>not written yet</em>';
-        #       if ($data['required'])
-        #           $sidebar .= ' (parameter required)';
-        #       else
-        #           $sidebar .= ' (parameter optional)';
-        $sidebar .= '<br>' . $data['help'];
-        #       $sidebar .= '<ul>';
-        #       foreach ($data['parameters'] as $parameter) {
-            #           $sidebar .= '<li>' . $parameter . '</li>';
-            #       }
-            #       $sidebar .= '</ul>';
-        $sidebar .= '</li>';
-    }
-    $sidebar .= '</ul></div></div>';
-    $sidebar = array(
-        'type' => 'html',
-        'content' => $sidebar
-    );
-    return $sidebar;
+?>
+<div class="box">
+<div class="head"><h3>API Functions</h3></div>
+<div class="body">
+  <ul>
+    <li><a href="/api">Overview</a></li>
+<?php foreach ($methods as $method => $data) { ?>
+<?php /*        if (!isset($data['working']) || $data['working']) */ ?>
+    <li><a href="/api/docs/<?= h($method) ?>"><?= h($method) ?></a><br/><?= h($data['help']) ?></li>
+<?php } ?>
+  </ul>
+</div>
+<div class="foot"></div>
+</div>
+<?php
+
 }
+
+
 ?>

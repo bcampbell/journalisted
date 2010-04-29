@@ -80,6 +80,10 @@ function faq_end() {
 
 
 ?>
+<div class="main">
+<div class="head"></div>
+<div class="body">
+
 <h2>Frequently Asked Questions</h2>
 
 <?php faq_begin("Who runs Journa<i>listed</i>?"); ?>
@@ -116,7 +120,7 @@ function faq_end() {
 
 <?php faq_begin("Why doesn’t Journa<i>listed</i> cover more news outlets?"); ?>
 <p>We would certainly like to cover more outlets, but to do so we would need more money (more technical costs, more administration costs). So until we get a little more funding, we have to stick with what we’ve got.</p>
-<p>Please consider making a <a href="/donate">donation</a>.</p>
+<p>Please consider making a <a href="http://www.justgiving.com/mediastandardstrust">donation</a>.</p>
 <?php faq_end(); ?>
 
 <?php faq_begin("What time period does Journa<i>listed</i> cover?"); ?>
@@ -195,7 +199,9 @@ takes a column inch to be 30 words.</p>
 <?php faq_begin("Can I send out a press release via your site to journalists?"); ?>
 <p>No. The site is meant to make it easier for the public to navigate the news – not as a PR tool</p>
 <?php faq_end(); ?>
-
+</div>
+<div class="foot"></div>
+</div> <!-- end main -->
 <?php
 
 page_footer();

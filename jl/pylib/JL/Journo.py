@@ -4,10 +4,11 @@ import csv
 import os
 import unicodedata
 import difflib
-import Misc
 
 from datetime import datetime
 
+import Misc
+import metaphone
 
 class FindJournoException(Exception):
     '''Base for exceptions raised by FindJourno logic.'''
@@ -600,6 +601,12 @@ def CreateNewJourno( conn, rawname ):
         firstname = parts[0]
         lastname = parts[-1]
 
+
+    # get metaphone versions of names (as calculated by php metaphone())
+    # 4 chars seems like the magic length for fuzzy matching.
+    firstname_metaphone = metaphone.php_metaphone( firstname )[:4]
+    lastname_metaphone = metaphone.php_metaphone( lastname )[:4]
+
     ref = GenerateUniqueRef( conn, prettyname )
 
     #print("CreateNewJourno: ",rawname," = ",prettyname," = ",ref);
@@ -608,13 +615,15 @@ def CreateNewJourno( conn, rawname ):
     q = conn.cursor()
     q.execute( "select nextval('journo_id_seq')" )
     (journo_id,) = q.fetchone()
-    q.execute( "INSERT INTO journo (id,ref,prettyname,lastname,"
-            "firstname,created) VALUES (%s,%s,%s,%s,%s,now())",
+    q.execute( "INSERT INTO journo (id,ref,prettyname,firstname,lastname,firstname_metaphone,lastname_metaphone,"
+            "created) VALUES (%s,%s,%s,%s,%s,%s,%s,now())",
             ( journo_id,
             ref.encode('utf-8'),
             prettyname.encode('utf-8'),
+            firstname.encode('utf-8'),
             lastname.encode('utf-8'),
-            firstname.encode('utf-8') ) )
+            firstname_metaphone,
+            lastname_metaphone ) )
 #gtb    q.execute( "INSERT INTO journo_alias (journo_id,alias) VALUES (%s,%s)",
 #           journo_id,
 #           alias.encode('utf-8') )
@@ -708,6 +717,9 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
     """
 
     rawname = rawname.lower()
+    if rawname == "kelly rose bradford":
+        # normal journo lookup strips "bradford" off as a placename.
+        return GetJournoIdFromRef( conn, 'kelly-rose-bradford' )
 
     if rawname == "paul evans":
         # guardian has two Paul Evans'

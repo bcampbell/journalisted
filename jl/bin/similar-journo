@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # Tool to discover journos who write about similar things
 # Uses the xapian database to find matches, and puts results in the journo_similar table in the postgres db

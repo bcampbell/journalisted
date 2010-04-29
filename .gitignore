@@ -1,4 +1,6 @@
 *.pyc
 *.swp
 jl/conf/general
-jl/web/.htaccess
+jl/conf/recaptcha.ini
+jl/conf/ft.conf
+
