@@ -233,11 +233,13 @@ function EmitPreview( $params )
  */
 function journoCreate( &$j )
 {
-	db_do( "INSERT INTO journo (ref,prettyname,lastname,firstname,status,created) VALUES (?,?,?,?,?,NOW())",
+	db_do( "INSERT INTO journo (ref,prettyname,firstname,lastname,firstname_metaphone,lastname_metaphone,status,created) VALUES (?,?,?,?,?,?,?,NOW())",
 		$j['ref'],
 		$j['prettyname'],
-		$j['lastname'],
 		$j['firstname'],
+		$j['lastname'],
+		metaphone($j['firstname'],4),
+        metaphone($j['lastname'],4),
 		$j['status'] );
 	$j['id'] = db_getOne( "SELECT currval( 'journo_id_seq' )" );
 
