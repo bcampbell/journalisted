@@ -389,45 +389,6 @@ function glue_url($parsed) {
 }
 
 
-/* param processing for search forms
- * (shared by site header, and also on various pages)
- */
-function search_getParams()
-{
-	static $s=null;
-	if( $s )
-		return $s;
-    
-    $s = array();
-    $art_q = get_http_var( 'a' );
-    $journo_q = get_http_var( 'j' );
-    if( $art_q ) {
-        $s['type'] = 'article';
-        $s['q'] = $art_q;
-    } else if( $journo_q ) {
-        $s['type'] = 'journo';
-        $s['q'] = $journo_q;
-    } else {
-        // need this one to handle search forms with dropdown to select type of query
-        $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
-        $s['q'] = get_http_var( 'q', '' );
-    }
-    $s['num'] = (int)get_http_var('num', 20 );
-    $s['start'] = (int)get_http_var('start', '0' );
-    if( $s['type'] == 'article' ) {
-        $s['sort_order'] = get_http_var( 'o', 'date' );
-    }
-
-    $s['by'] = get_http_var( 'by' );    // a journo ref
-    $s['q_original'] = '';
-    if( $s['by'] ) {
-        $s['q_original'] = $s['q'];
-        $s['q'] .= " author:" . $s['by'];
-    }
-    return $s;
-}
-
-
 
 // prepare an article for display by adding a few derived fields...
 function article_Augment( &$a )
