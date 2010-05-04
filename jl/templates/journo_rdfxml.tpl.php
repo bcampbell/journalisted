@@ -15,8 +15,8 @@
   <foaf:Person>
 
     <foaf:name><?= x($prettyname) ?></foaf:name>
-    <foaf:givenname><?= x($firstname) ?></foaf:givenname>
-    <foaf:family_name><?= x($lastname) ?></foaf:family_name>
+    <foaf:givenName><?= x($firstname) ?></foaf:givenName>
+    <foaf:familyName><?= x($lastname) ?></foaf:familyName>
 <?php if( $known_email ) { ?>
     <foaf:mbox rdf:resource="mailto:<?= x($known_email['email']) ?>"/>
 <?php } ?>
@@ -44,7 +44,7 @@
         <doac:position>Freelance</doac:position>
 <?php } else { /* kind=='e' */ ?>
     <?php if( $e['employer'] ) { ?>
-        <foaf:organization><?= $e['employer'] ?></foaf:organization>
+        <foaf:name><?= $e['employer'] ?></foaf:name>
     <?php } ?>
     <?php if( $e['job_title'] ) { ?>
         <doac:title><?= $e['job_title'] ?></doac:title>
@@ -67,7 +67,7 @@
     <doac:education>
       <doac:Education rdf:about="#edu<?= $i ?>">
 <?php if( $e['school'] ) { ?>
-        <foaf:organization><?= $e['school'] ?></foaf:organization>
+        <foaf:name><?= $e['school'] ?></foaf:name>
 <?php } ?>
 <?php if( $e['year_from'] ) { ?>
         <doac:date_starts><?= $e['year_from']; ?></doac:date_starts>
