@@ -176,3 +176,21 @@ status (character(1))
 
 
 
+person_permission table
+-----------------------
+
+id (integer)
+    unique row id
+person_id (integer, not null)
+    foreign key into person table
+journo_id
+    foreign key into journo table, or NULL
+    the specific journo on which this permission is granted, if any
+permission (text, not null)
+    'edit' - user can edit specified journos profile
+    'claimed' - user has claimed editing rights on journo, but not yet approved
+    'deny' - claim was denied on journo
+    'admin' - godlike do-anything status :-)
+reated
+    timestamp for when this permission was created
+
