@@ -60,6 +60,19 @@ class EditProfilePage
     }
 
 
+    // return true if logged-in user can edit this journo
+    function check_edit_rights() {
+        $sql = <<<EOT
+SELECT id FROM person_permission
+    WHERE person_id=? AND (
+        (journo_id=? AND permission='edit') OR (permission='admin')
+    )
+EOT;
+        $foo = db_getOne( $sql, $this->P->id(), $this->journo['id'] );
+        return ($foo !== NULL);
+    }
+
+
     function run_ajax() {
         header( "Cache-Control: no-cache" );
         header('Content-type: application/json');
@@ -81,8 +94,7 @@ class EditProfilePage
         }
 
         // is this person allowed to edit this journo?
-        if( !db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
-            $this->P->id(), $this->journo['id'] ) ) {
+        if( !$this->check_edit_rights() ) {
             $result = array( 'success'=>FALSE,
                 'errmsg'=>"Not allowed" );
             print json_encode( $result );
@@ -137,8 +149,7 @@ class EditProfilePage
         }
 
         // is this person allowed to edit this journo?
-        if( !db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
-            $this->P->id(), $this->journo['id'] ) ) {
+        if( !$this->check_edit_rights() ) {
             page_header( $this->pageTitle, $this->pageParams );
             print( "<p>Not allowed.</p>\n" );
             page_footer();
