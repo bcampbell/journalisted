@@ -5,6 +5,10 @@ chdir( dirname(dirname(__FILE__)) );
 require_once '../conf/general';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
+require_once '../phplib/adm.php';
+
+if( !admCheckAccess() )
+    exit;   // should return error code?
 
 header("Cache-Control: no-cache");
 

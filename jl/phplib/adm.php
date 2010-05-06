@@ -4,15 +4,44 @@
 
 // Error display
 require_once "../../phplib/error.php";
+require_once "../../phplib/person.php";
 function admin_display_error($num, $message, $file, $line, $context) {
     print "<p><strong>$message</strong> in $file:$line</p>";
 }
 err_set_handler_display('admin_display_error');
 
 
+function admCheckAccess()
+{
+    $P = person_if_signed_on();
+    if( !is_null( $P ) ) {
+        // check for admin permission
+        $perm = db_getOne( "SELECT id FROM person_permission WHERE permission='admin' AND person_id=?", $P->id() );
+        if( !is_null( $perm ) ) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+// only returns if logged-in user has admin access
+function admEnforceAccess()
+{
+    if( !admCheckAccess() ) {
+        // no access. stop right now.
+
+        // should print error message, but hey. let's just dump back to homepage
+        header( "Location: /" ); 
+        exit;
+    }
+}
+
 
 function admPageHeader( $title = '', $extra_head_fn=null )
 {
+    admEnforceAccess();
+
 	header( 'Content-Type: text/html; charset=utf-8' );
 
 ?>

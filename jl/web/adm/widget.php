@@ -8,10 +8,14 @@ chdir( dirname(dirname(__FILE__)) );
 
 require_once '../conf/general';
 require_once '../../phplib/utility.php';
+require_once '../phplib/adm.php';
 
 require_once 'missingarticle_widget.php';
 require_once 'otherarticle_widget.php';
 require_once 'weblink_widget.php';
+
+if( !admCheckAccess() )
+    exit;   // should return error code?
 
 header("Cache-Control: no-cache");
 
