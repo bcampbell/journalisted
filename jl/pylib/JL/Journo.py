@@ -604,8 +604,9 @@ def CreateNewJourno( conn, rawname ):
 
     # get metaphone versions of names (as calculated by php metaphone())
     # 4 chars seems like the magic length for fuzzy matching.
-    firstname_metaphone = metaphone.php_metaphone( firstname )[:4]
-    lastname_metaphone = metaphone.php_metaphone( lastname )[:4]
+    # (utf-8 encoding a little silly, but consistent assumptions on the web side of things)
+    firstname_metaphone = metaphone.php_metaphone( firstname.encode('utf-8') )[:4]
+    lastname_metaphone = metaphone.php_metaphone( lastname.encode('utf-8') )[:4]
 
     ref = GenerateUniqueRef( conn, prettyname )
 
