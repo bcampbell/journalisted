@@ -4,8 +4,6 @@
 # Licensed under the Affero General Public License
 # (http://www.affero.org/oagpl.html)
 #
-# TODO:
-# - extract better srcids, instead of using whole url
 #
 
 import re
@@ -21,14 +19,11 @@ from JL import ukmedia, ScraperUtils
 
 # NOTES:
 #
-# The Times website seems a little crap and stalls regularly, so
-# we timeout. Should handle it a bit more gracefully...
-#
-# The Times RSS feeds used to be a bit rubbish,  but have improved.
-#
 # Also scrape links from the html pages. The Times has a page for
 # each days edition which contains links to all the headlines for that day.
-# That's what we want. But it doesn't cover online-only articles
+# That's what we want. But it doesn't cover online-only articles.
+# RSS feeds used to be rubbish, but now seem OK... maybe we can drop the
+# html issue-crawling now...
 
 
 # lots of links on the page which we don't want, so we'll
@@ -147,6 +142,8 @@ def ScrubFunc( context, entry ):
         # Luckily the guid has proper link, marked as non-permalink
         url = entry.guid
 
+    url = re.sub( '#cid=OTC-RSS&attr=[0-9]+', '', url )
+
     context[ 'srcid' ] = CalcSrcID( url )
     context[ 'srcurl' ] = url
     context[ 'permalink'] = url
@@ -201,9 +198,9 @@ def FindArticles():
 
         # Which newspaper?
         if re.search( "/?days=Sunday$", url ):
-            srcorgname = "sundaytimes"
+            srcorgname = u"sundaytimes"
         else:
-            srcorgname = "times"
+            srcorgname = u"times"
         ukmedia.DBUG2( "** PAPER: " + srcorgname + "\n" )
 
         # go through by section
@@ -308,22 +305,32 @@ def Extract_escenic( html, context ):
     html = CleanHtml(html)
     soup = BeautifulSoup.BeautifulSoup( html )
 
-    h1 = soup.find( 'h1', {'class':'heading'} )
+    bodydiv = soup.find( 'div', {'id':'region-body'} )
+
+    # assume times by default
+    if 'srcorgname' not in art:
+        art['srcorgname'] = u'times';
+
+    h1 = bodydiv.find( 'h1', {'class':'heading'} )
     art['title'] = h1.renderContents(None).strip()
     art['title'] = ukmedia.DescapeHTML( ukmedia.StripHTML( art['title'] ) )
 
-    byline = u''
+    authors = []
     # times stuffs up bylines for obituaries (used for date span instead)
     if art['srcurl'].find( '/obituaries/' ) == -1:
-        authdiv = soup.find( 'div', {'class':'article-author'} )
-        if authdiv:
-            bylinespan = authdiv.find( 'span', { 'class': 'byline' } )
-            if bylinespan:
-                byline = bylinespan.renderContents( None )
-                byline = ukmedia.StripHTML( byline )
-                byline = ukmedia.DescapeHTML( byline )
-                byline = u' '.join( byline.split() )
-    art['byline'] = byline
+        # TODO: "byline" class is used by both the publication and the actual byline.
+        # should use position on page to determine, rather than just text matching
+        # before headline => publication, after headline => byline
+        for bylinespan in bodydiv.findAll( 'span', { 'class': 'byline' } ):
+            byline = ukmedia.FromHTMLOneLine( bylinespan.renderContents( None ) )
+            if byline in( u'The Sunday Times' ):
+                art['srcorgname'] = 'sundaytimes';
+            elif byline in ( u'Times Online', u'The Times', u'The Times Literary Supplement' ):
+                art['srcorgname'] = 'times';
+            else:   # it's a real byline!
+                authors.append( byline )
+
+    art['byline'] = u' and '.join( authors )
 
 
     # extract images
@@ -368,7 +375,7 @@ def Extract_escenic( html, context ):
     art['commentlinks'] = []
 
     num_comments = None
-    comment_form_div = soup.find( 'div', {'id':"comments-form"} )
+    comment_form_div = bodydiv.find( 'div', {'id':"comments-form"} )
     if comment_form_div is not None:
         # this page supports comments, but none have yet been posted
         num_comments = 0
@@ -542,10 +549,11 @@ def MergeFeedLists( feedlists ):
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
     context = {}
+    url = re.sub( '#cid=OTC-RSS&attr=[0-9]+', '', url )
     context['srcurl'] = url
     context['permalink'] = url
     context['srcid'] = CalcSrcID( url )
-    context['srcorgname'] = u'times'    # TODO: or sundaytimes!
+#    context['srcorgname'] = u'times'    # TODO: or sundaytimes!
     context['lastseen'] = datetime.now()
     return context
 
