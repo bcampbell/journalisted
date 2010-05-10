@@ -94,7 +94,7 @@ EOT;
     }
 
     // recent newsletters
-    $news = news_RecentNewsletters(5);
+    $news = news_RecentNews(5);
 
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 

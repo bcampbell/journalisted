@@ -404,10 +404,10 @@ function article_Augment( &$a )
 }
 
 
-function news_RecentNewsletters( $limit=5 )
+function news_RecentNews( $limit=5 )
 {
     // recent newsletters
-    $news = db_getAll( "SELECT id,slug,title,posted,date_from,date_to FROM news WHERE status='a' AND kind='newsletter' ORDER BY date_from DESC LIMIT 5" );
+    $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY date_from DESC LIMIT ?", $limit );
     foreach( $news as &$n ) {
         news_AugmentItem($n);
     }

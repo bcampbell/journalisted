@@ -25,15 +25,7 @@ $prettydate = pretty_date(strtotime($post['posted']));
 
 page_header( $post['title'] );
 
-if( $post['kind'] == 'newsletter' ) {
-    $news = news_RecentNewsletters( 10 );
-} else {
-    $news = db_getAll( "SELECT id,slug,title,posted,kind,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC LIMIT 50" );
-    foreach( $news as &$n ) {
-        news_AugmentItem( $n );
-    }
-    unset( $n );
-}
+$news = news_RecentNews( 10 );
 
 
 ?>
@@ -58,19 +50,21 @@ if( $post['kind'] == 'newsletter' ) {
 
 <div class="sidebar">
 
-
-<?php if( $post['kind'] == 'newsletter' ) { ?>
-
 <div class="box">
  <div class="head"><h3>Archive</h3></div>
  <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
-  <?php if( $n['slug']==$post['slug'] ) { ?>
-  <li><em><?= $n['title'] ?></em><br/><small>(week ending <?= $n['pretty_to'] ?>)</small></li>
-  <?php } else { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/><small>(week ending <?= $n['pretty_to'] ?>)</small></li>
-  <?php } ?>
+  <li>
+<?php if( $n['slug']==$post['slug'] ) { ?>
+    <em><?= $n['title'] ?></em><br/>
+<?php } else { ?>
+    <a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/>
+<?php } ?>
+<?php if( $n['kind']=='newsletter' ) { ?>
+    <small>(week ending <?= $n['pretty_to'] ?>)</small>
+<?php } ?>
+  </li>
 <?php } ?>
  </ul>
  </div>
@@ -86,22 +80,6 @@ if( $post['kind'] == 'newsletter' ) {
   <div class="foot"></div>
 </div>
 
-<?php } else { ?>
-
-<div class="box">
- <div class="head"><h3>Site News</h3></div>
- <div class="body">
- <ul>
-<?php foreach( $news as $n ) { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a><br/>
-    <small><?= $n['prettydate'] ?></small></li>
-<?php } ?>
- </ul>
- </div>
-<div class="foot"></div>
-</div>
-
-<?php } ?>
 
 <div class="box actions">
  <div class="head"><h3>Also on journa<i>listed</i>...</h3></div>

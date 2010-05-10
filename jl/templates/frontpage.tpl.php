@@ -80,7 +80,12 @@
 <div class="body">
  <ul>
 <?php foreach( $news as $n ) { ?>
-  <li><a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a> <small>(for week ending <?= $n['pretty_to'] ?>)</small></li>
+  <li>
+    <a href="/news/<?= $n['slug'] ?>"><?= $n['title'] ?></a>
+<?php if( $n['kind']=='newsletter') { ?>
+      <small>(for week ending <?= $n['pretty_to'] ?>)</small>
+<?php } ?>
+  </li>
 <?php } ?>
  </ul>
 </div>
