@@ -26,6 +26,8 @@ from BeautifulSoup import BeautifulSoup, Comment
 from JL import ukmedia, ScraperUtils
 
 
+
+
 # bbc blog feedlist automatically scraped by ./bbcblogs-scrape-rsslist.py
 # (run 2009-02-16 12:03:24)
 # got 95 feeds
@@ -350,11 +352,16 @@ def Extract( html, context ):
     if 'bbc.co.uk/blogs' in context['srcurl']:
         return Extract_blog( html, context )
     else:
-        # NOTE: hi-graphics extract version needs work to handle
-        # embedded video - at the moment these pages confuse it and
-        # cause it to fail (and lots of pages have embedded video now)
-        raise Exception( 'poo' )
-#        return Extract_hi( html, context )
+        if '<div id="mediaAsset"' in html:
+            ukmedia.DBUG2( "IGNORE media-only page ( %s )\n" %( context['srcurl'] ) )
+            return None
+
+
+        if 'table class="storycontent"' in html:
+            # old style
+            return Extract_hi( html, context )
+        else:
+            return Extract_tableless( html, context )
 
 def Extract_low( html, context ):
     """parse html of a low-graphics page"""
@@ -427,6 +434,128 @@ def Extract_low( html, context ):
 
 
 def Extract_hi( html, context ):
+
+    art = context
+    soup = BeautifulSoup( html )
+
+    story_table = soup.find( 'table', {'class':'storycontent' } )
+    h1 = story_table.find('h1')
+    if h1 is None:
+        # sigh... special case for "earth news" section (and others?)
+        h1 = story_table.find('div', {'class':'sh'} )
+        if h1 is None:  # special special case... bloody hell.
+            h1 = soup.find('div', {'class':'sh'} )
+
+    art['title'] = ukmedia.FromHTMLOneLine( h1.renderContents(None) )
+
+    # get pubdate from meta tag
+    date_meta = soup.find( 'meta', { 'name': 'OriginalPublicationDate' } )
+    if date_meta:
+        art['pubdate'] = ukmedia.ParseDateTime( date_meta['content'] )
+
+    bod = story_table.find( 'td', {'class':'storybody'} )
+
+    byline_parts = []
+    # TODO: could also use byline description in "span .byd"
+    for byl in bod.findAll( 'span', {'class':'byl'} ):
+        byline_parts.append( ukmedia.FromHTMLOneLine( byl.renderContents( None ) ) );
+    art['byline'] = u' and '.join( byline_parts )
+
+    # images
+    art['images'] = []
+    for img in bod.findAll( 'img' ):
+        d = img.findNextSiblings( limit=1 )
+        if d:
+            if d[0].name=='div' and d[0]['class']=='cap':
+                caption_div = d[0]
+                img_caption = ukmedia.FromHTMLOneLine( caption_div.renderContents(None) )
+                img_credit = u''
+                img_url = img['src']
+                art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
+
+                caption_div.extract()
+        img.extract()
+
+    for cruft in bod.findAll('div', {'id':'socialBookMarks'} ):
+        cruft.extract()
+    for cruft in bod.findAll('script' ):
+        cruft.extract()
+    for cruft in bod.findAll('table' ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'class':('mvtb','mvb')} ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'class':re.compile('^video') } ):
+        cruft.extract()
+
+    art['content'] = bod.renderContents(None)
+    art['description'] = ukmedia.FirstPara( art['content'] );
+
+#    print art['content'].encode( 'utf-8' )
+
+#    print 80*'-'
+#    for f in ('title','byline','pubdate' ):
+#        print art[f]
+
+    return art
+
+
+
+def Extract_tableless( html, context ):
+    # new(?) format, tableless, some linked data appearing?...
+    # eg /1/hi/technology/10102126.stm
+    #
+
+    art = context
+    soup = BeautifulSoup( html )
+
+    # get pubdate from meta tag
+    date_meta = soup.find( 'meta', { 'name': 'OriginalPublicationDate' } )
+    if date_meta:
+        art['pubdate'] = ukmedia.ParseDateTime( date_meta['content'] )
+
+    # headline
+    meta_div = soup.find('div',{'id':'meta-information'})
+    art['title'] = ukmedia.FromHTMLOneLine( meta_div.h1.renderContents(None) )
+
+
+    bod = soup.find('div',{'id':'story-body'})
+
+    authors = []
+    byline = bod.find('span',{'class':'byline'})
+    if byline:
+        for author in byline.findAll('span',{'class':'author-name'}):
+            authors.append( ukmedia.FromHTMLOneLine( author.renderContents(None) ) )
+        #TODO: could also use "span.author-position" info
+        byline.extract()
+    art['byline'] = u' and '.join(authors)
+
+
+    # images
+    art['images'] = []
+    for cap in bod.findAll('span',{'class':'caption'}):
+        if cap.img:
+            img_url = cap.img['src']
+            cap.img.extract()
+            img_caption = ukmedia.FromHTMLOneLine( cap.renderContents(None) )
+            img_credit = u''
+            art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
+        cap.extract()
+
+    for cruft in bod.findAll( 'div', {'class':re.compile('^video') } ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'class':'story-feature' } ):
+        cruft.extract()
+
+    art['content'] = bod.renderContents(None)
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    return art
+
+
+
+
+
+def OLDExtract_hi( html, context ):
     """Parse the html of a single article (in hi-graphics form)
 
     html -- the article html
@@ -627,20 +756,23 @@ def Extract_blog( html, context ):
 
 def ScrubFunc( context, entry ):
     """ per-article callback for processing RSS feeds """
+
+    url = context['srcurl']
+    # BBC has special rss versions which redirect to real article...
+    if '/rss/' in url:
+        # ...luckily the guid has proper link (marked as non-permalink)
+        url = entry.guid
+
     # a story can have multiple paths (eg uk vs international version)
-    srcid = CalcSrcID( context['srcurl'] )
+    srcid = CalcSrcID( url )
     if not srcid:
         return None # suppress it
 
-    if '/in_pictures/' in context['srcurl']:
+    if '/in_pictures/' in url:
         return None
 
     context['srcid'] = srcid
-
-    o = urlparse.urlparse(context['srcurl'])
-    if o[1] == 'news.bbc.co.uk':
-        # news page: scrape the low-graphics version
-        context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
+    context['srcurl'] = url
 
     return context
 
@@ -663,7 +795,7 @@ def ContextFromURL( url ):
     # scrape the low-graphics version of the page
     # NOTE: a few pages give 404 errors for their low-graphics counterpart...
     # I _think_ these are video pages (only text is a small caption)
-    context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
+#    context['srcurl'] = re.sub( '/hi/', '/low/', context['srcurl'] )
     context['srcid'] = CalcSrcID( url )
     context['srcorgname'] = u'bbcnews'
     context['lastseen'] = datetime.now()
