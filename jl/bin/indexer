@@ -253,27 +253,31 @@ def PerformIndexing( xapdb,  options ):
         if not row:
             break
 
+        try:
+            art = {}
+            # decode all the fields that need to be in unicode
+            for f in ( 'title', 'content', 'byline', 'description' ):
+                art[f] = row[f].decode( 'utf-8' )
+            # ones we can just copy without any processing
+            for f in ( 'id','status','srcorg', 'pubdate','permalink' ):
+                art[f] = row[f]
 
-        art = {}
-        # decode all the fields that need to be in unicode
-        for f in ( 'title', 'content', 'byline', 'description' ):
-            art[f] = row[f].decode( 'utf-8' )
-        # ones we can just copy without any processing
-        for f in ( 'id','status','srcorg', 'pubdate','permalink' ):
-            art[f] = row[f]
+            if art['status'] == 'a':
+                art['journos'] = FetchJournos( conn, art['id'] )
+                IndexArticle( xapdb, art )
+                idx_cnt = idx_cnt+1
+                ukmedia.DBUG2( u"index '%s' [%d]\n" %(art['title'], art['id']) );
+            else:
+                # if article is not active, make sure it's removed from xapian
+                Zap( xapdb, art['id'] )
+                zap_cnt = zap_cnt + 1
+                ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].encode('utf-8'), art['id'] ) );
 
-        if art['status'] == 'a':
-            art['journos'] = FetchJournos( conn, art['id'] )
-            IndexArticle( xapdb, art )
-            idx_cnt = idx_cnt+1
-            ukmedia.DBUG2( u"index '%s' [%d]\n" %(art['title'], art['id']) );
-        else:
-            # if article is not active, make sure it's removed from xapian
-            Zap( xapdb, art['id'] )
-            zap_cnt = zap_cnt + 1
-            ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].encode('utf-8'), art['id'] ) );
+            indexed_ids.append( art['id'] )
+        except Exception,e:
+            sys.stderr.write('ERROR: failed on article %d - %s\n' % (row['id'],str(e)) )
+            raise
 
-        indexed_ids.append( art['id'] )
 
         batch_cnt = batch_cnt+1
         if batch_cnt >= COMMIT_BATCH_SIZE:
