@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+
+import sys
+from datetime import datetime
+from optparse import OptionParser
+import simplejson as json
+import re
+
+import site
+site.addsitedir("../pylib")
+from JL import DB,ukmedia
+from BeautifulSoup import BeautifulSoup, Comment
+
+_options = None
+
+
+def main():
+    global _options
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+
+    (_options, args) = parser.parse_args()
+
+
+#    content
+#    main-content
+
+
+    for url in args:
+        try:
+            html = ukmedia.FetchURL( url )
+            details = extract( html )
+        except Exception,err:
+            sys.stderr.write('ERROR processing [%s]: %s\n' % (url,str(err)) )
+            sys.exit(1)
+
+        print (details['title'] or "<NONE>") + "    [" + url + "]"
+
+
+def find_headline( soup ):
+
+    headline =  None
+    # try some easy cases first:
+    h = soup.find( ('h1','h2','h3'),{'class':re.compile('entry-title|headline')}) 
+    if h is not None:
+        return h
+
+    # try and identify a container around just the story part
+    # id/class markers, in order of preference
+    story_markers = (
+        re.compile( r'\bhentry\b|\bpost\b|\bstory\b', re.IGNORECASE ),
+        re.compile( r'\bcontent\b|\bmain\b|\bcontentContainer\b|\bcontent[-_]main\b|\bmainColumn\b', re.IGNORECASE )
+    )
+
+    for pat in story_markers:
+        for attr in ('id','class'):
+            story = soup.find( 'div', {attr:pat} )
+            if story is not None:
+                break   # got one!
+        if story is not None:
+            break   # got one!
+
+    if story is None:
+        # give up and just use the whole page
+        story = soup
+
+    # might be one with .headline class...
+    headline = story.find( ('h1','h2','h3'), {'class':re.compile('title|headline')})
+    if headline is not None:
+        return headline
+    # just go for biggest h[123] we can find
+    for h in ('h1','h2','h3'):
+        headline = story.find(h)
+        if headline is not None:
+            return headline
+
+    return None
+
+
+
+
+def extract( html ):
+    soup = BeautifulSoup( html )
+
+    title = u''
+    h = find_headline( soup )
+    if h is not None:
+        title = ukmedia.FromHTMLOneLine( h.renderContents(None) )
+
+    #ideas:
+    # check for a slug in the url and make sure the headline corresponds
+    # ditto, using page <title>
+    return { 'title':title }
+
+if __name__ == "__main__":
+    main()
+
