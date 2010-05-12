@@ -33,9 +33,13 @@ def find_story( soup ):
         for attr in ('id','class'):
             story = soup.find( 'div', {attr:pat} )
             if story is not None:
+                if _options.debug:
+                    print "find_story(): found div %s=%s" % (attr, story[attr])
                 break   # got one!
         if story is not None:
             break   # got one!
+    if _options.debug and story is None:
+        print "find_story(): nothing"
     return story
 
 
@@ -46,6 +50,8 @@ def find_headline( soup ):
     # try some easy cases first:
     h = soup.find( ('h1','h2','h3'),{'class':re.compile('entry-title|headline')}) 
     if h is not None:
+        if _options.debug:
+            print "find_headline(): got easy one: %s class=%s" % (h.name,h['class'])
         return h
 
     story = find_story( soup )
@@ -54,15 +60,21 @@ def find_headline( soup ):
         story = soup
 
     # might be one with .headline class...
-    headline = story.find( ('h1','h2','h3'), {'class':re.compile('title|headline')})
-    if headline is not None:
-        return headline
+    h = story.find( ('h1','h2','h3'), {'class':re.compile('title|headline')})
+    if h is not None:
+        if _options.debug:
+            print "find_headline(): got one with a marker: %s class=%s" % (h.name,h['class'])
+        return h
     # just go for biggest h[123] we can find
-    for h in ('h1','h2','h3'):
-        headline = story.find(h)
-        if headline is not None:
-            return headline
+    for element in ('h1','h2','h3'):
+        h = story.find(element)
+        if h is not None:
+            if _options.debug:
+                print "find_headline(): got bare one: %s class=%s" % (h.name,h['class'])
+            return h
 
+    if _options.debug:
+        print "find_headline(): nothing"
     return None
 
 
@@ -141,6 +153,7 @@ def extract( html, context ):
 def main():
     global _options
     parser = OptionParser()
+    parser.add_option("-d", "--debug", action="store_true", dest="debug", help="output debug information")
 #    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
 #    parser.add_option("-j", "--json", action="store_true", dest="json", help="output results as json")
 
