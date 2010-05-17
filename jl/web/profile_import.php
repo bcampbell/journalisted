@@ -10,7 +10,7 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 
-/* page to manage importing data from other places (eg linkedin) */
+/* page to manage importing data from other places (eg LinkedIn) */
 
 
 // case-insensitive, alpha-only string compare
@@ -136,7 +136,7 @@ class ImportProfilePage extends EditProfilePage
     {
 
 ?>
-<h2>Import your linkedin profile</h2>
+<h2>Import information from LinkedIn</h2>
 <?php
 
         if( !is_null( $this->imported ) ) {
@@ -154,15 +154,13 @@ class ImportProfilePage extends EditProfilePage
 ?>
 
 <p>
-If you've got a public profile on <a href="http://www.linkedin.com">linkedin.com</a>,
-you can import biographical information to your journa<i>listed</i>
-profile.
+If you've got a public profile on <a href="http://www.linkedin.com">LinkedIn.com</a>,
+you can import it to journa<i>listed</i> profile.
 </p>
-
 <form action="<?= $this->pagePath ?>" method="POST">
   <dl>
-  <dt><label for="url">URL of your profile:</label></dt>
-  <dd><input type="text" size="60" name="url" id="url" value="<?= h($url) ?>" /><br/>
+  <dt><label for="url">Your LinkedIn URL:</label></dt>
+  <dd><input type="text" size="80" name="url" id="url" value="<?= h($url) ?>" /><br/>
   <span class="explain">e.g. "http://www.linkedin.com/in/<?= preg_replace('/-/','',$this->journo['ref'] ) ?>"</span>
   </dd>
   <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
@@ -196,10 +194,6 @@ profile.
 </ul>
 
 <a href="/<?= $this->journo['ref'] ?>#tab-bio">View your profile</a>
-
-<pre>
-<?php var_dump( $this->raw ); ?>
-</pre>
 <?php
         }
 
