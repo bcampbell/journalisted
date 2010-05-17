@@ -3,6 +3,17 @@ define('XMFP_INCLUDE_PATH', OPTION_JL_FSROOT . '/phplib/xmfp/');
 require_once(XMFP_INCLUDE_PATH . 'class.Xmf_Parser.php');
 
 
+// only need the year
+function hresume_year( $dt ) {#
+    $m = array();
+    if( preg_match( '/\d\d\d\d/', $dt, $m ) ) {
+        return (int)$m[0];
+    } else {
+        return null;
+    }
+}
+
+
 // pull in hResume from some url, returning the data munged into
 // the JL data model
 // NOTE: encoding of returned text is probably dependent on source data...
@@ -66,10 +77,11 @@ function hresume_slurpexperience( $exp ) {
 
     $vevent = $exp['vevent'];
     if( array_key_exists( 'dtstart', $vevent ) ) {
-        $out['year_from'] = (int)date_create($vevent['dtstart'])->format('Y');
+        $out['dtstart'] = $vevent['dtstart'];
+        $out['year_from'] = hresume_year($vevent['dtstart']);
     }
     if( array_key_exists( 'dtend', $vevent ) ) {
-        $out['year_to'] = (int)date_create($vevent['dtend'])->format('Y');
+        $out['year_to'] = hresume_year($vevent['dtend']);
     }
     // consider it active if start date but no end date
     if( !is_null($out['year_from']) && is_null($out['year_to']) ) {
@@ -79,14 +91,14 @@ function hresume_slurpexperience( $exp ) {
 
     $vcard = $exp['vcard'];
     if( $vcard ) {
-        $out['jobtitle'] = $vcard['title'][0]; // could be multiple titles?
+        $out['job_title'] = $vcard['title'][0]; // could be multiple titles?
         $out['employer'] = $vcard['org']['organization-name'];
     } else {
-        $out['jobtitle'] = '';
+        $out['job_title'] = '';
         $out['employer'] = $vevent['summary'];
     }
 
-    $out['jobtitle'] = html_entity_decode( $out['jobtitle'] );
+    $out['job_title'] = html_entity_decode( $out['job_title'] );
     $out['employer'] = html_entity_decode( $out['employer'] );
 
     return $out;
@@ -106,10 +118,10 @@ function hresume_slurpeducation( $edu ) {
         return null;
     $vevent = $edu['vevent'];
     if( array_key_exists( 'dtstart', $vevent ) ) {
-        $out['year_from'] = (int)date_create($vevent['dtstart'])->format('Y');
+        $out['year_from'] = hresume_year( $vevent['dtstart'] );
     }
     if( array_key_exists( 'dtend', $vevent ) ) {
-        $out['year_to'] = (int)date_create($vevent['dtend'])->format('Y');
+        $out['year_to'] = hresume_year($vevent['dtend']);
     }
     // consider it active if start date but no end date
     if( !is_null($out['year_from']) && is_null($out['year_to']) ) {

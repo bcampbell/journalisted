@@ -84,15 +84,25 @@ class ImportProfilePage extends EditProfilePage
         // submitting new entries?
         $action = get_http_var( "action" );
         if( $action == "import_profile" ) {
-            $url = get_http_var( 'url' );
-            $data = hresume_import( $url );
+            $this->doImportProfile();
+        }
+    }
 
-            $this->imported = array( 'education'=>array(), 'experience'=>array() );
+    function doImportProfile()
+    {
+        $url = get_http_var( 'url' );
+        $data = hresume_import( $url );
 
+        $this->raw = $data;
+        $this->imported = array( 'education'=>array(), 'experience'=>array() );
+        if( $data['education'] ) {
             $this->importEducation( $data['education'] );
+        }
+        if( $data['experience'] ) {
             $this->importExperience( $data['experience'] );
         }
     }
+
 
     function importEducation( $new_edus ) {
         $fields = array( 'year_from','year_to','school','field','qualification' );
@@ -124,39 +134,74 @@ class ImportProfilePage extends EditProfilePage
 
     function display()
     {
-        $this->showImportForm();
+
+?>
+<h2>Import your linkedin profile</h2>
+<?php
+
+        if( !is_null( $this->imported ) ) {
+            $this->displayResults();
+        } else {
+            $this->displayImportForm();
+        }
     }
 
-    function showImportForm()
+
+    function displayImportForm()
     {
         $url = get_http_var('url');
 
 ?>
-<h2>Import your linkedin profile</h2>
-<p>Instructions go here</p>
+
+<p>
+If you've got a public profile on <a href="http://www.linkedin.com">linkedin.com</a>,
+you can import biographical information to your journa<i>listed</i>
+profile.
+</p>
+
 <form action="<?= $this->pagePath ?>" method="POST">
-    <input type="text" size="60" name="url" id="url" value="<?= $url ?>" />
-    <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
-    <input type="hidden" name="action" value="import_profile" />
-    <button class="submit" type="submit">Import</button>
+  <dl>
+  <dt><label for="url">URL of your profile:</label></dt>
+  <dd><input type="text" size="60" name="url" id="url" value="<?= h($url) ?>" /><br/>
+  <span class="explain">e.g. "http://www.linkedin.com/in/<?= preg_replace('/-/','',$this->journo['ref'] ) ?>"</span>
+  </dd>
+  <input type="hidden" name="ref" value="<?=$this->journo['ref'];?>" />
+  <input type="hidden" name="action" value="import_profile" />
+  <button class="submit" type="submit">Import</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
 </form>
-
-
-<?php if( $this->imported ) { ?>
-<h3>Imported:</h3>
-<pre>
-Education:
-
-<?php print_r( $this->imported['education'] ); ?>
-
-
-Experience:
-<?php print_r( $this->imported['experience'] ); ?>
-
-</pre>
-<?php } ?>
-
 <?php
+    }
+
+
+    function displayResults()
+    {
+        if( !$this->imported['education'] && !$this->imported['experience'] ) {
+?>
+<p>Sorry, no new information was able to be imported.</p>
+
+<a href="/<?= $this->journo['ref'] ?>#tab-bio">Go back to your profile page</a>
+<?php
+        } else {
+?>
+
+<p>Thanks - the following information has been added to your profile:</p>
+
+<ul>
+<?php foreach( $this->imported['education'] as $e ) { ?>
+  <li><?= $e['school'] ?> (<?= $e['year_from'] ?>-<?= $e['year_to'] ?>)</li>
+<?php } ?>
+<?php foreach( $this->imported['experience'] as $e ) { ?>
+  <li><?= $e['job_title']?> at <?= $e['employer'] ?> (<?= $e['year_from'] ?>-<?= $e['year_to'] ?>)</li>
+<?php } ?>
+</ul>
+
+<a href="/<?= $this->journo['ref'] ?>#tab-bio">View your profile</a>
+
+<pre>
+<?php var_dump( $this->raw ); ?>
+</pre>
+<?php
+        }
 
     }
 

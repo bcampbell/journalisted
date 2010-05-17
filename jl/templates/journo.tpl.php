@@ -641,6 +641,10 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
       <li class="claim-profile">
         <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
 <?php } ?>
+<?php if( $can_edit_page ) { ?>
+      <li class="claim-profile">
+        <a href="/profile_import?ref=<?= $ref ?>">Import profile from linkedin</a></li>
+<?php } ?>
     </ul>
   </div>
   <div class="foot"></div>
