@@ -16,62 +16,70 @@ $action = get_http_var( 'action' );
 function extra_head()
 {
 ?>
-    <script type="text/javascript" src="/js/jquery-fieldselection.js"></script>
+<?php /*    <script type="text/javascript" src="/js/jquery-fieldselection.js"></script> */ ?>
+
+    <script type="text/javascript" src="/js/jquery.a-tools-1.4.1.min.js"></script>
     <script language="javascript" type="text/javascript">
-       $(document).ready(
-       function () {
+      $(document).ready(
+      function () {
 
-         function markdownSearch( query, daterange ) {
-           var q = $.trim(query);
+        function markdownSearch( query, daterange ) {
+          var q = $.trim(query);
                     
-           if( q.search(' ')!=-1 ) {
-              q = '"' + q + '"';
-           }
-           if( daterange ) {
-               q = q + " " + daterange;
-           }
-           var url = "/search?a=" + escape(q);
-           var out = "[" + query + "](" + url + ")";
-            return out;
+          if( q.search(' ')!=-1 ) {
+             q = '"' + q + '"';
           }
+          if( daterange ) {
+              q = q + " " + daterange;
+          }
+          var url = "/search?a=" + escape(q);
+          var out = "[" + query + "](" + url + ")";
+          return out;
+        }
 
-          $("#linkify-journo").click( function(e) {
-              var journo = $("#content").getSelection().text;
-              if( journo ) {
-                  var ref = journo.toLowerCase();
-                  ref = ref.replace(/\s+/g, "-")
-                  var out = "[" + journo + "](/" + ref + ")";
-                  $('#content').replaceSelection( out,true );
-              }
-   	          e.preventDefault();
-           } );
+        $("#linkify-journo").click( function(e) {
+          var sel = $("#content").getSelection();
+          var journo = sel.text;
+          if( journo ) {
+            var ref = journo.toLowerCase();
+            ref = ref.replace(/\s+/g, "-")
+            var txt = "[" + journo + "](/" + ref + ")";
+            $('#content').replaceSelection( txt );
+            $('#content').setSelection( sel.start, sel.start+txt.length );
+          }
+   	      e.preventDefault();
+        } );
 
-           $("#linkify-search").click( function(e) {
-             var txt = $("#content").getSelection().text;
-             if( txt ) {
-               txt = markdownSearch( txt );
-               $("#content").replaceSelection( txt, true );
-             }
-   		     e.preventDefault();
-           } );
+        $("#linkify-search").click( function(e) {
+          var sel = $("#content").getSelection();
+          var txt = sel.text;
+          if( txt ) {
+            txt = markdownSearch( txt );
+            $("#content").replaceSelection( txt );
+            $('#content').setSelection( sel.start, sel.start+txt.length );
+          }
+   		  e.preventDefault();
+        } );
 
     
-           $("#linkify-searchdaterange").click( function(e) {
-             var from = $("#date_from").val();
-             var to = $("#date_to").val();
-             if( from=="" || to=="" ) {
-                 alert("Bad range - fill it out!");
-   		         e.preventDefault();
-                 return;
-             }
-             var txt = $("#content").getSelection().text;
-             if( txt ) {
-                 txt = markdownSearch( txt, from+".."+to );
-                 $('#content').replaceSelection( txt,true );
-             }
-   		     e.preventDefault();
-           } );
-       } );
+        $("#linkify-searchdaterange").click( function(e) {
+          var from = $("#date_from").val();
+          var to = $("#date_to").val();
+          if( from=="" || to=="" ) {
+            alert("Bad range - fill it out!");
+   		    e.preventDefault();
+            return;
+          }
+          var sel = $("#content").getSelection();
+          var txt = sel.text;
+          if( txt ) {
+            txt = markdownSearch( txt, from+".."+to );
+            $('#content').replaceSelection( txt );
+            $('#content').setSelection( sel.start, sel.start+txt.length );
+          }
+   		  e.preventDefault();
+        } );
+      } );
     </script>
 <?php
 
