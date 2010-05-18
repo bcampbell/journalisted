@@ -43,7 +43,11 @@ EOT;
 
     $name_or_email = $P->name_or_blank() ? $P->name : $P->email;
 
-    $title = "Your account";
+    if( get_http_var('welcome') ) {
+        $title = "Welcome to journa<i>listed</i>, " . ucfirst($journo['firstname']);
+    } else {
+        $title = "Your account";
+    }
     page_header( $title );
 ?>
 <div class="main">

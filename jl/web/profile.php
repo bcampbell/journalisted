@@ -107,7 +107,8 @@ function showLookupPage()
 <div class="main">
 <div class="head"></div>
 <div class="body">
-<p>Let's look for your profile...</p>
+<p>You might already have a profile on journa<i>listed</i></p>
+<p>Let's take a look...</p>
 <form method="get" action="/profile">
  <label for="fullname">My name is:</label>
  <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
@@ -134,14 +135,8 @@ function showLookupPage()
 <input type="hidden" name="action" value="claim" />
 <input type="submit" value="Yes, that's me" />
 </form>
-<?php     if( 0 ) { /*DISABLED!*/ ?>
+
 or...
-<form method="get" action="/profile">
-  <input type="hidden" name="action" value="create" />
-  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
-  <input type="submit" value="No, create a new profile for me, <?= h($fullname)?>" />
-</form>
-<?php     } /* END DISABLED */ ?>
 
 <?php
 
@@ -149,15 +144,15 @@ or...
             /* searched, found no matches */
 ?>
 <p>Sorry, we couldn't find any profiles matching your name.</p>
-<?php     if( 0 ) { /*DISABLED!*/ ?>
+<?php
+        }
+?>
 <form method="get" action="/profile">
   <input type="hidden" name="action" value="create" />
   <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
   <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
 </form>
-<?php     } /* END DISABLED */ ?>
 <?php
-        }
     }
 ?>
 </div>
@@ -250,13 +245,11 @@ page_footer();
 
 function showCreatePage()
 {
-    return; /* DISABLED! */
-
     // we need them logged on first
-    $P = person_signon(array(
-        'reason_web' => "Log in to create a profile",
-        'reason_email' => "Log in to Journalisted to create a profile",
-        'reason_email_subject' => 'Log in to Journalisted'
+    $P = person_register(array(
+        'reason_web' => "Register to create a profile",
+        'reason_email' => "Register on Journalisted to create a profile",
+        'reason_email_subject' => 'Register on Journalisted'
     ));
 
     $fullname = get_http_var( 'fullname' );
@@ -279,19 +272,9 @@ function showCreatePage()
         $P->name( $journo['prettyname'] );  // (does a commit)
     }
 
-
-    page_header("");
-?>
-<div class="main">
-<div class="head"></div>
-<div class="body">
-<h3>Welcome to journa<i>listed</i>, <?= $journo['prettyname'] ?></h3>
-<p>You can now <a href="/<?= $journo['ref'] ?>">edit your profile</a></p>
-</div>
-<div class="foot"></div>
-</div>
-<?php
-    page_footer();
+    // just redirect to /account page.
+    header("Location: /account?welcome=1");
+    exit();
 }
 
 
