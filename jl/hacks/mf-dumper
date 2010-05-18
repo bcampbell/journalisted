@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+require_once( '../conf/general' );
+define('XMFP_INCLUDE_PATH', OPTION_JL_FSROOT . '/phplib/xmfp/');
+require_once(XMFP_INCLUDE_PATH . 'class.Xmf_Parser.php');
+
+
+
+if( sizeof( $argv) > 1 )
+{
+    $url = $argv[1];
+    $xmfp = Xmf_Parser::create_by_URI( $mF_roots, $url );
+    $mf = $xmfp->get_parsed_mfs();
+
+    var_dump( $mf );
+}
+
+?>

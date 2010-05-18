@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+chdir(dirname($_SERVER['SCRIPT_FILENAME']));
+require_once "../conf/general";
+require_once '../phplib/hresume.php';
+
+if( sizeof( $argv) > 1 )
+{
+    $url = $argv[1];
+    print "Grab $url\n";
+    $bio = hresume_import( $url );
+
+    print_r( $bio );
+}
+
