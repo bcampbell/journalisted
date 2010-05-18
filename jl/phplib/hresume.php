@@ -3,6 +3,21 @@ define('XMFP_INCLUDE_PATH', OPTION_JL_FSROOT . '/phplib/xmfp/');
 require_once(XMFP_INCLUDE_PATH . 'class.Xmf_Parser.php');
 
 
+// functions to pull in hresume data and convert it to the JL internal format
+
+
+
+function hresume_decode( &$s )
+{
+    // nasty workaround - xmfp seems to get the encoding wrong...
+    $s = iconv( 'iso-8859-1','utf-8', $s );
+
+    //
+    $s = html_entity_decode( $s, ENT_COMPAT, 'utf-8' );
+    return $s;
+}
+
+
 // only need the year
 function hresume_year( $dt ) {#
     $m = array();
@@ -98,8 +113,8 @@ function hresume_slurpexperience( $exp ) {
         $out['employer'] = $vevent['summary'];
     }
 
-    $out['job_title'] = html_entity_decode( $out['job_title'] );
-    $out['employer'] = html_entity_decode( $out['employer'] );
+    $out['job_title'] = hresume_decode( $out['job_title'] );
+    $out['employer'] = hresume_decode( $out['employer'] );
 
     return $out;
 }
@@ -135,7 +150,7 @@ function hresume_slurpeducation( $edu ) {
         $out['school'] = $vevent['summary'];
     }
 
-    $out['school'] = html_entity_decode( $out['school'] );
+    $out['school'] = hresume_decode( $out['school'] );
     $out['field'] = '';
     $out['qualification'] = '';
     $out['kind'] = 'u';
