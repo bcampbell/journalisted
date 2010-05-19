@@ -1051,6 +1051,9 @@ a.donate:focus {
 
 .monthly-stats-placeholder { width: 600px; height: 300px; }
 
+#stats-disclaimer {
+  padding: 4px;
+}
 
 
 /* SEARCH PAGE */

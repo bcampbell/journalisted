@@ -307,7 +307,7 @@ $previous_employers = array_unique( $previous_employers );
 
 
 <div class="monthly-stats">
-  <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#monthly-stats-footnote">*</a></sup></h3></div>
+  <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#stats-disclaimer">*</a></sup></h3></div>
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder"></div>
@@ -322,8 +322,8 @@ $previous_employers = array_unique( $previous_employers );
     </ul>
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
 
-    <div id="monthly-stats-footnote">
-      <sup>*</sup>Based only on articles from <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.
+    <div id="stats-disclaimer">
+    <sup>*</sup><em>Please note that these statistics are only based on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a></em>.
     </div>
 <?php
 // some random colours...
