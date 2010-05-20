@@ -1052,6 +1052,26 @@ a.donate:focus {
 .monthly-stats-placeholder { width: 600px; height: 300px; }
 
 
+a.dostuff {
+  margin: 0px;
+  padding: 4px;
+  font-size: 110%;
+  border: 2px solid #4444AA;
+  background-color: #8888FF;
+  color: #ffffff;
+}
+
+a.dostuff:hover {
+}
+
+
+a.dostuff:active {
+}
+
+
+.accountaction {
+    padding: 8px 0px;
+}
 
 /* SEARCH PAGE */
 
