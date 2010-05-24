@@ -15,32 +15,52 @@ require_once '../../phplib/person.php';
 require_once '../../phplib/utility.php';
 
 
+function extra_head()
+{
+?>
+<script language="javascript" type="text/javascript">
+    $(document).ready( function () {
+    });
+</script>
+<?php
+}
+
+function run_json( $cmd )
+{
+    $cmd = escapeshellcmd( $cmd ) . ' 2>&1';
+    $out = `$cmd`;
+
+    return json_decode( $out, TRUE );
+}
+
+function clean_url( $url )
+{
+    $bits = crack_url( $url );
+    // force http (but allow https too)
+    if( strtolower( $bits['scheme'] ) != 'https' ) {
+        $bits['scheme'] = 'http';
+    }
+    return glue_url($bits);
+}
+
 
 $P = person_if_signed_on(); /* (ugly hack to force login processing here, which might involve outputing http headers for cookies) */
 
 $ref = strtolower( get_http_var( 'j' ) );   /* eg 'fred-bloggs' */
-$journo = NULL;
+$_journo = NULL;
 if( $ref ) {
-    $journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $ref );
+    $_journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $ref );
 
-    if( $journo && $journo['status'] != 'a' ) {
+    if( $_journo && $_journo['status'] != 'a' ) {
         // only users with edit permissions can continue if journo is hidden/inactive
-        if( !canEditJourno( $journo['id'] ) ) {
-            $journo = NULL;
+        if( !canEditJourno( $_journo['id'] ) ) {
+            $_journo = NULL;
         }
     }
-
 }
 
-if( $journo ) {
-    if( canEditJourno( $journo['id'] ) ) {
-        $title = "Submit missing articles";
-    } else {
-        $title = "Submit missing articles for " . $journo['prettyname'];
-    }
-}
-else
-{
+
+if( !$_journo ) {
     page_header('');
 ?>
 <p>No journalist specified</p>
@@ -48,6 +68,219 @@ else
     page_footer();
     return;
 }
+
+
+
+
+
+
+class ItemSubmitter
+{
+    public $url = null;
+    public $title = null;
+    public $pubdate = null;
+    public $publication = null;
+
+    public $state = 'initial';
+    public $errs = array();
+    public $pagePath = '/missing';
+
+    public $finished = FALSE;
+
+    function __construct()
+    {
+        global $_journo;
+
+        $this->url = get_http_var( 'url' );
+        if( $this->url ) {
+            $this->url = clean_url( $this->url );
+        }
+
+        $this->title = get_http_var( 'title' );
+        $this->pubdate = get_http_var( 'pubdate' );
+        $this->publication = get_http_var( 'publication' );
+        $this->action = get_http_var( 'action' );
+
+        $msg = is_sane_article_url( $this->url );
+        if( !is_null( $msg ) ) {
+            $state = 'bad_url';
+            $this->errs['url'] = $msg;
+            return;
+        }
+
+        $srcid = scrape_CalcSrcID( $this->url );
+        if( $srcid ) {
+            // we should be able to scrape it
+            $r = scrape_ScrapeArticle( $this->url );
+            if( $r['status'] == 'fail' ) {
+                // uh-oh. queue it up for admin attention
+                db_do( "INSERT INTO missing_articles (journo_id,url) VALUES (?,?)",
+                    $_journo['id'], $this->url );
+                db_commit();
+                $this->state = 'scrape_failed';
+                return;
+            }
+
+            // fetch the details of the articles
+            $art = db_getRow( "SELECT title,pubdate FROM article WHERE id=?", $r['article']['id'] );
+
+            $this->title = $art['title'];
+            $this->pubdate = $art['pubdate'];
+
+            // result was 'new' or 'already_had'
+            // make sure it's attributed to _this_ journo.
+            $got_expected_journo = FALSE;
+            foreach( $r['article']['journos'] as $j ) {
+                if( $j['id'] == $_journo['id'] ) {
+                    $got_expected_journo = TRUE;
+                    break;
+                }
+            }
+
+            if( !$got_expected_journo ) {
+                // poo.
+                $this->state = 'journo_mismatch';
+                return;
+            }
+            $this->state = 'done';
+        } else {
+           // it's an article we don't scrape
+           $this->state = 'details_required';
+
+           if( $this->action=='submit_extra' ) {
+                if( $this->_check_details() ) {
+                    // it's OK! store it etc...
+                    $this->state='done';
+                }
+           } else {
+                $cmd = OPTION_JL_FSROOT . "/hacks/generic-scrape \"{$this->url}\"";
+                $guessed = run_json( $cmd );
+                if( !is_null( $guessed ) && $guessed[0]['status'] == 'ok' ) {
+
+                    $this->title = $guessed[0]['title'];
+                }
+           }
+       }
+    }
+
+
+
+    function emit()
+    {
+?>
+<pre>
+<?= $this->state ?>
+</pre>
+<?php
+
+        switch( $this->state ) {
+            case 'initial':
+            case 'bad_url':
+                $this->_emit_form(FALSE);
+                break;
+            case 'details_required':
+                $this->_emit_form( TRUE );
+                break;
+            default:
+                $this->_emit_finished();
+        }
+    }
+
+    function errhint( $field ) {
+        if( array_key_exists( $field, $this->errs ) ) {
+            return '<span class="errhint">' . $this->errs[$field] . '</span>';
+        } else {
+            return '';
+        }
+    }
+
+    function _emit_form( $show_extra )
+    {
+        global $_journo;
+?>
+<form action="<?= $this->pagePath ?>" method=POST>
+<dl>
+  <dt><label for="url">URL</label></dt>
+  <dd>
+    <input type="text" name="url" id="url" class="url" value="<?= h($this->url); ?>" />
+<?= $this->errhint('url') ?>
+  </dd>
+<?php if( $show_extra ) { ?>
+
+  <dt><label for="title">article title</label></dt>
+  <dd>
+    <input type="text" name="title" id="title" class="headline" value="<?= h($this->title); ?>" />
+<?= $this->errhint('title') ?>
+  </dd>
+
+  <dt><label for="pubdate">date of publication</label></dt>
+  <dd>
+    <input type="text" name="pubdate" id="pubdate" class="date" value="<?= h($this->pubdate); ?>" />
+<?= $this->errhint('pubdate') ?>
+  </dd>
+
+  <dt><label for="publication">publication</label></dt>
+  <dd>
+    <input type="text" name="publication" id="publication" value="<?= h($this->publication); ?>" />
+<?= $this->errhint('publication') ?>
+  </dd>
+
+<?php } ?>
+</dl>
+
+<input type="hidden" name="j" value="<?= $_journo['ref']; ?>" />
+<input type="hidden" name="action" value="<?= $show_extra ? "submit_extra":"submit"?>" />
+<input type="submit" value="Submit" />
+</form>
+<?php
+    }
+
+
+    function _emit_finished() {
+
+?>
+state:   <?= $this->state; ?><br/>
+url:     <?= $this->url; ?><br/>
+title:   <?= $this->title; ?><br/>
+pubdate: <?= $this->pubdate; ?><br/>
+org:     <?= $this->publication; ?><br/>
+<?php
+    }
+
+
+
+    function _check_details() {
+
+        // date is required
+        if( $this->pubdate == '' ) {
+            $this->errs['pubdate'] = "Please enter the date the article was published";
+        } else {
+            $dt = strtotime( $this->pubdate );
+            if( !$dt ) {
+                $this->errs['pubdate'] = "Please enter a valid date";
+            }
+        }
+
+        // title is required
+        if( $this->title == '' ) {
+            $this->errs['title'] = "Please enter the title of the article";
+        }
+
+        return( $this->errs ? FALSE:TRUE );
+    }
+}
+
+
+
+
+
+
+
+
+
+
+$item = new ItemSubmitter();
+$title = "Submit missing articles for " . $_journo['prettyname'];
 
 page_header($title);
 
@@ -57,11 +290,9 @@ page_header($title);
 <h2><?= $title ?></h2>
 
 <?php
-
-do_it();
-
-
+$item->emit();
 ?>
+
 </div> <!-- end main -->
 
 <div class="sidebar">
@@ -87,6 +318,8 @@ do_it();
 page_footer();
 
 
+
+
 // return true if user is logged in and has access to this journo
 function canEditJourno( $journo_id )
 {
@@ -103,86 +336,6 @@ function canEditJourno( $journo_id )
     }
 }
 
-
-
-function emit_rawform() {
-    global $journo;
-?>
-      <form action="/missing" method="POST">
-        <input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
-        <p>Please enter the urls of the article(s) you want to submit, one per line:</p>
-        <textarea name="rawurls" style="width: 100%;" rows="8"></textarea><br/>
-        <button type="submit" name="action" value="go">Submit</button> or <a href="/<?= $journo['ref'] ?>">cancel</a>
-      </form>
-<?php
-}
-
-
-
-function get_items() {
-
-    $items = array();
-    // fetch unprocessed items (just a bunch of urls)
-    $rawurls = get_http_var( 'rawurls', null );
-    if( $rawurls ) {
-        $urls = array_unique( explode("\n",$rawurls) );
-        foreach( $urls as $u ) {
-            $u = trim($u);
-            if( $u ) {
-                $items[] = array(
-                    'url'=>$u,
-                    'state'=>'initial',
-                    'title'=>null,
-                    'pubdate'=>null,
-                    'publication'=>null,
-                    'errs'=>array() );
-            }
-        }
-    }
-//    print "<pre>" . sizeof($items) . " from raw</pre>\n";
-
-    // fetch processed items
-    $cnt = get_http_var( 'cnt', 0 );
-    for( $i=0; $i<$cnt; ++$i ) {
-        $url = get_http_var( "url{$i}" );
-        if(!$url )
-            continue;
-
-        $items[] = array(
-            'url'=>$url,
-            'state'=>get_http_var( "state{$i}" ),
-            'title'=>get_http_var( "title{$i}", null ),
-            'pubdate'=>get_http_var( "pubdate{$i}", null ),
-            'publication'=>get_http_var( "publication{$i}", null ),
-            'errs'=>array()
-        );
-    }
-//    print "<pre>" . $cnt . " cnt</pre>\n";
-//    print "<pre>" . sizeof($items) . " total</pre>\n";
-
-    // add "http://" prefix if missing
-/*    foreach( $items as &$item ) {
-        if( preg_match( "%^[a-zA-Z]+://%", $item['url'] ) == 0 ) {
-            $item['url'] = "http://" . $item['url'];
-        }
-    }
-*/
-    return $items;
-}
-
-
-function do_it() {
-    $items = get_items();
-    if( $items ) {
-        $idx = 0;
-        foreach( $items as &$item ) {
-            process_item( $item );
-        }
-        emit_form($items);
-    } else {
-        emit_rawform();
-    }
-}
 
 
 
@@ -223,297 +376,5 @@ function is_sane_article_url( $url )
     }
 
     return null;
-}
-
-function is_url_scrapable( $url )
-{
-    $srcid = scrape_CalcSrcID( $url );
-    if( $srcid )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-function check_details( $item )
-{
-    $errs = array();
-    if( $item['pubdate'] == '' ) {
-        $errs['pubdate'] = "Please enter the date the article was published";
-    } else {
-        $dt = strtotime( $item['pubdate'] );
-        if( !$dt ) {
-            $errs['pubdate'] = "Please enter a valid date";
-        }
-    }
-
-    if( $item['title'] == '' ) {
-        $errs['title'] = "Please enter the title of the article";
-    }
-
-    return $errs;
-}
-
-
-
-// process a single item, and set it's state/error messages appropriately.
-//
-// These states need further interaction:
-//  'initial'
-//  'badurl' - url doesn't look like an article (scrapable or not)
-//  'need_extra' - article is non-scrapable, user needs to enter title/publdate etc...
-// these ones don't need any more processing:
-//  'ok' - scrapable article, done.
-//  'ok_queued' - scrapable, but queued for admin attention (didn't scrape, or got wrong journo etc)
-//  'ok_extra' - other article, done (extra means title/pubdate etc have been added).
-//  'ok_extra_queued' - other article, added but hidden (pending admin approval).
-function process_item( &$item )
-{
-    global $journo;
-    if( $item['state'] == 'ok' || $item['state'] =='ok_queued' ||
-        $item['state'] =='ok_extra' || $item['state']=='ok_extra_queued' ) {
-        return; // no further processing needed
-    }
-
-    $err = is_sane_article_url($item['url']);
-    if( $err ) {
-        $item['state'] = 'badurl';
-        $item['errs'] = array( 'url'=>$err );
-        return;
-    }
-
-    if( is_url_scrapable( $item['url'] ) ) {
-        // add a scrapable article...
-
-        $problems = TRUE;
-        // try and scrape it:
-
-    // DISABLED scraping for now... too slow to rely on in-page.
-      if( 0 ) {
-        $foo = scrape_ScrapeArticle( $item['url'] );
-
-        $status = $foo['status'];
-        if( $status=='new' || $status=='already_had' ) {
-            // don't care if new, or was already in DB. main thing here is if
-            // it's attributed to the right journo...
-            foreach( $foo['article']['journos'] as $j ) {
-                if( $j['id'] == $journo['id'] ) {
-                    $right_journo = FALSE;  // yay!
-                }
-            }
-        }
-      } // END DISABLED SECTION
-
-
-        if( $problems ) {
-            // can't deal with it here, so queue it up for admin attention
-            db_do( "INSERT INTO missing_articles (journo_id,url) VALUES (?,?)",
-                $journo['id'], $item['url'] );
-            db_commit();
-            $item['state'] = 'ok_queued';
-        } else {
-            // in database and attributed to the right journo!
-            $item['state'] = 'ok';
-        }
-    } else {
-        // not scrapable - add it to journo_other_articles
-        if( $item['state'] == 'need_extra' ) {
-            $item['errs'] = check_details( $item );
-            if( !$item['errs'] ) {
-                $dt = new DateTime( $item['pubdate'] );
-                $art = array(
-                    'journo_id'=>$journo['id'],
-                    'url'=>$item['url'],
-                    'title'=>$item['title'],
-                    'publication'=>$item['publication'],
-                    'status'=>canEditJourno( $journo['id'] ) ? 'a':'u',
-                    'pubdate_iso' => $dt->format(DateTime::ISO8601) );
-
-                // add it if not already in db
-                $foo = db_getOne( "DELETE FROM journo_other_articles WHERE journo_id=? AND url=?",
-                    $journo['id'], $item['url'] );
-                if( is_null( $foo ) ) {
-                    $sql = <<<EOT
-INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
-    VALUES ( ?,?,?,?,?,? )
-EOT;
-                    db_do( $sql,
-                        $art['journo_id'],
-                        $art['url'],
-                        $art['title'],
-                        $art['pubdate_iso'],
-                        $art['publication'],
-                        $art['status'] );
-                    $art['id'] = db_getOne( "SELECT lastval()" );
-                    db_commit();
-                    eventlog_Add( 'submit-otherarticle', $journo['id'], $art );
-
-                    if( $art['status'] == 'a' ) {
-                        $item['state'] = 'ok_extra';
-                    } else {
-                        $item['state'] = 'ok_extra_queued';
-                    }
-                }
-            }
-        } else {
-            $item['state'] = 'need_extra';
-            // TODO: could use url here to look up publication!
-        }
-    }
-}
-
-
-
-
-
-function emit_form( &$items )
-{
-    global $journo;
-    $accepted = 0;
-    $queued = 0;
-    $pending = 0;
-
-    foreach( $items as &$item ) {
-        if( $item['state'] == 'ok' || $item['state'] == 'ok_extra' ||
-            $item['state'] == 'ok_queued' || $item['state'] == 'ok_extra_queued' ) {
-            ++$accepted;
-        } else {
-            ++$pending;
-        }
-        // add htmlentities()-encoded strings to items
-        $item = h_array($item);
-    }
-    unset($item);
-
-
-    // show the ones which have been either added, or queued for admin attention
-    if( $accepted > 0 ) {
-        if( $accepted==1 ) {
-?><p>Thank you - this article has been submitted for addition:</p><?php
-        } else {
-?><p>Thank you - these articles have been submitted for addition:</p><?php
-        }
-?>
-<ul>
-<?php
-        foreach( $items as &$item ) {
-            if( $item['state']=='ok' || $item['state']=='ok_queued' ) {
-                /* it's a url we should be able to scrape */
-?>
-<li><a href="<?= h($item['url']) ?>"><?= h($item['url']) ?></a></li>
-<?php
-            } else if( $item['state'] == 'ok_extra' || $item['state'] == 'ok_extra_queued' ) {
-                /* it's a url we don't scrape, with title,date etc */
-                $dt = new DateTime( $item['pubdate'] );
-?>
-<li>
-<a href="<?= h($item['url']) ?>"><?= h($item['title']) ?></a><?php if( $item['publication'] ) { ?>, <span class="publication"><?= h($item['h_publication']) ?></span><?php } ?>, <span class="published"><?= pretty_date($dt); ?></span>
-</li>
-<?php
-            }
-        }
-
-?>
-</ul>
-<?php
-
-    }
-
-
-
-    // if they've all been done, we can bail out now.
-    if( $pending == 0 ) {
-?>
-        <p><a href="/<?= $journo['ref']; ?>">finish</a></p>
-<?php
-        return;
-    }
-
-
-    // show the ones still being sorted out
-?>
-</ul>
-
-<form method="POST" action="/missing" id="missing">
-<input type="hidden" name="j" value="<?php echo $journo['ref']; ?>" />
-<input type="hidden" name="cnt" value="<?php echo sizeof($items); ?>" />
-
-<?php
-    $idx = 0;
-    foreach( $items as &$item ) {
-        emit_item( $item, $idx );
-        ++$idx;
-    }
-?>
-<button name="action" value="go">Submit</button> or <a href="/<?= $journo['ref'] ?>">cancel</a>
-</form>
-<?php
-
-}
-
-
-
-// output an individual item on the form. May be editable, may be hidden, depending on its state
-function emit_item( $item, $idx )
-{
-    $state = $item['state'];
-    $errs = $item['errs'];
-    if( $state=='ok' || $state =='ok_queued' ) {
-?>
-<input type="hidden" name="state<?= $idx ?>" value="<?= $item['state'] ?>" />
-<input type="hidden" name="url<?= $idx ?>" value="<?= h($item['url']) ?>" />
-<?php
-    } elseif( $state == 'ok_extra' || $state == 'ok_extra_queued'  ) {
-?>
-<input type="hidden" name="state<?= $idx ?>" value="<?= $item['state'] ?>" />
-<input type="hidden" name="url<?= $idx ?>" value="<?= h($item['url']) ?>" />
-<input type="hidden" name="title<?= $idx ?>" value="<?= h($item['title']) ?>" />
-<input type="hidden" name="pubdate<?= $idx ?>" value="<?= h($item['pubdate']) ?>" />
-<input type="hidden" name="publication<?= $idx ?>" value="<?= h($item['publication']) ?>" />
-<?php
-    } elseif( $state == 'need_extra' ) {
-?>
-<fieldset>
-
-<p>Please tell us a little more about this article:</p>
-
-<input type="hidden" name="state<?= $idx ?>" value="<?= $item['state'] ?>" />
-
-<div class="field">
-<?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span><br/> <?php } ?>
-<label for="url<?php echo $idx;?>">article url</label>
-<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
-</div>
-
-<div class="field">
-<?php if( array_key_exists('title',$errs) ) { ?> <span class="errhint"><?php echo $errs['title']; ?></span> <?php } ?>
-<label for="title<?php echo $idx;?>">article title</label>
-<input type="text" class="wide" id="title<?php echo $idx;?>" name="title<?php echo $idx;?>" value="<?php echo $item['h_title']; ?>" />
-</div>
-
-<div class="field">
-<?php if( array_key_exists('pubdate',$errs) ) { ?> <span class="errhint"><?php echo $errs['pubdate']; ?></span> <?php } ?>
-<label for="pubdate<?php echo $idx;?>">publication date<br/><small>(yyyy-mm-dd)</small></label>
-<input type="text" id="pubdate<?php echo $idx;?>" name="pubdate<?php echo $idx;?>" value="<?php echo $item['h_pubdate']; ?>" />
-</div>
-
-<div class="field">
-<label for="publication<?php echo $idx;?>">publication<br/><small>(optional)</small></label>
-<input type="text" id="publication<?php echo $idx;?>" name="publication<?php echo $idx;?>" value="<?php echo $item['h_publication']; ?>" />
-</div>
-
-</fieldset>
-<?php
-
-    } else {
-
-?>
-<fieldset>
-<input type="hidden" name="<?php echo "state{$idx}";?>" value="<?php echo $item['state']; ?>" />
-<?php if( array_key_exists('url',$errs) ) { ?> <span class="errhint"><?php echo $errs['url']; ?></span> <?php } ?>
-<label for="url<?php echo $idx;?>">article url</label>
-<input type="text" class="wide" id="url<?php echo $idx;?>" name="url<?php echo $idx;?>" value="<?php echo $item['h_url']; ?>" />
-</fieldset>
-<?php
-    }
 }
 

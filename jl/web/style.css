@@ -185,8 +185,11 @@ form input[type="password"] {
   border: 1px solid #d9d9d9;
 }
 
-
+/* assorted types of fields */
 form input[type="text"].year { width: 4em; }
+form input[type="text"].date { width: 8em; }
+form input[type="text"].url { width: 480px; }
+form input[type="text"].headline { width: 480px; }
 
 .sidebar form input[type="text"] { width: 200px; }
 
