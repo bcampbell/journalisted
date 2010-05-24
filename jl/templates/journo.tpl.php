@@ -323,7 +323,7 @@ $previous_employers = array_unique( $previous_employers );
     <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
 
     <div id="stats-disclaimer">
-    <sup>*</sup><em>Please note that these statistics are only based on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a></em>.
+    <sup>*</sup><em>Please note that these statistics are based only on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a></em>.
     </div>
 <?php
 // some random colours...
