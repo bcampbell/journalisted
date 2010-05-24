@@ -9,7 +9,9 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_GU_No3_260410.swf',
     'TG_GU_No4_03_05_10.swf',
     'TG_Gu_No5_10_05_10.swf',
-    'TG_Gu_No6_17_05_10.swf' );
+    'TG_Gu_No6_17_05_10.swf',
+    'TG_TG_No1_24_05_10.swf',
+);
 
 
 $episode = get_http_var( 'episode', sizeof($tg_objs) );
