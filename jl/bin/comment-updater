@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.4
+#!/usr/bin/env python
 #
 # comment-updater
 #
@@ -37,7 +37,7 @@ def UpdateArticle( conn, options, article_id, srcurl ):
 
     if scraper is None:
         print >>sys.stderr, "WARNING: couldn't determine scraper for [a%d] %s" %(article_id,srcurl)
-    return
+        return
 
     # Assumes that comments are always scraped using as part of the main
     # article scraping... (ie comment info always on same page as article)
@@ -53,7 +53,7 @@ def UpdateArticle( conn, options, article_id, srcurl ):
     context = scraper.ContextFromURL( srcurl )
     if context is None or context['srcid'] is None:
         print >>sys.stderr, "WARNING: no srcid for [a%d] %s" %(article_id,srcurl)
-    return
+        return
 
     html = ukmedia.FetchURL( srcurl )
     art = scraper.Extract( html,context )
