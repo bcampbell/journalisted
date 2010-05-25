@@ -10,6 +10,7 @@ from optparse import OptionParser
 import simplejson as json
 import re
 import dateutil.parser
+import urlparse
 
 import site
 site.addsitedir("../pylib")
@@ -147,6 +148,8 @@ def extract( html, context ):
 
     context['title'] = title
     context['pubdate'] = pubdate
+    o = urlparse.urlparse( context['url'] )
+    context['publication'] = re.sub( '^www.','',o[1] )
     return context
 
 

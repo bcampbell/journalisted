@@ -101,6 +101,14 @@ class ItemSubmitter
         $this->publication = get_http_var( 'publication' );
         $this->action = get_http_var( 'action' );
 
+        // so we can detect if url is changed
+        $this->prev_url = get_http_var( 'prev_url' );
+
+        if( !$this->url && !$this->prev_url ) {
+            $this->state = 'initial';
+            return;
+        }
+
         $msg = is_sane_article_url( $this->url );
         if( !is_null( $msg ) ) {
             $state = 'bad_url';
@@ -118,6 +126,7 @@ class ItemSubmitter
                     $_journo['id'], $this->url );
                 db_commit();
                 $this->state = 'scrape_failed';
+                $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 return;
             }
 
@@ -137,52 +146,70 @@ class ItemSubmitter
                 }
             }
 
-            if( !$got_expected_journo ) {
-                // poo.
+            if( $got_expected_journo ) {
+                $this->state = 'done';
+            } else {
                 $this->state = 'journo_mismatch';
-                return;
+                $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
             }
-            $this->state = 'done';
         } else {
-           // it's an article we don't scrape
-           $this->state = 'details_required';
+            // it's an article we don't cover - need to collect title,pubdate,publication...
 
-           if( $this->action=='submit_extra' ) {
+            if( $this->url != $this->prev_url ) {
+                // got a new url.
+                // try and guess some basic details by scraping the page:
+                $cmd = OPTION_JL_FSROOT . "/bin/generic-scrape \"{$this->url}\"";
+                $cmd = escapeshellcmd( $cmd ) . ' 2>&1';
+                $out = `$cmd`;
+                $guessed = json_decode( $out, TRUE );
+                if( !is_null( $guessed ) && $guessed[0]['status'] == 'ok' ) {
+                    // fill in any empty fields with out guesses
+                    if( !$this->title )
+                        $this->title = $guessed[0]['title'];
+                    if( !$this->publication )
+                        $this->publication = $guessed[0]['publication'];
+                    // TODO: should verify journo name appears on page...
+                }
+                $this->state = 'details_required';
+            } else {
+                // submitting again - see if we can store 'em
                 if( $this->_check_details() ) {
                     // it's OK! store it etc...
-                    $this->state='done';
+                    $this->state = 'done';
+                } else {
+                    $this->state = 'details_required';
                 }
-           } else {
-                $cmd = OPTION_JL_FSROOT . "/hacks/generic-scrape \"{$this->url}\"";
-                $guessed = run_json( $cmd );
-                if( !is_null( $guessed ) && $guessed[0]['status'] == 'ok' ) {
-
-                    $this->title = $guessed[0]['title'];
-                }
-           }
-       }
+            }
+        }
     }
 
 
 
     function emit()
     {
+/*
 ?>
 <pre>
 <?= $this->state ?>
 </pre>
 <?php
-
+*/
         switch( $this->state ) {
-            case 'initial':
-            case 'bad_url':
-                $this->_emit_form(FALSE);
-                break;
             case 'details_required':
                 $this->_emit_form( TRUE );
                 break;
-            default:
+            case 'journo_mismatch':
+            case 'scrape_failed':
+                $this->_emit_failed();
+                break;
+            case 'done':
                 $this->_emit_finished();
+                break;
+            case 'initial':
+            case 'bad_url':
+            default:
+                $this->_emit_form(FALSE);
+                break;
         }
     }
 
@@ -228,6 +255,7 @@ class ItemSubmitter
 <?php } ?>
 </dl>
 
+<input type="hidden" name="prev_url" value="<?= h($this->url); ?>" />
 <input type="hidden" name="j" value="<?= $_journo['ref']; ?>" />
 <input type="hidden" name="action" value="<?= $show_extra ? "submit_extra":"submit"?>" />
 <input type="submit" value="Submit" />
@@ -237,16 +265,20 @@ class ItemSubmitter
 
 
     function _emit_finished() {
-
 ?>
-state:   <?= $this->state; ?><br/>
-url:     <?= $this->url; ?><br/>
-title:   <?= $this->title; ?><br/>
-pubdate: <?= $this->pubdate; ?><br/>
-org:     <?= $this->publication; ?><br/>
+    <div class="infomessage">
+    <p>Thank you - the article has been added to your profile</p>
+    </div>
 <?php
     }
 
+    function _emit_failed() {
+?>
+<p class="errormessage"> <?= $this->errs['error_message'] ?></p> </p>
+<p>Sorry, the article couldn't be added immediately.</p>
+<p>It has been flagged for manual approval by the journa<i>listed</i> team.</p>
+<?php
+    }
 
 
     function _check_details() {
@@ -291,7 +323,9 @@ page_header($title);
 
 <?php
 $item->emit();
+
 ?>
+<a href="/<?= $_journo['ref'] ?>">Go back to your profile page</a>
 
 </div> <!-- end main -->
 
