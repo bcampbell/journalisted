@@ -5,6 +5,7 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
+require_once "../phplib/journo_rdf.php";
 require_once '../phplib/misc.php';
 require_once '../phplib/gatso.php';
 require_once '../phplib/cache.php';
@@ -176,10 +177,8 @@ if( $fmt == 'text' ) {
     header( "Content-Type: text/plain" );
     include "../templates/journo_text.tpl.php";
 } else if( $fmt == 'rdfxml' ) {
-    extract( $data );
-
     header( "Content-Type: application/rdf+xml" );
-    include "../templates/journo_rdfxml.tpl.php";
+    journo_emitRDFXML( $data );
 } else {
     /* normal html version */
     $title = $journo['prettyname'];
