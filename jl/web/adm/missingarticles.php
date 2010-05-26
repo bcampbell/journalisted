@@ -20,7 +20,7 @@ admPageHeader( "Missing Articles", "ExtraHead" );
 <p>User-submitted articles we <em>should</em> be able to scrape...</p>
 <?php
 
-$sql = "SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted
+$sql = "SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted, m.reason
     FROM missing_articles m LEFT JOIN journo j ON m.journo_id=j.id
     ORDER BY submitted DESC";
 $rows = db_getAll( $sql );

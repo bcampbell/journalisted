@@ -76,10 +76,13 @@ if( !$_journo ) {
 
 class ItemSubmitter
 {
-    public $url = null;
-    public $title = null;
-    public $pubdate = null;
-    public $publication = null;
+    public $journo = null;
+
+    public $url = '';
+    public $title = '';
+    public $pubdate = ''; // as input by a user (ie a string)
+    public $pubdate_dt = null; // as converted into a DateTime obj
+    public $publication = '';
 
     public $state = 'initial';
     public $errs = array();
@@ -87,24 +90,30 @@ class ItemSubmitter
 
     public $finished = FALSE;
 
-    function __construct()
+    // if $blank is set, then don't read out from http vars at all
+    function __construct( $journo, $blank=FALSE )
     {
-        global $_journo;
+        $this->journo = $journo;
 
-        $this->url = get_http_var( 'url' );
-        if( $this->url ) {
-            $this->url = clean_url( $this->url );
+        if( !$blank ) {
+            $this->url = get_http_var( 'url','' );
+            if( $this->url ) {
+                $this->url = clean_url( $this->url );
+            }
+
+            $this->title = get_http_var( 'title','' );
+            $this->pubdate = get_http_var( 'pubdate','' );
+            $dt = date_create( $this->pubdate );
+            if( $dt )
+                $this->pubdate_dt = $dt;
+
+            $this->publication = get_http_var( 'publication','' );
+
+            // so we can detect if url is changed
+            $this->prev_url = get_http_var( 'prev_url', '' );
         }
 
-        $this->title = get_http_var( 'title' );
-        $this->pubdate = get_http_var( 'pubdate' );
-        $this->publication = get_http_var( 'publication' );
-        $this->action = get_http_var( 'action' );
-
-        // so we can detect if url is changed
-        $this->prev_url = get_http_var( 'prev_url' );
-
-        if( !$this->url && !$this->prev_url ) {
+        if( $blank || (!$this->url && !$this->prev_url) ) {
             $this->state = 'initial';
             return;
         }
@@ -121,10 +130,7 @@ class ItemSubmitter
             // we should be able to scrape it
             $r = scrape_ScrapeArticle( $this->url );
             if( $r['status'] == 'fail' ) {
-                // uh-oh. queue it up for admin attention
-                db_do( "INSERT INTO missing_articles (journo_id,url) VALUES (?,?)",
-                    $_journo['id'], $this->url );
-                db_commit();
+                $this->_queue_missing( 'failed to scrape' );
                 $this->state = 'scrape_failed';
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 return;
@@ -140,7 +146,7 @@ class ItemSubmitter
             // make sure it's attributed to _this_ journo.
             $got_expected_journo = FALSE;
             foreach( $r['article']['journos'] as $j ) {
-                if( $j['id'] == $_journo['id'] ) {
+                if( $j['id'] == $this->journo['id'] ) {
                     $got_expected_journo = TRUE;
                     break;
                 }
@@ -149,11 +155,19 @@ class ItemSubmitter
             if( $got_expected_journo ) {
                 $this->state = 'done';
             } else {
+                $this->_queue_missing( "scraped, but didn't get expected journo" );
                 $this->state = 'journo_mismatch';
                 $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
             }
         } else {
             // it's an article we don't cover - need to collect title,pubdate,publication...
+
+            // check for dupes
+            if( db_getOne( "SELECT id FROM journo_other_articles WHERE url=? AND journo_id=? AND status='a'", $this->url, $this->journo['id'] ) ) {
+                $this->errs['url'] = "This article has already been added to your profile";
+                $this->state = 'bad_url';
+                return;
+            }
 
             if( $this->url != $this->prev_url ) {
                 // got a new url.
@@ -169,12 +183,14 @@ class ItemSubmitter
                     if( !$this->publication )
                         $this->publication = $guessed[0]['publication'];
                     // TODO: should verify journo name appears on page...
+                    // (can't do much with that information at this stage,
+                    // except maybe flag it up as requiring admin attention...)
                 }
                 $this->state = 'details_required';
             } else {
                 // submitting again - see if we can store 'em
                 if( $this->_check_details() ) {
-                    // it's OK! store it etc...
+                    $this->_add_other_article();
                     $this->state = 'done';
                 } else {
                     $this->state = 'details_required';
@@ -183,6 +199,20 @@ class ItemSubmitter
         }
     }
 
+    // have we reached the end of processing for this article?
+    // We still might be display an info or error message in emit(), but the
+    // actual work is now complete - emit() won't output a form.
+    function is_finished()
+    {
+        switch( $this->state ) {
+            case 'journo_mismatch':
+            case 'scrape_failed':
+            case 'done':
+                return TRUE;
+            default:
+                return FALSE;
+        }
+    }
 
 
     function emit()
@@ -223,7 +253,6 @@ class ItemSubmitter
 
     function _emit_form( $show_extra )
     {
-        global $_journo;
 ?>
 <form action="<?= $this->pagePath ?>" method=POST>
 <dl>
@@ -256,8 +285,7 @@ class ItemSubmitter
 </dl>
 
 <input type="hidden" name="prev_url" value="<?= h($this->url); ?>" />
-<input type="hidden" name="j" value="<?= $_journo['ref']; ?>" />
-<input type="hidden" name="action" value="<?= $show_extra ? "submit_extra":"submit"?>" />
+<input type="hidden" name="j" value="<?= $this->journo['ref']; ?>" />
 <input type="submit" value="Submit" />
 </form>
 <?php
@@ -287,8 +315,7 @@ class ItemSubmitter
         if( $this->pubdate == '' ) {
             $this->errs['pubdate'] = "Please enter the date the article was published";
         } else {
-            $dt = strtotime( $this->pubdate );
-            if( !$dt ) {
+            if( is_null( $this->pubdate_dt ) ) {
                 $this->errs['pubdate'] = "Please enter a valid date";
             }
         }
@@ -300,6 +327,45 @@ class ItemSubmitter
 
         return( $this->errs ? FALSE:TRUE );
     }
+
+
+    // add the article to the other_articles table
+    function _add_other_article()
+    {
+        $sql = <<<EOT
+INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
+VALUES ( ?,?,?,?,?,? )
+EOT;
+        $art = array(
+            'journo_id'=>$this->journo['id'],
+            'url'=>$this->url,
+            'title'=>$this->title,
+            'publication'=>$this->publication,
+            'status'=>canEditJourno( $this->journo['id'] ) ? 'a':'u',
+            'pubdate_iso' => $this->pubdate_dt->format(DateTime::ISO8601) );
+        db_do( $sql,
+            $art['journo_id'],
+            $art['url'],
+            $art['title'],
+            $art['pubdate_iso'],
+            $art['publication'],
+            $art['status'] );
+        $art['id'] = db_getOne( "SELECT lastval()" );
+        db_commit();
+        eventlog_Add( 'submit-otherarticle', $this->journo['id'], $art );
+    }
+
+
+    function _queue_missing( $reason )
+    {
+        // uh-oh. queue it up for admin attention
+        db_do( "INSERT INTO missing_articles (journo_id,url,reason) VALUES (?,?,?)",
+            $this->journo['id'],
+            $this->url,
+            $reason
+        );
+        db_commit();
+    }
 }
 
 
@@ -308,22 +374,31 @@ class ItemSubmitter
 
 
 
-
-
-
-$item = new ItemSubmitter();
+$item = new ItemSubmitter( $_journo );
 $title = "Submit missing articles for " . $_journo['prettyname'];
 
 page_header($title);
 
 ?>
 <div class="main">
-
-<h2><?= $title ?></h2>
-
 <?php
-$item->emit();
-
+if( $item->is_finished() ) {
+    // it's been submitted.
+    // display the info message above the title...
+?>
+<?php $item->emit(); ?>
+<h2><?= $title ?></h2>
+<?php
+    // ... and a new, blank form underneath
+    $blank = new ItemSubmitter( $_journo, TRUE );
+    $blank->emit();
+} else {
+    // still going - show the form under the title
+?>
+<h2><?= $title ?></h2>
+<?php $item->emit(); ?>
+<?php
+}
 ?>
 <a href="/<?= $_journo['ref'] ?>">Go back to your profile page</a>
 

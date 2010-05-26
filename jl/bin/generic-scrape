@@ -45,7 +45,26 @@ def find_story( soup ):
 
 
 
-def find_headline( soup ):
+def find_headline( soup, url ):
+
+#    print url
+    slug = slug_from_url( url )
+    if slug:
+        words = slug.split('-')
+        finder_pat = '(.*?)'.join( [r'\b' + w + r'\b' for w in slug.split('-') ] )
+
+        for t in soup.findAll( text=re.compile(finder_pat, re.IGNORECASE) ):
+            h = t.findParent( ['h1','h2','h3','h4' ] )
+            if h:
+                return h
+#                print "GOT: ", ukmedia.FromHTMLOneLine( h.renderContents(None) ).encode('utf-8')
+#                sys.exit(0)
+            
+#        print "no good match for: ", slug
+#    else:
+#        print "no slug"
+#    sys.exit(0)
+
 
     headline =  None
     # try some easy cases first:
@@ -129,12 +148,26 @@ def extract_pubdate( soup ):
 
 
 
+def slug_from_url( url ):
+    """ return the slug part of a url, or '' """
+    url = re.sub('/$','',url)   # kill trailing slash
+    o = urlparse.urlparse( url )
+    txt = o.path.split('/')[-1]
+
+    m = re.compile( "^[\w]+-[-\w]+$" ).match( txt )
+    if m is None:
+        return ''
+    else:
+        return m.group(0)
+
+
+
 
 def extract( html, context ):
     soup = BeautifulSoup( html )
 
     title = u''
-    h = find_headline( soup )
+    h = find_headline( soup, context['url'] )
     if h is not None:
         title = ukmedia.FromHTMLOneLine( h.renderContents(None) )
     #ideas:
@@ -161,6 +194,7 @@ def main():
 #    parser.add_option("-j", "--json", action="store_true", dest="json", help="output results as json")
 
     (_options, args) = parser.parse_args()
+
 
     results = []
     for url in args:

@@ -35,6 +35,8 @@ def main():
     for a in articles:
         cmd = BINARY + ' "' + a['url'] + '"'
         out = os.popen(cmd).read()
+#        print out
+#        continue
         result = json.loads( out )
         got = result[0]
         if got['status'] == "error":
