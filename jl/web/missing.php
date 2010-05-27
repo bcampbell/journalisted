@@ -300,7 +300,7 @@ Please enter the URL of an article:<br/>
     function _emit_finished() {
 ?>
     <div class="infomessage">
-    <p>Thank you - the article <em><?php h($this->title) ?></em> has been added to your profile</p>
+    <p>Thank you - the article '<em><?= h($this->title) ?></em>' has been added to your profile</p>
     </div>
 <?php
     }
@@ -308,8 +308,8 @@ Please enter the URL of an article:<br/>
     function _emit_failed() {
 ?>
 <p class="errormessage"> <?= $this->errs['error_message'] ?></p> </p>
-<p>Sorry, the article couldn't be added immediately.</p>
-<p>It has been flagged for manual approval by the journa<i>listed</i> team.</p>
+<p>Sorry, the article couldn't be added immediately.<br/>
+It has been flagged for manual approval by the journa<i>listed</i> team.</p>
 <?php
     }
 
