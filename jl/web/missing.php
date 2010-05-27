@@ -79,6 +79,7 @@ class ItemSubmitter
     public $journo = null;
 
     public $url = '';
+    public $prev_url = '';
     public $title = '';
     public $pubdate = ''; // as input by a user (ie a string)
     public $pubdate_dt = null; // as converted into a DateTime obj
@@ -89,6 +90,8 @@ class ItemSubmitter
     public $pagePath = '/missing';
 
     public $finished = FALSE;
+
+    public $guessed_flag = FALSE;    // have any fields been guessed?
 
     // if $blank is set, then don't read out from http vars at all
     function __construct( $journo, $blank=FALSE )
@@ -120,8 +123,8 @@ class ItemSubmitter
 
         $msg = is_sane_article_url( $this->url );
         if( !is_null( $msg ) ) {
-            $state = 'bad_url';
             $this->errs['url'] = $msg;
+            $this->state = 'bad_url';
             return;
         }
 
@@ -131,8 +134,8 @@ class ItemSubmitter
             $r = scrape_ScrapeArticle( $this->url );
             if( $r['status'] == 'fail' ) {
                 $this->_queue_missing( 'failed to scrape' );
-                $this->state = 'scrape_failed';
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
+                $this->state = 'scrape_failed';
                 return;
             }
 
@@ -154,10 +157,12 @@ class ItemSubmitter
 
             if( $got_expected_journo ) {
                 $this->state = 'done';
+                return;
             } else {
                 $this->_queue_missing( "scraped, but didn't get expected journo" );
-                $this->state = 'journo_mismatch';
                 $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
+                $this->state = 'journo_mismatch';
+                return;
             }
         } else {
             // it's an article we don't cover - need to collect title,pubdate,publication...
@@ -170,30 +175,20 @@ class ItemSubmitter
             }
 
             if( $this->url != $this->prev_url ) {
-                // got a new url.
-                // try and guess some basic details by scraping the page:
-                $cmd = OPTION_JL_FSROOT . "/bin/generic-scrape \"{$this->url}\"";
-                $cmd = escapeshellcmd( $cmd ) . ' 2>&1';
-                $out = `$cmd`;
-                $guessed = json_decode( $out, TRUE );
-                if( !is_null( $guessed ) && $guessed[0]['status'] == 'ok' ) {
-                    // fill in any empty fields with out guesses
-                    if( !$this->title )
-                        $this->title = $guessed[0]['title'];
-                    if( !$this->publication )
-                        $this->publication = $guessed[0]['publication'];
-                    // TODO: should verify journo name appears on page...
-                    // (can't do much with that information at this stage,
-                    // except maybe flag it up as requiring admin attention...)
-                }
+                // url is new or has changed - try and autofill
+                // fields by scraping the page
+                $this->_guess_details();
                 $this->state = 'details_required';
+                return;
             } else {
                 // submitting again - see if we can store 'em
                 if( $this->_check_details() ) {
                     $this->_add_other_article();
                     $this->state = 'done';
+                    return;
                 } else {
                     $this->state = 'details_required';
+                    return;
                 }
             }
         }
@@ -255,10 +250,19 @@ class ItemSubmitter
     {
 ?>
 <form action="<?= $this->pagePath ?>" method=POST>
+<?php if( $show_extra ) { ?>
+We need some details about this article.<br/>
+<?php if( $this->guessed_flag ) { ?>
+We've made some guesses - <em>please check and correct any mistakes</em><br/>
+<?php } ?>
+<?php } ?>
+<?php if( $this->state=='initial' or $this->state=='bad_url' ) { ?>
+Please enter the URL of an article:<br/>
+<?php } ?>
 <dl>
   <dt><label for="url">URL</label></dt>
   <dd>
-    <input type="text" name="url" id="url" class="url" value="<?= h($this->url); ?>" />
+    <input type="text" name="url" id="url" class="url" value="<?= h($this->url); ?>" /><br/>
 <?= $this->errhint('url') ?>
   </dd>
 <?php if( $show_extra ) { ?>
@@ -272,6 +276,7 @@ class ItemSubmitter
   <dt><label for="pubdate">date of publication</label></dt>
   <dd>
     <input type="text" name="pubdate" id="pubdate" class="date" value="<?= h($this->pubdate); ?>" />
+    <span class="explain">(dd/mm/yyyy)</span>
 <?= $this->errhint('pubdate') ?>
   </dd>
 
@@ -295,7 +300,7 @@ class ItemSubmitter
     function _emit_finished() {
 ?>
     <div class="infomessage">
-    <p>Thank you - the article has been added to your profile</p>
+    <p>Thank you - the article <em><?php h($this->title) ?></em> has been added to your profile</p>
     </div>
 <?php
     }
@@ -366,6 +371,33 @@ EOT;
         );
         db_commit();
     }
+
+    function _guess_details()
+    {
+        // try and guess some basic details by scraping the page:
+        $cmd = OPTION_JL_FSROOT . "/bin/generic-scrape \"{$this->url}\"";
+        $cmd = escapeshellcmd( $cmd ) . ' 2>&1';
+        $out = `$cmd`;
+        $guessed = json_decode( $out, TRUE );
+        $g = $guessed[0];
+        if( !is_null( $guessed ) && $g['status'] == 'ok' ) {
+            // fill in any empty fields with out guesses
+            $this->title = $g['title'];
+            $this->pubdate = $g['pubdate'];
+            $dt = date_create( $this->pubdate );
+            if( $dt ) {
+                $this->pubdate_dt = $dt;
+            }
+            $this->publication = $g['publication'];
+
+            if( $g['title'] || $g['pubdate'] || $g['publication'] )
+                $this->guessed_flag = TRUE;
+
+            // TODO: should verify journo name appears on page...
+            // (can't do much with that information at this stage,
+            // except maybe flag it up as requiring admin attention...)
+        }
+    }
 }
 
 
@@ -375,19 +407,25 @@ EOT;
 
 
 $item = new ItemSubmitter( $_journo );
-$title = "Submit missing articles for " . $_journo['prettyname'];
+
+if( canEditJourno( $_journo['id'] ) ) {
+    $title = "Add articles to your profile";
+} else {
+    $title = "Submit missing articles for " . $_journo['prettyname'];
+}
 
 page_header($title);
 
 ?>
 <div class="main">
+<h2><?= $title ?></h2>
 <?php
 if( $item->is_finished() ) {
     // it's been submitted.
     // display the info message above the title...
 ?>
 <?php $item->emit(); ?>
-<h2><?= $title ?></h2>
+<p>Would you like to add another?</p>
 <?php
     // ... and a new, blank form underneath
     $blank = new ItemSubmitter( $_journo, TRUE );
@@ -395,7 +433,6 @@ if( $item->is_finished() ) {
 } else {
     // still going - show the form under the title
 ?>
-<h2><?= $title ?></h2>
 <?php $item->emit(); ?>
 <?php
 }
@@ -451,6 +488,10 @@ function canEditJourno( $journo_id )
 //
 function is_sane_article_url( $url )
 {
+    if( strpos( trim($url), ' ' ) !== False ) {
+        return "URLs should not contain spaces";
+    }
+
     $bits = crack_url( $url );
     if( $bits === FALSE )
         return "Please enter the full url of this article";
@@ -475,9 +516,9 @@ function is_sane_article_url( $url )
 
     // hostnames probably shouldn't have spaces in them...
     // (proably user entering  a headline... sigh...)
-    if( strpos( $host, ' ' ) !== False ) {
-        return "Please enter a valid url";
-    }
+//    if( strpos( $host, ' ' ) !== False ) {
+//        return "Please enter a valid url";
+//    }
 
     // make sure we've got at least a non-blank path (or a non-blank query)
     if( ($path=='' || $path=='/') && $query=='' ) {

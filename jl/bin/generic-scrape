@@ -150,7 +150,8 @@ def extract_pubdate( soup ):
 
 def slug_from_url( url ):
     """ return the slug part of a url, or '' """
-    url = re.sub('/$','',url)   # kill trailing slash
+    url = re.sub(r'/$','',url)   # kill trailing
+    url = re.sub(r'[.][a-zA-Z]{3,4}/$','',url)   # kill trailing file extension (.html etc)
     o = urlparse.urlparse( url )
     txt = o.path.split('/')[-1]
 
@@ -180,7 +181,10 @@ def extract( html, context ):
 #        pubdate = extract_date(soup)
 
     context['title'] = title
-    context['pubdate'] = pubdate
+    if pubdate is not None:
+        context['pubdate'] = pubdate.strftime('%Y-%m-%d')
+    else:
+        context['pubdate'] = ''
     o = urlparse.urlparse( context['url'] )
     context['publication'] = re.sub( '^www.','',o[1] )
     return context
