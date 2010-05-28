@@ -8,6 +8,7 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/journo.php';
 require_once '../phplib/scrapeutils.php';
 require_once '../phplib/eventlog.php';
 require_once '../../phplib/db.php';
@@ -73,8 +74,8 @@ if( !$_journo ) {
 
 
 
-
-class ItemSubmitter
+// class to handle submitting an article
+class ArticleSubmitter
 {
     public $journo = null;
 
@@ -169,7 +170,7 @@ class ItemSubmitter
 
             // check for dupes
             if( db_getOne( "SELECT id FROM journo_other_articles WHERE url=? AND journo_id=? AND status='a'", $this->url, $this->journo['id'] ) ) {
-                $this->errs['url'] = "This article has already been added to your profile";
+                $this->errs['url'] = "This article has already been added";
                 $this->state = 'bad_url';
                 return;
             }
@@ -300,7 +301,7 @@ Please enter the URL of an article:<br/>
     function _emit_finished() {
 ?>
     <div class="infomessage">
-    <p>Thank you - the article '<em><?= h($this->title) ?></em>' has been added to your profile</p>
+    <p>Thank you - the article '<em><?= h($this->title) ?></em>' has been added</p>
     </div>
 <?php
     }
@@ -406,12 +407,17 @@ EOT;
 
 
 
-$item = new ItemSubmitter( $_journo );
+$item = new ArticleSubmitter( $_journo );
 
 if( canEditJourno( $_journo['id'] ) ) {
     $title = "Add articles to your profile";
 } else {
     $title = "Submit missing articles for " . $_journo['prettyname'];
+}
+
+$newly_active = FALSE;
+if( $_journo['status'] == 'i' ) {
+    $newly_active = journo_checkActivation( $_journo['id'] );
 }
 
 page_header($title);
@@ -420,6 +426,15 @@ page_header($title);
 <div class="main">
 <h2><?= $title ?></h2>
 <?php
+if( $newly_active ) {
+?>
+<div class="infomessage">
+<strong>Profile activated</strong>
+</div>
+<?php
+}
+
+
 if( $item->is_finished() ) {
     // it's been submitted.
     // display the info message above the title...
@@ -428,7 +443,7 @@ if( $item->is_finished() ) {
 <p>Would you like to add another?</p>
 <?php
     // ... and a new, blank form underneath
-    $blank = new ItemSubmitter( $_journo, TRUE );
+    $blank = new ArticleSubmitter( $_journo, TRUE );
     $blank->emit();
 } else {
     // still going - show the form under the title
@@ -437,7 +452,7 @@ if( $item->is_finished() ) {
 <?php
 }
 ?>
-<a href="/<?= $_journo['ref'] ?>">Go back to your profile page</a>
+<a href="/<?= $_journo['ref'] ?>">Go to profile page</a>
 
 </div> <!-- end main -->
 
