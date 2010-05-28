@@ -155,11 +155,11 @@ class ImportProfilePage extends EditProfilePage
 
 <p>
 If you've got a public profile on <a href="http://www.linkedin.com">LinkedIn.com</a>,
-you can import it to journa<i>listed</i> profile.
+you can import it to your journa<i>listed</i> profile.
 </p>
 <form action="<?= $this->pagePath ?>" method="POST">
   <dl>
-  <dt><label for="url">Your LinkedIn URL:</label></dt>
+  <dt><label for="url">URL of public profile</label></dt>
   <dd><input type="text" size="80" name="url" id="url" value="<?= h($url) ?>" /><br/>
   <span class="explain">e.g. "http://www.linkedin.com/in/<?= preg_replace('/-/','',$this->journo['ref'] ) ?>"</span>
   </dd>
