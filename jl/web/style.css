@@ -908,6 +908,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.you-can-also li.print-page { background-image: url( "/img/icon_printer.png"); }
 .box.you-can-also li.forward-profile { background-image: url( "/img/icon_rightarrow.png"); }
 .box.you-can-also li.claim-profile { background-image: url( "/img/icon_person.png"); }
+.box.you-can-also li.import-linkedin { background-image: url( "/img/icon_linkedin.png"); }
 
 .box.subscribe-newsletter {
   background-color: #e7f3e3;
