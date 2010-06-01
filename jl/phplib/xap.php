@@ -92,7 +92,9 @@ class XapSearch {
             $this->enquire->set_sort_by_value_then_relevance( XAP_PUBDATETIME_ID );
         }   /* (default is relevance) */
 
-        $matches = $this->enquire->get_mset($offset, $limit);
+
+        $checkatleast = max( $limit, 500 );
+        $matches = $this->enquire->get_mset($offset, $limit, $checkatleast );
 
         $this->total_results = max( $matches->get_matches_estimated(), $offset+$matches->size() );
 
