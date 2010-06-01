@@ -1056,21 +1056,37 @@ a.donate:focus {
 .monthly-stats-placeholder { width: 600px; height: 300px; }
 
 
+/* TODO: merge with edit links! */
+
+
 a.dostuff {
-  margin: 0px;
-  padding: 4px;
-  font-size: 110%;
-  border: 2px solid #4444AA;
-  background-color: #8888FF;
-  color: #ffffff;
+/*  display:block;
+  float: left;
+*/
+    display: inline-block;
+  color: #000000;
+  text-decoration: none;
+  background: url(/img/editbutton.png) no-repeat 0px 0px;
+  height: 21px;
+  line-height: 20px;
 }
 
-a.dostuff:hover {
+a.dostuff span {
+/*  display:block;
+  float:left;
+*/
+    display: inline-block;
+  background:url(/img/editbutton.png) no-repeat right 0px;
+  height:21px;
+  padding-left:0px;
+  padding-right:10px;
+  margin-left:10px;
+  cursor:pointer;
 }
 
+a.dostuff:hover { background-position: 0px -21px; }
+a.dostuff:hover span {background-position: right -21px; }
 
-a.dostuff:active {
-}
 
 
 .accountaction {

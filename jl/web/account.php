@@ -114,7 +114,7 @@ EOT;
         if( $journo['permission'] == 'edit' ) {
 //            print"<pre>You've got $article_cnt articles</pre>";
 ?>
-<a class="dostuff" href="/<?= $journo['ref'] ?>">View your profile</a>
+<a class="dostuff" href="/<?= $journo['ref'] ?>"><span>View your profile</span></a>
 <?php
             if( $article_cnt<5 ) {
                 emit_add_articles( $journo ); ++$n;
@@ -193,7 +193,7 @@ function emit_add_articles( &$journo )
 <p>Add articles you have written that are published on
 the web</p>
 
-<a class="dostuff" href="/missing?j=<?= $journo['ref'] ?>">Add articles</a>
+<a class="dostuff" href="/missing?j=<?= $journo['ref'] ?>"><span>Add articles</span></a>
 </div>
 <?php
 
@@ -219,7 +219,7 @@ function emit_add_photo( &$journo ) {
 <p>
 <img width="64" height="64" src="/img/rupe.png" alt="no photo" />
 </p>
-<a class="dostuff" href="/profile_photo?ref=<?= $journo['ref'] ?>">Add photo</a>
+<a class="dostuff" href="/profile_photo?ref=<?= $journo['ref'] ?>"><span>Add photo</span></a>
 </div>
 <?php
 
@@ -237,7 +237,7 @@ Add your experience, education, awards and links to other
 profile information on the web
 </p>
 
-<a class="dostuff" href="/<?= $journo['ref'] ?>#bio-tab">Edit profile</a>
+<a class="dostuff" href="/<?= $journo['ref'] ?>#bio-tab"><span>Edit profile</span></a>
 </div>
 <?php
 
@@ -252,7 +252,7 @@ function emit_add_admired( &$journo ) {
 <p>Point people to other journalists you admire –
 recommendations make the web go round</p>
 
-<a class="dostuff" href="/profile_admired?ref=<?= $journo['ref'] ?>">Add journalists</a>
+<a class="dostuff" href="/profile_admired?ref=<?= $journo['ref'] ?>"><span>Add journalists</span></a>
 </div>
 <?php
 
@@ -265,7 +265,7 @@ function emit_add_alerts() {
 <div class="accountaction">
 <h3>Set up email alerts</h3>
 <p>Follow your favourite journalist(s).</p>
-<a class="dostuff" href="/weeklydigest">Set up alerts</a>
+<a class="dostuff" href="/alert"><span>Set up alerts</span></a>
 </div>
 <?php
 
@@ -281,7 +281,7 @@ function emit_subscribe_to_newsletter()
 <p>
 You are not subscribed to the weekly digest.
 </p>
-<a class="dostuff" href="/weeklydigest">Subscribe</a>
+<a class="dostuff" href="/weeklydigest"><span>Subscribe</span></a>
 </div>
 <?php
 
