@@ -108,15 +108,18 @@ def Extract( html, context ):
     if datepara is None:
         #"<span class="date">Monday October 27 2008 <b> byEmily Garnham for express.co.uk</b>"
         datespan = wrapdiv.find( 'span', {'class':'date'} )
-        bylineb = datespan.b
+        bylineb = datespan.find( 'b' )
         if bylineb is not None:
             art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
             art['byline'] = re.sub( '([bB]y)([A-Z])', r'\1 \2', art['byline'] )
             bylineb.extract()
         else:
-            # blogs(?) have slightly different date/byline layout
-            bylineb = wrapdiv.b
-            art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
+            if 'blog' in art['srcurl']:
+                # blogs(?) have slightly different date/byline layout
+                bylineb = wrapdiv.b
+                art['byline'] = ukmedia.FromHTMLOneLine( bylineb.renderContents(None).strip() )
+            else:
+                art['byline'] = u''
 
 
         art['pubdate'] = ukmedia.ParseDateTime( datespan.renderContents(None).strip() )
@@ -175,6 +178,11 @@ def Extract( html, context ):
 #       n = cruft.next
 #       cruft.extract()
 #       cruft = n
+
+    for cruft in wrapdiv.findAll('object'):
+        cruft.extract()
+    for cruft in wrapdiv.findAll('div',{'class':'right'}):
+        cruft.extract()
 
     for cruft in wrapdiv.findAll('form' ):      # (search form etc )
         cruft.extract()
