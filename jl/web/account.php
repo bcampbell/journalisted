@@ -122,8 +122,11 @@ EOT;
             if( $photo_cnt==0 ) {
                 emit_add_photo($journo); ++$n;
             }
-            if( $edu_cnt==0 && $emp_cnt==0 ) {
-                emit_add_information( $journo ); ++$n;
+            if( $emp_cnt==0 ) {
+                emit_add_experience( $journo ); ++$n;
+            }
+            if( $edu_cnt==0 ) {
+                emit_add_education( $journo ); ++$n;
             }
             if( $admired_cnt==0 ) {
                 emit_add_admired( $journo ); ++$n;
@@ -225,19 +228,37 @@ function emit_add_photo( &$journo ) {
 
 }
 
-function emit_add_information( &$journo )
+function emit_add_experience( &$journo )
 {
 
 ?>
 <div class="accountaction">
-<h3>Fill out your profile information</h3>
+<h3>Add experience</h3>
 
 <p>
-Add your experience, education, awards and links to other
-profile information on the web
+Add previous experience to your profile
 </p>
 
-<a class="dostuff" href="/<?= $journo['ref'] ?>#bio-tab"><span>Edit profile</span></a>
+<a class="dostuff" href="profile_employment?ref=<?= $journo['ref'] ?>&action=new_employment"><span>Add experience</span></a>
+</div>
+<?php
+
+}
+
+
+
+function emit_add_education( &$journo )
+{
+
+?>
+<div class="accountaction">
+<h3>Add education</h3>
+
+<p>
+Add information about your education to your profile
+</p>
+
+<a class="dostuff" href="/profile_education?ref=<?= $journo['ref'] ?>&action=new_uni"><span>Add Education</span></a>
 </div>
 <?php
 
