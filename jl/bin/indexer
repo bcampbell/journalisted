@@ -142,11 +142,8 @@ def IndexArticle( xapdb, art ):
 
     #print "indexing: '%s'"  %(art['title'].encode('utf-8'))
 
-    # strip off html to get raw text
-    txt = ukmedia.FromHTML( art['content'] );
 
     doc = xapian.Document()
-#    doc.set_data(txt)
 
     # add article id as a term
     article_id_term = 'Q' + str(art['id'])
@@ -183,9 +180,12 @@ def IndexArticle( xapdb, art ):
 
     doc.set_data( dat_serialised )
 
-    # index the main text of the article...
     indexer.set_document(doc)
-    indexer.index_text( txt )
+
+    # index the main text of the article (if there is any)
+    if art['content'] is not None:
+        txt = ukmedia.FromHTML( art['content'] );
+        indexer.index_text( txt )
 
     # ...and the title...
     indexer.increase_termpos()
@@ -231,10 +231,10 @@ def PerformIndexing( xapdb,  options ):
         # just force indexing of the one article
         article_id = int( options.single_article_id )
         ukmedia.DBUG2( "Indexing single article (id=%d).\n" % (article_id) )
-        c.execute( "SELECT * FROM article WHERE id=%s", (article_id) )
+        c.execute( "SELECT a.*,c.content FROM article a LEFT JOIN article_content c ON a.id=c.article_id WHERE a.id=%s", (article_id) )
     else:
-        # retrieve articles
-        sql = "SELECT * FROM article INNER JOIN article_needs_indexing ON id=article_id ORDER BY pubdate DESC"
+        # retrieve all articles flagged for indexing
+        sql = "SELECT a.*, c.content FROM ((article a LEFT JOIN article_content c ON a.id=c.article_id) INNER JOIN article_needs_indexing i ON a.id=i.article_id) ORDER BY a.pubdate DESC"
         if options.max_number:
             sql = sql + " LIMIT %d" % ( int(options.max_number) )
         ukmedia.DBUG2( "fetching articles\n" )
@@ -257,7 +257,11 @@ def PerformIndexing( xapdb,  options ):
             art = {}
             # decode all the fields that need to be in unicode
             for f in ( 'title', 'content', 'byline', 'description' ):
-                art[f] = row[f].decode( 'utf-8' )
+                if row[f] is None:
+                    art[f] = None   # probably only needed for content...
+                else:
+                    art[f] = row[f].decode( 'utf-8' )
+
             # ones we can just copy without any processing
             for f in ( 'id','status','srcorg', 'pubdate','permalink' ):
                 art[f] = row[f]
