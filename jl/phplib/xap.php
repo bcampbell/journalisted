@@ -42,6 +42,7 @@ class XapSearch {
         $this->qp->add_prefix( 'author', 'A' );
         $this->qp->add_prefix( 'title', 'T' );
         $this->qp->add_prefix( 'journo', 'J' );
+        $this->qp->add_prefix( 'srcorg', 'O' );
     }
 
 
