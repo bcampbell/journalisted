@@ -561,7 +561,10 @@ def PrettyDump( art ):
                 cnt = str(c['num_comments'])
             print "comments: %s at %s" % ( cnt, c['comment_url'])
     print "-----------content----------------------"
-    print art['content'].encode('utf-8')
+    if art['content'] is None:
+        print "-- no content --"
+    else:
+        print art['content'].encode('utf-8')
     print "----------------------------------------"
     print
 

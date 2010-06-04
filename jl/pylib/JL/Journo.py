@@ -786,7 +786,9 @@ def EvilPerJournoSpecialCasesLookup( conn, rawname, hints ):
     if rawname == "jane hamilton" and hints['srcorgname'] == u'sun':
         # two Jane Hamilton's at the sun. One appears to write about scotland,
         # the other about shoes.
-        content = hints['content'].lower()
+        content = u''
+        if hints['content'] is not None:
+            content = hints['content'].lower()
         lookups = { 'jane-hamilton-1': (u'scotland', u'glasgow',u'whisky',u'strathclyde' ),
             'jane-hamilton-2': ( u'shoe', u'designer', u'fashion', u'j.hamilton@the-sun.co.uk' ),
             }
