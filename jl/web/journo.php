@@ -179,6 +179,9 @@ if( $fmt == 'text' ) {
 } else if( $fmt == 'rdfxml' ) {
     header( "Content-Type: application/rdf+xml" );
     journo_emitRDFXML( $data );
+} else if( $fmt == 'n3' ) {
+    header( "Content-Type: text/plain" );   // text/n3
+    journo_emitN3( $data );
 } else {
     /* normal html version */
     $title = $journo['prettyname'];

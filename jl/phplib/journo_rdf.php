@@ -18,8 +18,12 @@ $ns = array(
 $_conf = array('ns' => $ns);
 
 
+
+
 function journo_asARC2Index( &$journo_data ) {
     extract( $journo_data, EXTR_PREFIX_ALL, 'j' );
+
+    $journo_uri = "jl:{$j_ref}";
 
     $j = array();
     $j['rdf:type'] = array( 'foaf:Person' );
@@ -58,7 +62,7 @@ function journo_asARC2Index( &$journo_data ) {
             $foo['doac:date-starts'] = array( $e['year_from'] );
         if( !$e['current'] && $e['year_to'] )
             $foo['doac:date-ends'] = array( $e['year_to'] );
-        $ename = "#exp{$i}";
+        $ename = "_:exp{$i}";
         $experience[$ename] = $foo;
         ++$i;
     }
@@ -69,21 +73,54 @@ function journo_asARC2Index( &$journo_data ) {
     }
 
 
-    return array_merge( array( 'jl:'.$j_ref => $j ),
-        $experience );
+    $articles = array();
+    foreach( $j_articles as $a ) {
+        // TODO: journo_other_articles suckiness will go away soon.... fix this then.
+        if( is_null($a['id'] ) ) {
+            $art_uri = $a['permalink']; // ugh.
+        } else {
+            $art_uri = "jl:article/?id={$a['id']}"; // ugh.
+        }
+
+        $foo = array(
+            'dc:title'=>array( $a['title'] ),
+            'dc:date'=>array( $a['iso_pubdate'] ),
+            'dc:creator'=>array( $journo_uri ) );
+
+        $articles[ $art_uri ] = $foo; 
+    }
+
+    $j['jl:mustBeAGoodWayToDenotingAuthorshipSomewhereAlready'] = array();
+    foreach( $articles as $art_uri=>$art ) {
+        $j['jl:mustBeAGoodWayToDenotingAuthorshipSomewhereAlready'][] = $art_uri;
+    }
+
+
+
+
+    return array_merge( array( $journo_uri => $j ),
+        $experience, $articles );
 }
 
 
 function journo_emitRDFXML( &$j ) {
     global $_conf;
-    $idx = journo_asARC2Index($j);
-
     $ser = ARC2::getRDFXMLSerializer($_conf);
+#    $triples = journo_asARC2Triples($j);
+#    $doc = $ser->getSerializedTriples($triples);
+    $idx = journo_asARC2Index($j);
     $doc = $ser->getSerializedIndex($idx);
-
-//    var_dump( $idx );
     print $doc;
 }
+
+function journo_emitN3( &$j ) {
+    global $_conf;
+    $ser = ARC2::getNTriplesSerializer($_conf);
+    $triples = journo_asARC2Triples($j);
+    $doc = $ser->getSerializedTriples($triples);
+    print $doc;
+}
+
 
 
 
