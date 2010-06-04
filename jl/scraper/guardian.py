@@ -671,7 +671,7 @@ def FindBlogFeeds():
 #    feeds.append( ('All guardian.co.uk blog posts', 'http://blogs.guardian.co.uk/atom.xml') )
 
 
-    bloglist = soup.find( 'div', {'class':'bd'} ).find( 'ul', {'class':'two-col last'})
+    bloglist = soup.find( 'div', {'id':'related'} )
 
     for a in bloglist.findAll( 'a', {'class': 'link-text'} ):
         url = a['href']
