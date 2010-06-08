@@ -8,6 +8,10 @@ require_once 'misc.php';
 function page_header( $title, $params=array() )
 {
     header( 'Content-Type: text/html; charset=utf-8' );
+    if( arr_get('pingbacks', $params, FALSE ) ) {
+        $pingback_url = OPTION_BASE_URL . "/pingback";
+        header("X-Pingback: {$pingback_url}");
+    }
 
     if( $title )
         $title .= ' - ' . OPTION_WEB_DOMAIN;

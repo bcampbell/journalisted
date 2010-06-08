@@ -61,6 +61,7 @@ if( $journo['status'] != 'a' && !$can_edit_page ) {
 $pageparams = array(
     'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
     'head_extra_fn'=>'extra_head',
+    'pingbacks'=>TRUE,
 );
 
 

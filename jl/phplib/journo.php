@@ -523,7 +523,9 @@ function journo_describeWeblink( $journo, $l )
             else
                 $desc = "{$prettyname}'s profile";
             break;
+        case 'pingback':
         case '':    // (other)
+        default:
             // could be anything - use the free text description the user entered
             $desc = $l['description'];
             break;
