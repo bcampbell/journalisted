@@ -98,7 +98,7 @@
 
  $links
     url
-    kind  - 'blog', 'webpage', 'twitter', '' (other)
+    kind  - 'blog', 'webpage', 'twitter', '' (other), 'pingback'
     description - (only set if kind='')
 
  $similar_journos - list of journos who write similar articles
@@ -152,6 +152,13 @@ foreach( $employers as $emp ) {
         $previous_employers[] = $emp['employer'];
 }
 $previous_employers = array_unique( $previous_employers );
+
+/* separate pingbacks from the other links */
+function is_pingback_link( &$l ) { return $l['kind']=='pingback'; }
+function is_not_pingback_link( &$l ) { return $l['kind']!='pingback'; }
+$pingbacks = array_filter( $links, 'is_pingback_link' );
+$links = array_filter( $links, 'is_not_pingback_link' );
+
 
 ?>
 
@@ -656,7 +663,18 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
     </ul>
-<?php } else { ?>
+<?php } ?>
+
+<?php if( $pingbacks ) { ?>
+    <h4>Mentioned in blogs:</h4>
+    <ul>
+<?php foreach( $pingbacks as $l ) { ?>
+       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
+<?php } ?>
+    </ul>
+<?php } ?>
+
+<?php if( !$links && !$pingbacks ) { ?>
   <span class="not-known">No links known</span>
 <?php } ?>
   </div>
