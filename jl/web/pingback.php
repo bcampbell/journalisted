@@ -78,7 +78,10 @@ EOT;
 
 $svr = xmlrpc_server_create();
 xmlrpc_server_register_method($svr, "pingback.ping", "handle_pingback");
-if( $response = xmlrpc_server_call_method($svr, $HTTP_RAW_POST_DATA, null) ) {
+
+$postdata = file_get_contents("php://input");
+
+if( $response = xmlrpc_server_call_method($svr, $postdata, null) ) {
     header("Content-Type: text/xml");
     print( $response );
 }
