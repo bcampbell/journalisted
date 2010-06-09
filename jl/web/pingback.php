@@ -6,6 +6,14 @@ require_once '../../phplib/db.php';
 //require_once '../../phplib/utility.php';
 
 
+function CRAPLOG( $msg ) {
+/*
+    $O = fopen( "/tmp/crap","a" );
+    fwrite( $O, $msg );
+    fclose( $O );
+*/
+}
+
 function handle_pingback($method, $params, $extra)
 {
     list ($sourceURI, $targetURI) = $params;
@@ -13,6 +21,7 @@ function handle_pingback($method, $params, $extra)
     // fetch the source URI to verify that the source does indeed link to the target
     $html = file_get_contents($sourceURI);
     if( $html === FALSE ) {
+        CRAPLOG( "0x10\n" );
         return 0x10;      // "The source URI does not exist."
     }
 
@@ -21,8 +30,10 @@ function handle_pingback($method, $params, $extra)
           mb_detect_encoding($html, 'UTF-8, ISO-8859-1, windows-1252', true));
 
     $html = html_entity_decode($html, ENT_COMPAT, 'UTF-8' );
-    if( strpos( $html, $targetURI ) === FALSE)
+    if( strpos( $html, $targetURI ) === FALSE) {
+        CRAPLOG( "0x11\n" );
         return 0x011;      // "The source URI does not contain a link to the target URI, and so cannot be used as a source."
+    }
 
     // check URL, try and extract journo ref
     $bits = crack_url( $targetURI );
@@ -34,12 +45,14 @@ function handle_pingback($method, $params, $extra)
     }
 
     if( $ref === null ) {
+        CRAPLOG( "0x21\n" );
         return 0x0021;  // "The specified target URI cannot be used as a target."
     }
 
     // valid journo?
     $journo = db_getRow( "SELECT * FROM journo WHERE ref=? AND status='a'", $ref );
     if( $journo === null ) {
+        CRAPLOG( "0x21 (invalid journo)\n" );
         return 0x0021;  // "The specified target URI cannot be used as a target."
     }
 
@@ -54,8 +67,9 @@ function handle_pingback($method, $params, $extra)
 
 
     // already got this pingback?
-    if( db_getOne( "SELECT id FROM journo_weblink WHERE url=? AND approved=true", $sourceURI ) )
+    if( db_getOne( "SELECT id FROM journo_weblink WHERE journo_id=? AND url=? AND approved=true", $journo['id'], $sourceURI ) )
     {
+        CRAPLOG( "0x30\n" );
         return 0x0030;  // "The pingback has already been registered."
     }
 
@@ -69,6 +83,7 @@ EOT;
     db_do( $sql, $journo['id'], $sourceURI, $desc );
     db_commit();
 
+    CRAPLOG( "added.\n" );
     return "Ping registered - thanks";
 }
 
@@ -80,6 +95,10 @@ $svr = xmlrpc_server_create();
 xmlrpc_server_register_method($svr, "pingback.ping", "handle_pingback");
 
 $postdata = file_get_contents("php://input");
+
+
+
+//CRAPLOG( sprintf( "%s\n--------\n", $postdata ) );
 
 if( $response = xmlrpc_server_call_method($svr, $postdata, null) ) {
     header("Content-Type: text/xml");
