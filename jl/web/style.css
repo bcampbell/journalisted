@@ -1001,11 +1001,13 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 /* position the "edit" links */
 .bio .head,
-.contact .head
+.contact .head,
+#tab-links .head
  { position: relative; }
 
 .bio .head a.edit,
-.contact .head a.edit
+.contact .head a.edit,
+#tab-links .head a.edit
  {
   position: absolute;
   top: 10px;

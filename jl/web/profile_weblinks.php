@@ -103,7 +103,7 @@ class WeblinksPage extends EditProfilePage
             return;
 
         // jump back to journo page
-        $this->Redirect( "/{$this->journo['ref']}" );
+        $this->Redirect( "/{$this->journo['ref']}#tab-links" );
     }
 
 
@@ -178,7 +178,7 @@ class WeblinksPage extends EditProfilePage
   <input type="hidden" name="action" value="submit" />
   <div class="button-area">
     <a class="add" href="#">Add a site</a><br/>
-    <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
+    <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>#tab-links">cancel</a>
   </div>
 </form>
 <p>Note: journa<i>listed</i> reserves the right to change or remove links</p>
