@@ -642,26 +642,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 
-<div class="">
-  <div class="head"><h3>Blogs linking to <?= $prettyname ?>'s profile</h3></div>
-  <div class="body">
-<?php if( $pingbacks ) { ?>
-    <ul>
-<?php foreach( $pingbacks as $l ) { ?>
-       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
-<?php } ?>
-
-<?php } else { ?>
-    <p class="not-known">None known</p>
-<?php } ?>
-    </ul>
-
-  </div>
-  <div class="foot">
-  </div>
-</div>
-
-
 </div> <!-- end links tab -->
 
 
@@ -700,6 +680,25 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot"></div>
 </div>
 
+
+<div class="box pingbacks">
+  <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
+  <div class="body">
+<?php if( $pingbacks ) { ?>
+    <ul>
+<?php foreach( $pingbacks as $l ) { ?>
+       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
+<?php } ?>
+
+<?php } else { ?>
+    <span class="not-known">None known</span>
+<?php } ?>
+    </ul>
+
+  </div>
+  <div class="foot">
+  </div>
+</div>
 
 
 
