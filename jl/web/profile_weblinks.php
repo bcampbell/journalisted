@@ -103,7 +103,7 @@ class WeblinksPage extends EditProfilePage
             return;
 
         // jump back to journo page
-        $this->Redirect( "/{$this->journo['ref']}" );
+        $this->Redirect( "/{$this->journo['ref']}#tab-links" );
     }
 
 
@@ -155,7 +155,7 @@ class WeblinksPage extends EditProfilePage
         if( $this->badSubmit ) {
             $weblinks = $this->submitted;
         } else {
-            $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? ORDER BY rank DESC", $this->journo['id'] );
+            $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? AND kind<>'pingback' ORDER BY rank DESC", $this->journo['id'] );
         }
 
         $home_url = '';
@@ -178,7 +178,7 @@ class WeblinksPage extends EditProfilePage
   <input type="hidden" name="action" value="submit" />
   <div class="button-area">
     <a class="add" href="#">Add a site</a><br/>
-    <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>">cancel</a>
+    <button class="submit" type="submit">Save changes</button> or <a href="/<?= $this->journo['ref'] ?>#tab-links">cancel</a>
   </div>
 </form>
 <p>Note: journa<i>listed</i> reserves the right to change or remove links</p>
@@ -248,7 +248,8 @@ class WeblinksPage extends EditProfilePage
 
     function handleSubmit()
     {
-        db_do( "DELETE FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
+        // rewrite the whole lot... (but preserve pingbacks, which aren't edited here)
+        db_do( "DELETE FROM journo_weblink WHERE kind<>'pingback' AND journo_id=?", $this->journo['id'] );
         $rankstep = 10;
         $rank = 100 + $rankstep*sizeof($this->submitted);
         foreach( $this->submitted as &$w ) {

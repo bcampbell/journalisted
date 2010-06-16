@@ -61,6 +61,7 @@ if( $journo['status'] != 'a' && !$can_edit_page ) {
 $pageparams = array(
     'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
     'head_extra_fn'=>'extra_head',
+    'pingbacks'=>TRUE,
 );
 
 
@@ -217,8 +218,9 @@ function extra_head()
     function () {
         var tabs = $('.tabs li');
         function setTab( tabname ) {
-            if( tabname != '#tab-bio' && tabname != '#tab-contact' ) {
-                tabname = '#tab-work';
+            if( tabname=='' ) {
+                /* default to first tab */
+                tabname = tabs.find('a').attr('href');
             }
             tabs.each( function() {
                 tabid = $('a',this).attr('href');

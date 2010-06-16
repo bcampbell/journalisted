@@ -98,7 +98,7 @@
 
  $links
     url
-    kind  - 'blog', 'webpage', 'twitter', '' (other)
+    kind  - 'blog', 'webpage', 'twitter', '' (other), 'pingback'
     description - (only set if kind='')
 
  $similar_journos - list of journos who write similar articles
@@ -152,6 +152,13 @@ foreach( $employers as $emp ) {
         $previous_employers[] = $emp['employer'];
 }
 $previous_employers = array_unique( $previous_employers );
+
+/* separate pingbacks from the other links */
+function is_pingback_link( &$l ) { return $l['kind']=='pingback'; }
+function is_not_pingback_link( &$l ) { return $l['kind']!='pingback'; }
+$pingbacks = array_filter( $links, 'is_pingback_link' );
+$links = array_filter( $links, 'is_not_pingback_link' );
+
 
 ?>
 
@@ -254,6 +261,7 @@ $previous_employers = array_unique( $previous_employers );
 <li><a href="#tab-work">Work</a></li>
 <li><a href="#tab-bio">Biography</a></li>
 <li><a href="#tab-contact">Contact</a></li>
+<li><a href="#tab-links">Links</a></li>
 </ul>
 </div>
 
@@ -611,6 +619,32 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 
 </div> <!-- end contact tab -->
+
+
+<div class="tab-content" id="tab-links">
+<div class="">
+  <div class="head">
+    <h3><?= $prettyname ?> on the web</h3>
+    <?php if( $can_edit_page ) { ?><a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a><?php } ?>
+  </div>
+  <div class="body">
+<?php if( $links ) { ?>
+    <ul>
+<?php foreach( $links as $l ) { ?>
+       <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
+<?php } ?>
+    </ul>
+<?php } else { ?>
+    <p class="not-known">No links entered</p>
+<?php } ?>
+  </div>
+  <div class="foot">
+  </div>
+</div>
+
+</div> <!-- end links tab -->
+
+
 </div> <?php /* end main body */ ?>
 <div class="foot"></div>
 </div> <!-- end main -->
@@ -647,23 +681,22 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 
 
-<div class="box links">
-  <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
+<div class="box pingbacks">
+  <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
   <div class="body">
-<?php if( $links ) { ?>
+<?php if( $pingbacks ) { ?>
     <ul>
-<?php foreach( $links as $l ) { ?>
+<?php foreach( $pingbacks as $l ) { ?>
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
-    </ul>
+
 <?php } else { ?>
-  <span class="not-known">No links known</span>
+    <span class="not-known">None known</span>
 <?php } ?>
+    </ul>
+
   </div>
   <div class="foot">
-    <?php if( $can_edit_page ) { ?>
-    <a class="edit" href="/profile_weblinks?ref=<?= $ref ?>">edit</a>
-    <?php } ?>
   </div>
 </div>
 
