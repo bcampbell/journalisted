@@ -33,7 +33,8 @@ $canned = array(
     new WhosWritingAbout(),
     new NewsletterSubscribers(),
     new EventLog(),
-    new RegisteredJournos()
+    new RegisteredJournos(),
+    new Pingbacks()
 );
 
 
@@ -857,6 +858,25 @@ class RegisteredJournos extends CannedQuery {
 
         $sql = <<<EOT
 SELECT j.ref, j.prettyname, j.oneliner, p.email, p.name FROM (person p INNER JOIN person_permission perm ON perm.person_id=p.id) INNER JOIN journo j ON j.id=perm.journo_id WHERE perm.permission='edit';
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+class Pingbacks extends CannedQuery {
+    function __construct() {
+        $this->name = "Pingbacks";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show pingbacks, by journo";
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner, l.url, l.description FROM journo j INNER join journo_weblink l ON j.id=l.journo_id WHERE l.kind='pingback' AND l.approved=true ORDER BY l.journo_id;
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
