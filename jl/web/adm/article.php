@@ -74,6 +74,9 @@ function FetchArticle( $article_id )
 	$q = db_query( 'SELECT * FROM article WHERE id=?', $article_id );
 
 	$art = db_fetch_array($q);
+
+    $art['images'] = db_getAll( "SELECT * FROM article_image WHERE article_id=?", $article_id );
+
 	return $art;
 }
 
@@ -123,7 +126,19 @@ EOT;
 <tr><th>last_similar</th><td><?php echo $art['last_similar']; ?></td></tr>
 <tr><th>last_comment_check</th><td><?php echo $art['last_comment_check']; ?></td></tr>
 
+<tr><th>images</th><td>
+ <ul>
+<?php foreach( $art['images'] as $im ) { ?>
+ <li>
+   <a href="<?= $im['url'] ?>"><?= $im['url'] ?></a><br/>
+   caption: <?= h($im['caption']) ?><br/>
+   credit: <?= h($im['credit']) ?><br/>
+<?php } ?>
+ </ul>
+</td>
+
 </table>
+
 <h2>content</h2>
 <table border=1>
   <tr><th>displayed</th><th>source HTML</th></tr>
