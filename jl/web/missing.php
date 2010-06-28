@@ -45,6 +45,34 @@ function clean_url( $url )
 }
 
 
+
+// returns a datetime obj, or NULL
+function parse_date( $d ) {
+    // DateTime parser treats 01/25/2010 as mm/dd/yyyy,
+    // but 01-25-2010 as dd/mm/yyyy. sigh.
+    // Test for this case and handle it ourselves.
+    $m = array();
+    if( 1==preg_match( '%(?P<day>[0-9]?[1-9])[-/](?P<month>[0-9]?[1-9])[-/](?P<year>[0-9]{2,4})%', $d, $m ) ) {
+        $day = intval( $m['day'] );
+        $month = intval( $m['month'] );
+        $year = intval( $m['year'] );
+
+        if( checkdate( $month, $day, $year ) ) {
+            $dt = new DateTime();
+            $dt->setDate( $year, $month, $day );
+            return $dt;
+        }
+    } else {
+        // just use DateTime parser
+        $dt = date_create( $d );
+        if( $dt )
+            return $dt;
+    }
+    return null;
+}
+
+
+
 $P = person_if_signed_on(); /* (ugly hack to force login processing here, which might involve outputing http headers for cookies) */
 
 $ref = strtolower( get_http_var( 'j' ) );   /* eg 'fred-bloggs' */
@@ -82,8 +110,8 @@ class ArticleSubmitter
     public $url = '';
     public $prev_url = '';
     public $title = '';
-    public $pubdate = ''; // as input by a user (ie a string)
-    public $pubdate_dt = null; // as converted into a DateTime obj
+    public $pubdate = ''; // as input by a user (ie a string in "dd/mm/yyyy" format)
+    public $pubdate_dt = null; // as converted into a DateTime obj (null if $pubdate is bad)
     public $publication = '';
 
     public $state = 'initial';
@@ -107,7 +135,7 @@ class ArticleSubmitter
 
             $this->title = get_http_var( 'title','' );
             $this->pubdate = get_http_var( 'pubdate','' );
-            $dt = date_create( $this->pubdate );
+            $dt = parse_date( $this->pubdate );
             if( $dt )
                 $this->pubdate_dt = $dt;
 
@@ -385,7 +413,7 @@ EOT;
             // fill in any empty fields with out guesses
             $this->title = $g['title'];
             $this->pubdate = $g['pubdate'];
-            $dt = date_create( $this->pubdate );
+            $dt = parse_date( $this->pubdate );
             if( $dt ) {
                 $this->pubdate_dt = $dt;
             }
