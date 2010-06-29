@@ -158,7 +158,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $can_edit_page && $status != 'a' ) { ?>
 <div class="not-public">
   <p><strong>Please Note:</strong>
-  Your public profile is not yet active. It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> five articles.
+  Your public profile is not yet active. It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> <?= nice_number(OPTION_JL_JOURNO_ACTIVATION_THRESHOLD) ?> articles.
   </p>
 </div>
 <?php } ?>

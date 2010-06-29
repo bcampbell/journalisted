@@ -131,7 +131,7 @@ EOT;
 <a href="/<?= $journo['ref'] ?>"><?= OPTION_BASE_URL . '/' . $journo['ref'] ?></a>
 </big>
 <?php
-            if( $article_cnt<5 ) {
+            if( $article_cnt<OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) {
                 emit_add_articles( $journo ); ++$n;
             }
             if( $photo_cnt==0 ) {
@@ -229,7 +229,7 @@ function emit_inactive_note( $journo ) {
 <div class="not-public">
   <p><strong>Please Note:</strong>
   Your <a href="/<?= $journo['ref'] ?>">public profile</a> is not yet active.
-  It will be switched on once you have <a href="/missing?j=<?= $journo['ref'] ?>">added</a> five articles.
+  It will be switched on once you have <a href="/missing?j=<?= $journo['ref'] ?>">added</a> <?= nice_number( OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) ?> articles.
   </p>
 </div>
 <?php

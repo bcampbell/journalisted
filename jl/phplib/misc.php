@@ -41,6 +41,16 @@ function pretty_date( $t )
     }
 }
 
+function nice_number( $n ) {
+    static $nums = array("zero","one","two","three","four","five","six","seven","eight","nine");
+    if( $n>=0 && $n<10 ) {
+        return $nums[$n];
+    } else {
+        return strval($n);
+    }
+}
+
+
 // join strings using ", " and " and "
 // eg ("foo", "bar", "wibble") => "foo, bar and wibble"
 function pretty_implode( $parts)
