@@ -296,11 +296,21 @@ $previous_employers = array_unique( $previous_employers );
   </ul>
 
 <?php if($more_articles) { ?>
-  (<a href="/<?= $ref ?>?allarticles=yes">Show all articles</a>)
+  <a class="show-all" href="/<?= $ref ?>?allarticles=yes">
+<?php
+ // TODO: enable once other_articles is merged...
+ //<?= $quick_n_nasty ? "Show all articles...":"Show all ${num_articles} articles..."
+?>
+Show all articles...
+  </a>
 <?php } ?>
 
+<?php if( $can_edit_page ) { ?>
+<div class="editbutton add"><a href="/missing?j=<?= $ref ?>"><span>Add articles</span></a></div>
+<?php } else { ?>
 <p>Article(s) missing? If you notice an article is missing,
 <a href="/missing?j=<?= $ref ?>">click here</a></p>
+<?php } ?>
 </div>
 </div>
 

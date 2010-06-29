@@ -286,12 +286,13 @@ We've made some guesses - <em>please check and correct any mistakes</em><br/>
 <?php } ?>
 <?php } ?>
 <?php if( $this->state=='initial' or $this->state=='bad_url' ) { ?>
-Please enter the URL of an article:<br/>
+Please enter the URL of the article:<br/>
 <?php } ?>
 <dl>
   <dt><label for="url">URL</label></dt>
   <dd>
     <input type="text" name="url" id="url" class="url" value="<?= h($this->url); ?>" /><br/>
+    <span class="explain">e.g. "http://www.thedailynews.com/articles/12345.html"</span></br/>
 <?= $this->errhint('url') ?>
   </dd>
 <?php if( $show_extra ) { ?>
@@ -438,7 +439,7 @@ EOT;
 $item = new ArticleSubmitter( $_journo );
 
 if( canEditJourno( $_journo['id'] ) ) {
-    $title = "Add articles to your profile";
+    $title = "Add articles you have written";
 } else {
     $title = "Submit missing articles for " . $_journo['prettyname'];
 }
