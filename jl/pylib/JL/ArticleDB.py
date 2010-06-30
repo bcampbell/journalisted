@@ -151,14 +151,14 @@ def CheckArticle(art):
 #   entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
     # check for missing/null fields
-    for f in ('title','description','content', 'permalink', 'srcurl','srcid','srcorgname','lastscraped','pubdate' ):
+    for f in ('title','content','description', 'permalink', 'srcurl','srcid','srcorgname','lastscraped','pubdate' ):
         if not (f in art):
             raise Exception, ( "missing '%s' field!" % (f) )
         if not art[f]:
             raise Exception, ( "null '%s' field!" % (f) )
 
     # check for empty strings
-    for f in ('title','description','content', 'permalink', 'srcurl','srcid' ):
+    for f in ('title','content','description', 'permalink', 'srcurl','srcid' ):
         s= art[f]
         if s.strip() == u'':
             raise Exception, ( "blank '%s' field!" % (f) )

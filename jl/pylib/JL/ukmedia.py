@@ -227,6 +227,7 @@ emptyparapat = re.compile( u"<p>\s*</p>", re.IGNORECASE|re.UNICODE|re.DOTALL )
 
 def SanitiseHTML_handleopen(m):
     tag = m.group(1).lower()
+
     if tag in acceptabletags:
         # special case - allow <a> to keep href attr:
         if tag == 'a':
@@ -248,6 +249,13 @@ def SanitiseHTML_handleclose(m):
 def SanitiseHTML( html ):
     """Strip out all non-essential tags and attrs"""
     html = html.replace('>>', '>')
+
+    # some tags we want to excise completely:
+    for tag in ('script','noscript' ):
+        pattxt = r'<\s*' + tag + r'\b.*?\s*>.*?</\s*' + tag + r'\s*>'
+        pat = re.compile(pattxt, re.IGNORECASE )
+        html = pat.sub('',html)
+    # others, we might want to kill but keep the content
     html = tagopenpat.sub( SanitiseHTML_handleopen, html )
     html = tagclosepat.sub( SanitiseHTML_handleclose, html )
     html = emptyparapat.sub( u'', html )
