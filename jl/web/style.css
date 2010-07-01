@@ -1109,9 +1109,32 @@ a.donate:focus {
 
 
 
-.accountaction {
-    padding: 8px 0px;
+a.public-profile-location {
+    display: block;
+    font-size: 150%;
+    text-align: center;
+    margin: 8px auto;
+    padding: 8px;
+    border: 1px solid #888;
+    background: #eee;
+    width: 500px;
+
 }
+
+.accountaction {
+    /*padding: 8px 0px;*/
+    padding: 0px 8px;
+    margin: 8px 8px;
+    float: left;
+    width: 272px;   /* 628/2 -16 -16*/
+    height: 140px;
+    border: 1px solid #888;
+    position: relative;
+}
+.accountaction h3 { border:none;}
+
+.accountaction .editbutton { position: absolute; right: 8px; bottom: 4px }
+.accountaction img { float: left; }
 
 /* SEARCH PAGE */
 

@@ -14,20 +14,6 @@ require_once '../phplib/passwordbox.php';
 account_page();
 
 
-/*
-
-- add articles
-- upload picure
-- edit profile
-- add admired journos
-- sign up to newsletter
-- set up alerts
-- show pending claim
-
-*/
-
-
-
 function account_page()
 {
 
@@ -104,7 +90,6 @@ EOT;
     page_header( $title );
 
 
-    $n=0;   // track the number of items we're displaying
 
 
     if( !is_null($journo) && $journo['permission']=='edit' && $journo['status'] =='i' ) {
@@ -119,49 +104,54 @@ EOT;
 <?php
     /* show a bunch of things user could/should do now... */
  
-    if( !is_null( $journo ) ) {
-        if( $journo['permission'] == 'claimed' ) {
+    if( !is_null( $journo ) && $journo['permission'] == 'claimed' ) {
             emit_claim_pending($journo);
-        }
-        if( $journo['permission'] == 'edit' ) {
-            //            print"<pre>You've got $article_cnt articles</pre>";
-            //
+    }
+    if( !is_null( $journo ) && $journo['permission'] == 'edit' ) {
 ?>
-<big>Your public profile is:
-<a href="/<?= $journo['ref'] ?>"><?= OPTION_BASE_URL . '/' . $journo['ref'] ?></a>
-</big>
+Your public profile is at:<br/>
+<a class="public-profile-location" href="/<?= $journo['ref'] ?>"><?= OPTION_BASE_URL . '/' . $journo['ref'] ?></a>
+<br/>
 <?php
-            if( $article_cnt<OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) {
-                emit_add_articles( $journo ); ++$n;
-            }
-            if( $photo_cnt==0 ) {
-                emit_add_photo($journo); ++$n;
-            }
-            if( $emp_cnt==0 ) {
-                emit_add_experience( $journo ); ++$n;
-            }
-            if( $edu_cnt==0 ) {
-                emit_add_education( $journo ); ++$n;
-            }
-            if( $weblink_cnt==0 ) {
-                emit_add_links( $journo ); ++$n;
-            }
-            if( $admired_cnt==0 ) {
-                emit_add_admired( $journo ); ++$n;
-            }
-            if( $contact_cnt==0 ) {
-                emit_add_contact_details( $journo ); ++$n;
-            }
+    }
 
+?>
+Things you can do now...
+<br/>
+<?php
+    $n=0;   // track the number of items we're displaying
+
+    if( !is_null( $journo ) && $journo['permission'] == 'edit' ) {
+        if( $article_cnt<OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) {
+            emit_add_articles( $journo ); ++$n;
         }
+        if( $photo_cnt==0 ) {
+            emit_add_photo($journo); ++$n;
+        }
+        if( $emp_cnt==0 ) {
+            emit_add_experience( $journo ); ++$n;
+        }
+        if( $edu_cnt==0 ) {
+            emit_add_education( $journo ); ++$n;
+        }
+        if( $weblink_cnt==0 ) {
+            emit_add_links( $journo ); ++$n;
+        }
+        if( $admired_cnt==0 ) {
+            emit_add_admired( $journo ); ++$n;
+        }
+        if( $contact_cnt==0 ) {
+            emit_add_contact_details( $journo ); ++$n;
+        }
+
     }
 
-    if( ( $alert_cnt==0 && $n<4) || $n<2 ) {
-        emit_add_alerts(); ++$n;
+    if( ( $alert_cnt==0 && $n<6) || $n<2 ) {
+        emit_add_alerts( $alert_cnt ); ++$n;
     }
 
-    if( ( !$newsletter && $n<4) || $n<2 ) {
-        emit_subscribe_to_newsletter(); ++$n;
+    if( ( !$newsletter && $n<6) || $n<2 ) {
+        emit_subscribe_to_newsletter( $newsletter ); ++$n;
     }
 
 ?>
@@ -243,6 +233,7 @@ function emit_add_photo( &$journo ) {
 <p>
 <img width="64" height="64" src="/img/rupe.png" alt="no photo" />
 </p>
+<p>Make sure your adoring fans know who to stop in the street for autographs...</p>
 <div class="editbutton"><a href="/profile_photo?ref=<?= $journo['ref'] ?>"><span>Add photo</span></a></div>
 </div>
 <?php
@@ -301,12 +292,18 @@ recommendations make the web go round</p>
 }
 
 
-function emit_add_alerts() {
+function emit_add_alerts( $alert_cnt ) {
 
 ?>
 <div class="accountaction">
 <h3>Set up email alerts</h3>
-<p>Follow your favourite journalist(s).</p>
+<p>Follow your favourite journalist(s) via email.</p>
+<?php if( $alert_cnt == 0 ) { ?>
+<p>You don't have any alerts set up.</p>
+<?php } else { ?>
+<p>You currently have <strong><?= nice_number($alert_cnt) ?></strong> <?= ($alert_cnt==1) ? "alert":"alerts" ?>.</p>
+<?php } ?>
+<p>
 <div class="editbutton"><a href="/alert"><span>Set up alerts</span></a></div>
 </div>
 <?php
@@ -314,16 +311,24 @@ function emit_add_alerts() {
 }
 
 
-function emit_subscribe_to_newsletter()
+function emit_subscribe_to_newsletter( $newsletter )
 {
 
 ?>
-<div>
+<div class="accountaction">
+<?php if( $newsletter ) { ?>
+<h3>Weekly digest</h3>
+<p>
+You are subscribed to the weekly digest.
+</p>
+<div class="editbutton"><a href="/weeklydigest"><span>Unsubscribe</span></a></div>
+<?php } else { ?>
 <h3>Subscribe to the weekly digest</h3>
 <p>
 You are not subscribed to the weekly digest.
 </p>
 <div class="editbutton"><a href="/weeklydigest"><span>Subscribe</span></a></div>
+<?php } ?>
 </div>
 <?php
 
@@ -334,8 +339,13 @@ function emit_add_links( &$journo )
 
 ?>
 <div class="accountaction">
-<h3>Add links</h3>
-<p>Add links to your homepage, blog, profiles etc...</p>
+<h3>Add links to...</h3>
+<ul>
+<li>your home page</li>
+<li>your blog</li>
+<li>Facebook/Linkedin/myspace/etc...</li>
+<li>other pages about you</li>
+<ul>
 
 <div class="editbutton"><a href="/profile_weblinks?ref=<?= $journo['ref'] ?>"><span>Add links</span></a></div>
 </div>
@@ -349,8 +359,13 @@ function emit_add_contact_details( &$journo )
 
 ?>
 <div class="accountaction">
-<h3>Add your contact details</h3>
-<p>Email, phone, address, twitter...</p>
+<h3>Add contact details</h3>
+<ul>
+<li>Email</li>
+<li>Phone</li>
+<li>Address</li>
+<li>twitter</li>
+</ul>
 
 <div class="editbutton"><a href="/profile_contact?ref=<?= $journo['ref'] ?>"><span>Add contact details</span></a></div>
 </div>
