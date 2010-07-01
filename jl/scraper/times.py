@@ -166,27 +166,46 @@ def ScrubFunc( context, entry ):
 
 
 def FindArticles():
-    """ fetch list of articles """
+    sitemap_times = "http://www.thetimes.co.uk/tto/public/?view=sitemap&section=News"
+    sitemap_sundaytimes = "http://www.thesundaytimes.co.uk/sto/public/Sitemap/?view=sitemap"
 
-    sitemap_url = "http://www.thetimes.co.uk/tto/public/?view=sitemap&section=News"
+    arts = []
+    arts = arts + FindArticlesFromSiteMap( sitemap_times )
+    arts = arts + FindArticlesFromSiteMap( sitemap_sundaytimes )
+    return arts
+
+
+def FindArticlesFromSiteMap( sitemap_url ):
+    """ fetch list of articles by crawling for links using the sitemap"""
 
     html = ukmedia.FetchURL( sitemap_url )
     soup = BeautifulSoup.BeautifulSoup( html )
 
     pages = []
 
-    sitemap = soup.find( 'div', {'id':'sitemap-body'} )
-    for section in sitemap.findAll( 'div', {'class':'section'} ):
-        section_name = section.h2.a.img['alt']
-        for li in section.findAll( 'li' ):
-            a = li.a
+    if 'thetimes.co.uk/' in sitemap_url:
+        sitemap = soup.find( 'div', {'id':'sitemap-body'} )
+        for section in sitemap.findAll( 'div', {'class':'section'} ):
+            section_name = section.h2.a.img['alt']
+            for li in section.findAll( 'li' ):
+                a = li.a
+                name = a.string
+                url = a.get('href')
+                if url is not None:
+                    o = urlparse.urlparse( url )
+                    if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
+                        pages.append( url )
+                    elif o[1].endswith( '.typepad.com' ):
+                        pages.append( url )
+    elif 'thesundaytimes.co.uk/' in sitemap_url:
+        sitemap = soup.find('div',{'id':'sitemap'})
+        for a in sitemap.findAll('a'):
             name = a.string
             url = a.get('href')
-            if url is not None:
+            if a:
+                url = urlparse.urljoin( sitemap_url, url )
                 o = urlparse.urlparse( url )
-                if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
-                    pages.append( url )
-                elif o[1].endswith( '.typepad.com' ):
+                if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
                     pages.append( url )
 
     article_urls = set()
@@ -228,12 +247,15 @@ def ReapArticles( page_url ):
 
         title = a.string
         srcid = CalcSrcID( url )
+        #print url,":",srcid
         if srcid is not None:
             article_urls.add(url)
     return article_urls
 
 
+
 # http://www.timesonline.co.uk/tol/news/politics/article3471714.ece
+#http://www.thesundaytimes.co.uk/sto/travel/Destinations/article328119.ece
 srcidpat_ece = re.compile( '/(article[0-9]+\.ece)$' )
 
 def CalcSrcID( url ):
@@ -275,8 +297,8 @@ def CalcSrcID( url ):
     if o[1] in ( 'thetimes.co.uk','www.thetimes.co.uk' ):
         return 'thetimes.co.uk_' + m.group(1)
 
-    if o[1] in ( 'sundaytimes.co.uk', 'www.sundaytimes.co.uk' ):
-        return 'sundaytimes.co.uk_' + m.group(1)
+    if o[1] in ( 'thesundaytimes.co.uk', 'www.thesundaytimes.co.uk' ):
+        return 'thesundaytimes.co.uk_' + m.group(1)
 
     if o[1] in ('timesonline.co.uk', 'www.timesonline.co.uk' ):
         if 'timesonline.co.uk/tol/feeds/rss/' in url:
@@ -290,12 +312,12 @@ def Extract( html, context ):
     o = urlparse.urlparse( context['srcurl'] )
     if o[1].endswith( 'typepad.com' ):
         return Extract_typepad( html, context )
-
     if o[1] in ('www.timesonline.co.uk', 'timesonline.co.uk'):
         return Extract_ece_timesonline( html,context )
-
     if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk'):
         return Extract_ece_thetimes( html,context )
+    if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk'):
+        return Extract_ece_thesundaytimes( html,context )
 
 
 
@@ -379,6 +401,71 @@ def Extract_ece_thetimes( html, context ):
         art['images'].append( image )
 
     return art
+
+
+
+def Extract_ece_thesundaytimes( html, context ):
+    """ article extractor for thesundaytimes.co.uk """
+    art = context
+    art['srcorgname'] = u'sundaytimes';
+
+    soup = BeautifulSoup.BeautifulSoup( html )
+    if soup.find( 'div', {'id':'login-popup'} ):
+        raise Exception, "Not logged in"
+
+
+    # get headline and pubdate from meta tags
+    dashboard_header = soup.head.find( 'meta', {'name':'dashboard_header'} )
+    art['title'] = ukmedia.FromHTMLOneLine( dashboard_header[ 'content' ] )
+
+    dashboard_updated_date = soup.head.find( 'meta', {'name':'dashboard_updated_date'} )
+    dashboard_published_date = soup.head.find( 'meta', {'name':'dashboard_publication_date'} )
+    art['pubdate'] = ukmedia.ParseDateTime( dashboard_published_date['content'] )
+
+    interactive_article_div = soup.find( 'div', {'id':'interactive-article'} )
+    if interactive_article_div is not None:
+        ukmedia.DBUG2( "SKIP interactive-article (%s)\n" % (art['srcurl']) )
+        return None
+
+    content_div = soup.find('div',{'class':'standard-content'} )
+    # get byline
+    authors = []
+
+    author_comments_div = content_div.find( 'div',{'class':['author-comments', 'standard-summary', 'standard-summary-full-width']} )
+    if author_comments_div:
+        for span in author_comments_div.findAll( 'span',{'class':'author-name'} ):
+            authors.append( ukmedia.FromHTMLOneLine( span.renderContents(0) ) )
+        author_comments_div.extract()
+
+    art['byline'] = u', '.join( authors )
+
+
+    # process and remove photos from content
+    art['images'] = []
+    for image_span in content_div.findAll('span',{'class':re.compile( r'\bmulti-position-img-left\b' )}):
+        img = {}
+        img['url'] = urlparse.urljoin( art['srcurl'],image_span.img['src'] )
+        t = image_span.find('span',{'class':re.compile(r'\bmulti-position-photo-text\b')}).renderContents(None)
+        t=t.strip()
+        m = re.compile(r'(.*)\s*([(](.*?)[)])$').search(t)
+        if m:
+            img['caption'] = m.group(1)
+            img['credit'] = m.group(3)
+        else:
+            img['caption'] = t
+            img['credit']= u''
+        art['images'].append(img)
+        image_span.extract() 
+
+    # trim out non-content bits
+    content_div.h2.extract()
+    for cruft in content_div.findAll( 'p',{'class':re.compile(r'hideinprint')}):
+        cruft.extract()
+
+    art['content'] = ukmedia.SanitiseHTML( content_div.renderContents(None) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+    return art
+
 
 
 def Extract_ece_timesonline( html, context ):
@@ -659,6 +746,7 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
+
 #    Login()
 #    articles = FindArticles()
 #    for a in articles:
