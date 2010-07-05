@@ -234,7 +234,7 @@ $previous_employers = array_unique( $previous_employers );
 <?php if( $twitter_id ) { ?>
     <div class="section twitter">
     <h4>Twitter</h4>
-    <ul><li>@<a href="<?= $twitter_url ?>"><?= h($twitter_id) ?></a></li></ul>
+    <ul><li><a href="<?= $twitter_url ?>">@<?= h($twitter_id) ?></a></li></ul>
     </div>
 <?php } ?>
 
@@ -579,7 +579,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
   <div class="body">
 <?php if( $twitter_id ) { ?>
-    <p>Find <?= $prettyname; ?> on twitter: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
+    <p>Find <?= $prettyname; ?> on twitter: <a href="<?= $twitter_url ?>"?>@<?= h($twitter_id) ?></a></p>
 <?php } else { ?>
     <p class="not-known">No Twitter account entered</p>
 <?php } ?>

@@ -155,7 +155,7 @@ class WeblinksPage extends EditProfilePage
         if( $this->badSubmit ) {
             $weblinks = $this->submitted;
         } else {
-            $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE journo_id=? ORDER BY rank DESC", $this->journo['id'] );
+            $weblinks = db_getAll( "SELECT * FROM journo_weblink WHERE kind NOT IN ('pingback','twitter') AND journo_id=? ORDER BY rank DESC", $this->journo['id'] );
         }
 
         $home_url = '';
@@ -194,7 +194,7 @@ class WeblinksPage extends EditProfilePage
             'blog'=>'My Blog',
             'homepage'=>'My Website',
             'profile'=>'Profile/Bio',
-            'twitter'=>'Twitter',
+        //    'twitter'=>'Twitter',
             ''=>'Other...' );
 
         $is_template = false;
@@ -248,7 +248,7 @@ class WeblinksPage extends EditProfilePage
 
     function handleSubmit()
     {
-        db_do( "DELETE FROM journo_weblink WHERE journo_id=?", $this->journo['id'] );
+        db_do( "DELETE FROM journo_weblink WHERE kind NOT IN ('pingback','twitter') AND journo_id=?", $this->journo['id'] );
         $rankstep = 10;
         $rank = 100 + $rankstep*sizeof($this->submitted);
         foreach( $this->submitted as &$w ) {

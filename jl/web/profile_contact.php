@@ -84,7 +84,7 @@ Please do not enter any information wish to keep private.</p>
     <dd><input type="text" size="60" name="email" id="email" value="<?= h($email['email']) ?>" /></dd>
 
     <dt><label for="email">Twitter name</label></dt>
-    <dd><input type="text" size="60" name="twitter" id="twitter" value="<?= h($twitter) ?>" /></dd>
+    <dd><span>@</span><input type="text" size="60" name="twitter" id="twitter" value="<?= h($twitter) ?>" /></dd>
 
     <dt><label for="phone">Telephone</label></dt>
     <dd><input type="text" size="60" name="phone" id="phone" value="<?= h($phone['phone_number']); ?>" /></dd>
@@ -113,6 +113,8 @@ Please do not enter any information wish to keep private.</p>
         $phone = get_http_var('phone');
         $address = get_http_var('address');
         $twitter = get_http_var('twitter');
+
+        $twitter = preg_replace( "/^@+/", "", $twitter );
 
         // address
         db_do( "DELETE FROM journo_address WHERE journo_id=?", $this->journo['id'] );

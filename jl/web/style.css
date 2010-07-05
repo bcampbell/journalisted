@@ -191,6 +191,8 @@ form input[type="text"].date { width: 8em; }
 form input[type="text"].url { width: 480px; }
 form input[type="text"].headline { width: 480px; }
 
+form input#twitter { width:12em; }
+
 .sidebar form input[type="text"] { width: 200px; }
 
 form textarea { border: 1px solid #d9d9d9; }
