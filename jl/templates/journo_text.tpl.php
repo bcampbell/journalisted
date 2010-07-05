@@ -221,7 +221,7 @@ foreach( $similar_journos as $j ) {
 echo "\n\n";
 
 
-echo heading( "Journalists admired by {$prettyname}",2 );
+echo heading( "Journalists recommened by {$prettyname}",2 );
 if( $admired ) {
     foreach( $admired as $a ) {
         echo fmt_journo( $a ) . "\n";

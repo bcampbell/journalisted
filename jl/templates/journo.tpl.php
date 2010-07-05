@@ -767,7 +767,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 
 <div class="box admired-journos">
- <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
+ <div class="head"><h3>Journalists recommended by <?= $prettyname ?></h3></div>
  <div class="body">
 <?php if( $admired ) { ?>
   <ul>
@@ -781,7 +781,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
  </div>
  <div class="foot">
 <?php if( $can_edit_page ) { ?>
-  <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a>
+  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
 <?php } ?>
  </div>
 </div>

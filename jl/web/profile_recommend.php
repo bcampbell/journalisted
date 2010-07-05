@@ -15,9 +15,9 @@ class AdmiredJournosPage extends EditProfilePage
 {
 
     function __construct() {
-        $this->pageName = "admired";
-        $this->pagePath = "/profile_admired";
-        $this->pageTitle = "Journalists you admire";
+        $this->pageName = "recommend";
+        $this->pagePath = "/profile_recommend";
+        $this->pageTitle = "Journalists you recommend";
         $this->pageParams = array( 'head_extra_fn'=>array( &$this, 'extra_head' ) );
         parent::__construct();
     }
@@ -111,7 +111,7 @@ EOT;
         $admired = db_getAll( $sql, $this->journo['id'] );
 
 ?>
-<h2>Which journalists do you most admire?</h2>
+<h2>Which journalists do you recommend?</h2>
 <form class="admired" method="POST" action="<?= $this->pagePath; ?>">
 <?php
         foreach( $admired as $a ) {

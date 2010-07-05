@@ -281,11 +281,11 @@ function emit_add_admired( &$journo ) {
 
 ?>
 <div class="accountaction">
-<h3>Which journalists do you admire?</h3>
+<h3>Which journalists do you recommend?</h3>
 <p>Point people to other journalists you admire –
 recommendations make the web go round</p>
 
-<div class="editbutton"><a href="/profile_admired?ref=<?= $journo['ref'] ?>"><span>Add journalists</span></a></div>
+<div class="editbutton"><a href="/profile_recommend?ref=<?= $journo['ref'] ?>"><span>Recommend journalists</span></a></div>
 </div>
 <?php
 
