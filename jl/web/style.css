@@ -208,7 +208,7 @@ form .explain {
 }
 
 form .remove {
-  float: right;
+/*  float: right;*/
 }
 
 .errhint { font-weight: bold; color: red; display: block; }
@@ -232,9 +232,10 @@ form dd {
 }
 
 form dd a.remove {
-  position: absolute;
+/*  position: absolute;
   right: 0px;
   bottom: 0px;
+  */
 }
 
 form dl {
