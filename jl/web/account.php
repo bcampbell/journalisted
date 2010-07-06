@@ -233,7 +233,7 @@ function emit_add_photo( &$journo ) {
 <p>
 <img width="64" height="64" src="/img/rupe.png" alt="no photo" />
 </p>
-<p>Make sure your adoring fans know who to stop in the street for autographs...</p>
+<p></p>
 <div class="editbutton"><a href="/profile_photo?ref=<?= $journo['ref'] ?>"><span>Add photo</span></a></div>
 </div>
 <?php
