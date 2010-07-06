@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+#
+# Check the generic-scrape tool against a set of test data
+#
+# fields in the testdata:
+#  url -
+#  title -
+#  rawdate - unparsed (but reasonable) date eg "15 Nov, 2001 21:15 GMT"
+#  byline - name of journo (ie just "Fred Smith", not "By Fred Smith in Washington")
+#
+
+import json
+import os
+from optparse import OptionParser
+
+BINARY = "../bin/generic-scrape"
+INFILENAME = "sample-articles.json"
+
+_options = None
+
+
+def main():
+    global _options
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+
+    (_options, args) = parser.parse_args()
+
+    articles = json.load( open( INFILENAME,"r") )
+
+    errcnt = 0
+    total = 0
+    wrong=0
+    correct=0
+    for a in articles:
+        cmd = BINARY + ' "' + a['url'] + '"'
+        out = os.popen(cmd).read()
+#        print out
+#        continue
+        result = json.loads( out )
+        got = result[0]
+        if got['status'] == "error":
+            errcnt = errcnt+1
+        else:
+            if got['title'] == a['title']:
+                correct = correct+1
+            else:
+                if _options.verbose:
+                    print "expected '%s', got '%s' for %s" %(a['title'],got['title'],a['url'] )
+                wrong = wrong+1
+
+#    print """{ "url": "%s", "title": "%s" },""" % (got['url'].encode('utf-8'),got['title'].encode('utf-8') )
+        total=total+1
+
+    print "test-generic-scrape, titles: %d correct, %d wrong, %d errors" % (correct,wrong,errcnt)
+
+if __name__ == "__main__":
+    main()

@@ -789,3 +789,39 @@ function journo_fetchTwitterID( $journo_id ) {
     return $twitter_id;
 }
 
+
+
+
+function journo_countArticles( $journo_id ) {
+    $sql = <<<EOT
+SELECT COUNT(*)
+    FROM journo_other_articles
+    WHERE status='a' AND journo_id=?
+EOT;
+
+    $cnt = db_getOne( $sql, $journo_id );
+
+    $sql = <<<EOT
+SELECT COUNT(*)
+    FROM article a
+        INNER JOIN journo_attr attr ON a.id=attr.article_id
+    WHERE a.status='a' AND attr.journo_id=?
+EOT;
+    $cnt += db_getOne( $sql, $journo_id );
+
+    return $cnt;
+}
+
+
+// returns TRUE if journo status was changed to active
+function journo_checkActivation( $journo_id )
+{
+    if( journo_countArticles($journo_id) >= OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) {
+        $n = db_do( "UPDATE journo SET status='a', modified=true WHERE status='i' AND id=?", $journo_id );
+        db_commit();
+        if( $n > 0 )
+            return TRUE;
+    }
+    return FALSE;
+}
+

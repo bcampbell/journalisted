@@ -52,6 +52,15 @@ if( !is_null($P) )
 
 
 // if journo is not active, only allow viewing if logged-in user can edit page
+
+if( $journo['status'] == 'i' ) {
+    // activate journo if they've met the requirements
+    if( journo_checkActivation( $journo['id'] ) ) {
+        $journo['status'] = 'a';
+    }
+}
+
+
 if( $journo['status'] != 'a' && !$can_edit_page ) {
     spew_404( $ref );
     exit(1);

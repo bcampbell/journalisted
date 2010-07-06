@@ -165,8 +165,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 <?php if( $can_edit_page && $status != 'a' ) { ?>
 <div class="not-public">
   <p><strong>Please Note:</strong>
-  Your page is not yet publicly accessible.
-  It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> five articles.
+  Your public profile is not yet active. It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> <?= nice_number(OPTION_JL_JOURNO_ACTIVATION_THRESHOLD) ?> articles.
   </p>
 </div>
 <?php } ?>
@@ -242,7 +241,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 <?php if( $twitter_id ) { ?>
     <div class="section twitter">
     <h4>Twitter</h4>
-    <ul><li>@<a href="<?= $twitter_url ?>"><?= h($twitter_id) ?></a></li></ul>
+    <ul><li><a href="<?= $twitter_url ?>">@<?= h($twitter_id) ?></a></li></ul>
     </div>
 <?php } ?>
 
@@ -305,11 +304,21 @@ $links = array_filter( $links, 'is_not_pingback_link' );
   </ul>
 
 <?php if($more_articles) { ?>
-  (<a href="/<?= $ref ?>?allarticles=yes">Show all articles</a>)
+  <a class="show-all" href="/<?= $ref ?>?allarticles=yes">
+<?php
+ // TODO: enable once other_articles is merged...
+ //<?= $quick_n_nasty ? "Show all articles...":"Show all ${num_articles} articles..."
+?>
+Show all articles...
+  </a>
 <?php } ?>
 
+<?php if( $can_edit_page ) { ?>
+<div class="editbutton add"><a href="/missing?j=<?= $ref ?>"><span>Add articles</span></a></div>
+<?php } else { ?>
 <p>Article(s) missing? If you notice an article is missing,
 <a href="/missing?j=<?= $ref ?>">click here</a></p>
+<?php } ?>
 </div>
 </div>
 
@@ -578,7 +587,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
   <div class="body">
 <?php if( $twitter_id ) { ?>
-    <p>Find <?= $prettyname; ?> on twitter: @<a href="<?= $twitter_url ?>"?><?= h($twitter_id) ?></a></p>
+    <p>Find <?= $prettyname; ?> on twitter: <a href="<?= $twitter_url ?>"?>@<?= h($twitter_id) ?></a></p>
 <?php } else { ?>
     <p class="not-known">No Twitter account entered</p>
 <?php } ?>
@@ -674,6 +683,10 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( !$can_edit_page ) { ?>
       <li class="claim-profile">
         <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
+<?php } ?>
+<?php if( $can_edit_page ) { ?>
+      <li class="import-linkedin">
+        <a href="/profile_import?ref=<?= $ref ?>">Import profile data from linkedin</a></li>
 <?php } ?>
     </ul>
   </div>
@@ -787,7 +800,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 
 <div class="box admired-journos">
- <div class="head"><h3>Journalists admired by <?= $prettyname ?></h3></div>
+ <div class="head"><h3>Journalists recommended by <?= $prettyname ?></h3></div>
  <div class="body">
 <?php if( $admired ) { ?>
   <ul>
@@ -801,7 +814,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
  </div>
  <div class="foot">
 <?php if( $can_edit_page ) { ?>
-  <a class="edit" href="/profile_admired?ref=<?= $ref ?>">edit</a>
+  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
 <?php } ?>
  </div>
 </div>

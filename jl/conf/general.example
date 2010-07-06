@@ -35,4 +35,7 @@ define('OPTION_JL_GOOGLE_ANALYTICS_ENABLE', '0');
 // "we've sent you an email page" instead
 define('OPTION_JL_BYPASS_LOGIN_EMAIL', '0');
 
+// number of articles new journos need to add to activate their profile
+define('OPTION_JL_JOURNO_ACTIVATION_THRESHOLD', '5');
+
 ?>

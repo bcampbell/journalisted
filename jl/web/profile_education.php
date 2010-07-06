@@ -162,7 +162,7 @@ class EducationPage extends EditProfilePage
 
 <form class="education" method="POST" action="<?= $this->pagePath; ?>">
 <dl>
-  <dt><label for="school_<?= $uniq; ?>">School name</label></dt>
+  <dt><label for="school_<?= $uniq; ?>">University name</label></dt>
   <dd>
     <input type="text" size="60" name="school" id="school_<?= $uniq; ?>" value="<?= h($edu['school']); ?>" />
     <span class="explain">eg: "St. Cedd's College, Cambridge"</span>

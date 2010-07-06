@@ -185,8 +185,13 @@ form input[type="password"] {
   border: 1px solid #d9d9d9;
 }
 
-
+/* assorted types of fields */
 form input[type="text"].year { width: 4em; }
+form input[type="text"].date { width: 8em; }
+form input[type="text"].url { width: 480px; }
+form input[type="text"].headline { width: 480px; }
+
+form input#twitter { width:12em; }
 
 .sidebar form input[type="text"] { width: 200px; }
 
@@ -205,35 +210,49 @@ form .explain {
 }
 
 form .remove {
-  float: right;
+/*  float: right;*/
 }
 
 .errhint { font-weight: bold; color: red; display: block; }
 
 form dt {
+  display: block;
   float: left;
   width: 130px;
   clear: both;
   text-align: right;
   padding-right: 8px;
+  margin: 8px 0px;
 }
 
 
 form dd {
+  display: block;
   position: relative;
+  float: left;
   margin: 8px 0px;
 }
 
 form dd a.remove {
-  position: absolute;
+/*  position: absolute;
   right: 0px;
   bottom: 0px;
+  */
 }
 
 form dl {
   padding-bottom: 8px;
   border-bottom: 1px solid black;
   border-bottom: 1px solid #d9d9d9;
+}
+
+/* clear:both without extra html */
+form dl:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
 }
 
 
@@ -792,6 +811,9 @@ ul.newList li a:focus {-moz-outline-style: none;}
 }
 
 
+.previous-articles a.show-all {
+    float: right;
+}
 
 /* search forms for journo page and search results page */
 .journo-profile .search form {
@@ -905,6 +927,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.you-can-also li.print-page { background-image: url( "/img/icon_printer.png"); }
 .box.you-can-also li.forward-profile { background-image: url( "/img/icon_rightarrow.png"); }
 .box.you-can-also li.claim-profile { background-image: url( "/img/icon_person.png"); }
+.box.you-can-also li.import-linkedin { background-image: url( "/img/icon_linkedin.png"); }
 
 .box.subscribe-newsletter {
   background-color: #e7f3e3;
@@ -1057,6 +1080,69 @@ a.donate:focus {
   padding: 4px;
 }
 
+/* TODO: replace "edit" buttons with "editbutton"! */
+/* TODO: modify these to allow icon attachment (on the a?) */
+
+.editbutton {
+    margin: 4px 0px;
+}
+
+.editbutton a {
+/*  display:block;
+  float: left;
+*/
+  display: inline-block;
+  color: #000000;
+  text-decoration: none;
+  background: url(/img/editbutton.png) no-repeat 0px 0px;
+  height: 21px;
+  line-height: 21px;
+}
+
+.editbutton a span {
+/*  display:block;
+  float:left;
+*/
+  display: inline-block;
+  background:url(/img/editbutton.png) no-repeat right 0px;
+  height:21px;
+  padding-left:0px;
+  padding-right:10px;
+  margin-left:10px;
+  cursor:pointer;
+}
+
+.editbutton a:hover { background-position: 0px -21px; }
+.editbutton a:hover span {background-position: right -21px; }
+
+
+
+a.public-profile-location {
+    display: block;
+    font-size: 150%;
+    text-align: center;
+    margin: 8px auto;
+    padding: 8px;
+    border: 1px solid #888;
+    background: #eee;
+    width: 500px;
+
+}
+
+.accountaction {
+    /*padding: 8px 0px;*/
+    padding: 0px 8px;
+    margin: 8px 8px;
+    float: left;
+    width: 272px;   /* 628/2 -16 -16*/
+    height: 140px;
+    border: 1px solid #888;
+    position: relative;
+}
+.accountaction h3 { border:none;}
+
+.accountaction .editbutton { position: absolute; right: 8px; bottom: 4px }
+.accountaction img { float: left; }
 
 /* SEARCH PAGE */
 
