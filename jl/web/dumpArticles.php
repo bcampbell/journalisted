@@ -20,12 +20,13 @@ $details = '';
 try {
     /* apache config should handle this... but just in case... */
     /* (TODO: any way to remove the hardcoded IP?) */
-    if( 1 != preg_match( '/127.\d{1,3}.\d{1,3}.\d{1,3}/', $_SERVER['REMOTE_ADDR'] )
-        && $_SERVER['REMOTE_ADDR']!= '93.93.131.123' )
-    {
+
+
+    $ip_whitelist = array( '93.93.131.123','82.133.93.217' );
+
+    if( !in_array( $_SERVER['REMOTE_ADDR'], $ip_whitelist ) ) {
         throw new Exception( "local access only" );
     }
-
 
     $after = get_http_var('after' );
 
