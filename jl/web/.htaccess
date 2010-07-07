@@ -48,3 +48,9 @@ RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)/([^?/]*)$ journo_tags.php?ref=$1&tag=$
 # /L/<token>
 RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
 
+<Files dumpArticles.php>
+  Order Deny,Allow
+  Deny from all
+  Allow from 127
+</Files>
+
