@@ -51,6 +51,8 @@ RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
 <Files dumpArticles.php>
   Order Deny,Allow
   Deny from all
-  Allow from 127
+  Allow from localhost
+  Allow from ::1
+  Allow from 93.93.131.123
 </Files>
 

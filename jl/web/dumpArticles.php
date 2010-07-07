@@ -5,7 +5,6 @@ require_once '../conf/general';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
-
 function array_cherrypick( &$srcarray, &$keys )
 {
     $out = array();
@@ -20,7 +19,10 @@ $results = array();
 $details = '';
 try {
     /* apache config should handle this... but just in case... */
-    if( 1 != preg_match( '/127.\d{1,3}.\d{1,3}.\d{1,3}/', $_SERVER['REMOTE_ADDR'] ) ) {
+    /* (TODO: any way to remove the hardcoded IP?) */
+    if( 1 != preg_match( '/127.\d{1,3}.\d{1,3}.\d{1,3}/', $_SERVER['REMOTE_ADDR'] )
+        && $_SERVER['REMOTE_ADDR']!= '93.93.131.123' )
+    {
         throw new Exception( "local access only" );
     }
 
