@@ -148,6 +148,9 @@ datecrackers = [
     re.compile( r"(?P<day>\d{1,2})\s+(?P<month>\w+),?\s+(?P<year>\d{4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d)", re.UNICODE ),
     # '2003/01/21 15:29:49' (historical bbcnews (meta tag))
     re.compile( r"(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})\s+(?P<hour>\d{1,2}):(?P<min>\d\d):(?P<sec>\d\d)", re.UNICODE ),
+    # '2010-07-01'
+    # '2010/07/01'
+    re.compile( """(?P<year>\d{4})[-/](?P<month>\d{1,2})[-/](?P<day>\d{1,2})""", re.UNICODE ),
 
     ]
 
