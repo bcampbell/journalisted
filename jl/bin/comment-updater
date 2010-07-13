@@ -26,8 +26,8 @@ import scrapefront
 # These are the organisations whose scrapers provide comment info
 # TODO: unhappy having this here... this knowledge should be out
 # in the individual scrapers.
-org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday','times','sundaytimes' )
-#org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday' )
+#org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday','times','sundaytimes' )
+org_names = ( 'dailymail','express','herald','scotsman','scotlandonsunday' )
 
 
 
