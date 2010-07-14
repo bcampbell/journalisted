@@ -12,6 +12,7 @@
  $status       - status of this journo:
                 'a'=active, 'i'=inactive, 'h'=hidden
                  (should be 'a' can be 'i' or 'h' only if $can_edit_page is set)
+ $fake         - True if journo is a suspected fake, False otherwise
  $rssurl       - url of RSS feed for this page
 
  $picture      - array with picture of journo (or null)
@@ -162,8 +163,14 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 ?>
 
+<?php if( $fake===True ) { ?>
+<div class="profile-warning fake">
+  <p><strong>Warning:</strong> this journalist may not exist. The newspaper may have invented them. To find out more click <a href="/fakes">here</a>...</p>
+</div>
+<?php } ?>
+
 <?php if( $can_edit_page && $status != 'a' ) { ?>
-<div class="not-public">
+<div class="profile-warning not-public">
   <p><strong>Please Note:</strong>
   Your public profile is not yet active. It will be switched on once you have <a href="/missing?j=<?= $ref ?>">added</a> <?= nice_number(OPTION_JL_JOURNO_ACTIVATION_THRESHOLD) ?> articles.
   </p>

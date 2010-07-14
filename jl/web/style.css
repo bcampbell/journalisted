@@ -798,7 +798,30 @@ ul.newList li a:focus {-moz-outline-style: none;}
   border-radius: 5px;
 }
 
-.not-public p { margin: 2px 0px; }
+/* profile warnings to display as a banner across the top of the page... */
+.profile-warning p { margin: 2px 0px; }
+.profile-warning {
+  margin: 0px 0px 8px 0px;
+  padding: 8px;
+  /*border-top: 4px solid #d77a00;
+  border-bottom: 4px solid #d77a00;*/
+  border: 1px solid #d77a00;
+  background-color: #f8c64d;
+  color: #1a1a1a;
+  -moz-box-shadow: 0 0 5px #888888;
+  -webkit-box-shadow: 0 0 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.profile-warning.not-public {
+}
+
+.profile-warning.fake {
+    font-size: larger;
+}
+
 
 .journo-profile {
   -moz-box-shadow: 0 0 5px #888888;
