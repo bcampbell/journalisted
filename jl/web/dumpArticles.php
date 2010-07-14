@@ -1,6 +1,14 @@
 <?php
 /* internal API fn to dump out latest articles */
 
+
+
+// NOTE: there is a little bordercase where you might miss articles
+// under the following circumstances:
+// - multiple articles having an _identical_ lastscraped value
+// - the LIMIT clause of the SQL clipping results off in the middle of such a group
+// Not likely to be a big deal in practice, but if we ever do a bulk import
+// we should be a little clever about generating timestamps.
 require_once '../conf/general';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
@@ -52,11 +60,12 @@ try {
     $sql = <<<EOT
         SELECT {$fieldlist}
             FROM article
-            WHERE lastscraped>=?
+            WHERE lastscraped>?
             ORDER BY lastscraped
             LIMIT ?;
 EOT;
-    $r = db_query( $sql, $after_dt->format(DateTime::ISO8601), $limit );
+    //$r = db_query( $sql, $after_dt->format(DateTime::ISO8601), $limit );
+    $r = db_query( $sql, $after_dt->format('Y-m-d\TH:i:s.uO'), $limit );
     while( $row = db_fetch_array( $r ) ) {
         $out = array_cherrypick( $row, $fields );
         // sanitize the timestamps
