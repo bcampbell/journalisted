@@ -71,7 +71,7 @@ EOT;
         // sanitize the timestamps
         foreach( $time_fields as $tf ) {
             $dt = new DateTime( $out[$tf] );
-            $out[$tf] = $dt->format(DateTime::ISO8601);
+            $out[$tf] = $dt->format('Y-m-d\TH:i:s.uO');
         }
         $results[] = $out;
     }
