@@ -541,6 +541,10 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 {
     $data = $journo;
 
+    if( $data['fake'] == 't' ) {
+        $data['fake'] = True;
+    }
+
     $data['quick_n_nasty'] = $quick_n_nasty;
     if( !$quick_n_nasty ) {
         $slowdata = journo_calculateSlowData( $journo );

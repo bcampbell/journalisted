@@ -151,6 +151,10 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
     }
 }
 
+// fields that we've recently added, which might not be in cached versions
+if( !array_key_exists('fake',$data ) ) {
+    $data['fake'] = False;
+}
 
 // some stuff we don't cache:
 $data['can_edit_page'] = $can_edit_page;
