@@ -1,3 +1,44 @@
+/* meyerweb.com style reset  */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, textarea {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+}
+/* remember to define focus styles! */
+:focus {
+	outline: 0;
+}
+body {
+	line-height: 1;
+	color: black;
+	background: white;
+}
+ol, ul {
+	list-style: none;
+}
+/* tables still need 'cellspacing="0"' in the markup */
+table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+caption, th, td {
+	text-align: left;
+	font-weight: normal;
+}
+blockquote:before, blockquote:after, q:before, q:after {
+	content: "";
+}
+blockquote, q {
+	quotes: "" "";
+}
+/* END meyerweb.com style reset http://meyerweb.com/eric/thoughts/2007/05/01/reset-reloaded/ */
+
 /* BASIC STYLES */
 
 h1,h2,h3,h4,h5,h6 {
@@ -274,8 +315,8 @@ form dl:after {
 #header {
   margin: 0;
   padding: 0;
-  height: 104px;
-  background: url("/img/header_bg.png") repeat-x;
+  height: 144px;
+  background: #cc0e0e url("/img/header_bg.png") repeat-x left bottom;
 }
 
 #header .inner {
@@ -288,7 +329,7 @@ form dl:after {
 
 #header h1 {
   position: absolute;
-  bottom: 14px;
+  bottom: 27px;
   left: 32px;
   width: 228px;
   height: 59px;
@@ -309,8 +350,8 @@ form dl:after {
 
 #header .nav {
   position: absolute;   /* within header */
-  top: 8px;
-  right: 120px;
+  top: 6px;
+  right: 110px;
   padding: 0;
   margin: 0;
   color: #ffffff;
@@ -327,16 +368,29 @@ form dl:after {
   display:inline;
 }
 
-#header .nav ul li {
+#header .nav li {
   list-style-type: none;
   display:inline;
   margin: 0;
   padding: 0;
+  
+  margin:0 5px 0 0;
+  padding:0 5px 0 0;
+  background: url('img/header-divider.png') right 4px no-repeat;
+  /* border-right: 1px solid #FFF; */
 }
 
+#header .nav  li:last-child {
+	background-image: none;
+}
+
+
+
+
 #header .nav a { 
-  color: #FFFFFF; 
-  padding: 8px 4px 8px 4px;
+  color: #FFFFFF;
+ font-size: 12px;
+  padding: 4px 4px 8px 4px;
 
 }
 
@@ -412,8 +466,12 @@ ul.newList a {color: #666; text-decoration:none; display:block;}
 ul.newList {margin:0; padding:0; list-style:none; color:#666; width:160px; background:#fff; position:absolute;  border:1px solid #ccc; top:22px; left:0; overflow:hidden; z-index:9999;}
 
 .newListSelected {
-    margin-right: 4px;
-    width:155px; color:#666; height:22px; padding:3px 0 0 6px; float:left;
+    margin-right: 15px;
+    width:200px; 
+	color:#666; 
+	height:22px; 
+	padding:3px 0 0 6px; 
+	float:left;
     background: #ffffff url('/img/dropdown.png') no-repeat center right;
     border: 1px solid #888888;
 }
