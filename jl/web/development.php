@@ -44,7 +44,7 @@ as a network service)
 </p>
 
 <p>
-The main project page is <a href="http://code.google.com/p/journa-list/">here</a> (hosted at code.google.com).
+The source code is at <a href="http://github.com/bcampbell/journalisted">http://github.com/bcampbell/journalisted</a>.
 </p>
 <p>
 There is a public development <a href="http://groups.google.com/group/jl-dev">mailing list</a>.
