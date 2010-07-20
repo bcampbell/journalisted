@@ -178,11 +178,18 @@ function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 
 function article_url( $article_id, $sim_orderby='score', $sim_showall='no' )
 {
-    $url = "/article?id={$article_id}";
+    $id36 = base_convert( $article_id, 10,36 );
+    $url = "/article/{$id36}";
+    $extra = array();
     if( strtolower($sim_orderby) == 'date' )
-        $url .= '&sim_orderby=date';
+        $extra[] = 'sim_orderby=date';
     if( strtolower($sim_showall) == 'yes' )
-        $url .= '&sim_showall=yes';
+        $extra[] = 'sim_showall=yes';
+
+    if( $extra ) {
+        $url = $url . "?" . implode( '&',$extra );
+    }
+
     return $url;
 }
 

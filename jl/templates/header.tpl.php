@@ -30,6 +30,9 @@
 <?php foreach( $rss_feeds as $rss_title => $rss_url) { ?>
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
+<?php if( $canonical_url ) { ?>
+  <link rel="canonical" href="<?= $canonical_url ?>" />
+<?php } ?>
   <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
   <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>

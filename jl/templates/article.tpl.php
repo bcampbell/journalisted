@@ -1,7 +1,7 @@
 <?php
 /*
  Template for article page
-
+ $article_id        -
  $title             - article headline
  $srcorgname        - name of original source of article eg "The Sun"
  $iso_pubdate       - machine-readable publication date eg "2007-12-28T22:35:00+00:00"

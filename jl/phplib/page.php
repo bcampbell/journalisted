@@ -28,6 +28,10 @@ function page_header( $title, $params=array() )
     if (array_key_exists('rss', $params))
         $rss_feeds = $params['rss'];
 
+    $canonical_url = null;
+    if (array_key_exists('canonical_url', $params))
+        $canonical_url = $params['canonical_url'];
+
     $js_files = array( "/jl.js" );
     if (array_key_exists('js_extra', $params))
         $js_files = array_merge( $js_files, $params['js_extra'] );

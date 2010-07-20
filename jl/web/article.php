@@ -12,9 +12,15 @@ require_once '../../phplib/utility.php';
 
 
 
-$article_id = get_http_var( 'id' );
-emit_page_article( $article_id );
+// handle either base-10 or base-36 article ids
+$article_id = get_http_var( 'id36' );
+if( $article_id ) {
+    $article_id = base_convert( $article_id, 36,10 );
+} else {
+    $article_id = get_http_var( 'id' );
+}
 
+emit_page_article( $article_id );
 
 function emit_page_article( $article_id )
 {
@@ -22,7 +28,8 @@ function emit_page_article( $article_id )
     if( $art['status'] != 'a' )
         return; /* TODO: a message or something... */
     $pagetitle = $art['title'];
-    page_header( $pagetitle );
+    $params = array( 'canonical_url'=>article_url( $article_id ) );
+    page_header( $pagetitle, $params );
     {
         extract( $art );
         include "../templates/article.tpl.php";
@@ -168,7 +175,7 @@ EOT;
     {
         $pat = sprintf("/%s/i", $j['prettyname'] );
 
-        $replacement = '<span class="author vcard"><a class="url fn" href="'. $j['ref'] . '">\0</a></span>';
+        $replacement = '<span class="author vcard"><a class="url fn" href="/'. $j['ref'] . '">\0</a></span>';
         $byline = preg_replace( $pat, $replacement, $byline );
     }
 
