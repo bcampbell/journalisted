@@ -23,7 +23,7 @@ $_conf = array('ns' => $ns);
 function journo_asARC2Index( &$journo_data ) {
     extract( $journo_data, EXTR_PREFIX_ALL, 'j' );
 
-    $journo_uri = "jl:{$j_ref}";
+    $journo_uri = "jl:id/journo/{$j_ref}";
 
     $j = array();
     $j['rdf:type'] = array( 'foaf:Person' );
@@ -76,27 +76,25 @@ function journo_asARC2Index( &$journo_data ) {
     $articles = array();
     foreach( $j_articles as $a ) {
         // TODO: journo_other_articles suckiness will go away soon.... fix this then.
+        $id36 = base_convert( $a['id'], 10,36 );
         if( is_null($a['id'] ) ) {
             $art_uri = $a['permalink']; // ugh.
         } else {
-            $art_uri = "jl:article/?id={$a['id']}"; // ugh.
+            $art_uri = "jl:id/article/{$id36}";
         }
 
         $foo = array(
             'dc:title'=>array( $a['title'] ),
-            'dc:date'=>array( $a['iso_pubdate'] ),
-            'dc:creator'=>array( $journo_uri ) );
+            'dc:date'=>array( $a['iso_pubdate'] )
+           /* 'dc:creator'=>array( $journo_uri ) */ );
 
         $articles[ $art_uri ] = $foo; 
     }
 
-    $j['jl:mustBeAGoodWayToDenotingAuthorshipSomewhereAlready'] = array();
+    $j['foaf:made'] = array();
     foreach( $articles as $art_uri=>$art ) {
-        $j['jl:mustBeAGoodWayToDenotingAuthorshipSomewhereAlready'][] = $art_uri;
+        $j['foaf:made'][] = $art_uri;
     }
-
-
-
 
     return array_merge( array( $journo_uri => $j ),
         $experience, $articles );

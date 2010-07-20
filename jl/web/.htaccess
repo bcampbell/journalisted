@@ -48,10 +48,13 @@ RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+).json([?][^/]*)?$ journo.php?ref=$1&fmt
 RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+).txt([?][^/]*)?$ journo.php?ref=$1&fmt=text$2 [PT,QSA]
 
 # non-information resources:
-# /id/journo/<journo-ref>
-RewriteRule ^id/journo/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ id.php?type=journo&ref=$1$3 [PT,QSA]
+# /id/journo/<journo-ref>    /id/article/<id36>
+RewriteRule ^id/journo/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ id.php?type=journo&ref=$1$2 [PT,QSA]
+RewriteRule ^id/article/([a-zA-Z0-9]+)([?][^/]*)?$ id.php?type=article&id36=$1$2 [PT,QSA]
 # /data/journo/<journo-ref>
 RewriteRule ^data/journo/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ journo.php?ref=$1&fmt=rdfxml$2 [PT,QSA]
+# /data/article/<id36>
+RewriteRule ^data/article/([a-zA-Z0-9]+)([?][^/]*)?$ article.php?id36=$1&fmt=rdfxml$2 [PT,QSA]
 
 # /a/<id36>    (tidy article urls)
 RewriteRule ^article/([a-zA-Z0-9]+)([?][^/]*)?$ article.php?id36=$1$2 [PT]
