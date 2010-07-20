@@ -12,17 +12,15 @@ require_once '../../phplib/utility.php';
 
 
 
-$article_id = get_http_var( 'id' );
-$findtext = get_http_var( 'find' );
-$ref = get_http_var( 'ref' );
-
-if( $findtext )
-    emit_page_findarticles( $findtext, $ref );
-else
-{
-    emit_page_article( $article_id );
+// handle either base-10 or base-36 articles
+$article_id = get_http_var( 'id36' );
+if( $article_id ) {
+    $article_id = base_convert( $article_id, 36,10 );
+} else {
+    $article_id = get_http_var( 'id' );
 }
 
+emit_page_article( $article_id );
 
 function emit_page_article( $article_id )
 {
@@ -30,7 +28,8 @@ function emit_page_article( $article_id )
     if( $art['status'] != 'a' )
         return; /* TODO: a message or something... */
     $pagetitle = $art['title'];
-    page_header( $pagetitle );
+    $params = array( 'canonical_url'=>article_url( $article_id ) );
+    page_header( $pagetitle, $params );
     {
         extract( $art );
         include "../templates/article.tpl.php";
@@ -159,53 +158,6 @@ function collect_commentlinks( $article_id )
 
 
 
-function emit_page_findarticles( $findtext,$ref=null )
-{
-    if( $ref )
-    {
-        $journo = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE status='a' AND ref=?", $ref );
-        $pagetitle = sprintf( "Articles by %s containing \"%s\"", $journo['prettyname'], $findtext );
-    }
-    else
-        $pagetitle = "Articles containing \"$findtext\"";
-    page_header( $pagetitle );
-
-    if( $ref )
-    {
-        $q = db_query( "SELECT id,title,description,pubdate,permalink,srcorg " .
-        "FROM article,journo_attr j " .
-        "WHERE status='a' AND id=j.article_id AND j.journo_id=? " .
-            "AND content ILIKE ? " .
-        "ORDER BY pubdate DESC", $journo['id'], '%'.$findtext.'%' );
-        printf( "<h2>Articles by %s containing \"%s\"</h2>", $journo['prettyname'], $findtext );
-    }
-    else
-    {
-        printf( "<h2>Articles within the last week containing \"%s\"</h2>", $findtext );
-        $q= db_query( "SELECT id,title,description,pubdate,permalink,byline,srcorg FROM article WHERE status='a' AND AGE(pubdate) < interval '7 days' AND content ILIKE ? ORDER BY pubdate DESC", '%' . $findtext . '%' );
-    }
-
-    print "<ul>\n";
-
-    $cnt = 0;
-    $orgs = get_org_names();
-    while( $r=db_fetch_array($q) )
-    {
-        ++$cnt;
-        $org = $orgs[ $r['srcorg'] ];
-        $pubdate = pretty_date(strtotime($r['pubdate']));
-        print "<li>\n";
-        print "<a href=\"/article?id={$r['id']}\">{$r['title']}</a>, {$pubdate}, <em>{$org}</em>\n";
-        print "<small>(<a href=\"{$r['permalink']}\">original article</a>)</small\n";
-        print "</li>\n";
-    }
-    print "</ul>\n";
-
-    printf( "<p>Found %d matching articles</p>", $cnt );
-    page_footer();
-}
-
-
 /* Mark up the byline of an article with links to the journo pages.
  * TODO: should use journo_alias table instead of journo.prettyname
  */ 
@@ -223,7 +175,7 @@ EOT;
     {
         $pat = sprintf("/%s/i", $j['prettyname'] );
 
-        $replacement = '<span class="author vcard"><a class="url fn" href="'. $j['ref'] . '">\0</a></span>';
+        $replacement = '<span class="author vcard"><a class="url fn" href="/'. $j['ref'] . '">\0</a></span>';
         $byline = preg_replace( $pat, $replacement, $byline );
     }
 

@@ -16,9 +16,15 @@ require_once "HTML/QuickForm.php";
 //require_once "HTML/QuickForm/Rule.php";
 //require_once "HTML/QuickForm/Renderer/Default.php";
 
-$article_id = get_http_var( 'id' );
-if( !$article_id )
-    $article_id = get_http_var( 'article_id' );
+// handle either base-10 or base-36 articles
+$article_id = get_http_var( 'id36' );
+if( $article_id ) {
+    $article_id = base_convert( $article_id, 36,10 );
+} else {
+    $article_id = get_http_var( 'id' );
+    if( !$article_id )
+        $article_id = get_http_var( 'article_id' );
+}
 $action = get_http_var( 'action' );
 
 admPageHeader();
@@ -102,7 +108,7 @@ EOT;
 <table border="1">
 <tr><th>title</th><td><h2><?php echo $art['title']; ?></h2></td></tr>
 <tr><th>status</th><td><?php echo $art['status']; ?></td></tr>
-<tr><th>id</th><td><?php echo $art['id']; ?> [<a href="/article?id=<?php echo $art['id'];?>">go to journalisted page</a>]
+<tr><th>id</th><td><?php echo $art['id']; ?> [<a href="<?= article_url( $art['id'] ); ?>">go to article page</a>]
 <tr><th>srcorg</th><td><?php echo $orgname;?> (id <?php echo $art['srcorg'];?>)</td></tr>
 <tr><th>permalink</th><td><a href="<?php echo $art['permalink'];?>"><?php echo $art['permalink']; ?></a></td></tr>
 <tr><th>pubdate</th><td><?php echo $art['pubdate']; ?></td></tr>
