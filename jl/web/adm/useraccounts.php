@@ -48,6 +48,10 @@ if( $action=='view' ) {
 } elseif( $action == 'generate_token' ) {
     // generate a login token
     do_generate_token();
+} elseif( $action == 'newsletter_subscribe' ) {
+    do_newsletter_subscribe();
+} elseif( $action == 'newsletter_unsubscribe' ) {
+    do_newsletter_unsubscribe();
 } else {    // $action=='find'
     $email = get_http_var( 'email','' );
     if( $email ) {
@@ -146,6 +150,12 @@ function emit_details( $person_id )
     // general
     $p = db_getRow( "SELECT * FROM person WHERE id=?", $person_id );
 
+
+    $subscribed_to_newsletter = false;
+    if( db_getOne( "SELECT person_id FROM person_receives_newsletter WHERE person_id=?", $person_id ) ) {
+        $subscribed_to_newsletter = true;
+    }
+
 ?>
 <h3>viewing user: '<?php echo $p['email'];?>'</h3>
 [<a href="/adm/useraccounts?person_id=<? echo $person_id;?>&action=changeemail">Change email address</a>]<br/>
@@ -154,6 +164,19 @@ id: <?php echo $p['id']; ?><br/>
 name: <?php echo $p['name'] ? $p['name'] : "-blank-"; ?><br/>
 <?php if( $p['password'] ) { ?>Password is set <?php } else { ?>No password set<?php } ?><br/>
 Logged in <?php echo $p['numlogins'];?> times<br/>
+<?php
+
+    // show newsletter subscription
+?>
+<h4>newsletter</h4>
+status:
+<?php if( $subscribed_to_newsletter ) { ?>
+<em>Subscribed</em>
+<small>[<a href="/adm/useraccounts?person_id=<?= $person_id;?>&action=newsletter_unsubscribe">unsubscribe</a>]</small>
+<?php } else { ?>
+<em>not subscribed</em>
+<small>[<a href="/adm/useraccounts?person_id=<?= $person_id;?>&action=newsletter_subscribe">subscribe</a>]</small>
+<?php } ?>
 <?php
 
     // show alerts
@@ -314,6 +337,34 @@ get a confirmation back before changing anything...
 <?php
 
 }
+
+function do_newsletter_subscribe() {
+    $person_id = get_http_var( "person_id" );
+    db_do("DELETE FROM person_receives_newsletter WHERE person_id=?", $person_id );
+    db_do("INSERT INTO person_receives_newsletter (person_id) VALUES (?)", $person_id );
+    db_commit();
+?>
+<div class="action_summary">
+subscribed to newsletter
+</div>
+<?php
+
+    emit_details( $person_id );
+}
+
+function do_newsletter_unsubscribe() {
+    $person_id = get_http_var( "person_id" );
+    db_do("DELETE FROM person_receives_newsletter WHERE person_id=?", $person_id );
+    db_commit();
+?>
+<div class="action_summary">
+unsubscribed from newsletter
+</div>
+<?php
+
+    emit_details( $person_id );
+}
+
 
 
 function do_reallychangeemail()
