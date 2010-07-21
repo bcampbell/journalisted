@@ -60,7 +60,7 @@ function show_news_post( $id_or_slug ) {
 
     page_header( $post['title'] );
 
-    $news = news_RecentNews( 10 );
+    $news = news_RecentNews( 5 );
 
 ?>
 <div class="main">
@@ -101,6 +101,7 @@ function show_news_post( $id_or_slug ) {
   </li>
 <?php } ?>
  </ul>
+ <a href="/news">more...</a>
  </div>
 <div class="foot"></div>
 </div>
