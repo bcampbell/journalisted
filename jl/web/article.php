@@ -7,6 +7,7 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/misc.php';
+require_once '../phplib/article_rdf.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -20,15 +21,26 @@ if( $article_id ) {
     $article_id = get_http_var( 'id' );
 }
 
-emit_page_article( $article_id );
+$art = article_collect( $article_id );  //db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
+if( $art['status'] != 'a' ) {
+    return; /* TODO: 404? */
+}
 
-function emit_page_article( $article_id )
+
+$fmt = get_http_var( 'fmt' );
+if( $fmt=="rdfxml" ) {
+    header( "Content-Type: application/rdf+xml" );
+    article_emitRDFXML( $art );
+    return;
+} else {
+    emit_page_article( $art );
+}
+
+
+function emit_page_article( $art )
 {
-    $art = article_collect( $article_id );  //db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
-    if( $art['status'] != 'a' )
-        return; /* TODO: a message or something... */
     $pagetitle = $art['title'];
-    $params = array( 'canonical_url'=>article_url( $article_id ) );
+    $params = array( 'canonical_url'=>article_url( $art['id'] ) );
     page_header( $pagetitle, $params );
     {
         extract( $art );
@@ -41,12 +53,19 @@ function emit_page_article( $article_id )
 function article_collect( $article_id ) {
     $art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
     $art['article_id'] = $art['id'];
+    $art['id36'] = base_convert( $art['id'], 10, 36 );
     $art['blog_links'] = db_getAll( "SELECT * FROM article_bloglink WHERE article_id=? ORDER BY linkcreated DESC", $article_id );
-    $art['byline'] = markup_byline( $art['byline'], $article_id );
+
+    // journos
+    $sql = <<<EOT
+SELECT j.prettyname, j.ref
+    FROM ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id )
+    WHERE attr.article_id=? AND j.status='a';
+EOT;
+    $art['journos'] = db_getAll( $sql, $article_id );
+    $art['byline'] = markup_byline( $art['byline'], $art['journos'] );
 
     $orginfo = db_getRow( "SELECT * FROM organisation WHERE id=?", $art['srcorg'] );
-
-
     $art['srcorgname'] = $orginfo[ 'prettyname' ];
     $art['sop_name'] = $orginfo['sop_name'];
     $art['sop_url'] = $orginfo['sop_url'];
@@ -161,16 +180,8 @@ function collect_commentlinks( $article_id )
 /* Mark up the byline of an article with links to the journo pages.
  * TODO: should use journo_alias table instead of journo.prettyname
  */ 
-function markup_byline( $byline, $article_id )
+function markup_byline( $byline, $journos )
 {
-    $sql = <<<EOT
-SELECT j.prettyname, j.ref
-    FROM ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id )
-    WHERE attr.article_id=? AND j.status='a';
-EOT;
-
-    $journos = db_getAll( $sql, $article_id );
-
     foreach( $journos as $j )
     {
         $pat = sprintf("/%s/i", $j['prettyname'] );
