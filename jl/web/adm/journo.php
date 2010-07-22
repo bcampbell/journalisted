@@ -350,7 +350,7 @@ function EmitArticles( $journo_id )
 	print "<h3>Articles</h3>\n";
 
 	$sql = <<<EOT
-SELECT id,title,permalink,status,srcorg,pubdate
+SELECT id,title,permalink,status,srcorg,pubdate,wordcount
 	FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
 		WHERE attr.journo_id=? ORDER BY pubdate DESC
 EOT;
@@ -373,11 +373,12 @@ EOT;
 
 		// TODO: correct the class usage!
 		$divclass = $status=='a' ? 'bio_approved':'bio_unapproved';
-
-		print " <li>\n";
-		print(" <div class=\"$divclass\"><a href=\"/adm/article?id=$id\">$title</a>" );
-		print("  <small>{$pubdate}, <em>{$org}</em> [<a href=\"$permalink\">original article</a>]</small></div>\n" );
-		print " </li>\n";
+?>
+<li>
+<div class="<?=$divclass?>"><a href="/adm/article?id=<?=$id?>"><?= $title ?></a>
+<small><?= $pubdate ?>, <em><?= $org ?></em> (<?=$row['wordcount']?> words) [<a href="<?= $permalink ?>">original article</a>]</small></div>
+</li>
+<?php
 	}
 ?>
 </ul>
