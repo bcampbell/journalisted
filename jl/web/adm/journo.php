@@ -299,9 +299,9 @@ function EmitJourno( $journo_id )
 ?>
 <strong>fake?:</strong>
 <?php if( $j['fake'] == 't' ) { ?>
-<strong>YES!</strong><small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=unset_fake">unmark</a>]</small>
+<strong>YES!</strong><small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=unset_fake">Change to 'real'</a>]</small>
 <?php } else { ?>
-no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">mark as FAKE</a>]</small>
+no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">change to 'fake'</a>]</small>
 <?php } ?>
 <br/>
 
