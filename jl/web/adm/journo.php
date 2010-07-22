@@ -55,6 +55,14 @@ switch( $action )
 	case "remove_link":
 		ConfirmRemoveWeblink( $journo_id, get_http_var('link_id') );
 		break;
+	case "set_fake":
+		SetFake( $journo_id, TRUE );
+		EmitJourno( $journo_id );
+		break;
+	case "unset_fake":
+		SetFake( $journo_id, FALSE );
+		EmitJourno( $journo_id );
+		break;
 	case "remove_link_confirmed":
 		RemoveWeblink( $journo_id, get_http_var('link_id') );
 		EmitJourno( $journo_id );
@@ -268,10 +276,12 @@ function EmitJourno( $journo_id )
 <a href="/<?php echo $j['ref'];?>">Jump to their page</a>
 (<a href="/<?php echo $j['ref'];?>?full=yes">Force a page rebuild</a>)
 <h3>General</h3>
+
+
 <?php
 
 	printf("<form method='post'>\n");
-	printf("<strong>status:</strong> %s\n", $statusnames[ $j['status'] ] );
+    printf("<strong>status:</strong> %s<br/>\n", $statusnames[ $j['status'] ] );
 	print form_element_hidden( 'action', 'change_status' );
 	print form_element_hidden( 'journo_id', $journo_id );
 	/* only allow setting to active or hidden, not inactive */
@@ -284,8 +294,18 @@ function EmitJourno( $journo_id )
 		printf("<input type=\"submit\" name=\"submit\" value=\"Change to 'Active'\" />\n" );
 		print form_element_hidden( 'status', 'a' );
 	}
+    printf("</form>\n");
 
-	printf("</form>\n");
+?>
+<strong>fake?:</strong>
+<?php if( $j['fake'] == 't' ) { ?>
+<strong>YES!</strong><small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=unset_fake">unmark</a>]</small>
+<?php } else { ?>
+no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">mark as FAKE</a>]</small>
+<?php } ?>
+<br/>
+
+<?php
 	printf("<strong>id:</strong> %s<br />\n", $j['id'] );
 	printf("<strong>ref:</strong> %s<br />\n", $j['ref'] );
 	printf("<strong>prettyname:</strong> %s<br />\n", $j['prettyname'] );
@@ -558,6 +578,14 @@ function AddWeblink( $journo_id, $url, $desc )
 	db_commit();
 	EmitActionMsg( "Added Weblink ({$url})" );
 }
+
+
+function SetFake( $journo_id, $yesno ) {
+    db_query( "UPDATE journo SET fake=? WHERE id=?", $yesno, $journo_id );
+    db_commit();
+    EmitActionMsg( $yesno ? "Set to FAKE" : "Set to NOT fake" );
+}
+
 
 function RemoveWeblink( $journo_id, $link_id )
 {
