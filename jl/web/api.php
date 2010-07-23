@@ -29,7 +29,7 @@ $methods = array(
         'help' => 'Fetch a list of articles attributed to a journalist',
     ),
     'getArticles' => array(
-        'parameters' => array('id36'),
+        'parameters' => array('id36','url'),
         'help' => 'Retrieve information about an article or set of articles',
     ),
 );
