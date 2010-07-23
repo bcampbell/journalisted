@@ -144,7 +144,7 @@
     <p><?= sizeof( $blog_links ) ?> blog posts link to this article:</p>
     <ul>
     <?php foreach( $blog_links as $bl ) { ?>
-        <li><?= gen_bloglink( $bl ) ?></li>
+        <li><?= article_gen_bloglink( $bl ) ?></li>
     <?php } ?>
     </ul>
 <?php } else { ?>

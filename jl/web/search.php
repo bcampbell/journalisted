@@ -5,6 +5,7 @@ require_once '../phplib/page.php';
 /*require_once '../phplib/frontpage.php'; */
 require_once '../phplib/misc.php';
 require_once '../phplib/journo.php';
+require_once '../phplib/article.php';
 require_once '../phplib/xap.php';
 require_once '../phplib/search.php';
 require_once '../../phplib/db.php';
@@ -113,7 +114,7 @@ function search_articles()
     $last = min( $start+$num_per_page, $total );
 
     foreach( $results as &$art ) {
-        article_Augment( $art );
+        article_augment( $art );
     }
     unset( $art );
 
