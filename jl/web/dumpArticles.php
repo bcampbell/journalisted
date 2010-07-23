@@ -10,17 +10,9 @@
 // Not likely to be a big deal in practice, but if we ever do a bulk import
 // we should be a little clever about generating timestamps.
 require_once '../conf/general';
+require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
-
-function array_cherrypick( &$srcarray, &$keys )
-{
-    $out = array();
-    foreach( $keys as $k ) {
-        $out[$k] = $srcarray[$k];
-    }
-    return $out;
-}
 
 $status = 0;
 $results = array();

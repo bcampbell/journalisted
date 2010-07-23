@@ -438,7 +438,7 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        article_Augment( $a );
+        article_augment( $a );
     $slowdata[ 'most_commented' ] = $a;
 
     /* find the most blogged article in the last 6 months */
@@ -455,7 +455,7 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        article_Augment( $a );
+        article_augment( $a );
     $slowdata[ 'most_blogged' ] = $a;
 
     return $slowdata;
@@ -665,7 +665,7 @@ EOT;
     // now do a pass over to pretty up the results
     foreach( $arts as &$a ) {
         // add pretty pubdate etc...
-        article_Augment($a);
+        article_augment($a);
         if( !is_null( $a['id'] ) )
             $a['buzz'] = BuzzFragment( $a );
         else

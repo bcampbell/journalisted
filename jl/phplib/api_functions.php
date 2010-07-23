@@ -20,7 +20,8 @@ function api_output($arr, $last_mod=null) {
 	} elseif ($output == 'rabx') {
 		$out = api_output_rabx($arr);
 	} else { # JS
-		$out = api_output_js($arr);
+		//$out = api_output_js($arr);
+		$out = json_encode($arr);
 		$callback = get_http_var('callback');
 		if (preg_match('#^[A-Za-z0-9._[\]]+$#', $callback)) {
 			$out = "$callback($out)";
@@ -55,7 +56,8 @@ function api_header($o, $last_mod=null) {
 }
 
 function api_error($e) {
-	api_output(array('error' => $e));
+    /* TODO: replace with exception mechanism */
+	api_output(array('status'=>-1, 'error' => $e));
 }
 
 function api_output_php($arr) {
@@ -97,7 +99,7 @@ function api_output_xml($v, $k=null) {
 	}
 }
 
-function api_output_js($v, $level=0) {
+function api_output_js_OLD($v, $level=0) {
 	$verbose = get_http_var('verbose') ? "\n" : '';
 	if (is_array($v)) {
 		# PHP arrays are both JS arrays and objects

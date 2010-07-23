@@ -4,6 +4,7 @@
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
+require_once '../phplib/article.php';
 require_once '../phplib/journo.php';
 require_once "../phplib/journo_rdf.php";
 require_once '../phplib/misc.php';
