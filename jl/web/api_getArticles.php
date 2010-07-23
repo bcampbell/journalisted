@@ -1,14 +1,32 @@
 <?php
 require_once '../phplib/article.php';
+require_once '../phplib/scrapeutils.php';
+
+
+$api_getArticles_params = array(
+    'id36' => array( 'desc'=><<<EOT
+Journalisted Identifiers of article(s) you want. This can be a single
+id or a list separated by commas or whitespace.<br/>
+Each id is the base-36 identifier (ie [0-9a-z]+) assigned to the article
+by journa<i>listed</i>. eg <code>http://journalisted.com/article/&lt;id36&gt;</code>
+EOT
+    ),
+    'url' => array( 'desc'=>"The original url of the article you want (eg <code>http://www.examplenewspaper.com/big-story.html</code>)" )
+);
+
+
 
 function api_getArticles_front() {
+    global $api_getArticles_params;
 ?>
 <p><big>Retrieve information about an article or set of articles</big></p>
 
 <h4>Arguments</h4>
 <dl>
-<dt><code>id36</code></dt>
-<dd>The article(s) you want. This can be a single id or a list separated by commas or whitespace. Each id is a base-36 identifier (ie alphanumeric 0-9a-z).</dd>
+<?php foreach( $api_getArticles_params as $name=>$info ) { ?>
+  <dt><code><?= $name ?></code></dt>
+  <dd><?= $info['desc'] ?></dd>
+<?php } ?>
 </dl>
 
 <h4>Returned values</h4>
@@ -38,17 +56,41 @@ This API will either return _all_ the articles requested, or fail.
 }
 
 function api_getArticles_invoke($params) {
-    if( !$params['id36'] ) {
-        api_error( "missing required parameter: 'id36'" );
+    $article_ids = array();
+    if( $params['id36'] ) {
+        $id36s = preg_split( "/[\s,]+/",$params['id36'] );
+        foreach( $id36s as $id36 ) {
+            $article_ids[] = article_id36_to_id( $id36 );
+        }
+    }
+
+    if( $params['url'] ) {
+        // look up article by its original url
+        $url = $params['url'];
+        $srcid = scrape_CalcSrcID( $url );
+        if( is_null($srcid) ) {
+            api_error( "couldn't find article with url: '" . $url . "'" );
+            return;
+        }
+        $id = db_getOne( 'SELECT id FROM article WHERE srcid=?', $srcid );
+        if( is_null($id) ) {
+            api_error( "don't have article with url: '" . $url . "'" );
+            return;
+        }
+        $article_ids[] = $id;
+    }
+
+    if( !$article_ids ) {
+        api_error( "No articles specified - use 'id36' and/or 'url'" );
         return;
     }
+
+
     #$brief = $params['brief'] ? TRUE : FALSE;
-    $ids = preg_split( "/[\s,]+/",$params['id36'] );
     $fields = array( 'title','id36','srcorgname','iso_pubdate','permalink', 'journos','description' );
 
     $results = array();
-    foreach( $ids as $id36 ) {
-        $id = article_id36_to_id($id36);
+    foreach( $article_ids as $id ) {
         $raw = article_collect( $id );
         $art = array_cherrypick( $raw, $fields );
         $results[] = $art;
