@@ -13,6 +13,7 @@ require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/journo.php';
+require_once '../phplib/article.php';
 
 NEW_version();
 
