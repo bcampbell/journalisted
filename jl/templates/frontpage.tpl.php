@@ -88,6 +88,7 @@
   </li>
 <?php } ?>
  </ul>
+ <a href="/news">more...</a>
 </div>
 <div class="foot"></div>
 </div>

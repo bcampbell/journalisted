@@ -197,62 +197,12 @@ EOT;
 </div> <!-- end main -->
 
 <div class="sidebar">
-<?php /*$this->navBox(); */?>
 </div> <!-- end sidebar -->
 
 <?php
-//$this->showNavigation();
 
         page_footer();
     }
-
-
-
-    function navBox()
-    {
-        $pages = array(
-            'photo'=>array( 'title'=>'Photo', 'url'=>'/profile_photo' ),
-            'admired'=>array( 'title'=>'Admired Journalists', 'url'=>'/profile_admired' ),
-            'employment'=>array( 'title'=>'Employment', 'url'=>'/profile_employment' ),
-            'education'=>array( 'title'=>'Education', 'url'=>'/profile_education' ),
-            'awards'=>array( 'title'=>'Awards', 'url'=>'/profile_awards' ),
-            'books'=>array( 'title'=>'Books', 'url'=>'/profile_books' ),
-            'contact'=>array( 'title'=>'Contact', 'url'=>'/profile_contact' ),
-            'weblinks'=>array( 'title'=>'On the web', 'url'=>'/profile_weblinks' ), 
-        );
-
-        $prev = NULL;
-        foreach( $pages as $pagename=>&$p ) {
-            $p['prev'] = $prev;
-            $p['next'] = NULL;
-            if( !is_null( $prev ) )
-                $pages[$prev]['next'] = $pagename;
-            $prev = $pagename;
-        }
-        unset( $p );
-
-?>
-<div class="box">
-<div class="head"><h4>Edit your profile</h4></div>
-<div class="body">
-<ul>
-<?php foreach( $pages as $n=>$p ) { ?>
-<li>
-<?php if( $n == $this->pageName ) { ?>
-<?= $p['title'] ?>
-<?php } else { ?>
-<a href="<?= $p['url'] ?>?ref=<?=$this->journo['ref'] ?>" ><?= $p['title'] ?></a>
-<?php } ?>
-</li>
-<?php } ?>
-</ul>
-</div>
-</div>
-
-<?php
-    }
-
-
 
 
 

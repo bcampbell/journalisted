@@ -453,7 +453,6 @@ CREATE TABLE event_log (
 --
 
 CREATE SEQUENCE event_log_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -496,7 +495,6 @@ CREATE TABLE image (
 --
 
 CREATE SEQUENCE image_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -525,8 +523,10 @@ CREATE TABLE journo (
     oneliner text DEFAULT ''::text NOT NULL,
     last_similar timestamp without time zone,
     modified boolean DEFAULT true NOT NULL,
-    firstname_metaphone character varying(4) DEFAULT ''::character varying NOT NULL,
-    lastname_metaphone character varying(4) DEFAULT ''::character varying NOT NULL,
+    firstname_metaphone text DEFAULT ''::text NOT NULL,
+    lastname_metaphone text DEFAULT ''::text NOT NULL,
+    admin_notes text DEFAULT ''::text NOT NULL,
+    admin_tags text DEFAULT ''::text NOT NULL,
     CONSTRAINT journo_status_check CHECK ((((status = 'a'::bpchar) OR (status = 'h'::bpchar)) OR (status = 'i'::bpchar)))
 );
 
@@ -547,7 +547,6 @@ CREATE TABLE journo_address (
 --
 
 CREATE SEQUENCE journo_address_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -578,7 +577,6 @@ CREATE TABLE journo_admired (
 --
 
 CREATE SEQUENCE journo_admired_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -911,7 +909,6 @@ CREATE TABLE journo_phone (
 --
 
 CREATE SEQUENCE journo_phone_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -942,7 +939,6 @@ CREATE TABLE journo_photo (
 --
 
 CREATE SEQUENCE journo_photo_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1001,7 +997,8 @@ CREATE TABLE missing_articles (
     id integer NOT NULL,
     journo_id integer,
     url text NOT NULL,
-    submitted timestamp without time zone DEFAULT now() NOT NULL
+    submitted timestamp without time zone DEFAULT now() NOT NULL,
+    reason text DEFAULT ''::text NOT NULL
 );
 
 
@@ -1034,7 +1031,10 @@ CREATE TABLE news (
     author text DEFAULT ''::text NOT NULL,
     slug text DEFAULT ''::text NOT NULL,
     posted timestamp without time zone DEFAULT now() NOT NULL,
-    content text DEFAULT ''::text NOT NULL
+    content text DEFAULT ''::text NOT NULL,
+    date_from date,
+    date_to date,
+    kind text DEFAULT ''::text NOT NULL
 );
 
 
@@ -1124,7 +1124,8 @@ CREATE TABLE person_permission (
     id integer NOT NULL,
     person_id integer NOT NULL,
     journo_id integer,
-    permission text
+    permission text,
+    created timestamp without time zone DEFAULT now() NOT NULL
 );
 
 
@@ -1885,6 +1886,20 @@ CREATE INDEX journo_bio_idx_journo_id ON journo_bio USING btree (journo_id);
 --
 
 CREATE UNIQUE INDEX journo_email_idkey ON journo_email USING btree (id);
+
+
+--
+-- Name: journo_firstname_metaphone_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_firstname_metaphone_idx ON journo USING btree (firstname_metaphone);
+
+
+--
+-- Name: journo_lastname_metaphone_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_lastname_metaphone_idx ON journo USING btree (lastname_metaphone);
 
 
 --

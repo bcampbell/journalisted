@@ -671,7 +671,7 @@ def FindBlogFeeds():
 #    feeds.append( ('All guardian.co.uk blog posts', 'http://blogs.guardian.co.uk/atom.xml') )
 
 
-    bloglist = soup.find( 'div', {'class':'bd'} ).find( 'ul', {'class':'two-col last'})
+    bloglist = soup.find( 'div', {'id':'editor-zone-1'} )
 
     for a in bloglist.findAll( 'a', {'class': 'link-text'} ):
         url = a['href']
@@ -828,13 +828,13 @@ def Extract_newformat( html, context ):
     art['images'] = []
     caption_pat = re.compile( ur"(.*)\s*(?:photograph:|photographs:|photo:|photos:)\s*(.*)\s*$", re.UNICODE|re.IGNORECASE )
     # images
-    for imagediv in contentdiv.findAll( 'div', {'class':re.compile("""\\bimage\\b""") } ):
-        img = imagediv.img
+    for figure in contentdiv.findAll( 'figure' ):
+        img = figure.img
         img_url = img['src']
-        p = imagediv.find( 'p', {'class':'caption'} )
+        figcaption = figure.find( 'figcaption' )
         t = u''
-        if p:
-            t = p.renderContents( None )
+        if figcaption:
+            t = figcaption.renderContents( None )
             t = ukmedia.FromHTMLOneLine(t)
         m = caption_pat.match( t )
         cap = u''
@@ -844,7 +844,7 @@ def Extract_newformat( html, context ):
             cred = m.group(2)
 
         art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
-        imagediv.extract()
+        figure.extract()
 
     # long articles have a folding part
 
@@ -1266,5 +1266,4 @@ if 0:
 
 if __name__ == "__main__":
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, DupeCheckFunc )
-
 

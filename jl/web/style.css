@@ -1,4 +1,49 @@
+/* meyerweb.com style reset  */
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, textarea {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+}
+/* remember to define focus styles! */
+:focus {
+	outline: 0;
+}
+body {
+	line-height: 1;
+	color: black;
+	background: white;
+}
+ol, ul {
+	list-style: none;
+}
+/* tables still need 'cellspacing="0"' in the markup */
+table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+caption, th, td {
+	text-align: left;
+	font-weight: normal;
+}
+blockquote:before, blockquote:after, q:before, q:after {
+	content: "";
+}
+blockquote, q {
+	quotes: "" "";
+}
+/* END meyerweb.com style reset http://meyerweb.com/eric/thoughts/2007/05/01/reset-reloaded/ */
+
 /* BASIC STYLES */
+
+p { margin: 4px 0px; }
+code { font-family: monospace; }
+em { font-style: italic; }
 
 h1,h2,h3,h4,h5,h6 {
   margin: 0; padding: 0;
@@ -34,6 +79,9 @@ a.extlink {
   padding-right: 19px;
   background: transparent url('/img/icon_extlink.png') no-repeat center right;
 }
+
+dl { margin: 8px; 0px; }
+dd { padding-left: 12px; margin-bottom: 8px; }
 
 ul {
 /*  margin: 0px; */
@@ -185,8 +233,13 @@ form input[type="password"] {
   border: 1px solid #d9d9d9;
 }
 
-
+/* assorted types of fields */
 form input[type="text"].year { width: 4em; }
+form input[type="text"].date { width: 8em; }
+form input[type="text"].url { width: 480px; }
+form input[type="text"].headline { width: 480px; }
+
+form input#twitter { width:12em; }
 
 .sidebar form input[type="text"] { width: 200px; }
 
@@ -205,35 +258,49 @@ form .explain {
 }
 
 form .remove {
-  float: right;
+/*  float: right;*/
 }
 
 .errhint { font-weight: bold; color: red; display: block; }
 
 form dt {
+  display: block;
   float: left;
   width: 130px;
   clear: both;
   text-align: right;
   padding-right: 8px;
+  margin: 8px 0px;
 }
 
 
 form dd {
+  display: block;
   position: relative;
+  float: left;
   margin: 8px 0px;
 }
 
 form dd a.remove {
-  position: absolute;
+/*  position: absolute;
   right: 0px;
   bottom: 0px;
+  */
 }
 
 form dl {
   padding-bottom: 8px;
   border-bottom: 1px solid black;
   border-bottom: 1px solid #d9d9d9;
+}
+
+/* clear:both without extra html */
+form dl:after {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
 }
 
 
@@ -255,8 +322,8 @@ form dl {
 #header {
   margin: 0;
   padding: 0;
-  height: 104px;
-  background: url("/img/header_bg.png") repeat-x;
+  height: 144px;
+  background: #cc0e0e url("/img/header_bg.png") repeat-x left bottom;
 }
 
 #header .inner {
@@ -269,7 +336,7 @@ form dl {
 
 #header h1 {
   position: absolute;
-  bottom: 14px;
+  bottom: 27px;
   left: 32px;
   width: 228px;
   height: 59px;
@@ -290,8 +357,8 @@ form dl {
 
 #header .nav {
   position: absolute;   /* within header */
-  top: 8px;
-  right: 120px;
+  top: 6px;
+  right: 110px;
   padding: 0;
   margin: 0;
   color: #ffffff;
@@ -308,16 +375,29 @@ form dl {
   display:inline;
 }
 
-#header .nav ul li {
+#header .nav li {
   list-style-type: none;
   display:inline;
   margin: 0;
   padding: 0;
+  
+  margin:0 5px 0 0;
+  padding:0 5px 0 0;
+  background: url('img/header-divider.png') right 4px no-repeat;
+  /* border-right: 1px solid #FFF; */
 }
 
+#header .nav  li:last-child {
+	background-image: none;
+}
+
+
+
+
 #header .nav a { 
-  color: #FFFFFF; 
-  padding: 8px 4px 8px 4px;
+  color: #FFFFFF;
+ font-size: 12px;
+  padding: 4px 4px 8px 4px;
 
 }
 
@@ -393,8 +473,12 @@ ul.newList a {color: #666; text-decoration:none; display:block;}
 ul.newList {margin:0; padding:0; list-style:none; color:#666; width:160px; background:#fff; position:absolute;  border:1px solid #ccc; top:22px; left:0; overflow:hidden; z-index:9999;}
 
 .newListSelected {
-    margin-right: 4px;
-    width:155px; color:#666; height:22px; padding:3px 0 0 6px; float:left;
+    margin-right: 15px;
+    width:200px; 
+	color:#666; 
+	height:22px; 
+	padding:3px 0 0 6px; 
+	float:left;
     background: #ffffff url('/img/dropdown.png') no-repeat center right;
     border: 1px solid #888888;
 }
@@ -779,7 +863,30 @@ ul.newList li a:focus {-moz-outline-style: none;}
   border-radius: 5px;
 }
 
-.not-public p { margin: 2px 0px; }
+/* profile warnings to display as a banner across the top of the page... */
+.profile-warning p { margin: 2px 0px; }
+.profile-warning {
+  margin: 0px 0px 8px 0px;
+  padding: 8px;
+  /*border-top: 4px solid #d77a00;
+  border-bottom: 4px solid #d77a00;*/
+  border: 1px solid #d77a00;
+  background-color: #f8c64d;
+  color: #1a1a1a;
+  -moz-box-shadow: 0 0 5px #888888;
+  -webkit-box-shadow: 0 0 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.profile-warning.not-public {
+}
+
+.profile-warning.fake {
+    font-size: larger;
+}
+
 
 .journo-profile {
   -moz-box-shadow: 0 0 5px #888888;
@@ -792,6 +899,9 @@ ul.newList li a:focus {-moz-outline-style: none;}
 }
 
 
+.previous-articles a.show-all {
+    float: right;
+}
 
 /* search forms for journo page and search results page */
 .journo-profile .search form {
@@ -905,6 +1015,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .box.you-can-also li.print-page { background-image: url( "/img/icon_printer.png"); }
 .box.you-can-also li.forward-profile { background-image: url( "/img/icon_rightarrow.png"); }
 .box.you-can-also li.claim-profile { background-image: url( "/img/icon_person.png"); }
+.box.you-can-also li.import-linkedin { background-image: url( "/img/icon_linkedin.png"); }
 
 .box.subscribe-newsletter {
   background-color: #e7f3e3;
@@ -1001,11 +1112,13 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 /* position the "edit" links */
 .bio .head,
-.contact .head
+.contact .head,
+#tab-links .head
  { position: relative; }
 
 .bio .head a.edit,
-.contact .head a.edit
+.contact .head a.edit,
+#tab-links .head a.edit
  {
   position: absolute;
   top: 10px;
@@ -1055,6 +1168,69 @@ a.donate:focus {
   padding: 4px;
 }
 
+/* TODO: replace "edit" buttons with "editbutton"! */
+/* TODO: modify these to allow icon attachment (on the a?) */
+
+.editbutton {
+    margin: 4px 0px;
+}
+
+.editbutton a {
+/*  display:block;
+  float: left;
+*/
+  display: inline-block;
+  color: #000000;
+  text-decoration: none;
+  background: url(/img/editbutton.png) no-repeat 0px 0px;
+  height: 21px;
+  line-height: 21px;
+}
+
+.editbutton a span {
+/*  display:block;
+  float:left;
+*/
+  display: inline-block;
+  background:url(/img/editbutton.png) no-repeat right 0px;
+  height:21px;
+  padding-left:0px;
+  padding-right:10px;
+  margin-left:10px;
+  cursor:pointer;
+}
+
+.editbutton a:hover { background-position: 0px -21px; }
+.editbutton a:hover span {background-position: right -21px; }
+
+
+
+a.public-profile-location {
+    display: block;
+    font-size: 150%;
+    text-align: center;
+    margin: 8px auto;
+    padding: 8px;
+    border: 1px solid #888;
+    background: #eee;
+    width: 500px;
+
+}
+
+.accountaction {
+    /*padding: 8px 0px;*/
+    padding: 0px 8px;
+    margin: 8px 8px;
+    float: left;
+    width: 272px;   /* 628/2 -16 -16*/
+    height: 140px;
+    border: 1px solid #888;
+    position: relative;
+}
+.accountaction h3 { border:none;}
+
+.accountaction .editbutton { position: absolute; right: 8px; bottom: 4px }
+.accountaction img { float: left; }
 
 /* SEARCH PAGE */
 

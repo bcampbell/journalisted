@@ -8,6 +8,10 @@ require_once 'misc.php';
 function page_header( $title, $params=array() )
 {
     header( 'Content-Type: text/html; charset=utf-8' );
+    if( arr_get('pingbacks', $params, FALSE ) ) {
+        $pingback_url = OPTION_BASE_URL . "/pingback";
+        header("X-Pingback: {$pingback_url}");
+    }
 
     if( $title )
         $title .= ' - ' . OPTION_WEB_DOMAIN;
@@ -23,6 +27,10 @@ function page_header( $title, $params=array() )
     $rss_feeds = array();
     if (array_key_exists('rss', $params))
         $rss_feeds = $params['rss'];
+
+    $canonical_url = null;
+    if (array_key_exists('canonical_url', $params))
+        $canonical_url = $params['canonical_url'];
 
     $js_files = array( "/jl.js" );
     if (array_key_exists('js_extra', $params))

@@ -4,7 +4,9 @@
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
+require_once '../phplib/article.php';
 require_once '../phplib/journo.php';
+require_once "../phplib/journo_rdf.php";
 require_once '../phplib/misc.php';
 require_once '../phplib/gatso.php';
 require_once '../phplib/cache.php';
@@ -52,6 +54,15 @@ if( !is_null($P) )
 
 
 // if journo is not active, only allow viewing if logged-in user can edit page
+
+if( $journo['status'] == 'i' ) {
+    // activate journo if they've met the requirements
+    if( journo_checkActivation( $journo['id'] ) ) {
+        $journo['status'] = 'a';
+    }
+}
+
+
 if( $journo['status'] != 'a' && !$can_edit_page ) {
     spew_404( $ref );
     exit(1);
@@ -61,6 +72,7 @@ if( $journo['status'] != 'a' && !$can_edit_page ) {
 $pageparams = array(
     'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
     'head_extra_fn'=>'extra_head',
+    'pingbacks'=>TRUE,
 );
 
 
@@ -141,6 +153,10 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
     }
 }
 
+// fields that we've recently added, which might not be in cached versions
+if( !array_key_exists('fake',$data ) ) {
+    $data['fake'] = False;
+}
 
 // some stuff we don't cache:
 $data['can_edit_page'] = $can_edit_page;
@@ -176,10 +192,11 @@ if( $fmt == 'text' ) {
     header( "Content-Type: text/plain" );
     include "../templates/journo_text.tpl.php";
 } else if( $fmt == 'rdfxml' ) {
-    extract( $data );
-
     header( "Content-Type: application/rdf+xml" );
-    include "../templates/journo_rdfxml.tpl.php";
+    journo_emitRDFXML( $data );
+} else if( $fmt == 'n3' ) {
+    header( "Content-Type: text/plain" );   // text/n3
+    journo_emitN3( $data );
 } else {
     /* normal html version */
     $title = $journo['prettyname'];
@@ -205,9 +222,11 @@ if( $fmt == 'text' ) {
 
 function extra_head()
 {
-
+    global $journo;
 
 ?>
+<link rel="alternate" type="application/rdf+xml" href="/data/journo/<?= $journo['ref'] ?>" />
+
 
 <!-- <script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
 <script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
@@ -217,8 +236,9 @@ function extra_head()
     function () {
         var tabs = $('.tabs li');
         function setTab( tabname ) {
-            if( tabname != '#tab-bio' && tabname != '#tab-contact' ) {
-                tabname = '#tab-work';
+            if( tabname=='' ) {
+                /* default to first tab */
+                tabname = tabs.find('a').attr('href');
             }
             tabs.each( function() {
                 tabid = $('a',this).attr('href');

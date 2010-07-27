@@ -42,6 +42,7 @@ class XapSearch {
         $this->qp->add_prefix( 'author', 'A' );
         $this->qp->add_prefix( 'title', 'T' );
         $this->qp->add_prefix( 'journo', 'J' );
+        $this->qp->add_prefix( 'srcorg', 'O' );
     }
 
 
@@ -93,7 +94,7 @@ class XapSearch {
         }   /* (default is relevance) */
 
 
-        $checkatleast = max( $limit, 500 );
+        $checkatleast = max( $limit, 1000 );
         $matches = $this->enquire->get_mset($offset, $limit, $checkatleast );
 
         $this->total_results = max( $matches->get_matches_estimated(), $offset+$matches->size() );

@@ -30,6 +30,9 @@
 <?php foreach( $rss_feeds as $rss_title => $rss_url) { ?>
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>
+<?php if( $canonical_url ) { ?>
+  <link rel="canonical" href="<?= $canonical_url ?>" />
+<?php } ?>
   <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
   <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>
@@ -54,28 +57,30 @@
       <a class="mst-logo" href="http://www.mediastandardstrust.org"><img src="/img/mst_logo.png" alt="Media Standards Trust" /></a>
       <div class="nav">
 <?php if( $logged_in_user ) { ?>
-          <span class="hellouser">Hello, <a href="/account"><em><?= $logged_in_user ?></em></a></span>
+<?php if( $can_edit_profile ) { ?>
+          <span class="hellouser">Hello, <a href="/profile" title="Click to go to your public profile page"><em><?= $logged_in_user ?></em></a></span>
+<?php } else { ?>
+          <span class="hellouser">Hello, <a href="/account" title="See user your account details"><em><?= $logged_in_user ?></em></a></span>
+<?php } ?>
 <?php } ?>
         <ul>
-          <li><a href="/">Home</a></li>
+          <li><a href="/" title="Go to the front page of journalisted">Home</a></li>
+<?php if( $logged_in_user ) { ?>
+          <li><a href="/account" title="See your user account details">My details</a></li>
+<?php } ?>
+<?php /*
 <?php if( $logged_in_user && $can_edit_profile ) { ?>
           <li><a href="/profile">My profile</a></li>
 <?php } else { ?>
           <li><a href="/profile">Edit profile</a></li>
 <?php } ?>
+<?php */ ?>
+          <li class="alert<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert" title="Follow your favourite journalist(s) via email">Alerts</a></li>
+          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"><a href="/about" title="More information about journalisted">About</a></li>
 <?php if( $logged_in_user ) { ?>
-          <li class="my<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
-<?php } ?>
-<!--    <li class="all<?= $mnpage=='all' ? ' active' :''; ?>"><a href="/list">Journalists A-Z</a></li>
-          <li class="subject<?= $mnpage=='subject' ? ' active' :''; ?>"><a href="/tags">Subject Index</a></li>
--->
-<?php if( $logged_in_user ) { ?>
-          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"><a href="/about">About</a></li>
-          <li><a href="/logout">Log out</a></li>
+          <li><a href="/logout" title="Log out - make sure you use this if you're using a public computer">Log out</a></li>
 <?php } else { ?>
-          <li class="alert<?= $mnpage=='my' ? ' active' :''; ?>"><a href="/alert">Alerts</a></li>
-          <li class="about<?= $mnpage=='about' ? ' active' :''; ?>"><a href="/about">About</a></li>
-          <li><a href="/login">Log in</a></li>
+          <li><a href="/login" title="Log in/register">Log in</a></li>
 <?php } ?>
         </ul>
       </div>

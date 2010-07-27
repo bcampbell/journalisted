@@ -669,8 +669,62 @@ def FindColumnistArticles():
     return entries
 
 
-
 def Extract_blog( html, context ):
+    """extract fn for telegraph blog posts (wordpress?)"""
+
+    art = context
+    soup = BeautifulSoup.BeautifulSoup( html )
+
+    # there are bad links the the RSS feeds (pointing at the story in the old blog I think)
+    # These redirect to the summary page (even though all the content appears to have been migrated! doh!)
+    # actual blog post pages have
+    # <meta name="DCSext.Content_Type" content="Story"/>
+    # I think :-)
+    meta = soup.find('head').find('meta', {'name':'DCSext.Content_Type'})
+    if meta['content'] == 'Index':
+        ukmedia.DBUG("skip blog index page: %s\n" % (art['srcurl']) )
+        return None
+    # OR could probably also check for summary pages with:
+    #if soup.find(text='Latest Posts'):
+
+    post_div = soup.find( 'div', {'id':re.compile('^post-\d+$')} )
+
+    h1 = post_div.find( 'div', {'class':'storyHead'} ).h1
+    art['title'] = ukmedia.FromHTMLOneLine( h1.renderContents(None) )
+
+
+    byline_div = post_div.find('div',{'class':'byline'})
+    author_span = byline_div.find('span',{'class':'byAuthor'})
+    art['byline'] = ukmedia.FromHTMLOneLine( author_span.renderContents(None) )
+
+#    pubdate_span = byline_div.find('span', {'class': 'lastUpdated' } )
+#    art['pubdate'] = ukmedia.ParseDateTime( pubdate_span.renderContents(None) )
+    meta = soup.find('head').find('meta',{'name':'DC.date.issued'})
+    art['pubdate'] = ukmedia.ParseDateTime( meta['content'] )
+
+    entry_div = post_div.find('div',{'class':'entry'})
+
+    art['images'] = []
+    for att in entry_div.findAll( 'div', {'id':re.compile('^attachment_\d+$')}):
+        img = {}
+        img['url'] = urlparse.urljoin( art['srcurl'], att.img['src'] )
+        cap = att.find('p',{'class':'wp-caption-text'})
+        img['caption'] = ukmedia.FromHTMLOneLine( cap.renderContents(None) )
+        img['credit'] = u''
+        art['images'].append(img)
+
+        att.extract()
+
+    # TODO: images
+
+    art['content'] = ukmedia.SanitiseHTML( entry_div.renderContents( None ) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    return art
+
+
+
+def Extract_blogOLD( html, context ):
     """extract fn for telegraph blog posts"""
 
     art = context
@@ -714,22 +768,19 @@ srcidpat_xml = re.compile( "(xml=.*[.]xml)" )
 
 # BLOG url
 # http://blogs.telegraph.co.uk/christian_adams/blog/2009/02/02/why_cartoonists_love_drawing_snow
-srcidpat_blog = re.compile( "http://blogs.telegraph.co.uk(.*)" )
+# srcidpat_blog = re.compile( "http://blogs.telegraph.co.uk(.*)" )
 
 def CalcSrcID( url ):
     """ extract unique id from url """
 
     url = url.lower()
-
-    # blog?
-    m = srcidpat_blog.match( url )
-    if m:
-        return 'telegraph_blogs' + m.group(1)
-
     o = urlparse.urlparse( url )
-
     if not o[1].endswith( 'telegraph.co.uk' ):
         return None
+
+    # blog?
+    if o[1] == 'blogs.telegraph.co.uk':
+        return 'telegraph_blogs' + o[2]
 
     m = srcidpat_html.search( o[2] )
     if m:
@@ -817,16 +868,16 @@ def ContextFromURL( url ):
     context = {}
     context['srcurl'] = url
     context['permalink'] = url
-    context['srcid'] = url
+    context['srcid'] = CalcSrcID( url )
     context['lastseen'] = datetime.now()
 
     # apply the various url-munging rules :-)
-    context = ScrubFunc( context, None )
+#    context = ScrubFunc( context, None )
 
     return context
 
 def FindArticles():
-    l = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc )
+    l = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
     return l
 
 if __name__ == "__main__":

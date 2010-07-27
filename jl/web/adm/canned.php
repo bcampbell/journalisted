@@ -33,7 +33,9 @@ $canned = array(
     new WhosWritingAbout(),
     new NewsletterSubscribers(),
     new EventLog(),
-    new RegisteredJournos()
+    new RegisteredJournos(),
+    new Pingbacks(),
+    new FakeJournos()
 );
 
 
@@ -213,7 +215,7 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
             $out = "<a href=\"/{$j['ref']}\" >{$j['prettyname']}</a>";
             if( array_key_exists( 'oneliner', $j ) )
                 $out .= " <small><em>({$j['oneliner']})</em></small>";
-            $out .= " <small>[<a href=\"/adm/{$j['ref']}\">admin</a>]</small>";
+            $out .= " <small>[<a href=\"/adm/{$j['ref']}\">admin page</a>]</small>";
             /* can provide an array of extra links */
             if( array_key_exists( 'extralinks', $j ) ) {
                 foreach( $j['extralinks'] as $l ) {
@@ -228,7 +230,7 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
 
             // assume we've got title and id at least
             $out = "<a href=\"/article?id={$a['id']}\">{$a['title']}</a>";
-            $out .= " <small>[<a href=\"/adm/article?id={$a['id']}\">admin</a>]</small>";
+            $out .= " <small>[<a href=\"/adm/article?id={$a['id']}\">admin page</a>]</small>";
             if( array_key_exists( 'permalink', $a ) ) {
                 $out .= " <small>[<a href=\"{$a['permalink']}\">original article</a>]</small>";
             }
@@ -248,7 +250,7 @@ function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
     } else {
         if( $col=='ref' ) {
             $ref = $cell;
-            return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin</a>]', $ref, $ref, $ref );
+            return sprintf( '<a href="/%s">%s</a> [<a href="/adm/%s">admin page</a>]', $ref, $ref, $ref );
         }
         return admMarkupPlainText( $cell );
     }
@@ -857,6 +859,42 @@ class RegisteredJournos extends CannedQuery {
 
         $sql = <<<EOT
 SELECT j.ref, j.prettyname, j.oneliner, p.email, p.name FROM (person p INNER JOIN person_permission perm ON perm.person_id=p.id) INNER JOIN journo j ON j.id=perm.journo_id WHERE perm.permission='edit';
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+class Pingbacks extends CannedQuery {
+    function __construct() {
+        $this->name = "Pingbacks";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show pingbacks, by journo";
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner, l.url, l.description FROM journo j INNER join journo_weblink l ON j.id=l.journo_id WHERE l.kind='pingback' AND l.approved=true ORDER BY l.journo_id;
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+class FakeJournos extends CannedQuery {
+    function __construct() {
+        $this->name = get_class($this);
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show journos marked as fake";
+    }
+
+    function perform($params) {
+        $sql = <<<EOT
+SELECT ref, prettyname, oneliner FROM journo WHERE fake=true;
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );

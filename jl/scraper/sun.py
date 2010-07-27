@@ -138,107 +138,10 @@ def FindArticles():
 
 
 
-# OLD VERSION - Crawls the whole site, rather than just sun-lite pages
-# Sun RSS feeds are rubbish, and the section pages look like they
-# could change often (according to whatever campaigns the sun is
-# banging on about at any one time)... so to get articles to scrape
-# we do a shallow crawl the site looking for likely links...
-#
-def OLD_FindArticles():
-    """Gather articles to scrape from the sun website.
-
-    Returns a list of scrape contexts, one for each article.
-    """
-    ukmedia.DBUG2( "*** sun ***: looking for articles...\n" )
-
-    urls = Crawl( 'http://www.thesun.co.uk/sol/homepage/' )
-
-    found = []
-    for url in urls:
-        found.append( ContextFromURL( url ) )
-
-    return found
-
-
-
-# keep track of pages visited by Crawl(), so we don't process them
-# multiple times
-crawled = set()
-
-# 
-articleurlpat = re.compile( "http:[/][/]www[.]thesun[.]co[.]uk[/]sol[/].*[/]article\\d+[.]ece([?].*)?" )
-
-# OLD VERSION - Crawls the whole site, rather than just sun-lite pages
-def Crawl( url, depth=0 ):
-    """Recursively crawl the sun website looking for article links.
-
-    Returns a set containing article urls.
-    """
-
-    global crawled
-    maxdepth = 1    # Very shallow. We only go 1 level down.
-
-    if depth==0:    # Starting a new crawl?
-        crawled = set()
-
-    articlelinks = set()
-    indexlinks = set()
-
-    if url in crawled:
-        ukmedia.DBUG2( "(already visited '%s')\n" % (url) )
-        return articlelinks
-
-    try:
-        html = ukmedia.FetchURL( url )
-    except urllib2.HTTPError, e:
-        # continue even if we get http errors (bound to be a borked
-        # link or two)
-        traceback.print_exc()
-        print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
-        return articlelinks
-
-    soup = BeautifulSoup( html )
-    for a in soup.findAll( 'a' ):
-        if not a.has_key( 'href' ):
-            continue
-        href = a['href'].strip()
-        if href.startswith('/'):
-            # handle relative links
-            href = 'http://www.thesun.co.uk' + href
-
-        # discard external sites, discussion pages, login pages etc...
-        if not href.startswith( 'http://www.thesun.co.uk/sol/' ):
-            continue
-
-        if articleurlpat.match( href ):
-            articlelinks.add( href )
-        else:
-            indexlinks.add( href )
-
-    crawled.add( url )
-    ukmedia.DBUG2( "Crawled '%s' (depth=%d), found %d articles\n" % ( url, depth, len( articlelinks ) ) )
-
-    if depth < maxdepth:
-        for l in indexlinks:
-            if not (l in crawled):
-                articlelinks = articlelinks | Crawl( l, depth+1 )
-            else:
-                ukmedia.DBUG2( "  [already visited '%s']\n" % (l) )
-
-    return articlelinks
-
-
-
 def Extract( html, context ):
     art = context
-    soup = BeautifulSoup( html )
-
-#    rt = soup.find( 'roottag' )
-#    if not rt:
-#        print "no roottag '%s' [%s]" %(art['title'], art['srcurl'])
-#    else:
-#        print "roottag '%s' [%s]" %(art['title'], art['srcurl'])
-#    return None
+    # sun _claims_ to be iso-8859-1, but they're talking crap.
+    soup = BeautifulSoup( html, fromEncoding='windows-1252' )
 
     # main column is column2 div - we can exclude a lot of nav cruft by starting here.
     col2 = soup.find( 'div', {'id':"column2"} )
@@ -284,12 +187,6 @@ def Extract( html, context ):
     titletxt = ukmedia.FromHTML( titletxt )
     titletxt = u' '.join( titletxt.split() )
     art['title'] = titletxt
-
-
-#   if html.find( "<!-- BEGIN: Module - Main Article -->" ) == -1:
-#       ukmedia.DBUG2( "IGNORE non-story '%s' (%s)\n" % (art['title'], art['srcurl']) );
-#       return None
-
 
     # ignore some known pages
     ignore_titles = [ "Contact us", "HAVE YOUR SAY" ]
@@ -344,41 +241,14 @@ def Extract( html, context ):
 
     art['byline'] = bylinetxt
 
-    contenttxt = u''
-    desctxt = u''
 
-    # try just using the roottag element to grab
-    # the main text (tags might be mismatched, so just use regex
-    # to pull out the roottag data and prettify it with a new soup)
-#    m = re.search( "<roottag>(.*)</roottag>", html, re.DOTALL )
-#    if m:
-#        roottag_soup = BeautifulSoup( m.group(1), fromEncoding=soup.originalEncoding )
-#        for cruft in roottag_soup.findAll( 'div' ):
-#            cruft.extract()
-#        contenttxt = roottag_soup.renderContents( None )
-#    else:            
-    if 1:
-        # first para has 'first-para' class
-        # (sometimes have multiple first-paras, so use first non-empty one)
-        for p in col2.findAll('p', { 'class': re.compile( '\\bfirst-para\\b' ) } ):
-            contenttxt = p.prettify( None )
-            desctxt = ukmedia.FromHTML( contenttxt )
-            if desctxt != u'':
-                break
-
-        # other paras have 'article' class
-        # KNOWN issue - some subheadings are done with non-article class paras...
-        for para in col2.findAll( 'p', { 'class': re.compile( '\\barticle\\b' ) } ):
-            for cruft in para.findAll( 'div' ):
-                cruft.extract()
-            contenttxt += para.prettify(None)
-
+    bodyText = col2.find( 'div', {'id':'bodyText'} )
+    for cruft in bodyText.findAll( 'p', {'class':re.compile('advertising') } ):
+        cruft.extract()
+    contenttxt = bodyText.renderContents(None)
     contenttxt = ukmedia.SanitiseHTML( contenttxt );
-    if desctxt == u'':
-        desctxt = ukmedia.FirstPara( contenttxt )
-
     art['content'] = contenttxt
-    art['description'] = desctxt
+    art['description'] = ukmedia.FirstPara( contenttxt )
 
     return art
 
@@ -406,7 +276,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    # use a huge maxerrors because of the sheer volume of articles we
-    # pick up in the crawl
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=150 )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

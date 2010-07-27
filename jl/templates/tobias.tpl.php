@@ -11,6 +11,14 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_Gu_No5_10_05_10.swf',
     'TG_Gu_No6_17_05_10.swf',
     'TG_TG_No1_24_05_10.swf',
+    'TG_TG_No2_31_03_10.swf',
+    'TG_TG_No3_07_06_10.swf',
+    'TG_TG_No4_14_06_10.swf',
+    'TG_TG_No5_21_06_10.swf',
+    'TG_TG_No6_28_06_10.swf',
+    'TG_TG_No7_05_07_10.swf',
+    'TG_TG_No8_12_07_10.swf',
+    'TG_TG_No9_19_07_10.swf',
 );
 
 
@@ -105,12 +113,13 @@ $previous_employers = array_unique( $previous_employers );
 <embed src="/tobias/<?= $tg_file ?>" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="400"></embed>
 </object>
     <div>
+Episode:
 <?php
 for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
     if( $i==$episode ) {
-?>Episode <?= $i ?>&nbsp;&nbsp;&nbsp;<?php
+?><strong><?= $i ?></strong>&nbsp;&nbsp;&nbsp;<?php
     } else {
-?><a href="/<?= $ref ?>?episode=<?= $i ?>">Episode <?= $i ?></a>&nbsp;&nbsp;&nbsp;<?php
+?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;&nbsp;&nbsp;<?php
     }
 }
 ?>

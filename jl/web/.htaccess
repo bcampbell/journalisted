@@ -19,6 +19,7 @@ RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.php -f
 RewriteRule (.+) $1.php [PT]
 
 RewriteRule ^adm/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ adm/journo.php?ref=$1$2 [PT,QSA]
+RewriteRule ^adm/article/([a-zA-Z0-9]+)([?][^/]*)?$ adm/article.php?id36=$1$2 [PT]
 # spare admin pages any further friggery
 RewriteRule ^adm/.* - [L]
 
@@ -37,14 +38,36 @@ RewriteRule ^faq/([-a-zA-Z0-9]+)$ faq.php?q=$1 [PT,QSA]
 # fred-bloggs
 # freg-bloggs?blah=foo
 RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ journo.php?ref=$1$2 [PT,QSA]
-
 # /<journo-ref>/rss
 RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)/rss([?][^/]*)?$ journo_rss.php?ref=$1$2 [PT,QSA]
-
-
 # /<journo-ref>/<tag>
 RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+)/([^?/]*)$ journo_tags.php?ref=$1&tag=$2 [PT,QSA]
 
+# /<journo-ref>.json, /<journo-ref>.txt
+RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+).json([?][^/]*)?$ journo.php?ref=$1&fmt=json$2 [PT,QSA]
+RewriteRule ^([a-zA-Z0-9]+-[-a-zA-Z0-9]+).txt([?][^/]*)?$ journo.php?ref=$1&fmt=text$2 [PT,QSA]
+
+# non-information resources:
+# /id/journo/<journo-ref>    /id/article/<id36>
+RewriteRule ^id/journo/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ id.php?type=journo&ref=$1$2 [PT,QSA]
+RewriteRule ^id/article/([a-zA-Z0-9]+)([?][^/]*)?$ id.php?type=article&id36=$1$2 [PT,QSA]
+# /data/journo/<journo-ref>
+RewriteRule ^data/journo/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)([?][^/]*)?$ journo.php?ref=$1&fmt=rdfxml$2 [PT,QSA]
+# /data/article/<id36>
+RewriteRule ^data/article/([a-zA-Z0-9]+)([?][^/]*)?$ article.php?id36=$1&fmt=rdfxml$2 [PT,QSA]
+
+# /a/<id36>    (tidy article urls)
+RewriteRule ^article/([a-zA-Z0-9]+)([?][^/]*)?$ article.php?id36=$1$2 [PT]
+
 # /L/<token>
 RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
+
+<Files dumpArticles.php>
+  Order Deny,Allow
+  Deny from all
+  Allow from localhost
+  Allow from ::1
+  Allow from 93.93.131.123
+  Allow from 82.133.93.217
+</Files>
 

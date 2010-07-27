@@ -7,23 +7,92 @@
 #
 
 import re
-from datetime import datetime
+from datetime import datetime,timedelta
 import sys
 import os
 import urlparse
+import cookielib
+import urllib   # for urlencode
+import urllib2
+import ConfigParser
 
 import site
 site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
 
+TIMESPLUS_CONFIG_FILE = '../conf/timesplus.ini'
+
+# Storage for cookies we receive in this session
+cookiejar = cookielib.LWPCookieJar()
+
 # NOTES:
+# 
+# scraper for the paywall-enabled times and sundaytimes
 #
-# Also scrape links from the html pages. The Times has a page for
-# each days edition which contains links to all the headlines for that day.
-# That's what we want. But it doesn't cover online-only articles.
-# RSS feeds used to be rubbish, but now seem OK... maybe we can drop the
-# html issue-crawling now...
+# The domains involved are:
+#
+# thetimes.co.uk
+#  - The Times
+# sundaytimes.co.uk
+#  - The Sunday Times
+# timesplus.co.uk
+#  - site used for account management
+#  - the login system is here
+# timesonline.co.uk
+#  - the old Times/Sundaytimes site. Now redirects to thetimes.co.uk
+#
+# There are also mobile versions of everything.
+#
+# The login system is really convoluted (7 HTTP requests!)
+
+
+
+def dump_cookies():
+    print "----------------------------------------"
+    print 'These are the cookies we have received so far :'
+    for index, cookie in enumerate(cookiejar):
+        print index, '  :  ', cookie
+    print "----------------------------------------"
+
+def Login():
+    global cookiejar
+
+    config = ConfigParser.ConfigParser()
+    config.read( TIMESPLUS_CONFIG_FILE )
+    timesplus_username = config.defaults()[ 'username' ]
+    timesplus_password = config.defaults()[ 'password' ]
+
+    # the times paywall login is really convoluted...
+    # starting with an empty cookiejar, it takes three POSTs to the login URL
+    # to gather up all the cookies needed. And each one does some 302 redirects,
+    # so you end up doing about 7 HTTP requests in all before you can start
+    # fetching stories. Ugh.
+    ukmedia.DBUG2( "Logging in as %s\n" % (timesplus_username) )
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
+    urllib2.install_opener(opener)
+    postdata = urllib.urlencode( {'userName':timesplus_username,'password':timesplus_password, 'keepMeLoggedIn':'false' } )
+
+    req = urllib2.Request( "https://www.timesplus.co.uk/iam/app/barrier?execution=e2s1&_eventId=loginEvent", postdata );
+    handle = urllib2.urlopen( req )
+#    html = handle.read()
+
+    #dump_cookies()
+
+    req = urllib2.Request( "https://www.timesplus.co.uk/iam/app/barrier?execution=e2s1&_eventId=loginEvent", postdata );
+    handle = urllib2.urlopen( req )
+#    html = handle.read()
+
+    #dump_cookies()
+    #print "Three"
+
+    req = urllib2.Request( "https://www.timesplus.co.uk/iam/app/barrier?execution=e2s1&_eventId=loginEvent", postdata );
+    handle = urllib2.urlopen( req )
+#    html = handle.read()
+
+
+    # OK... should now be logged in
+#    dump_cookies()
 
 
 # lots of links on the page which we don't want, so we'll
@@ -38,60 +107,6 @@ sectionnames = ('News',
         )
 
 siteroot = "http://timesonline.co.uk"
-
-
-def FetchRSSFeeds():
-    """Scrape a list of all the timesonline rss feeds, returns a list of (name,url) tuples"""
-    html = ukmedia.FetchURL( 'http://www.timesonline.co.uk/tol/tools_and_services/rss/' )
-    soup = BeautifulSoup.BeautifulSoup(html)
-
-    feeds = []
-
-    foo = soup.find( 'div', {'id':'region-column1-layout2'} )
-    for a in foo.findAll( 'a' ):
-        name = ukmedia.FromHTMLOneLine( a.renderContents( None ) )
-        url = a['href'].encode('ascii').strip()
-        o = urlparse.urlparse( url )
-
-        ok = False
-        if 'timesonline.co.uk' in o[1] or 'typepad.com' in o[1]:
-            ok = True
-        if 'podcast.timesonline.co.uk' in o[1]:
-            ok = False
-        if ok:
-            feeds.append( (name,url) )
-
-    return feeds
-
-
-def FindBlogFeeds():
-    """Scrape a list of all the timesonline blogs, returns a list of (name,url) tuples"""
-
-    mainblogpage = 'http://www.timesonline.co.uk/tol/comment/blogs/'
-
-    html = ukmedia.FetchURL( mainblogpage )
-    soup = BeautifulSoup.BeautifulSoup( html )
-    feed_dict = {}
-    for a in soup.findAll( 'a', {'class':'link-06c', 'href':re.compile(r'\btypepad[.]com\b(?!.*[.]html$)') } ):
-        url = a['href'].strip()
-        if not url.endswith('/'):
-            url += '/'
-#        url += 'atom.xml'   # atom
-#        url += 'index.rdf'  # rss1.0
-        url += 'rss.xml'    # rss2.0
-
-        url = url.encode('ascii').strip()
-        name = a.renderContents(None).strip()
-
-        feed_dict[url] = name
-
-
-
-    feeds = []
-    for url,name in feed_dict.iteritems():
-        feeds.append( (name,url) )
-
-    return feeds
 
 
 def CleanHtml(html):
@@ -151,100 +166,96 @@ def ScrubFunc( context, entry ):
 
 
 def FindArticles():
-    """ use various sources to make sure we get both print and online-only articles"""
-    foundarticles = []
+    sitemap_times = "http://www.thetimes.co.uk/tto/public/?view=sitemap&section=News"
+    sitemap_sundaytimes = "http://www.thesundaytimes.co.uk/sto/public/Sitemap/?view=sitemap"
 
-    # part 1: get RSS feeds
-    ukmedia.DBUG2( "*** times ***: scraping lists of feeds...\n" )
-    mainfeeds = FetchRSSFeeds()
-    blogfeeds = FindBlogFeeds()     # their main rss list isn't 100% complete. sigh.
-    feeds = MergeFeedLists( (blogfeeds,mainfeeds) )
-
-    foundarticles = ScraperUtils.FindArticlesFromRSS( feeds, u'times', ScrubFunc, maxerrors=15 )
-
-    # part 2: get main paper articles from scraping pages (_should_ mirror what's in the print editions)
-    ukmedia.DBUG2( "*** times ***: scraping newspaper article list...\n" )
-
-    # hit the page which shows the covers of the papers for the week
-    # and extract a link to each day
-    ukmedia.DBUG2( "fetching /tol/newspapers/the_times...\n" )
-    html = ukmedia.FetchURL( siteroot + '/tol/newspapers/the_times' )
-#   ukmedia.DBUG2( "  got it.\n" )
-    soup = BeautifulSoup.BeautifulSoup(html)
-
-    # (one day of the week will always be missing, as it'll have
-    # been renamed 'Today')
-    days = ( 'Today', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'The Sunday Times' )
-    daypat = re.compile( "/tol/newspapers/(.*?)/[?]days=(.*?)" )
-
-    daypages = {}
-    for link in soup.findAll( 'a', {'class':"link-06c"} ):
-
-        url = link['href']
-        if daypat.match( url ):
-            day = link.renderContents(None).strip()
-            if day in days:
-                daypages[day] = siteroot + url
-
-    # go through each days page and extract links to articles
-    for day, url in daypages.iteritems():
-
-        ukmedia.DBUG2( "fetching " + day + "\n" )
-        html = ukmedia.FetchURL( url )
-#       ukmedia.DBUG( " got " + day + "\n" )
-        fetchtime = datetime.now()
-        soup = BeautifulSoup.BeautifulSoup(html)
+    arts = []
+    arts = arts + FindArticlesFromSiteMap( sitemap_times )
+    arts = arts + FindArticlesFromSiteMap( sitemap_sundaytimes )
+    return arts
 
 
-        # Which newspaper?
-        if re.search( "/?days=Sunday$", url ):
-            srcorgname = u"sundaytimes"
-        else:
-            srcorgname = u"times"
-        ukmedia.DBUG2( "** PAPER: " + srcorgname + "\n" )
+def FindArticlesFromSiteMap( sitemap_url ):
+    """ fetch list of articles by crawling for links using the sitemap"""
 
-        # go through by section
-        for heading in soup.findAll( 'h3', {'class': 'section-heading' } ):
-            sectionname = heading.find( text = sectionnames )
-            if not sectionname:
-#               print "Ignoring section ",heading
-                continue
+    html = ukmedia.FetchURL( sitemap_url )
+    soup = BeautifulSoup.BeautifulSoup( html )
 
-            ukmedia.DBUG2( "  " + sectionname + "\n" )
+    pages = []
 
-            ul = heading.findNextSibling( 'ul' )
-            for a in ul.findAll( 'a' ):
-                title = ukmedia.FromHTMLOneLine( a.renderContents(None) )
-                url = siteroot + a['href']
+    if 'thetimes.co.uk/' in sitemap_url:
+        sitemap = soup.find( 'div', {'id':'sitemap-body'} )
+        for section in sitemap.findAll( 'div', {'class':'section'} ):
+            section_name = section.h2.a.img['alt']
+            for li in section.findAll( 'li' ):
+                a = li.a
+                name = a.string
+                url = a.get('href')
+                if url is not None:
+                    o = urlparse.urlparse( url )
+                    if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
+                        pages.append( url )
+                    elif o[1].endswith( '.typepad.com' ):
+                        pages.append( url )
+    elif 'thesundaytimes.co.uk/' in sitemap_url:
+        sitemap = soup.find('div',{'id':'sitemap'})
+        for a in sitemap.findAll('a'):
+            name = a.string
+            url = a.get('href')
+            if a:
+                url = urlparse.urljoin( sitemap_url, url )
+                o = urlparse.urlparse( url )
+                if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
+                    pages.append( url )
 
-                # don't do puzzle solutions
-                skip = False
-                if "games_and_puzzles" in url:
-                    for pat in puzzle_blacklist:
-                        if pat.match( title ):
-#                            ukmedia.DBUG2( "SKIP puzzle solution: '%s' (%s)\n" % (title, url) )
-                            skip=True
+    article_urls = set()
+    for page_url in pages:
+        article_urls.update( ReapArticles( page_url ) )
 
-#                    if not skip:
-#                        print "PUZ: '%s': '%s'" %(title,url)
-
-                if not skip:
-                    context = {
-                        'title': title,
-                        'srcurl': url,
-                        'srcid': CalcSrcID(url),
-                        'permalink': url,
-                        'lastseen': fetchtime,
-                        'srcorgname' : srcorgname,
-                        }
-
-                    foundarticles.append( context )
+    foundarticles =[]
+    for url in article_urls:
+        context = ContextFromURL( url )
+        if context is not None:
+            foundarticles.append( context )
 
     ukmedia.DBUG2( "Found %d articles\n" % ( len(foundarticles) ) )
     return foundarticles
 
 
+def ReapArticles( page_url ):
+    """ find all article links on a page """
+
+    article_urls = set()
+    ukmedia.DBUG2( "scanning for article links on %s\n" %(page_url,) )
+    try:
+        html = ukmedia.FetchURL( page_url ) 
+    except urllib2.HTTPError, e:
+        # bound to be some 404s...
+        print >>sys.stderr, "SKIP '%s' (%d error)" %(page_url, e.code)
+        return article_urls
+
+    soup = BeautifulSoup.BeautifulSoup( html )
+
+
+    for a in soup.findAll( 'a' ):
+        url = a.get('href')
+        if url is None:
+            continue
+        url = urlparse.urljoin( page_url, url )
+        url = ''.join( url.split() )
+        url = re.sub( '#(.*?)$', '', url)
+
+        title = a.string
+        srcid = CalcSrcID( url )
+        #print url,":",srcid
+        if srcid is not None:
+            article_urls.add(url)
+    return article_urls
+
+
+
 # http://www.timesonline.co.uk/tol/news/politics/article3471714.ece
+#http://www.thesundaytimes.co.uk/sto/travel/Destinations/article328119.ece
 srcidpat_ece = re.compile( '/(article[0-9]+\.ece)$' )
 
 def CalcSrcID( url ):
@@ -261,22 +272,37 @@ def CalcSrcID( url ):
         'timesnews.typepad.com',
         'timesonline.typepad.com' )
 
+    if o[2].endswith( '/archives.html' ):
+        return None
+
     if domain in blogdomains:
+        if o[2].endswith( '/index.html' ):
+            return None
         if o[2].endswith('.html'):
             return 'times_' + o[2]
-        else:
-            return None
+        return None
 
     # main paper?
 
     if o[1].startswith('feeds.' ):
         return None  # got wrong url from rss feed!
 
-    if not o[1].endswith( 'timesonline.co.uk' ):
+    m = srcidpat_ece.search( o[2] )
+    if m is None:
         return None
 
-    m = srcidpat_ece.search( o[2] )
-    if m:
+    paper_domains = ( 'thetimes.co.uk','www.thetimes.co.uk',
+        'sundaytimes.co.uk', 'www.sundaytimes.co.uk',
+        'timesonline.co.uk', 'www.timesonline.co.uk' )
+    if o[1] in ( 'thetimes.co.uk','www.thetimes.co.uk' ):
+        return 'thetimes.co.uk_' + m.group(1)
+
+    if o[1] in ( 'thesundaytimes.co.uk', 'www.thesundaytimes.co.uk' ):
+        return 'thesundaytimes.co.uk_' + m.group(1)
+
+    if o[1] in ('timesonline.co.uk', 'www.timesonline.co.uk' ):
+        if 'timesonline.co.uk/tol/feeds/rss/' in url:
+            return None
         return 'times_' + m.group(1)
 
     return None
@@ -286,21 +312,164 @@ def Extract( html, context ):
     o = urlparse.urlparse( context['srcurl'] )
     if o[1].endswith( 'typepad.com' ):
         return Extract_typepad( html, context )
-    else:
-        return Extract_escenic( html,context )
+    if o[1] in ('www.timesonline.co.uk', 'timesonline.co.uk'):
+        return Extract_ece_timesonline( html,context )
+    if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk'):
+        return Extract_ece_thetimes( html,context )
+    if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk'):
+        return Extract_ece_thesundaytimes( html,context )
 
 
 
-def NextTag( el ):
-    while el:
-        el = el.nextSibling
-        if isinstance( el, BeautifulSoup.Tag ):
-            break
-    return el
 
 
-def Extract_escenic( html, context ):
-    """Extract fn for main newspaper (Escenic CMS)"""
+def Extract_ece_thetimes( html, context ):
+    """ article extractor for thetimes.co.uk """
+    art = context
+    art['srcorgname'] = u'times';
+
+    soup = BeautifulSoup.BeautifulSoup( html )
+    if soup.find( 'div', {'id':'login-popup'} ):
+        raise Exception, "Not logged in"
+
+#    open( "/tmp/wibble.html",'w' ).write(html)
+#    sys.exit(0)
+
+    # get headline and pubdate from meta tags
+    dashboard_header = soup.head.find( 'meta', {'name':'dashboard_header'} )
+    art['title'] = ukmedia.FromHTMLOneLine( dashboard_header[ 'content' ] )
+
+    dashboard_updated_date = soup.head.find( 'meta', {'name':'dashboard_updated_date'} )
+    dashboard_published_date = soup.head.find( 'meta', {'name':'dashboard_published_date'} )
+    art['pubdate'] = ukmedia.ParseDateTime( dashboard_published_date['content'] )
+
+    tab1_div = soup.find( 'div', {'id':'tab-1'} )
+
+
+    byline_timestamp_div = tab1_div.find( 'div', {'class':'byline-timestamp' } )
+    authors = []
+    for strong in byline_timestamp_div.findAll( 'strong', {'class':'f-author' } ):
+        authors.append( ukmedia.FromHTMLOneLine(strong.renderContents(None)) )
+ 
+    art['byline'] = u', '.join( authors )
+    # TODO - should also grab title and location
+
+    bodycopy = tab1_div.find('div',{'id':'bodycopy'} )
+    art['content'] = ukmedia.SanitiseHTML( bodycopy.renderContents( None ) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    if art['content'].strip() == u'':
+        ukmedia.DBUG2( "SKIP contentless article '%s' (%s)\n" % (art['title'],art['srcurl']) )
+        return None
+
+    # images
+    art['images'] = []
+    slideshow_div = tab1_div.find( 'div',{'class':re.compile(r'\btto-slideshow\b')} )
+    if slideshow_div:
+        for slide in slideshow_div.findAll( 'li', {'class':re.compile(r'\btto-slide\b')} ):
+            img = slide.img
+            caption = slide.find( 'span', {'class':'f-caption'} )
+            credit = slide.find( 'span', {'class':'f-credit'} )
+
+            image = {}
+            image[ 'url' ] = urlparse.urljoin( art['srcurl'], img.get('src') )
+            image['caption'] = ukmedia.FromHTMLOneLine( caption.renderContents(None) )
+            image['credit'] = ukmedia.FromHTMLOneLine( credit.renderContents(None) )
+            art['images'].append( image )
+
+    # check for single-image articles
+    single_media = tab1_div.find( 'div', {'class': 'media single-media'} )
+    if single_media:
+        img = single_media.img
+
+        # caption/credit is elsewhere on page...
+        utilities_head_div = tab1_div.find( 'div', {'class':'utilities-head'} )
+        caption = utilities_head_div.find( 'div', {'class':'f-caption'} )
+        credit = utilities_head_div.find( 'div', {'class':'f-credit'} )
+        
+        image = {}
+
+        image['url'] = urlparse.urljoin( art['srcurl'], img.get('src') )
+        if caption:
+            image['caption'] = ukmedia.FromHTMLOneLine( caption.renderContents(None) )
+        else:
+            image['caption'] = u''
+        if credit:
+            image['credit'] = ukmedia.FromHTMLOneLine( credit.renderContents(None) )
+        else:
+            image['credit'] = u''
+        art['images'].append( image )
+
+    return art
+
+
+
+def Extract_ece_thesundaytimes( html, context ):
+    """ article extractor for thesundaytimes.co.uk """
+    art = context
+    art['srcorgname'] = u'sundaytimes';
+
+    soup = BeautifulSoup.BeautifulSoup( html )
+    if soup.find( 'div', {'id':'login-popup'} ):
+        raise Exception, "Not logged in"
+
+
+    # get headline and pubdate from meta tags
+    dashboard_header = soup.head.find( 'meta', {'name':'dashboard_header'} )
+    art['title'] = ukmedia.FromHTMLOneLine( dashboard_header[ 'content' ] )
+
+    dashboard_updated_date = soup.head.find( 'meta', {'name':'dashboard_updated_date'} )
+    dashboard_published_date = soup.head.find( 'meta', {'name':'dashboard_publication_date'} )
+    art['pubdate'] = ukmedia.ParseDateTime( dashboard_published_date['content'] )
+
+    interactive_article_div = soup.find( 'div', {'id':'interactive-article'} )
+    if interactive_article_div is not None:
+        ukmedia.DBUG2( "SKIP interactive-article (%s)\n" % (art['srcurl']) )
+        return None
+
+    content_div = soup.find('div',{'class':'standard-content'} )
+    # get byline
+    authors = []
+
+    author_comments_div = content_div.find( 'div',{'class':['author-comments', 'standard-summary', 'standard-summary-full-width']} )
+    if author_comments_div:
+        for span in author_comments_div.findAll( 'span',{'class':'author-name'} ):
+            authors.append( ukmedia.FromHTMLOneLine( span.renderContents(0) ) )
+        author_comments_div.extract()
+
+    art['byline'] = u', '.join( authors )
+
+
+    # process and remove photos from content
+    art['images'] = []
+    for image_span in content_div.findAll('span',{'class':re.compile( r'\bmulti-position-img-left\b' )}):
+        img = {}
+        img['url'] = urlparse.urljoin( art['srcurl'],image_span.img['src'] )
+        t = image_span.find('span',{'class':re.compile(r'\bmulti-position-photo-text\b')}).renderContents(None)
+        t=t.strip()
+        m = re.compile(r'(.*)\s*([(](.*?)[)])$').search(t)
+        if m:
+            img['caption'] = m.group(1)
+            img['credit'] = m.group(3)
+        else:
+            img['caption'] = t
+            img['credit']= u''
+        art['images'].append(img)
+        image_span.extract() 
+
+    # trim out non-content bits
+    content_div.h2.extract()
+    for cruft in content_div.findAll( 'p',{'class':re.compile(r'hideinprint')}):
+        cruft.extract()
+
+    art['content'] = ukmedia.SanitiseHTML( content_div.renderContents(None) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+    return art
+
+
+
+def Extract_ece_timesonline( html, context ):
+    """ for the pre-paywall timesonline.co.uk (Escenic CMS)"""
     art = context
     html = CleanHtml(html)
     soup = BeautifulSoup.BeautifulSoup( html )
@@ -482,18 +651,38 @@ def Extract_typepad( html, context ):
 
     # footer format varies by blog... some have byline, some have time
     byline = u''
+    pubdate = None
+
+
     postfooter = soup.find( 'span', {'class':'post-footers'} )
     if not postfooter:
         postfooter = soup.find( 'p', {'class':'entry-footer'} )
 
     footertxt = postfooter.renderContents( None )
 
+    
+    # stupid tech blog uses usa dates. gah.
+    if 'timesonline.typepad.com/technology/' in art['srcurl']:
+        usa_date = True
+    else:
+        usa_date = False
+
     # "Posted by Alice Fishburn on October  9, 2008 in ..."
-    m = re.compile( r"Posted by\s+(.*?)\s+on (\w+\s+\d+,\s+\d{4})" ).search( footertxt )
+    m = re.compile( r"Posted by\s+(.*?)\s+on\s+(.*)" ).search( footertxt )
     if m:
         byline = m.group(1)
         datetxt = m.group(2)
-        art['pubdate'] = ukmedia.ParseDateTime(datetxt)
+        art['pubdate'] = ukmedia.ParseDateTime( datetxt, usa_format=usa_date )
+    else:
+        m = re.compile( r"Posted by\s+(.*)", re.IGNORECASE ).search( footertxt )
+        if m:
+            byline = m.group(1)
+        date_header = soup.find('h2',{'class':'date-header'})
+        if date_header:
+            art['pubdate'] = ukmedia.ParseDateTime( date_header.renderContents(None), usa_format=usa_date )
+            
+
+
 
     if 'pubdate' not in art:
         # date-header has date but no time
@@ -531,18 +720,15 @@ def Extract_typepad( html, context ):
     art['description'] = desc
     art['content'] = content
 
+    art['srcorgname'] = u'times'
 
     return art
 
 
 
-def MergeFeedLists( feedlists ):
-    """merges lists of (name,url) tuples, keyed by url"""
-    u = {}
-    for l in feedlists:
-        for f in l:
-            u[f[1]] = f[0]
-    return [(v,k) for k,v in u.iteritems()]
+
+
+
 
 
 
@@ -560,6 +746,21 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
+
+#    Login()
+#    articles = FindArticles()
+#    for a in articles:
+#        url = a[ 'srcurl' ]
+#        print url
+#        try:
+#            ukmedia.FetchURL( url )
+#        except urllib2.HTTPError, e:
+#            # bound to be some 404s...
+#            print >>sys.stderr, "HTTPError on '%s' (%d error)" %(url, e.code)
+
+#    sys.exit(0)
+
+    Login()
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 
 

@@ -53,18 +53,18 @@ defaulttimeout=120  # socket timeout, in secs
 
 def MonthNumber( name ):
     monthlookup = {
-        '01': 1, 'jan': 1, 'january': 1,
-        '02': 2, 'feb': 2, 'february': 2,
-        '03': 3, 'mar': 3, 'march': 3,
-        '04': 4, 'apr': 4, 'april': 4,
-        '05': 5, 'may': 5, 'may': 5,
-        '06': 6, 'jun': 6, 'june': 6,
-        '07': 7, 'jul': 7, 'july': 7,
-        '08': 8, 'aug': 8, 'august': 8,
-        '09': 9, 'sep': 9, 'september': 9,
-        '10': 10, 'oct': 10, 'october': 10,
-        '11': 11, 'nov': 11, 'november': 11,
-        '12': 12, 'dec': 12, 'december': 12 }
+        '01': 1, '1':1, 'jan': 1, 'january': 1,
+        '02': 2, '2':2, 'feb': 2, 'february': 2,
+        '03': 3, '3':3, 'mar': 3, 'march': 3,
+        '04': 4, '4':4, 'apr': 4, 'april': 4,
+        '05': 5, '5':5, 'may': 5, 'may': 5,
+        '06': 6, '6':6, 'jun': 6, 'june': 6,
+        '07': 7, '7':7, 'jul': 7, 'july': 7,
+        '08': 8, '8':8, 'aug': 8, 'august': 8,
+        '09': 9, '9':9, 'sep': 9, 'september': 9,
+        '10': 10, '10':10, 'oct': 10, 'october': 10,
+        '11': 11, '11':11, 'nov': 11, 'november': 11,
+        '12': 12, '12':12, 'dec': 12, 'december': 12 }
     return monthlookup[ name.lower() ]
 
 
@@ -76,8 +76,9 @@ datecrackers = [
     re.compile( """(?P<year>\d{4})-(?P<month>\d\d)-(?P<day>\d\d)\s+(?P<hour>\d\d):(?P<min>\d\d):(?P<sec>\d\d)""", re.UNICODE ),
     # "9 Sep 2009 12.33" (heraldscotland blogs)
     re.compile( r"(?P<day>\d{1,2})\s+(?P<month>\w+)\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2})[.:](?P<min>\d\d)", re.UNICODE ),
+    # "May 25 2010 3:34PM" (thetimes.co.uk)
     # "Thursday August 21 2008 10:42 am" (guardian blogs in their new cms)
-    re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s+((?P<am>am)|(?P<pm>pm))', re.UNICODE|re.IGNORECASE ),
+    re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2}):(?P<min>\d\d)\s*((?P<am>am)|(?P<pm>pm))', re.UNICODE|re.IGNORECASE ),
     # 'Tuesday October 14 2008 00.01 BST' (Guardian blogs in their new cms)
     re.compile( r'\w+\s+(?P<month>\w+)\s+(?P<day>\d{1,2})\s+(?P<year>\d{4})\s+(?P<hour>\d{1,2})[:.](?P<min>\d\d)\s+', re.UNICODE|re.IGNORECASE ),
     # 'Tuesday 16 December 2008 16.23 GMT' (Guardian blogs in their new cms)
@@ -147,6 +148,9 @@ datecrackers = [
     re.compile( r"(?P<day>\d{1,2})\s+(?P<month>\w+),?\s+(?P<year>\d{4}),?\s+(?P<hour>\d{1,2}):(?P<min>\d\d)", re.UNICODE ),
     # '2003/01/21 15:29:49' (historical bbcnews (meta tag))
     re.compile( r"(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})\s+(?P<hour>\d{1,2}):(?P<min>\d\d):(?P<sec>\d\d)", re.UNICODE ),
+    # '2010-07-01'
+    # '2010/07/01'
+    re.compile( """(?P<year>\d{4})[-/](?P<month>\d{1,2})[-/](?P<day>\d{1,2})""", re.UNICODE ),
 
     ]
 
@@ -157,13 +161,18 @@ def GetGroup(m,nm):
     except IndexError:
         return None
 
-def ParseDateTime( datestring ):
+def ParseDateTime( datestring, usa_format=False ):
     """Parse a date string in a variety of formats. Raises an exception if no dice"""
 
     #DEBUG:
     #print "DATE: "
     #print datestring
     #print "\n"
+
+    if usa_format:
+        # swap day and month if both are numeric
+        datestring = re.sub( r'(\d{1,2})([-/])(\d{1,2})([-/])(\d{2,4})', r'\3\2\1\4\5', datestring )
+
 
     for c in datecrackers:
         m = c.search( datestring )
@@ -174,7 +183,7 @@ def ParseDateTime( datestring ):
         #print "MONTH: "
         #print m.group( 'month' )
         #print "\n"
-        
+
         day = int( m.group( 'day' ) )
         month = MonthNumber( m.group( 'month' ) )
         year = int( m.group( 'year' ) )
@@ -221,6 +230,7 @@ emptyparapat = re.compile( u"<p>\s*</p>", re.IGNORECASE|re.UNICODE|re.DOTALL )
 
 def SanitiseHTML_handleopen(m):
     tag = m.group(1).lower()
+
     if tag in acceptabletags:
         # special case - allow <a> to keep href attr:
         if tag == 'a':
@@ -242,6 +252,13 @@ def SanitiseHTML_handleclose(m):
 def SanitiseHTML( html ):
     """Strip out all non-essential tags and attrs"""
     html = html.replace('>>', '>')
+
+    # some tags we want to excise completely:
+    for tag in ('script','noscript' ):
+        pattxt = r'<\s*' + tag + r'\b.*?\s*>.*?</\s*' + tag + r'\s*>'
+        pat = re.compile(pattxt, re.IGNORECASE )
+        html = pat.sub('',html)
+    # others, we might want to kill but keep the content
     html = tagopenpat.sub( SanitiseHTML_handleopen, html )
     html = tagclosepat.sub( SanitiseHTML_handleclose, html )
     html = emptyparapat.sub( u'', html )

@@ -12,9 +12,7 @@ require_once '../phplib/page.php';
 require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
-
-require_once '../phplib/offline_frontpage.php';
-
+require_once '../phplib/journo.php';
 
 NEW_version();
 
@@ -94,7 +92,7 @@ EOT;
     }
 
     // recent newsletters
-    $news = news_RecentNews(5);
+    $news = news_RecentNews(4);
 
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 
@@ -115,7 +113,6 @@ EOT;
     }
     unset( $a );
 
-
     // recently-viewed journos
     // TODO: really not so happy about this... (see web/journo.php too)
     $sql = <<<EOT
@@ -134,6 +131,14 @@ EOT;
 }
 
 
+function article_addJournos( &$a )
+{
+    $j = db_getAll( "SELECT prettyname,ref FROM journo j INNER JOIN journo_attr attr ON attr.journo_id=j.id WHERE attr.article_id=? LIMIT 1", ($a['id']) );
+    if( $j )
+        $a['journos'] = $j;
+    else
+        $a['journos'] = array();
+}
 
 
 function OLD_version()

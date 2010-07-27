@@ -45,7 +45,7 @@ $(document).ready(function(){
         $action = get_http_var('action');
 
         $sql = <<<EOT
-SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted
+SELECT m.id,m.journo_id, j.ref, j.prettyname, j.oneliner, m.url, m.submitted, m.reason
     FROM missing_articles m LEFT JOIN journo j ON m.journo_id=j.id
     WHERE m.id=?;
 EOT;
@@ -76,6 +76,7 @@ EOT;
         $this->id = $r['id'];
         $this->url = $r['url'];
         $this->submitted = new DateTime($r['submitted']);
+        $this->reason = $r['reason'];
         $this->journo = ($r['journo_id']===null) ? null : array(
             'id'=>$r['journo_id'],
             'ref'=>$r['ref'],
@@ -147,6 +148,9 @@ EOT;
 <small>submitted <?php echo $this->submitted->format( 'Y-m-d H:i' ); ?>
 <?php if( $this->journo ) { ?> for <a href="/<?php echo $this->journo['ref']; ?>"><?php echo $this->journo['prettyname']; ?></a><?php } ?></small>
 <br/>
+<?php if( $this->reason ) { ?>
+<small><pre>reason: <?= h($this->reason) ?></pre></small>
+<?php } ?>
 <?php
             if( $this->state == 'delete_requested' ){
 ?>

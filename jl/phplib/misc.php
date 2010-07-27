@@ -41,6 +41,16 @@ function pretty_date( $t )
     }
 }
 
+function nice_number( $n ) {
+    static $nums = array("zero","one","two","three","four","five","six","seven","eight","nine");
+    if( $n>=0 && $n<10 ) {
+        return $nums[$n];
+    } else {
+        return strval($n);
+    }
+}
+
+
 // join strings using ", " and " and "
 // eg ("foo", "bar", "wibble") => "foo, bar and wibble"
 function pretty_implode( $parts)
@@ -165,16 +175,6 @@ function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 
 
 
-
-function article_url( $article_id, $sim_orderby='score', $sim_showall='no' )
-{
-    $url = "/article?id={$article_id}";
-    if( strtolower($sim_orderby) == 'date' )
-        $url .= '&sim_orderby=date';
-    if( strtolower($sim_showall) == 'yes' )
-        $url .= '&sim_showall=yes';
-    return $url;
-}
 
 
 // Send a text email (swiped from planningalerts.com)
@@ -389,25 +389,15 @@ function glue_url($parsed) {
 }
 
 
-
-// prepare an article for display by adding a few derived fields...
-function article_Augment( &$a )
-{
-    $d = new datetime( $a['pubdate'] );
-    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
-    $a['iso_pubdate'] = $d->format('c');
-    // fill in prettyname of publisher, if possible
-    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
-        $orgs = get_org_names();
-        $a['srcorgname'] = $orgs[ $a['srcorg'] ];
-    }
-}
-
-
 function news_RecentNews( $limit=5 )
 {
     // recent newsletters
-    $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC LIMIT ?", $limit );
+    $news = null;
+    if( is_null( $limit ) ) {
+        $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC" );
+    } else {
+        $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC LIMIT ?", $limit );
+    }
     foreach( $news as &$n ) {
         news_AugmentItem($n);
     }
@@ -434,6 +424,18 @@ function news_AugmentItem( &$n ) {
     if( $n['date_to'] ) {
         $n['pretty_to'] = pretty_date( $n['date_to'] );
     }
+}
+
+
+
+// create an array by cherrypicking items from another
+function array_cherrypick( &$srcarray, &$keys )
+{
+    $out = array();
+    foreach( $keys as $k ) {
+        $out[$k] = $srcarray[$k];
+    }
+    return $out;
 }
 
 ?>

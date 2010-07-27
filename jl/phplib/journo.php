@@ -438,7 +438,7 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        article_Augment( $a );
+        article_augment( $a );
     $slowdata[ 'most_commented' ] = $a;
 
     /* find the most blogged article in the last 6 months */
@@ -455,7 +455,7 @@ EOT;
 
     $a = db_getRow( $sql, $journo['id'] );
     if( $a )
-        article_Augment( $a );
+        article_augment( $a );
     $slowdata[ 'most_blogged' ] = $a;
 
     return $slowdata;
@@ -476,15 +476,13 @@ function journo_emitAllArticles( &$journo )
   <ul class="art-list">
 
 
-<?php unset($a); foreach( $arts as $a ) { ?>
+<?php unset($a); foreach( $arts as $art ) { ?>
     <li class="hentry">
-        <h4 class="entry-title"><a href="<?php echo article_url($a['id']);?>"><?php echo $a['title']; ?></a></h4>
-        <span class="publication"><?php echo $a['srcorgname']; ?>,</span>
-        <abbr class="published" title="<?php echo $a['iso_pubdate']; ?>"><?php echo $a['pretty_pubdate']; ?></abbr>
-        <?php if( $a['buzz'] ) { ?> (<?php echo $a['buzz']; ?>)<?php } ?><br/>
-        <div class="art-info">
-          <a class="extlink" href="<?php echo $a['permalink'];?>" >Original article at <?php echo $a['srcorgname']?></a><br/>
-        </div>
+        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
+        <span class="publication"><?= $art['srcorgname']; ?>,</span>
+        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+        <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
     </li>
 <?php } ?>
 
@@ -523,7 +521,9 @@ function journo_describeWeblink( $journo, $l )
             else
                 $desc = "{$prettyname}'s profile";
             break;
+        case 'pingback':
         case '':    // (other)
+        default:
             // could be anything - use the free text description the user entered
             $desc = $l['description'];
             break;
@@ -538,6 +538,10 @@ function journo_describeWeblink( $journo, $l )
 function journo_collectData( $journo, $quick_n_nasty=false )
 {
     $data = $journo;
+
+    if( $data['fake'] == 't' ) {
+        $data['fake'] = True;
+    }
 
     $data['quick_n_nasty'] = $quick_n_nasty;
     if( !$quick_n_nasty ) {
@@ -659,7 +663,7 @@ EOT;
     // now do a pass over to pretty up the results
     foreach( $arts as &$a ) {
         // add pretty pubdate etc...
-        article_Augment($a);
+        article_augment($a);
         if( !is_null( $a['id'] ) )
             $a['buzz'] = BuzzFragment( $a );
         else
@@ -785,5 +789,41 @@ function journo_fetchTwitterID( $journo_id ) {
         }
     }
     return $twitter_id;
+}
+
+
+
+
+function journo_countArticles( $journo_id ) {
+    $sql = <<<EOT
+SELECT COUNT(*)
+    FROM journo_other_articles
+    WHERE status='a' AND journo_id=?
+EOT;
+
+    $cnt = db_getOne( $sql, $journo_id );
+
+    $sql = <<<EOT
+SELECT COUNT(*)
+    FROM article a
+        INNER JOIN journo_attr attr ON a.id=attr.article_id
+    WHERE a.status='a' AND attr.journo_id=?
+EOT;
+    $cnt += db_getOne( $sql, $journo_id );
+
+    return $cnt;
+}
+
+
+// returns TRUE if journo status was changed to active
+function journo_checkActivation( $journo_id )
+{
+    if( journo_countArticles($journo_id) >= OPTION_JL_JOURNO_ACTIVATION_THRESHOLD ) {
+        $n = db_do( "UPDATE journo SET status='a', modified=true WHERE status='i' AND id=?", $journo_id );
+        db_commit();
+        if( $n > 0 )
+            return TRUE;
+    }
+    return FALSE;
 }
 
