@@ -31,6 +31,24 @@ Look out for the RSS icon:<img src="/images/rss.gif" />
 
 <p>We provide some APIs you can use to pull information out of our database. Find out more on the <a href="/api">API Page</a>.</p>
 
+<h3>RDF/Linked data</h3>
+
+<p>Some basic data is provided in RDF, and we plan to expose a lot more.</p>
+<p>For journalists, the URL scheme is:</p>
+<dl>
+<dt><code>http://journalisted.com/id/journo/fred-bloggs</code></dt>
+<dd>URI represents the <em>actual</em> Fred Bloggs (a non-information resource).<br/>
+Obviously, since the technology to deliver people via HTTP isn't
+quite there yet, this will redirect to a URL which will instead
+deliver information _about_ Fred Bloggs instead. This will be either the HTML page
+or RDF data, depending on the results of <a href="http://www4.wiwiss.fu-berlin.de/bizer/pub/LinkedDataTutorial/#ExampleHTTP">content negotiation</a>.</dd>
+<dt><code>http://journalisted.com/fred-bloggs</code></dt>
+<dd>The normal, human-readble HTML page of information about Fred Bloggs</dd>
+<dt><code>http://journalisted.com/data/journo/fred-bloggs</code></dt>
+<dd>Information about Fred Bloggs in RDF (currently in RDF XML but other formats
+will also be supported)</dd>
+</dl>
+
 <h3>Site Development</h3>
 
 <p>

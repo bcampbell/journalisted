@@ -13,6 +13,7 @@ require_once '../phplib/cache.php';
 require_once '../phplib/misc.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/journo.php';
+require_once '../phplib/article.php';
 
 NEW_version();
 
@@ -92,7 +93,7 @@ EOT;
     }
 
     // recent newsletters
-    $news = news_RecentNews(5);
+    $news = news_RecentNews(4);
 
     $orgs = db_getAll( "SELECT shortname,prettyname FROM organisation ORDER BY prettyname" );
 

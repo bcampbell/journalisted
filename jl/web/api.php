@@ -9,6 +9,8 @@ require_once '../phplib/page.php';
 # XXX: Need to override error handling! XXX
 
 
+
+/* TODO: move params out of this array and into a fn in the separate API files */
 $methods = array(
     'findArticles' => array(
         'parameters' => array('search','offset','limit'),
@@ -25,6 +27,10 @@ $methods = array(
     'getJournoArticles' => array(
         'parameters' => array('journo','offset','limit'),
         'help' => 'Fetch a list of articles attributed to a journalist',
+    ),
+    'getArticles' => array(
+        'parameters' => array('id36','url'),
+        'help' => 'Retrieve information about an article or set of articles',
     ),
 );
 
@@ -175,11 +181,20 @@ called with the data as its argument.</li>
 <h3>Errors</h3>
 
 <p>
-If there's an error, either in the arguments provided or in trying to perform the request, this is returned as a top-level error string.
+Upon any sort of error, a non-zero <code>status</code> will be returned,
+along with an <code>error</code> field containing a human-readable error message.
 <ul>
-<li>in XML: <code>&lt;jl&gt;&lt;error&gt;ERROR&lt;/error&gt;&lt;/jl&gt;</code></li>
-<li>in JS: <code>{"error":"ERROR"}</code></li>
-<li>in PHP and RABX: a serialised array containing one entry with key <code>error</code></li>
+<li>
+in XML:<pre><code>
+  &lt;jl&gt;
+    &lt;status&gt;-1&lt;/status&gt;
+    &lt;error&gt;Too many fish&lt;/error&gt;
+  &lt;/jl&gt;
+
+</code></pre>
+</li>
+<li>in JS: <code>{"status":-1,"error":"Too many fish"}</code></li>
+<li>in PHP and RABX: a serialised array containing <code>status</code> and <code>error</code></li>
 </ul>
 </p>
 

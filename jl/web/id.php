@@ -55,13 +55,11 @@ if( $type=='article' ) {
         header( "Location: /article/{$id36}" );
         die();
     }
-    /*
     if( $best == 'application/rdf+xml' ) {
         header( "HTTP/1.1 303 See Other" );
         header( "Location: /data/article/{$id36}" );
         die();
     }
-     */
 
     //if( $best === FALSE ) {
     header('HTTP/1.1 406 Not Acceptable');

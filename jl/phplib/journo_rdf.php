@@ -7,8 +7,9 @@ require_once 'misc.php';
 require_once 'arc2/ARC2.php';
 
 
+$JL = 'http://'. OPTION_WEB_DOMAIN . '/';
+
 $ns = array(
-    'jl' => 'http://'. OPTION_WEB_DOMAIN . '/',
     'rdf'=>"http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     'rdfs'=>"http://www.w3.org/2000/01/rdf-schema#",
     'foaf'=>"http://xmlns.com/foaf/0.1/",
@@ -21,9 +22,10 @@ $_conf = array('ns' => $ns);
 
 
 function journo_asARC2Index( &$journo_data ) {
+    global $JL;
     extract( $journo_data, EXTR_PREFIX_ALL, 'j' );
 
-    $journo_uri = "jl:id/journo/{$j_ref}";
+    $journo_uri = "{$JL}id/journo/{$j_ref}";
 
     $j = array();
     $j['rdf:type'] = array( 'foaf:Person' );
@@ -80,7 +82,7 @@ function journo_asARC2Index( &$journo_data ) {
         if( is_null($a['id'] ) ) {
             $art_uri = $a['permalink']; // ugh.
         } else {
-            $art_uri = "jl:id/article/{$id36}";
+            $art_uri = "{$JL}id/article/{$id36}";
         }
 
         $foo = array(

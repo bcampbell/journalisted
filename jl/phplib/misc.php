@@ -176,23 +176,6 @@ function tag_cloud_from_query( &$q, $journo_ref=null, $period=null )
 
 
 
-function article_url( $article_id, $sim_orderby='score', $sim_showall='no' )
-{
-    $id36 = base_convert( $article_id, 10,36 );
-    $url = "/article/{$id36}";
-    $extra = array();
-    if( strtolower($sim_orderby) == 'date' )
-        $extra[] = 'sim_orderby=date';
-    if( strtolower($sim_showall) == 'yes' )
-        $extra[] = 'sim_showall=yes';
-
-    if( $extra ) {
-        $url = $url . "?" . implode( '&',$extra );
-    }
-
-    return $url;
-}
-
 
 // Send a text email (swiped from planningalerts.com)
 function jl_send_text_email($to, $from_name, $from_email, $subject, $body)
@@ -406,25 +389,15 @@ function glue_url($parsed) {
 }
 
 
-
-// prepare an article for display by adding a few derived fields...
-function article_Augment( &$a )
-{
-    $d = new datetime( $a['pubdate'] );
-    $a['pretty_pubdate'] = pretty_date(strtotime($a['pubdate']));
-    $a['iso_pubdate'] = $d->format('c');
-    // fill in prettyname of publisher, if possible
-    if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
-        $orgs = get_org_names();
-        $a['srcorgname'] = $orgs[ $a['srcorg'] ];
-    }
-}
-
-
 function news_RecentNews( $limit=5 )
 {
     // recent newsletters
-    $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC LIMIT ?", $limit );
+    $news = null;
+    if( is_null( $limit ) ) {
+        $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC" );
+    } else {
+        $news= db_getAll( "SELECT id,slug,kind,title,posted,date_from,date_to FROM news WHERE status='a' ORDER BY posted DESC LIMIT ?", $limit );
+    }
     foreach( $news as &$n ) {
         news_AugmentItem($n);
     }
@@ -451,6 +424,18 @@ function news_AugmentItem( &$n ) {
     if( $n['date_to'] ) {
         $n['pretty_to'] = pretty_date( $n['date_to'] );
     }
+}
+
+
+
+// create an array by cherrypicking items from another
+function array_cherrypick( &$srcarray, &$keys )
+{
+    $out = array();
+    foreach( $keys as $k ) {
+        $out[$k] = $srcarray[$k];
+    }
+    return $out;
 }
 
 ?>

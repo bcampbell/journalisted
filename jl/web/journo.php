@@ -4,6 +4,7 @@
 
 require_once '../conf/general';
 require_once '../phplib/page.php';
+require_once '../phplib/article.php';
 require_once '../phplib/journo.php';
 require_once "../phplib/journo_rdf.php";
 require_once '../phplib/misc.php';
@@ -221,9 +222,11 @@ if( $fmt == 'text' ) {
 
 function extra_head()
 {
-
+    global $journo;
 
 ?>
+<link rel="alternate" type="application/rdf+xml" href="/data/journo/<?= $journo['ref'] ?>" />
+
 
 <!-- <script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
 <script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
