@@ -11,6 +11,7 @@ require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
+require_once '../phplib/article.php';
 
 require_once "HTML/QuickForm.php";
 //require_once "HTML/QuickForm/Rule.php";
