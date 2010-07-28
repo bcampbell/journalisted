@@ -190,7 +190,7 @@ def FindArticlesFromSiteMap( sitemap_url ):
             for li in section.findAll( 'li' ):
                 a = li.a
                 name = a.string
-                url = a.get('href')
+                url = urlparse.urljoin( sitemap_url, a.get('href') )
                 if url is not None:
                     o = urlparse.urlparse( url )
                     if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
@@ -226,7 +226,7 @@ def ReapArticles( page_url ):
     """ find all article links on a page """
 
     article_urls = set()
-    ukmedia.DBUG2( "scanning for article links on %s\n" %(page_url,) )
+    #    ukmedia.DBUG2( "scanning for article links on %s\n" %(page_url,) )
     try:
         html = ukmedia.FetchURL( page_url ) 
     except urllib2.HTTPError, e:
@@ -250,6 +250,8 @@ def ReapArticles( page_url ):
         #print url,":",srcid
         if srcid is not None:
             article_urls.add(url)
+
+    ukmedia.DBUG2( "scanned %s, found %d articles\n" % ( page_url, len(article_urls) ) );
     return article_urls
 
 
@@ -761,6 +763,8 @@ if __name__ == "__main__":
 #    sys.exit(0)
 
     Login()
+
+
     ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 
 
