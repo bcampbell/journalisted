@@ -65,24 +65,32 @@ class ArticleDB:
         lastscraped = "%s" % (art['lastscraped'])
         lastseen = "%s" % (art['lastseen'])
         firstseen = lastseen    # it's a new entry
-        content = art['content'].encode( 'utf-8' )
         srcurl = art['srcurl']
         permalink = art['permalink']
         srcorg = Misc.GetOrgID( self.conn, art[ 'srcorgname' ] )
         srcid = art['srcid']
 
-
-        # noddy wordcount
-        txt = ukmedia.StripHTML( art['content'] )
-        wordcount = len( txt.split() );
+        wordcount = None
+        content = None
+        # does article include content?
+        if 'content' in art:
+            content = art['content'].encode( 'utf-8' )
+            # noddy wordcount
+            txt = ukmedia.StripHTML( art['content'] )
+            wordcount = len( txt.split() );
 
         # send to db!
         cursor = self.conn.cursor()
-        q = 'INSERT INTO article (title, byline, description, lastscraped, pubdate, firstseen, lastseen, content, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
-        cursor.execute( q, ( title, byline, description, lastscraped, pubdate, firstseen, lastseen, content, permalink, srcurl, srcorg, srcid, wordcount, lastscraped ) )
+        q = 'INSERT INTO article (title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+        cursor.execute( q, ( title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, lastscraped ) )
 
         cursor.execute( "select currval('article_id_seq')" )
         id = cursor.fetchone()[0]
+
+        # add content, if included
+        if content is not None:
+            q = 'INSERT INTO article_content (article_id, content) VALUES ( %s,%s )'
+            cursor.execute( q, ( id, content ) )
 
         # queue it for xapian indexing
         cursor.execute( "DELETE FROM article_needs_indexing WHERE article_id=%s", (id) )

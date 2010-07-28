@@ -11,6 +11,7 @@ require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
+require_once '../phplib/article.php';
 
 require_once "HTML/QuickForm.php";
 //require_once "HTML/QuickForm/Rule.php";
@@ -78,11 +79,9 @@ admPageFooter();
 function FetchArticle( $article_id )
 {
 	$q = db_query( 'SELECT * FROM article WHERE id=?', $article_id );
-
 	$art = db_fetch_array($q);
-
     $art['images'] = db_getAll( "SELECT * FROM article_image WHERE article_id=?", $article_id );
-
+    $art['content'] = db_getOne( "SELECT content FROM article_content WHERE article_id=?", $article_id );
 	return $art;
 }
 
@@ -146,6 +145,9 @@ EOT;
 </table>
 
 <h2>content</h2>
+<?php if( is_null($art['content']) ) { ?>
+<p> -- content not scraped -- </p>
+<?php } else { ?>
 <table border=1>
   <tr><th>displayed</th><th>source HTML</th></tr>
   <tr>
@@ -162,6 +164,7 @@ EOT;
     </td>
   </tr>
 </table>
+<?php } ?>
 
 <h2>similar articles</h2>
 <a href="/adm/article?id=<?php echo $art['id']; ?>&action=update_similar">Run similar-articles tool now</a> (to update the list)<br/>
