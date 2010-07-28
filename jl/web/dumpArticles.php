@@ -22,7 +22,7 @@ try {
     /* (TODO: any way to remove the hardcoded IP?) */
 
 
-    $ip_whitelist = array( '93.93.131.123','82.133.93.217' );
+    $ip_whitelist = array( '127.0.1.1','93.93.131.123','82.133.93.217' );
 
     if( !in_array( $_SERVER['REMOTE_ADDR'], $ip_whitelist ) ) {
         throw new Exception( "local access only" );
@@ -46,18 +46,17 @@ try {
         throw new Exception( "bad date: after" );
     }
 
-    $fields = array( 'id','srcid','title','content','pubdate','lastscraped' );
-    $time_fields = array( 'pubdate','lastscraped' );
-    $fieldlist = implode(',',$fields);
     $sql = <<<EOT
-        SELECT {$fieldlist}
-            FROM article
-            WHERE lastscraped>?
-            ORDER BY lastscraped
+        SELECT a.id, a.srcid, a.title, c.content, a.pubdate, a.lastscraped
+            FROM (article a INNER JOIN article_content c ON c.article_id=a.id)
+            WHERE a.lastscraped>?
+            ORDER BY a.lastscraped
             LIMIT ?;
 EOT;
     //$r = db_query( $sql, $after_dt->format(DateTime::ISO8601), $limit );
     $r = db_query( $sql, $after_dt->format('Y-m-d\TH:i:s.uO'), $limit );
+    $fields = array( 'id','srcid','title','content','pubdate','lastscraped' );
+    $time_fields = array( 'pubdate','lastscraped' );
     while( $row = db_fetch_array( $r ) ) {
         $out = array_cherrypick( $row, $fields );
         // sanitize the timestamps
