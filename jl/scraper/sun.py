@@ -62,6 +62,10 @@ def CalcSrcID( url ):
     if not (o[1].endswith('thesun.co.uk') or o[1].endswith('thescottishsun.co.uk') ):
         return None
 
+    for blacklisted in ( '/mystic_meg/', '/virals/', '/video/' ):
+        if blacklisted in o[2]:
+            return None
+
     m = srcidpat_slugstyle.search( o[2] )
     if m:
         return 'sun_' + m.group(1)
@@ -77,8 +81,85 @@ def CalcSrcID( url ):
     return None
 
 
-# NEW version
 def FindArticles():
+    homepage = "http://www.thesun.co.uk"
+    html = ukmedia.FetchURL( homepage )
+    soup = BeautifulSoup( html )
+
+    # go through the naviation menu looking for urls of sections
+    sections = set()
+    nav = soup.find( 'div',{'id':'LeftNavigation'} )
+    for a in nav.findAll( 'a' ):
+        name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
+        url = urlparse.urljoin( homepage, a['href'] )
+
+        # filter out undesirables...
+        accepted = True
+        o = urlparse.urlparse( url )
+        if o[1] not in ('www.thesun.co.uk', 'thesun.co.uk' ):
+            accepted = False
+        for blacklisted in ( '/mystic_meg/', '/virals/' ):
+            if blacklisted in o[2]:
+                accepted = False
+
+        if accepted:
+            sections.add( url )
+
+    ukmedia.DBUG2( "scanned navigation menu, found %d sections\n" %(len(sections),) )
+
+    article_urls = set()
+    for section_url in sections:
+        article_urls.update( ReapArticles( section_url ) )
+
+    foundarticles =[]
+    for url in article_urls:
+        context = ContextFromURL( url )
+        if context is not None:
+            foundarticles.append( context )
+
+    ukmedia.DBUG2( "Found %d articles\n" % ( len(foundarticles) ) )
+    return foundarticles
+
+
+
+def ReapArticles( page_url ):
+    """ find all article links on a page """
+
+    article_urls = set()
+    #    ukmedia.DBUG2( "scanning for article links on %s\n" %(page_url,) )
+    try:
+        html = ukmedia.FetchURL( page_url ) 
+    except urllib2.HTTPError, e:
+        # bound to be some 404s...
+        print >>sys.stderr, "SKIP '%s' (%d error)" %(page_url, e.code)
+        return article_urls
+
+    soup = BeautifulSoup( html )
+
+
+    for a in soup.findAll( 'a' ):
+        url = a.get('href')
+        if url is None:
+            continue
+        url = urlparse.urljoin( page_url, url )
+        url = ''.join( url.split() )
+        url = re.sub( '#(.*?)$', '', url)
+
+        title = a.string
+        srcid = CalcSrcID( url )
+        #print url,":",srcid
+        if srcid is not None:
+            article_urls.add(url)
+
+    ukmedia.DBUG2( "scanned %s, found %d articles\n" % ( page_url, len(article_urls) ) );
+    return article_urls
+
+
+
+
+
+# OLD Sun-Lite version - left in for reference
+def FindArticles_SUNLITE():
     """ Scrapes the Sun-Lite pages to get article list for the week """
     baseurl = "http://www.thesun.co.uk"
 
