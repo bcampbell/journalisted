@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+#
+# hacky tool to convert DB from one encoding to another.
+#
+
+import sys
+#import string
+#import time
+#import shutil
+#import os
+from optparse import OptionParser
+
+sys.path.insert(0, '../pylib/JL')
+import DB
+
+_CONFIG = {
+    'encoding': 'utf-8',
+    'tables': [
+        {
+          'name': 'article_image',
+          'pk': 'id',
+          'fields': ( 'url','caption','credit' )
+        },
+        {
+          'name': 'article',
+          'pk': 'id',
+          'fields': ( 'title','byline','description','content','permalink','srcurl','srcid' )
+        },
+        {
+          'name':'requeststash',
+          'pk':'key',
+          'fields': ('key','method','url','extra','email')
+        }
+    ]
+}
+
+
+
+
+_conn = None
+_options = None
+
+
+def check_table( table, pk, fields, encoding ):
+    global _conn
+    global _options
+
+    c = _conn.cursor()
+
+    if _options.verbose:
+        print "checking that %s is %s" %(table,encoding)
+    c.execute( "SELECT * FROM " + table )
+    cnt = 0
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+        cnt=cnt+1
+
+        for f in fields:
+            val = row[f]
+            if isinstance(val, str):
+                try:
+                    u = val.decode( encoding )
+                    val = u.encode( encoding )
+                except UnicodeDecodeError:
+                    print >>sys.stdout, "BAD decode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
+                    continue
+                except UnicodeEncodeError:
+                    print >>sys.stdout, "BAD encode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
+                    continue
+def main():
+    global _CONFIG
+    global _conn
+    global _options
+
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose",
+        action="store_true", dest="verbose", default=False )
+    parser.add_option("-t", "--table",
+        dest="table",
+        metavar="TABLE",
+        help="only check TABLE" );
+
+    (_options, args) = parser.parse_args()
+
+    _conn=DB.Connect()
+
+#    go()
+    for table in _CONFIG['tables']:
+        if (_options.table is None) or _options.table==table['name']:
+            check_table(table['name'],table['pk'],table['fields'],_CONFIG['encoding'])
+
+if __name__ == "__main__":
+    main()
+
