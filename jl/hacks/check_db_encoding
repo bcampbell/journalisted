@@ -49,26 +49,38 @@ def check_table( table, pk, fields, encoding ):
 
     if _options.verbose:
         print "checking that %s is %s" %(table,encoding)
-    c.execute( "SELECT * FROM " + table )
-    cnt = 0
-    while 1:
-        row = c.fetchone()
-        if row is None:
-            break
-        cnt=cnt+1
 
-        for f in fields:
-            val = row[f]
-            if isinstance(val, str):
-                try:
-                    u = val.decode( encoding )
-                    val = u.encode( encoding )
-                except UnicodeDecodeError:
-                    print >>sys.stdout, "BAD decode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
-                    continue
-                except UnicodeEncodeError:
-                    print >>sys.stdout, "BAD encode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
-                    continue
+    # fetch in batches to avoid massive memory use
+    offset = 0
+    limit = 5000
+    while 1:
+        if _options.verbose:
+            print " fetch %d-%d" % ( offset, offset+limit-1)
+        c.execute( "SELECT * FROM " + table + " OFFSET %s LIMIT %s", (offset,limit) )
+        cnt = 0
+        while 1:
+            row = c.fetchone()
+            if row is None:
+                break
+            cnt=cnt+1
+
+            for f in fields:
+                val = row[f]
+                if isinstance(val, str):
+                    try:
+                        u = val.decode( encoding )
+                        val = u.encode( encoding )
+                    except UnicodeDecodeError:
+                        print >>sys.stdout, "BAD decode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
+                        continue
+                    except UnicodeEncodeError:
+                        print >>sys.stdout, "BAD encode: %s.%s (%s=%s)" %(table,f,pk,row[pk] )
+                        continue
+        if cnt==0:
+            break;
+        offset = offset + cnt
+
+
 def main():
     global _CONFIG
     global _conn
