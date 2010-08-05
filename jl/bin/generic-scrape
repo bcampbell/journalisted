@@ -7,10 +7,13 @@
 import sys
 from datetime import datetime
 from optparse import OptionParser
-import simplejson as json
 import re
 import dateutil.parser
 import urlparse
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 import site
 site.addsitedir("../pylib")
