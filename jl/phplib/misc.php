@@ -344,7 +344,7 @@ function crack_url( $url )
 {
     $fields = array( 'scheme','user','pass','host','port','path','query','fragment' );
     $m = array();
-    if( preg_match( "/^((?P<scheme>\w+):\/\/)?((?P<user>.+?)(:(?P<pass>.+?))?@)?(?P<host>[^\/:?]+)?(:(?P<port>\d+))?(?P<path>.+?)?([?](?P<query>.*?))?([#](?P<fragment>.*?))?$/",$url,&$m ) > 0 ) {
+    if( preg_match( "/^((?P<scheme>\w+):\/\/)?((?P<user>.+?)(:(?P<pass>.+?))?@)?(?P<host>[^\/:?]+)?(:(?P<port>\d+))?(?P<path>.+?)?([?](?P<query>.*?))?([#](?P<fragment>.*?))?$/",$url,$m ) > 0 ) {
         $ret = array();
         foreach( $fields as $f ) {
             $ret[$f] = arr_get( $f, $m, '' );
