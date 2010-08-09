@@ -28,14 +28,26 @@ function article_asARC2Index( &$art ) {
     $a = array();
     //$a['rdf:type'] = "foaf:Document";
     $a['dc:title'] = array( x($a_title) );
-
+    $a['dc:date'] = array( x($a_iso_pubdate) );
+    $a['dc:publisher'] = array( x($a_srcorgname) );
+    $a['dc:description'] = array( x($a_description) );
     $a['foaf:made_by'] = array();
     foreach( $a_journos as $j ) {
-        $journo_uri = "/id/journo/{$j['ref']}";
+        $journo_uri = "$JL/id/journo/{$j['ref']}";
         $a['foaf:maker'][] = $journo_uri;
     }
     return array( $art_uri => $a );
 }
+
+// TODO:
+// permalink
+//
+// statement of principles
+// blog links
+// comment links
+// similar_articles
+
+
 
 
 function article_emitRDFXML( &$a ) {
