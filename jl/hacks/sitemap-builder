@@ -1,0 +1,177 @@
+#!/usr/bin/env python
+#
+# Tool to build sitemap files + index for JL
+#
+#
+
+
+import sys
+import os
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import gzip
+
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+import mysociety.config
+mysociety.config.set_file("../conf/general")
+
+__options = None
+_conn = None
+
+
+
+
+def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
+    '''
+    Convert positive integer to a base36 string.
+    '''
+    if not isinstance(number, (int, long)):
+        raise TypeError('number must be an integer')
+    if number < 0:
+        raise ValueError('number must be positive')
+ 
+    # Special case for small numbers
+    if number < 36:
+        return alphabet[number]
+ 
+    base36 = ''
+    while number != 0:
+        number, i = divmod(number, 36)
+        base36 = alphabet[i] + base36
+ 
+    return base36
+ 
+def base36decode(number):
+    return int(number,36)
+
+
+
+
+class SitemapWriter:
+    """ helper class to manage writing out big sitemap files """
+    file_head = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+"""
+
+    file_foot ="""</urlset>
+"""
+
+    # sitemap maximums, minus threshold of paranoia
+    MAX_FILESIZE = 10485760 - 1024
+    MAX_URLS = 50000 - 1000
+
+    def __init__( self, base_url, output_dir, base_name="sitemap" ):
+        self.filenames = []
+        self.curr = None    # current open file
+        self.curr_cnt = 0   # num of entries written to curr
+        self.curr_size = 0
+        self.base_name = base_name
+        self.output_dir = output_dir
+        self.base_url = base_url
+
+
+    def add( self, loc, lastmod=None, changefreq=None, priority=None ):
+        out = ' <url><loc>%s</loc>' % (loc,)
+        if priority is not None:
+            out = out + "<priority>" + priority + "</priority>";
+        out = out + "</url>\n";
+
+        if self.curr is not None:
+            # check that current file has room
+            if self.curr_cnt>=self.MAX_URLS or self.curr_size+len(out)+len(self.file_foot)>=self.MAX_FILESIZE:
+                self._end_file()
+
+        if self.curr is None:
+            self._start_file()
+
+        self.curr.write(out)
+        self.curr_cnt = self.curr_cnt + 1
+        self.curr_size = self.curr_size + len(out)
+
+    def finish( self ):
+        if self.curr:
+            self._end_file()
+
+        # finish up, writing out the index file
+
+        index_head = """<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+"""
+        index_foot = "</sitemapindex>\n"
+
+        index_filename = os.path.join( self.output_dir, (self.base_name + "_index.xml") )
+        idx = open( index_filename, 'w' )
+        if _options.verbose:
+            print "writing " + index_filename
+        idx.write( index_head )
+        for f in self.filenames:
+            sitemap_url = self.base_url + "/" + f
+            idx.write( "<sitemap><loc>%s</loc></sitemap>\n" % (sitemap_url,) )
+        idx.write( index_foot )
+        idx.close()
+
+    def _start_file( self ):
+        assert self.curr is None
+
+        filename = self.base_name + "%d.xml.gz" % ( len(self.filenames), )
+        if _options.verbose:
+            print "writing " + filename
+        self.curr = gzip.GzipFile( os.path.join( self.output_dir, filename ), 'w' )
+        self.curr.write( self.file_head )
+        self.curr_size = len(self.file_head)
+        self.curr_cnt = 0
+        self.filenames.append( filename )
+
+    def _end_file( self ):
+        assert self.curr is not None
+        self.curr.write( self.file_foot )
+        self.curr.close()
+        self.curr = None
+        self.curr_cnt = 0
+        self.curr_size = 0
+
+
+
+
+def main():
+    global _options,_conn
+
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
+
+    (_options, args) = parser.parse_args()
+
+    _conn = DB.Connect()
+    base_url = mysociety.config.get('BASE_URL')
+    out = SitemapWriter( base_url+"/sitemap", "../web/sitemap" )
+    c = _conn.cursor()
+
+    # journos
+    c.execute( "SELECT ref FROM journo WHERE status='a'" )
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+        url = base_url + "/" + row['ref']
+        out.add( url, priority="1.0" )
+
+    # articles
+    c.execute( "SELECT id FROM article WHERE status='a'" )
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+        url = base_url + "/article/%s" % (base36encode( row['id'] ),)
+        out.add( url )
+
+    out.finish()
+
+
+if __name__ == "__main__":
+    main()
+

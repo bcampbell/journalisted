@@ -14,7 +14,10 @@ import string
 from datetime import datetime
 from optparse import OptionParser
 import operator
-import simplejson as json
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 import site
 site.addsitedir("../pylib")

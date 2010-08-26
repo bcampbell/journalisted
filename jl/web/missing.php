@@ -52,7 +52,7 @@ function parse_date( $d ) {
     // but 01-25-2010 as dd/mm/yyyy. sigh.
     // Test for this case and handle it ourselves.
     $m = array();
-    if( 1==preg_match( '%(?P<day>[0-9]?[1-9])[-/](?P<month>[0-9]?[1-9])[-/](?P<year>[0-9]{2,4})%', $d, $m ) ) {
+    if( 1==preg_match( '%(?P<day>[0-9]?[0-9])[-/](?P<month>[0-9]?[0-9])[-/](?P<year>[0-9]{4})%', $d, $m ) ) {
         $day = intval( $m['day'] );
         $month = intval( $m['month'] );
         $year = intval( $m['year'] );
@@ -62,12 +62,13 @@ function parse_date( $d ) {
             $dt->setDate( $year, $month, $day );
             return $dt;
         }
-    } else {
+    }
+   /* else {
         // just use DateTime parser
         $dt = date_create( $d );
         if( $dt )
             return $dt;
-    }
+   }*/
     return null;
 }
 

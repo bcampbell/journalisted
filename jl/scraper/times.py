@@ -421,7 +421,7 @@ def Extract_ece_thesundaytimes( html, context ):
     art['title'] = ukmedia.FromHTMLOneLine( dashboard_header[ 'content' ] )
 
     dashboard_updated_date = soup.head.find( 'meta', {'name':'dashboard_updated_date'} )
-    dashboard_published_date = soup.head.find( 'meta', {'name':'dashboard_publication_date'} )
+    dashboard_published_date = soup.head.find( 'meta', {'name':'dashboard_published_date'} )
     art['pubdate'] = ukmedia.ParseDateTime( dashboard_published_date['content'] )
 
     interactive_article_div = soup.find( 'div', {'id':'interactive-article'} )
@@ -462,6 +462,8 @@ def Extract_ece_thesundaytimes( html, context ):
     # trim out non-content bits
     content_div.h2.extract()
     for cruft in content_div.findAll( 'p',{'class':re.compile(r'hideinprint')}):
+        cruft.extract()
+    for cruft in content_div.findAll( 'div',{'class':'tools'}):
         cruft.extract()
 
     art['content'] = ukmedia.SanitiseHTML( content_div.renderContents(None) )

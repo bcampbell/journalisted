@@ -102,6 +102,19 @@ function journo_asARC2Index( &$journo_data ) {
         $experience, $articles );
 }
 
+// TODO:
+// fakeflag
+// picture (foaf)
+// bios ?
+// education
+// books
+// awards
+// links - blogs, webpage, twitter, pingbacks, other
+// similar_journos
+// num_articles
+// tags
+
+
 
 function journo_emitRDFXML( &$j ) {
     global $_conf;

@@ -20,7 +20,7 @@ require_once "HTML/QuickForm.php";
 // handle either base-10 or base-36 articles
 $article_id = get_http_var( 'id36' );
 if( $article_id ) {
-    $article_id = base_convert( $article_id, 36,10 );
+    $article_id = article_id36_to_id( $article_id );
 } else {
     $article_id = get_http_var( 'id' );
     if( !$article_id )
@@ -299,12 +299,11 @@ function process_article_query( $values )
 	print "</tr>\n";
     while( $r=db_fetch_array($q) ) {
 
-        $arturl = "?id={$r['id']}";
-        $checkurl = "?page=checkscrapers&article_id={$r['id']}";
+        $arturl = "/adm/article?id={$r['id']}";
 
         $out = '';
 		$out .= "<td>{$r['when']}</td>\n";
-        $out .= "<td>\"<a href=\"{$arturl}\">{$r['title']}\"</a><br />\n<small>(<a href=\"{$r['permalink']}\">original at {$orgs[$r['srcorg']] }</a>)(<a href=\"{$checkurl}\">check</a>)</small></td>";
+        $out .= "<td>\"<a href=\"{$arturl}\">{$r['title']}\"</a><br />\n<small>(<a href=\"{$r['permalink']}\">original at {$orgs[$r['srcorg']] }</a>)</small></td>";
         $out .= "<td>{$r['byline']}</td>";
         print "<tr>$out</tr>\n";
     }
@@ -329,7 +328,7 @@ function EmitAttribution( $art )
 	foreach( $journos as $j )
 	{
 		$journo_url = "/adm/journo?journo_id=" . $j['id'];
-		$removal_url = sprintf( "?id=%s&action=remove_journo&journo_id=%s",
+		$removal_url = sprintf( "/adm/article?id=%s&action=remove_journo&journo_id=%s",
 			$article_id, $j['id'] );
 
 		printf( "<li><a href=\"%s\">%s</a> <small>[<a href=\"%s\">remove</a>]</small></li>\n",
@@ -377,7 +376,7 @@ from the article?<br />
 <input type="hidden" name="journo_id" value="<?=$journo_id;?>" />
 <input type="hidden" name="action" value="remove_journo_confirmed" />
 <input type="submit" name="submit" value="Yes!" />
-<a href="?id=<?=$art['id'];?>">No, I've changed my mind</a>
+<a href="/adm/article?id=<?=$art['id'];?>">No, I've changed my mind</a>
 </form>
 <?php
 

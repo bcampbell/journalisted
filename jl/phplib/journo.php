@@ -8,6 +8,7 @@ require_once 'image.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/gatso.php';
 require_once '../phplib/eventlog.php';
+require_once '../phplib/article.php';
 
 define( 'OPTION_JL_NUM_SITES_COVERED', '14' );
 
