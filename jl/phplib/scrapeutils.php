@@ -21,7 +21,7 @@ function scrape_CalcSrcID( $url )
 
 	ob_start();
     $ret = -1;
-    passthru($cmd, &$ret );
+    passthru($cmd, $ret );
 	$out = ob_get_contents();
 	ob_end_clean();
 
@@ -45,7 +45,7 @@ function scrape_ScrapeURL( $url )
 
 	ob_start();
     $ret = -1;
-    passthru($cmd, &$ret );
+    passthru($cmd, $ret );
 	$out = ob_get_contents();
 	ob_end_clean();
 
@@ -80,7 +80,7 @@ function scrape_ScrapeArticle( $url )
 
 	ob_start();
     $ret = -1;
-    passthru($cmd, &$ret );
+    passthru($cmd, $ret );
 	$out = ob_get_contents();
 	ob_end_clean();
 
