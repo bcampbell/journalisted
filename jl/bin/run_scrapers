@@ -1,0 +1,16 @@
+#!/bin/sh
+JL=/srv/vhost/journalisted.com/journalisted/jl
+PAPERS='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
+
+cd $JL/scraper
+for p in $PAPERS
+do
+    echo "******** START $p"
+    time nice ./$p
+    echo "******** END $p"
+done
+
+echo "***** DONE!"
+
+
+
