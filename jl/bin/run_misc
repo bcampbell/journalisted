@@ -1,14 +1,5 @@
 #!/bin/sh
 JL=/srv/vhost/journalisted.com/journalisted/jl
-PAPERS='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
-
-cd $JL/scraper
-for p in $PAPERS
-do
-    echo "******** START $p"
-    time nice ./$p
-    echo "******** END $p"
-done
 
 cd $JL/bin
 echo "***** START journo-page-builder"
@@ -16,9 +7,9 @@ time nice ./journo-page-builder
 echo "***** START indexer"
 time nice ./indexer -n 10000
 echo "***** START similar-article"
-time nice ./similar-article -n 3000
+time nice ./similar-article -n 100
 echo "***** START similar-journo"
-time nice ./similar-journo -n 100
+time nice ./similar-journo -n 10
 echo "***** START journo-oneliner-tool"
 time nice ./journo-oneliner-tool
 echo "***** START comment-updater"
