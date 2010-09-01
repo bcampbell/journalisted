@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+#
+# create new organisation entries from other_articles table
+# (could also do employment)
+#
+
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import re
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+__opts = None
+_conn = None
+
+
+def resolve_org( domain, name ):
+    """ look up an organisation, return org id or None """
+    n = name.lower().strip().encode( 'utf-8' )
+    domain = domain.lower().strip().encode( 'ascii' )
+
+
+    candidates = [ domain ]
+    if domain.starts_with( 'www.' ):
+        candidates.append( re.sub( '^www.','',domain ) )
+    else:
+        candidates.append( 'www.' + domain
+
+    c = _conn.cursor()
+    c.execute( "SELECT org_id FROM org_domain WHERE domain in (" + ','.join( candidates ) + ")" )
+
+    matches = [ row['org_id'] for row in c.fetchall() ]
+
+    c.execute( "SELECT org_id FROM org_alias WHERE alias=%s", n )
+    matched_name = [ row['org_id'] for row in c.fetchall() ]
+
+    print "domain: ", matched_domain
+    print "name: ", matched_name
+
+
+
+def collect_orgs():
+    orgs = {}
+
+    c = _conn.cursor()
+
+    c.execute( """SELECT url,publication FROM journo_other_articles""" )# WHERE status='a'""" )
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+
+        publication = row['publication'].decode('utf-8')
+        url = row['url'].decode('utf-8')
+        o = urlparse.urlparse(url)
+        domain = o[1]
+
+        if domain not in orgs:
+            if publication.strip() == '':
+                # use domain for missing publication names
+                publication = domain
+                publication = re.sub( '^www.','',publication )
+
+            orgs[domain] = publication
+
+    return orgs
+
+
+
+
+
+
+def main():
+    global _opts,_conn
+
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
+    (_opts, args) = parser.parse_args()
+    _conn = DB.Connect()
+    orgs = collect_orgs()
+
+    for domain,name in orgs.items():
+        print "%s (%s)" % (name.encode('utf-8'),domain.encode('utf-8'))
+
+#    resolve_org( name=args[0], domain=args[1] )
+
+if __name__ == "__main__":
+    main()
+
