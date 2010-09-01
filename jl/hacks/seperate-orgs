@@ -47,7 +47,6 @@ def go():
         if row is None:
             break
 
-
         oart = {}
         for f in ('id','journo_id','url','title','publication','pubdate','status' ):
             if f in ('title','publication' ):
