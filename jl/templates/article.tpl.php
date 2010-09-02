@@ -30,7 +30,6 @@
     byline
     ...etc...
     
- $sim_total         - total number of similar articles ($sim_arts might be just the first few)
  $sim_showall       - are we showing all of them?
  $sim_orderby       - how the sim_arts is ordered ("date" or "score")
  
@@ -44,7 +43,10 @@
    score             - eg number of diggs (null if source doesn't have a score metric)
    buzz              - eg "10 diggs, 15 comments"   "20 votes, 4 comments"   "14 comments"
 */
+
 ?>
+
+
 
 <div class="main article-summary">
 
@@ -110,11 +112,13 @@
     </ul>
 
   </div>
-<?php if( $sim_total > sizeof( $sim_arts ) && $sim_showall != 'yes' ) { ?>
   <div class="pager">
-    <a href="<?php echo article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all <?php print $sim_total; ?> similar articles.</a>
-  </div>
+<?php if( $sim_showall != 'yes' ) { ?>
+    <a href="<?= article_url( $article_id, $sim_orderby, 'yes' ); ?>">Show all similar articles</a>
+<?php } else { ?>
+    <a href="<?= article_url( $article_id, $sim_orderby, 'no' ); ?>">Show first 10 only</a>
 <?php } ?>
+  </div>
   <div class="foot"></div>
 </div>
 

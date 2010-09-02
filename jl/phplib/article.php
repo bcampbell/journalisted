@@ -85,11 +85,15 @@ EOT;
         $ord = 's.score DESC, a.pubdate DESC';
 
     $sql = <<<EOT
-SELECT *
+SELECT a.id,a.title, a.srcorg,a.byline,a.permalink,a.pubdate
     FROM article a INNER JOIN article_similar s ON s.other_id=a.id
     WHERE s.article_id=? and a.status='a'
     ORDER BY {$ord}
 EOT;
+    /* only the first 10 by default */
+    if( $sim_showall != 'yes' ) {
+        $sql  .= "   LIMIT 10";
+    }
 
     $sim_arts = db_getAll( $sql, $article_id );
     foreach( $sim_arts as &$s ) {
@@ -97,16 +101,9 @@ EOT;
     }
     unset( $s );
 
-    $sim_total = sizeof($sim_arts);
-    $default_cnt = 10;
-    if( $sim_total > $default_cnt && $sim_showall != 'yes' )
-        $sim_arts = array_slice( $sim_arts, 0, $default_cnt );
-
     $art['sim_orderby'] = $sim_orderby;
     $art['sim_showall'] = $sim_showall;
-    $art['sim_total'] = $sim_total;
     $art['sim_arts'] = $sim_arts;
-
 
     $tags = db_getAll( 'SELECT tag, freq FROM article_tag WHERE article_id=? ORDER BY freq DESC', $article_id );
     $sorted_tags = array();

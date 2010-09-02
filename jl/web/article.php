@@ -45,6 +45,7 @@ function emit_page_article( $art )
     $pagetitle = $art['title'];
     $params = array( 'canonical_url'=>article_url( $art['id'] ) );
     page_header( $pagetitle, $params );
+
     {
         extract( $art );
         include "../templates/article.tpl.php";
