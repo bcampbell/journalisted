@@ -22,26 +22,44 @@ _conn = None
 
 def resolve_org( domain, name ):
     """ look up an organisation, return org id or None """
-    n = name.lower().strip().encode( 'utf-8' )
     domain = domain.lower().strip().encode( 'ascii' )
 
-
+    # use domain to look them up
+    # want to look for both www. and bare versions
     candidates = [ domain ]
-    if domain.starts_with( 'www.' ):
+    if domain.startswith( 'www.' ):
         candidates.append( re.sub( '^www.','',domain ) )
     else:
-        candidates.append( 'www.' + domain
+        candidates.append( 'www.' + domain )
 
     c = _conn.cursor()
-    c.execute( "SELECT org_id FROM org_domain WHERE domain in (" + ','.join( candidates ) + ")" )
+    c.execute( "SELECT org_id FROM org_domain WHERE domain in ( %s,%s )",
+        (candidates[0], candidates[1]) )
 
     matches = [ row['org_id'] for row in c.fetchall() ]
 
-    c.execute( "SELECT org_id FROM org_alias WHERE alias=%s", n )
-    matched_name = [ row['org_id'] for row in c.fetchall() ]
+    if len( matches ) == 1:
+        # seems unambiguous...
+        return matches[0]
 
-    print "domain: ", matched_domain
-    print "name: ", matched_name
+    if len( matches ) == 0:
+        return None
+
+    if len( matches ) > 1:
+        n = name.lower().strip().encode( 'utf-8' )
+        # try to disambiguate using name
+        sql = """SELECT a.org_id
+            FROM (org_domain d INNER JOIN org_alias a ON d.org_id=a.org_id)
+            WHERE d.domain in (%s,%s) AND alias=%s"""
+        c.execute( sql, (candidates[0], candidates[1], n) )
+        matched_names = [ row['org_id'] for row in c.fetchall() ]
+#        if len(matched_names) == 0:
+#            return None
+        if len(matched_names) == 1:
+            return matched_names[0]
+
+    raise Exception( "Can't disambiguate org (domain: '%s' name: '%s')" % (domain,name) )
+
 
 
 
@@ -74,8 +92,6 @@ def collect_orgs():
 
 
 
-
-
 def main():
     global _opts,_conn
 
@@ -86,9 +102,10 @@ def main():
     orgs = collect_orgs()
 
     for domain,name in orgs.items():
-        print "%s (%s)" % (name.encode('utf-8'),domain.encode('utf-8'))
+        print domain,name, "=> ",resolve_org( domain,name )
+#        print "%s (%s)" % (name.encode('utf-8'),domain.encode('utf-8'))
 
-#    resolve_org( name=args[0], domain=args[1] )
+#    print resolve_org( args[0], args[1] )
 
 if __name__ == "__main__":
     main()
