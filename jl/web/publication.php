@@ -53,7 +53,7 @@ function publication_collect( $pub_id ) {
     $p = db_getRow( "SELECT * FROM organisation WHERE id=?", $pub_id );
 
     /* recent articles */
-    $arts = db_getAll( "SELECT id,title,pubdate,permalink FROM article ORDER BY pubdate DESC LIMIT 10" );
+    $arts = db_getAll( "SELECT id,title,pubdate,permalink FROM article WHERE srcorg=? ORDER BY pubdate DESC LIMIT 10", $pub_id );
     foreach( $arts as &$a ) {
         article_augment( $a );
     }

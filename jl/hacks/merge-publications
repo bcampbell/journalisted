@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+#
+# tool to help merge publications
+#
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import re
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+__opts = None
+_conn = None
+
+def find_dupes():
+
+    c = _conn.cursor()
+
+    c.execute( "SELECT pub_id,alias FROM pub_alias WHERE alias in (select alias from pub_alias GROUP BY alias HAVING count(alias)>1) ORDER BY alias" )
+    for row in c.fetchall():
+        print row['pub_id'], row['alias']
+
+
+def merge_publication( from_id, into_id ):
+
+    c = _conn.cursor()
+
+    # merge domains, aliases, phone numbers, email formats...
+    c.execute( "UPDATE pub_domain SET pub_id=%s WHERE pub_id=%s AND domain NOT IN (SELECT domain FROM pub_domain WHERE pub_id=%s)", (into_id, from_id, into_id) )
+    c.execute( "DELETE FROM pub_domain WHERE pub_id=%s", (from_id,) )
+
+    c.execute( "UPDATE pub_alias SET pub_id=%s WHERE pub_id=%s AND alias NOT IN (SELECT alias FROM pub_alias WHERE pub_id=%s)", (into_id, from_id, into_id) )
+    c.execute( "DELETE FROM pub_alias WHERE pub_id=%s", (from_id,) )
+
+    c.execute( "UPDATE pub_phone SET pub_id=%s WHERE pub_id=%s AND phone NOT IN (SELECT phone FROM pub_phone WHERE pub_id=%s)", (into_id, from_id, into_id) )
+    c.execute( "DELETE FROM pub_phone WHERE pub_id=%s", (from_id,) )
+
+    c.execute( "UPDATE pub_email_format SET pub_id=%s WHERE pub_id=%s AND fmt NOT IN (SELECT fmt FROM pub_email_format WHERE pub_id=%s)", (into_id, from_id, into_id) )
+    c.execute( "DELETE FROM pub_email_format WHERE pub_id=%s", (from_id,) )
+
+    # mark affected articles for re-indexing
+    c.execute( "DELETE FROM article_needs_indexing WHERE article_id in ( SELECT id FROM article WHERE srcorg=%s )", (from_id,) )
+    c.execute( "INSERT INTO article_needs_indexing (article_id) VALUES ( SELECT id FROM article WHERE srcorg=%s )", (from_id,) )
+
+    # migrate articles
+    c.execute( "UPDATE article SET srcorg=%s WHERE srcorg=%s", (into_id,from_id) )
+
+    # delete the "from" publication
+    c.execute( "DELETE FROM organisation WHERE id=%s", (from_id,) )
+
+
+def main():
+    global _opts,_conn
+
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
+    parser.add_option("-f", "--from", dest="from_id", help="id of FROM publication (will be deleted)", metavar="FROM" )
+    parser.add_option("-i", "--into", dest="into_id", help="id of publication to merge INTO", metavar="INTO" )
+    (_opts, args) = parser.parse_args()
+    _conn = DB.Connect()
+
+    if _opts.from_id and _opts.into_id:
+        merge_publication( _opts.from_id, _opts.into_id )
+        _conn.commit()
+    else:
+        find_dupes()
+
+
+if __name__ == "__main__":
+    main()
+

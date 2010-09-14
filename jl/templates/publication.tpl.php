@@ -14,6 +14,10 @@ Template for showing a publication
 <div class="head"><h2><?= $prettyname ?></h2></div>
 <div class="body">
 
+<p>
+Homepage: <a href="<?= $home_url ?>"><?= $home_url ?></a>
+</p>
+
 <h3>Recently published journalists</h3>
 
 <p>Journalists published by <?= $prettyname ?> over the last week:</p>

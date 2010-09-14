@@ -6,7 +6,7 @@ CREATE TABLE pub_alias (
   alias text NOT NULL
 );
 
-CREATE INDEX pub_alias_alias_idx ON pub_alias (alias);
+CREATE INDEX pub_alias_lower_alias_idx ON pub_alias (LOWER(alias));
 
 CREATE TABLE pub_domain (
   id serial PRIMARY KEY,
