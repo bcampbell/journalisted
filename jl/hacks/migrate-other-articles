@@ -20,6 +20,11 @@ __opts = None
 _conn = None
 
 
+
+class UnresolvedPublication(Exception):
+    pass
+
+
 def resolve_publication( domain, name ):
     """ look up a publications, return publication id or None """
 
@@ -52,7 +57,7 @@ def resolve_publication( domain, name ):
             return None     # give up
         if len(matched_names) == 1:
             return matched_names[0]
-        raise Exception( "Can't disambiguate publication (domain: '%s' name: '%s') - no domains, but multiple names" % (domain,name) )
+        raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - no domains, but multiple names" % (domain,name) )
 
     elif len( matched_domains ) > 1:
         # more than one matching domain - try to disambiguate using name
@@ -66,9 +71,9 @@ def resolve_publication( domain, name ):
         if len(matched_names) == 1:
             return matched_names[0]
         if len(matched_names) == 0:
-            raise Exception( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, no names" % (domain,name) )
+            raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, no names" % (domain,name) )
         if len(matched_names) > 1:
-            raise Exception( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, multiple names" % (domain,name) )
+            raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, multiple names" % (domain,name) )
 
     assert False    # shouldn't get this far
 
@@ -90,7 +95,7 @@ def create_publication( domain, publication ):
     c.execute( """INSERT INTO pub_alias (pub_id,alias) VALUES (%s,%s)""", (pub_id,publication) )
 
     if _opts.verbose:
-        print "new publication [%d]: %s (%s)" % ( pub_id,publication,domain)
+        print "new publication [%d]: %s (%s)" % ( pub_id,publication.encode('utf-8'),domain.encode('utf-8'))
     return pub_id
 
 
@@ -102,11 +107,17 @@ def migrate_article( art ):
     cursor.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
     existing = cursor.fetchall()
     if len(existing) > 0:
-        print >>sys.stderr, "already got %s - SKIPPING." % (art['permalink'])
+        print >>sys.stderr, "already got %s - SKIPPING." % (art['permalink'].encode('utf-8'))
         return
 
     # 1) sort out publication (create if necessary)
     url = art['permalink'].strip()
+
+
+    # some domains people have entered which we don't accept
+    domain_blacklist = ( 'factiva.com', 'tinyurl.com', 'findarticles.com', 'bit.ly', 'visiolink.com', 'youtube.com',
+        'lexisnexis.com', 'google.com', 'feedproxy.google.com', 'feeds.feedburner.com', 'rss.mediafed.com' )
+
 
     o = urlparse.urlparse(url)
     domain = o[1]
@@ -114,8 +125,16 @@ def migrate_article( art ):
     if domain == '':
         print >>sys.stderr, "SKIP bad/blank url (other_id=%s)" % (art['other_article_id'])
         return
+    if domain in domain_blacklist:
+        print >>sys.stderr, "SKIP blacklisted url (other_id=%s): %s" % (art['other_article_id'], url.encode('utf-8') )
+        return
 
-    srcorg = resolve_publication( domain, art['publication'] )
+    try:
+        srcorg = resolve_publication( domain, art['publication'] )
+    except UnresolvedPublication,e:
+        print >>sys.stderr, "SKIP article (other_id=%s): %s" % (art['other_article_id'],e)
+        return
+
     if srcorg is None:
         srcorg = create_publication( domain,art['publication'] )
 
@@ -145,12 +164,10 @@ def migrate_article( art ):
     cursor.execute( "INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (article_id) )
 
     if _opts.verbose:
-        print "a%d: %s" % ( article_id, art['permalink'] )
+        print "a%d: %s" % ( article_id, art['permalink'].encode('utf-8') )
 
     # 5) delete the redundant other_article
     cursor.execute( "DELETE FROM journo_other_articles WHERE id=%s", (art['other_article_id']) )
-
-    _conn.commit()
 
 
 
@@ -185,6 +202,21 @@ def main():
     _conn = DB.Connect()
 
     migrate_articles()
+    _conn.commit()
+
+#    c = _conn.cursor()
+#    c.execute( "SELECT id,prettyname,home_url FROM organisation ORDER by prettyname" )
+#    orgs = c.fetchall()
+#    for row in orgs:
+#        print row['id'],row['prettyname'],row['home_url']
+#    print len(orgs), "orgs"
+#    c.execute( "SELECT status,count(*) as cnt from journo_other_articles group by status" )
+#    for row in c.fetchall():
+#        print row['status'],row['cnt']
+#    _conn.rollback()
+
+
+
 
 if __name__ == "__main__":
     main()

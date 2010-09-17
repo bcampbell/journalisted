@@ -12,6 +12,8 @@
  $buzz              - eg "15 comments"
  $permalink         - original url of article
 
+ $journos           - array of journos attributed to this article
+
  $srcorgurl         - homepage of source organisation (eg "http://dailymail.com")
  $sop_url           - url of statement of principles
  $sop_name          - name of statement of principles
@@ -44,6 +46,11 @@
    buzz              - eg "10 diggs, 15 comments"   "20 votes, 4 comments"   "14 comments"
 */
 
+
+$journo_links = array();
+foreach( $journos as $j ) {
+    $journo_links[]  = sprintf( '<a href="%s">%s</a>', $j['ref'], $j['prettyname'] );
+}
 ?>
 
 
@@ -59,6 +66,9 @@
       <h2 class="entry-title"><?= $title; ?></h2>
     </div>
     <div class="body">
+<?php if( $journo_links ) { ?>
+      by <?= pretty_implode( $journo_links ) ?><br/>
+<?php } ?>
       <?= $byline; ?><br/>
       <blockquote class="entry-summary">
         <?= $description ?>

@@ -52,3 +52,7 @@ blockquote {
     text-decoration: none;
     padding: 0.1em;
 }
+
+tbody tr:nth-child(odd) {
+  background-color: #ddddff;
+}

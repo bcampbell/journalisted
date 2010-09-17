@@ -66,6 +66,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 </head>
 <body>
 <h1>Journalisted admin</h1>
+<a href="/">Home</a>
 <a href="article">Articles</a>
  (<small>
  <a href="scrape">Scrape</a> |
@@ -86,6 +87,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
  (<small>
  <a href="claims">Claims</a>
  </small>) |
+<a href="/adm/publication">Publications</a>
 <hr>
 <?php
 
