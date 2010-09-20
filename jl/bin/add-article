@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+#
+# tool to try and scrape some minimal info from _any_ news article page
+# title, pubdate...
+#
+
+import sys
+import datetime
+from optparse import OptionParser
+import re
+import dateutil.parser
+import urlparse
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+import site
+site.addsitedir("../pylib")
+from JL import DB,ukmedia,Publication
+from BeautifulSoup import BeautifulSoup, Comment
+
+_opts = None
+_conn = None
+
+from optparse import OptionParser
+
+
+ 
+def store_article( art ):
+    """ add a non-scraped article """
+    # TODO: merge this with ArticleDB.Add() to create a proper unified interface...
+
+    url = art['permalink']
+
+    # check to see if it's already in DB
+    cursor = _conn.cursor()
+    srcid = art.get( 'srcid', url )
+    cursor.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
+    existing = cursor.fetchall()
+    if len(existing) > 0:
+        article_id = existing[0][0]
+        return { 'result': 'alreadygot', 'art': {'id': article_id} }
+
+    # some domains people have entered which we don't accept
+    domain_blacklist = ( 'factiva.com', 'tinyurl.com', 'findarticles.com', 'bit.ly', 'visiolink.com', 'youtube.com',
+        'lexisnexis.com', 'google.com', 'feedproxy.google.com', 'feeds.feedburner.com', 'rss.mediafed.com' )
+
+    o = urlparse.urlparse(url)
+    domain = o[1]
+    domain = domain.lower()
+    if domain == '':
+        raise Exception( "bad/blank url" )
+    if domain in domain_blacklist:
+        raise Exception( "blacklisted url: %s" % (url, ) )
+
+    # sort out publication (create if necessary)
+    publication = art.get( 'publication', u'' )
+    srcorg = Publication.resolve( _conn, domain, publication )
+    if srcorg is None:
+        srcorg = Publication.create( _conn, domain, publication )
+
+    art['srcorg'] = srcorg
+
+    # add article
+    # (send text to the DB as utf-8)
+    title = art['title'].encode( 'utf-8' )
+    byline = u''
+    description = u''
+    pubdate = "%s" %(art['pubdate'])
+    lastscraped = None
+    lastseen = datetime.datetime.now()
+    firstseen = lastseen
+    srcurl = art['permalink']
+    permalink = art['permalink']
+    wordcount = None
+
+    q = """INSERT INTO article (id,title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) VALUES (DEFAULT, %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id"""
+    cursor.execute( q, ( title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, lastscraped ) )
+    article_id = cursor.fetchone()[0]
+
+    # attribute journos (if any)
+    if 'journos' in art:
+        for j in art['journos']:
+            journo_id = j['id']
+            cursor.execute( "INSERT INTO journo_attr ( journo_id, article_id) VALUES (%s,%s)", (journo_id,article_id) )
+
+    # mark article for indexing
+    cursor.execute( "DELETE FROM article_needs_indexing WHERE article_id=%s", (article_id) )
+    cursor.execute( "INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (article_id) )
+
+    art['id'] = article_id
+
+    return { 'result': 'added', 'art':art }
+
+
+
+def main():
+    global _opts
+    global _conn
+
+    parser = OptionParser(usage="usage: %prog [options] url",
+                          version="%prog 1.0")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output debug information")
+#    parser.add_option("-j", "--json", action="store_true", dest="json", help="output results as json")
+#    parser.add_option("-u", "--url", dest="url", help="url of article")
+    parser.add_option("-t", "--title", dest="title", help="title of article")
+    parser.add_option("-d", "--date", dest="pubdate", help="publication date of article")
+    parser.add_option("-p", "--publication", dest="publication", help="name of publication")
+    parser.add_option("-j", "--journo", dest="journo", help="journo to attribute article to eg fred-bloggs-2")
+
+    (_opts, args) = parser.parse_args()
+
+    art = {}
+    if len(args) != 1:
+        parser.error("wrong number of arguments")
+    url = args[0]
+
+    if _opts.title is None:
+        parser.error( "missing title" )
+    if _opts.pubdate is None:
+        parser.error( "missing pubdate" )
+    if _opts.publication is not None:
+        art['publication'] = _opts.publication.decode( 'utf-8' )
+
+    art['pubdate'] = dateutil.parser.parse( _opts.pubdate )
+    art['title'] = _opts.title.decode( 'utf-8' )
+    art['permalink'] = url
+
+    _conn = DB.Connect()
+
+    if _opts.journo is not None:
+        journo = {}
+        if _opts.journo.isdigit():
+            journo['id'] = int( _opts.journo )
+        else:
+            journo['ref'] = _opts.journo
+            c = _conn.cursor()
+            c.execute( "SELECT id FROM journo WHERE ref=%s", ( journo['ref'], ) )
+            journo['id'] = c.fetchone()[0]
+        art['journos'] = [ journo, ]
+
+    results = store_article( art )
+    _conn.commit()
+
+    dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime.datetime) else None
+    print json.dumps( results, default=dthandler )
+
+
+#        try:
+#            html = ukmedia.FetchURL( url )
+#            details = extract( html, {'url':url,'status':'ok'} )
+#        except Exception,err:
+#            details = {
+#                'url':url,
+#                'status':'error',
+#                'errormsg': str(err) }
+
+#        results.append( details )
+
+#    print( json.dumps( results ) )
+
+if __name__ == "__main__":
+    main()
+

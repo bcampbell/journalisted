@@ -1,2 +1,2 @@
-__all__ = ['DB','Byline','Journo','ArticleDB','Tags','ukmedia','ScraperUtils', 'Misc' ]
+__all__ = ['DB','Byline','Journo','ArticleDB','Tags','ukmedia','ScraperUtils', 'Misc', 'Publication' ]
 
