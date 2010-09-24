@@ -11,6 +11,7 @@
 // we should be a little clever about generating timestamps.
 require_once '../conf/general';
 require_once '../phplib/misc.php';
+require_once '../phplib/article.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -47,7 +48,7 @@ try {
     }
 
     $sql = <<<EOT
-        SELECT a.id, a.srcid, a.title, c.content, a.pubdate, a.lastscraped
+        SELECT a.id, a.srcid, a.title, c.content, a.pubdate, a.lastscraped, a.permalink
             FROM (article a INNER JOIN article_content c ON c.article_id=a.id)
             WHERE a.lastscraped>?
             ORDER BY a.lastscraped
@@ -55,7 +56,7 @@ try {
 EOT;
     //$r = db_query( $sql, $after_dt->format(DateTime::ISO8601), $limit );
     $r = db_query( $sql, $after_dt->format('Y-m-d\TH:i:s.uO'), $limit );
-    $fields = array( 'id','srcid','title','content','pubdate','lastscraped' );
+    $fields = array( 'id','srcid','title','content','pubdate','lastscraped','permalink' );
     $time_fields = array( 'pubdate','lastscraped' );
     while( $row = db_fetch_array( $r ) ) {
         $out = array_cherrypick( $row, $fields );
@@ -66,6 +67,23 @@ EOT;
         }
         $results[] = $out;
     }
+
+    // go through and add in id36 and journo data to articles
+    foreach( $results as &$art ) {
+        $art['id36'] = article_id_to_id36( $art['id'] );
+
+        $sql = <<<EOT
+SELECT j.prettyname, j.ref
+    FROM ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id )
+    WHERE attr.article_id=? AND j.status='a';
+EOT;
+        $journos = array();
+        foreach( db_getAll( $sql, $art['id'] ) as $j ) {
+            $journos[] = array( 'ref'=>$j['ref'], 'prettyname'=>$j['prettyname'] );
+        }
+        $art['journos'] = $journos;
+    }
+
 } catch (Exception $e) {
     $details = $e->getMessage();
     $status = -1;
