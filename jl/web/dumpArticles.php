@@ -48,8 +48,9 @@ try {
     }
 
     $sql = <<<EOT
-        SELECT a.id, a.srcid, a.title, c.content, a.pubdate, a.lastscraped, a.permalink
-            FROM (article a INNER JOIN article_content c ON c.article_id=a.id)
+        SELECT a.id, a.srcid, a.title, c.content, a.pubdate, a.lastscraped, a.permalink,
+                a.srcorg, o.shortname, o.prettyname, o.home_url
+            FROM ((article a INNER JOIN article_content c ON c.article_id=a.id) INNER JOIN organisation o ON o.id=a.srcorg)
             WHERE a.lastscraped>?
             ORDER BY a.lastscraped
             LIMIT ?;
@@ -60,6 +61,14 @@ EOT;
     $time_fields = array( 'pubdate','lastscraped' );
     while( $row = db_fetch_array( $r ) ) {
         $out = array_cherrypick( $row, $fields );
+
+        // add source publication info
+        $source = array( 'id'=>$row['srcorg'],
+            'shortname'=>$row['shortname'],
+            'prettyname'=>$row['prettyname'],
+            'home_url'=>$row['home_url'] );
+        $out['source'] = $source;
+
         // sanitize the timestamps
         foreach( $time_fields as $tf ) {
             $dt = new DateTime( $out[$tf] );
