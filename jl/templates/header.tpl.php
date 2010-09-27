@@ -27,6 +27,7 @@
   <![endif]-->
   <meta name="Content-Type" content="text/html; charset=UTF-8" />
   <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+  <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
 <?php foreach( $rss_feeds as $rss_title => $rss_url) { ?>
   <link rel="alternate" type="application/rss+xml" title="<?= $rss_title ?>" href="<?= $rss_url ?>" />
 <?php } ?>

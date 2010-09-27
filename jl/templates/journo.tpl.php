@@ -184,7 +184,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="overview">
-  <div class="head"><h2><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" align="right"></a><?= $prettyname; ?></h2></div>
+  <div class="head"><h2><?= $prettyname; ?><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" class="rss"></a></h2></div>
   <div class="body">
 
     <div class="photo">
@@ -311,20 +311,19 @@ $links = array_filter( $links, 'is_not_pingback_link' );
   </ul>
 
 <?php if($more_articles) { ?>
-  <a class="show-all" href="/<?= $ref ?>?allarticles=yes">
+  <a class="moreArticles" href="/<?= $ref ?>?allarticles=yes">
 <?php
  // TODO: enable once other_articles is merged...
  //<?= $quick_n_nasty ? "Show all articles...":"Show all ${num_articles} articles..."
 ?>
-Show all articles...
+&laquo; All previous articles
   </a>
 <?php } ?>
 
 <?php if( $can_edit_page ) { ?>
-<div class="editbutton add"><a href="/missing?j=<?= $ref ?>"><span>Add articles</span></a></div>
+<div class="editbutton add "><a class="missing" href="/missing?j=<?= $ref ?>"><span>Add articles</span></a></div>
 <?php } else { ?>
-<p>Article(s) missing? If you notice an article is missing,
-<a href="/missing?j=<?= $ref ?>">click here</a></p>
+ <a class="missing" href="/missing?j=<?= $ref ?>">Article missing?</a> 
 <?php } ?>
 </div>
 </div>
