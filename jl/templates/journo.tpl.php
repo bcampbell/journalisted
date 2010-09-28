@@ -191,7 +191,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 <?php if( $picture ) { ?>
       <img src="<?= $picture['url']; ?>" alt="photo" width="<?= $picture['width'] ?>" height="<?= $picture['height']; ?>" />
 <?php } else { ?>
-      <img width="135" height="135" src="/img/rupe.png" alt="no photo" />
+      <img width="128" height="128" src="/img/rupe.png" alt="no photo" />
 <?php } ?>
   <?php if( $can_edit_page ) { ?> <a class="edit" href="/profile_photo?ref=<?= $ref ?>">edit</a><?php } ?>
     </div>
