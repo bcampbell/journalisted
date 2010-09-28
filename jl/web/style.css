@@ -242,8 +242,8 @@ form input[type="password"] {
 /* assorted types of fields */
 form input[type="text"].year { width: 4em; }
 form input[type="text"].date { width: 8em; }
-form input[type="text"].url { width: 480px; }
-form input[type="text"].headline { width: 480px; }
+form input[type="text"].url { width: 460px; }
+form input[type="text"].headline { width: 460px; }
 
 form input#twitter { width:12em; }
 
