@@ -22,7 +22,13 @@
 <li><a href="/faq/what-is-your-privacy-policy">Privacy</a></li>
 </ul>
 </div>
-&copy; 2007 <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
+&copy; 2007&ndash;<script type="text/javascript">
+<!--
+var now = (new Date().getFullYear()).toString();
+var theYear = now.substring(now.length, 2);
+document.writeln(theYear,"");
+// -->
+</script> <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
 
 
   </div>

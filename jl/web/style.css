@@ -55,7 +55,7 @@ h1,h2,h3,h4,h5,h6 {
 
 h1 { font-size: 250%; }
 h2 { font-size: 200%; }
-h3 { font-size: 150%; }
+h3 { font-size: 130%; }
 h4 { font-size: 125%; }
 h5 { font-size: 112%; }
 
@@ -93,7 +93,7 @@ ul {
 
 /* lists of articles */
 ul.art-list {
-  margin: 0px;
+  margin: 0 0 5px 0;
   padding: 0px;
   list-style: none;
   list-style-image: none;
@@ -101,7 +101,9 @@ ul.art-list {
 
 ul.art-list li {
   border-bottom: 1px solid #cccccc;
-  padding: 4px 0 16px 0;
+  padding: 8px 0 10px 0;
+  margin: 0 20px 0;
+  padding: 8px 0;
 }
 
 abbr.published { text-decoration: none; border: none; }
@@ -114,6 +116,10 @@ ul.bio-list li {
   /* list-style: none; */
 }
 
+/* Graph */ 
+#monthly-stats-placeholder {
+	height: 300px;
+}
 
 
 /* fancify edit links */
@@ -236,8 +242,8 @@ form input[type="password"] {
 /* assorted types of fields */
 form input[type="text"].year { width: 4em; }
 form input[type="text"].date { width: 8em; }
-form input[type="text"].url { width: 460px; }
-form input[type="text"].headline { width: 460px; }
+form input[type="text"].url { width: 480px; }
+form input[type="text"].headline { width: 480px; }
 
 form input#twitter { width:12em; }
 
@@ -368,7 +374,9 @@ form dl:after {
   font-weight: bold;
   margin-right: 8px;
 }
-
+.hellouser em {
+	font-style: normal;
+}
 #header .nav ul {
   margin: 0;
   padding: 0;
@@ -447,6 +455,10 @@ form dl:after {
   background: url("/img/buttons.png") no-repeat;
   overflow: hidden;
   border: none;
+  -moz-border-radius-bottomleft:0;
+  -moz-border-radius-bottomright:0;
+  -moz-border-radius-topleft:0;
+  -moz-border-radius-topright:0;
 /*  float: left;*/
 }
 
@@ -503,11 +515,12 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 #footer {
   margin: 0px auto;
-  padding: 0px 10px;
-  width: 955px; /* =995-10-10-10-10 */
+  padding: 5px 0;
+  width: 975px; /* =995-10-10-10-10 */
   clear: both;
   border-top: 1px solid #c4c4c4;
-  font-size: 90%;
+  font-size: 85%;
+  
 }
 
 #footer .nav {
@@ -765,9 +778,13 @@ ul.newList li a:focus {-moz-outline-style: none;}
     margin-left: 16px;
     width: 314px;   /* 1/3rd width */
     min-height: 150px;
+    background-color: #CDCFB5;
 }
 
-.box.tobias .body { padding-left: 8px; }
+.box.tobias .body { 
+  padding-left: 8px;
+   
+}
 .box.tobias img {
     float: left;
     margin: 0px 8px 8px 0px;
@@ -899,10 +916,10 @@ ul.newList li a:focus {-moz-outline-style: none;}
 }
 
 
-.previous-articles a.show-all {
+.previous-articles a.missing{
     float: right;
-}
 
+}
 /* search forms for journo page and search results page */
 .journo-profile .search form {
   padding: 5px;
@@ -945,6 +962,10 @@ ul.newList li a:focus {-moz-outline-style: none;}
   float: left;
   font-size: 90%;
   color: #222222;
+}
+
+.journo-profile .search form input#findarticles { 
+	padding: 5px 4px 0px 25px;
 }
 
 .journo-profile .search form input#findarticles.placeholder {
@@ -1055,14 +1076,29 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 .box.mistake {
   background: #ebebeb url( "/img/box_bg_hatched.png" ) repeat;
+  padding-top: 5px;
 }
+.box.mistake .body {
+	padding-top: 0;
+	padding-bottom: 15px;
+}
+.box.mistake .head .h3 {
 
+	
+}
 /* overview section on journo page */
 
 .overview {
   padding: 0px 8px 0 8px;
 }
 
+.overview .head  h2{
+	padding-bottom: 10px;
+	margin-bottom: 10px;
+}
+.rss {
+	float: right;
+}
 .overview .photo {
   float: left;
 }
@@ -1075,6 +1111,8 @@ ul.newList li a:focus {-moz-outline-style: none;}
   -moz-box-shadow: 3px 3px 5px #888888;
   -webkit-box-shadow: 3px 3px 5px #888888;
   display: block;
+  padding:5px;
+  background-color: white;
 }
 
 .overview .fudge {
@@ -1082,6 +1120,10 @@ ul.newList li a:focus {-moz-outline-style: none;}
   width: 362px; /* =440-88 */
   padding-left: 88px;
   margin-left: 20px;
+}
+
+.fudge ul, .box ul {
+  margin: 0;
 }
 
 .overview .section {
@@ -1123,6 +1165,54 @@ ul.newList li a:focus {-moz-outline-style: none;}
   position: absolute;
   top: 10px;
   right: 0px;
+}
+/* Global submit style */
+
+input[type="submit"], input[type="button"], .button {
+	display: inline-block;
+	zoom: 1; /* zoom and *display = ie7 hack for display:inline-block */
+	*display: inline;
+	vertical-align: baseline;
+	margin: 0 2px;
+	outline: none;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	font: 12px/100% Arial, Helvetica, sans-serif;
+	padding: 3px 5px 3px 5px;
+/*	text-shadow: 0 1px 1px rgba(0,0,0,.3); */
+	-webkit-border-radius: .5em; 
+	-moz-border-radius: .5em;
+	border-radius: .5em;
+/*	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+	-moz-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+	box-shadow: 0 1px 2px rgba(0,0,0,.2); */
+	border: solid 1px #da7c0c;
+	background: #f0a100;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f5b40f), to(#ea8b00));
+	background: -moz-linear-gradient(top,  #f5b40f,  #ea8b00);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5b40f', endColorstr='#ea8b00');
+	-webkit-border-radius: 2em;
+	-moz-border-radius: 2em;
+	border-radius: 2em;
+}
+
+input[type="submit"]:hover, input[type="button"]:hover, .button:hover  {
+	text-decoration: none;
+	background: #F8C64B;
+	background: -webkit-gradient(linear, left top, left bottom, from(#F8C64B), to(#ea8b00));
+	background: -moz-linear-gradient(top,  #F8C64B,  #ea8b00);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#F8C64B', endColorstr='#ea8b00');
+
+}
+input[type="submit"]:active, input[type="button"]:active, .button:active {
+	position: relative;
+	top: 1px;
+
+	background: -webkit-gradient(linear, left top, left bottom, from(#f47a20), to(#faa51a));
+	background: -moz-linear-gradient(top,  #f47a20,  #faa51a);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f47a20', endColorstr='#faa51a');
+
 }
 
 
@@ -1167,6 +1257,11 @@ a.donate:focus {
 #stats-disclaimer {
   padding: 4px;
 }
+#stats-disclaimer em {
+	font-style: normal;
+	font-size: 11px;
+}
+
 
 /* TODO: replace "edit" buttons with "editbutton"! */
 /* TODO: modify these to allow icon attachment (on the a?) */
@@ -1236,16 +1331,24 @@ a.public-profile-location {
 
 /* TODO: this should be default for .main (ie move padding from .main to .main>.body) */
 .main.search-results { padding: 0px; }
-.main.search-results .body { padding: 8px 16px 16px 16px; }
+.main.search-results .body { 
+	/* padding: 8px 16px 16px 16px; */
+}
 
 .main.search-results .head,
 .box .pager {
-  padding: 8px 16px;
+  padding: 8px 8px 8px 30px;
   margin: 0px;
   height: 20px;   /* =34-8-8 */
   line-height: 20px;
   background-color: #eeeeee;
 }
+.pager {
+	padding: 5px 20px 5px 20px;
+	border: 1px solid #CCC;	
+}
+
+
 .search-results .head {  border-bottom: 1px solid #dddddd; }
 .box .pager {  border-top: 1px solid #dddddd; }
 
