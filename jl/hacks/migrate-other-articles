@@ -105,6 +105,7 @@ def migrate_article( art ):
     cursor = _conn.cursor()
     srcid = art['permalink']
     cursor.execute( "SELECT id FROM article WHERE srcid=%s", srcid )
+
     existing = cursor.fetchall()
     if len(existing) > 0:
         print >>sys.stderr, "already got %s - SKIPPING." % (art['permalink'].encode('utf-8'))
@@ -186,8 +187,11 @@ def migrate_articles():
             'publication': row['publication'].decode('utf-8'),
             'journo_id': int( row['journo_id'] )
         }
+        try:
+            migrate_article( other_art )
+        except Exception, e:
+            print >>sys.stderr, "EXCEPTION (other_id=%s): %s" % (other_art['other_article_id'],e)
 
-        migrate_article( other_art )
 
 
 
