@@ -41,7 +41,7 @@ The results are an array of articles, each with the following fields:
 <dt><code>journos</code></dt>
 <dd>The journalists this article is attributed to (an array, possibly empty). Each journo will have the following fields:
   <dl>
-    <dt><code>ref</code></dt><dd>the unique ref for the journo</dd>
+    <dt><code>ref</code></dt><dd>the unique ref for the journo eg ('<code>fred-bloggs-2</code>'). The ref acts as a slug.</dd>
     <dt><code>prettyname</code></dt><dd>the display name of the journo</dd>
   </dl>
 </dd>
