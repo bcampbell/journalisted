@@ -25,7 +25,7 @@ import traceback
 
 import site
 site.addsitedir("../pylib")
-from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup,Tag
+from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup,Tag,Comment
 from JL import ukmedia, ScraperUtils
 
 notw_bloggers = (
@@ -153,11 +153,13 @@ def ScanPrimary( soup ):
 
         try:
             html = ukmedia.FetchURL( url )
-        except urllib2.HTTPError, e:
-            # continue even if we get http errors (bound to be a borked
+            # continue even if we get urllib2 errors (bound to be a borked
             # link or two)
-            traceback.print_exc()
-            print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
+        except urllib2.HTTPError, e:
+            print >>sys.stderr, "ERROR fetching '%s' (code %d)\n" %(url, e.code)
+            continue
+        except urllib2.URLError, e:
+            print >>sys.stderr, "ERROR connecting to '%s' (reason: %s)\n" %(url, e.reason)
             continue
 
         soup_sec = BeautifulSoup( html )
@@ -186,6 +188,10 @@ def Extract_blog( html, context ):
 
     art = context
     art['srcorgname'] = u'notw'
+
+    ukmedia.DBUG2( "SKIP BLOG: %s" %(art['permalink'],) )
+    return None
+
 
     soup = BeautifulSoup( html )
 
@@ -228,7 +234,6 @@ def Extract_blog( html, context ):
     for cruft in content_soup.findAll('script' ):
         cruft.extract()
 
-    content_txt = ukmedia.DescapeHTML( content_soup.renderContents(None) )
     content_txt = ukmedia.SanitiseHTML( content_txt )
     art['content'] = content_txt
     art['description'] = ukmedia.FirstPara( content_txt )
@@ -280,6 +285,10 @@ def Extract_notw( html, context ):
 
     # byline and pubdate
     bylinep = col2.find( 'p',{'class':'byline'} )
+    # kill the twitter link, if any
+    for a in bylinep.findAll( 'a', {'href':re.compile('http://twitter[.]com')} ):
+        a.extract()
+
     byline_txt = bylinep.renderContents( None )
     byline_txt = ukmedia.FromHTMLOneLine( byline_txt )
 
@@ -336,17 +345,29 @@ def Extract_notw( html, context ):
         art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
 
-    # main text is inside a bare <div>, near the byline para
-#    contentdiv = bylinep.findNextSibling('div', {'class':'clear-left'}).div
-    contentdiv = bylinep.findNextSibling('div')
+    # main text starts after the byline, and goes on until the crap at the bottom.
+
+    cruft = bylinep
+    # kill byline and everything before it
+    while cruft:
+        prev = cruft.previousSibling
+        cruft.extract()
+        cruft = prev
+
+    # kill off assorted non-content crap
+    contentdiv = col2.find( 'div', {'id':'column2-inner-article'} )
 
     #strip out cruft from text
-    for cruft in contentdiv.findAll('div'):
+    for cruft in contentdiv.findAll(['script','div','link'] ):
         cruft.extract()
     for cruft in contentdiv.findAll('a', href="javascript:;" ):
         cruft.extract()
+    for cruft in soup.findAll(text=lambda text:isinstance(text, Comment)):
+        cruft.extract()
+
+
     content_txt = contentdiv.renderContents( None )
-    content_txt = ukmedia.DescapeHTML(content_txt)
+    content_txt = ukmedia.SanitiseHTML( content_txt )
     art['content'] = content_txt
     art['description'] = ukmedia.FirstPara( content_txt )
 

@@ -254,7 +254,7 @@ def SanitiseHTML( html ):
     html = html.replace('>>', '>')
 
     # some tags we want to excise completely:
-    for tag in ('script','noscript' ):
+    for tag in ('script','noscript','style' ):
         pattxt = r'<\s*' + tag + r'\b.*?\s*>.*?</\s*' + tag + r'\s*>'
         pat = re.compile(pattxt, re.IGNORECASE )
         html = pat.sub('',html)
