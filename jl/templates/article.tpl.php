@@ -67,9 +67,8 @@ foreach( $journos as $j ) {
     </div>
     <div class="body">
 <?php if( $journo_links ) { ?>
-      by <?= pretty_implode( $journo_links ) ?><br/>
+      By <?= pretty_implode( $journo_links ) ?><br/>
 <?php } ?>
-      <?= $byline; ?><br/>
       <blockquote class="entry-summary">
         <?= $description ?>
       </blockquote>
