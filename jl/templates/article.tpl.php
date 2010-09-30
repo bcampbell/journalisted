@@ -49,7 +49,7 @@
 
 $journo_links = array();
 foreach( $journos as $j ) {
-    $journo_links[]  = sprintf( '<a href="%s">%s</a>', $j['ref'], $j['prettyname'] );
+    $journo_links[]  = sprintf( '<a href="/%s">%s</a>', $j['ref'], $j['prettyname'] );
 }
 ?>
 
