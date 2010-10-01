@@ -905,16 +905,16 @@ ul.newList li a:focus {-moz-outline-style: none;}
 }
 
 
-.journo-profile {
+.journo-profile, .publication-profile {
   -moz-box-shadow: 0 0 5px #888888;
   -webkit-box-shadow: 0 0 5px #888888;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
-
-  background-color: #f7dbdb;
 }
 
+.journo-profile { background-color: #f7dbdb; }
+/*.publication-profile { background-color: #dbdbf7; } */
 
 .previous-articles a.missing{
     float: right;

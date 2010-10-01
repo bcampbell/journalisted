@@ -10,23 +10,59 @@ Template for showing a publication
 ?>
 
 
-<div class="main">
-<div class="head"><h2><?= $prettyname ?></h2></div>
+<div class="main publication-profile vcard">
+<div class="head"><h2 class="fn org"><?= $prettyname ?></h2></div>
 <div class="body">
 
-<p>
-Homepage: <a href="<?= $home_url ?>"><?= $home_url ?></a>
-</p>
+<dl>
+<dt>Homepage:</dt>
+<dd><a class="url extlink" href="<?= $home_url ?>"><?= $home_url ?></a></dd>
 
-<h3>Recently published journalists</h3>
+<?php if( $adr ) { ?>
+<dt>Address:</dt>
+<dd class="adr">
+<?php
+foreach( vcard_adr_fields() as $f ) {
+    if( array_key_exists( $f, $adr ) ) {
+?>
+<span class="<?= $f ?>"><?= h($adr[$f]) ?></span><br/>
+<?php
+    }
+}
+?>
+</dd>
+<?php } ?>
 
-<p>Journalists published by <?= $prettyname ?> over the last week:</p>
+<?php if( $tel ) { ?>
+<dt>Telephone:</dt>
+<dd class="tel"><?= $tel ?></dd>
+<?php } ?>
+
+<?php if( $principles ) { ?>
+<dt>Statement of principles:</dt>
+<dd><a href="<?= $principles['url'] ?>"><?= h($principles['name']) ?></a></dd>
+<?php } ?>
+</dl>
+
+
+
+<h3>Journalists published by <?= $prettyname ?> over the last week</h3>
+
+<div style="-moz-column-count: 3; -webkit-column-count: 3;">
+
+<?php if( $recent_journos ) { ?>
 <ul>
 <?php foreach( $recent_journos as $j ) { ?>
   <li><?= journo_link( $j ) ?></li>
 <?php } ?>
 </ul>
+<?php } else { ?>
+<p class="not-known">None known</p>
+<?php } ?>
 
+</div>
+
+<?php if( 0 ) { ?>
 <h3>Recent Articles</h3>
   <ul class="art-list">
 
@@ -38,6 +74,8 @@ Homepage: <a href="<?= $home_url ?>"><?= $home_url ?></a>
     </li>
 <?php } ?>
   </ul>
+
+<?php } ?>
 
 </div>
 <div class="foot"></div>
