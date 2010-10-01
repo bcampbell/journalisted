@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+#
+# dump out a dotfile for recommended journos
+#
+# $ ./graph-recommended-journos >/tmp/foo.dot
+# $ neato -Tsvg /tmp/foo.dot -o/tmp/foo.svg
+#
+
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import re
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+__opts = None
+_conn = None
+
+
+
+def main():
+    global _opts,_conn
+
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
+    (_opts, args) = parser.parse_args()
+    _conn = DB.Connect()
+
+    
+    c = _conn.cursor()
+    c.execute( """SELECT j1.prettyname as journo_prettyname, j1.ref AS journo_ref, a.admired_name, j2.prettyname as admired_prettyname, j2.ref AS admired_ref
+        FROM ((journo_admired a LEFT JOIN journo j1 ON j1.id=a.journo_id)
+            LEFT JOIN journo j2 ON j2.id=a.admired_id)""" )
+
+    non_jl = set()
+    print "digraph recommended_journos {"
+    print "  graph [ overlap=false ];"
+    print "  node [ shape=box ];"
+
+    while 1:
+        row = c.fetchone()
+        if row is None:
+            break
+
+        node_from = "%s" % (row['journo_ref'], )
+        if row['admired_ref'] is None:
+            node_to = row['admired_name']   # admired journo not in our db
+            non_jl.add( node_to )
+        else:
+            node_to = "%s" % (row['admired_ref'], )
+
+        print '  "%s" -> "%s";' % (node_from,node_to)
+
+        for j in non_jl:
+            print ' "%s" [ style=dashed, fontcolor="#888888", color="#888888" ];' % (j,)
+
+    print "}"
+
+
+if __name__ == "__main__":
+    main()
+
