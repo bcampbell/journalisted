@@ -165,12 +165,18 @@ function journo_guessContactDetails( &$journo, $guessed_main_org )
     if( $org === null )
         return null;
 
-    $row = db_getRow( "SELECT prettyname,phone,email_format FROM organisation WHERE id=?", $org );
+    $fmt = db_getOne( "SELECT fmt FROM pub_email_format WHERE pub_id=?", $org );
+    if( !$fmt ) {
+        return null;
+    }
+
+    $phone = db_getOne( "SELECT phone FROM pub_phone WHERE pub_id=?", $org );
+    $prettyname = db_getRow( "SELECT prettyname FROM organisation WHERE id=?", $org );
 
     return array(
-        'orgname' => $row['prettyname'],
-        'orgphone' => $row['phone'],
-        'emails' => expandEmailFormat( $row['email_format'], $journo )
+        'orgname' => $prettyname,
+        'orgphone' => $phone,
+        'emails' => expandEmailFormat( $fmt, $journo )
     );
 }
 
