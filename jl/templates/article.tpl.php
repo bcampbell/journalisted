@@ -80,7 +80,9 @@ foreach( $journos as $j ) {
     <a class="extlink" href="<?= $permalink ?>" >Read the original article</a>.<br/>
     It was published by
     <span class="published-by vcard"><a class="fn org url extlink" href="<?= $srcorg_url ?>"><?= $srcorgname ?></a></span>,
+<?php if( $sop_url && $sop_name ) { ?>
     which adheres to the <a rel="statement-of-principles" class="extlink" href="<?= $sop_url;?>"><?= $sop_name ?></a>
+<?php } ?>
   </div>
 
 </div>  <!-- end hentry -->
