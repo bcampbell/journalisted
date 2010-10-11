@@ -1,6 +1,7 @@
 import re
+import unicodedata
 
-class UnresolvedPublication(Exception):
+class AmbiguousPublication(Exception):
     pass
 
 
@@ -34,7 +35,7 @@ def resolve( conn, domain, name ):
             return None     # give up
         if len(matched_names) == 1:
             return matched_names[0]
-        raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - no domains, but multiple names" % (domain,name) )
+        raise AmbiguousPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - no domains, but multiple names" % (domain,name) )
 
     elif len( matched_domains ) > 1:
         # more than one matching domain - try to disambiguate using name
@@ -48,24 +49,46 @@ def resolve( conn, domain, name ):
         if len(matched_names) == 1:
             return matched_names[0]
         if len(matched_names) == 0:
-            raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, no names" % (domain,name) )
+            raise AmbiguousPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, no names" % (domain,name) )
         if len(matched_names) > 1:
-            raise UnresolvedPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, multiple names" % (domain,name) )
+            raise AmbiguousPublication( "Can't disambiguate publication (domain: '%s' name: '%s') - multiple domains, multiple names" % (domain,name) )
 
     assert False    # shouldn't get this far
 
 
+def slugify( fancytext ):
+    slug = fancytext
+    # replace accented chars if there is a good equivalent
+    slug = unicodedata.normalize('NFKD',slug).encode('ascii','ignore')
+    slug = slug.lower()
+    slug = re.sub(r'[^a-z0-9]+', '-', slug )
+    slug = slug.strip('-')
+    return slug
 
 
-def create( conn, domain, publication ):
-    if publication.strip() == u'':
-        # use domain for missing publication names
+def create( conn, domain, publication=u'' ):
+
+    publication = publication.strip()
+    if publication == u'':
+        # use domain as publication name
         publication = unicode( domain )
         publication = re.sub( u'^www.',u'',publication )
+        shortname = publication
+    else:
+        shortname = publication.lower()
+        # replace accented chars
+        shortname = unicodedata.normalize('NFKD',shortname).encode('ascii','ignore')
+        # get rid of non-alphas:
+        shortname = re.sub(u'[^-a-z]',u'',shortname)
+
+    # for more natural-seeming sort order...
+    sortname = publication.lower()
+    sortname = re.sub(u'^the\s+',u'',sortname)
+
 
     c = conn.cursor()
-    c.execute( """INSERT INTO organisation (id,shortname,prettyname,home_url) VALUES (DEFAULT, %s,%s,%s) RETURNING id""",
-        ( domain, publication, "http://" + domain ) )
+    c.execute( """INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, %s,%s,%s,%s) RETURNING id""",
+        ( shortname, publication, sortname, "http://" + domain ) )
     pub_id = c.fetchone()[0]
 
     c.execute( """INSERT INTO pub_domain (pub_id,domain) VALUES (%s,%s)""", (pub_id,domain) )
