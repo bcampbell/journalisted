@@ -256,7 +256,7 @@ def SanitiseHTML( html ):
     # some tags we want to excise completely:
     for tag in ('script','noscript','style' ):
         pattxt = r'<\s*' + tag + r'\b.*?\s*>.*?</\s*' + tag + r'\s*>'
-        pat = re.compile(pattxt, re.IGNORECASE )
+        pat = re.compile(pattxt, re.DOTALL|re.IGNORECASE )
         html = pat.sub('',html)
     # others, we might want to kill but keep the content
     html = tagopenpat.sub( SanitiseHTML_handleopen, html )
