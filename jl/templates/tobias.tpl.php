@@ -30,6 +30,9 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_No18_27_09_10_1725627a.swf',
     'Tg_no19_04_10_10_1731215a.swf',
     'Tg_No20_11_10_10_1736370a.swf',
+    'Tg_No21_20_10_10_1743100a.swf',
+    'Tg_No22_1746168a.swf',
+    'Tg_No23_01_11_10_1750855a.swf'
 );
 
 
@@ -115,7 +118,7 @@ $previous_employers = array_unique( $previous_employers );
 <div class="tab-content" id="tab-work">
 
 <div class="">
-  <div class="head"><h3>Tobias Grubbe's latest adventures - episode <?= $episode ?></h3></div>
+  <div class="head"><h3>Tobias Grubbe's latest adventures</h3></div>
   <div class="body">
     <br/>
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
@@ -128,9 +131,9 @@ Episode:
 <?php
 for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
     if( $i==$episode ) {
-?><strong><?= $i ?></strong>&nbsp;&nbsp;&nbsp;<?php
+?><strong><?= $i ?></strong>&nbsp;&nbsp;<?php
     } else {
-?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;&nbsp;&nbsp;<?php
+?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;&nbsp;<?php
     }
 }
 ?>
