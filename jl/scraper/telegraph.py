@@ -19,7 +19,7 @@
 #
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 import os
 import urlparse
@@ -28,6 +28,13 @@ import site
 site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
+
+
+
+def in_sunday_edition( pubdate ):
+    """ voodoo: treat anything published after 6pm sat as being in sunday edition"""
+    dt = pubdate + timedelta( hours=6 )
+    return dt.weekday() == 6
 
 
 
@@ -456,6 +463,13 @@ def Extract_HTML_Article( html, context ):
     if desctxt == u'':
         desctxt = ukmedia.FirstPara( art['content'] )
     art['description'] = desctxt
+
+    if not 'srcorgname' in art:
+        if in_sunday_edition( art['pubdate'] ):
+            art['srcorgname'] = u'sundaytelegraph'
+        else:
+            art['srcorgname'] = u'telegraph'
+
 
     return art
 
