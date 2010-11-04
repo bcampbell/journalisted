@@ -519,7 +519,7 @@ function canEditJourno( $journo_id )
     if( is_null( $P ) )
         return FALSE;
 
-    if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND journo_id=? AND permission='edit'",
+    if( db_getOne( "SELECT id FROM person_permission WHERE person_id=? AND ((journo_id=? AND permission='edit') OR permission='admin')",
         $P->id(), $journo_id ) ) {
         return TRUE;
     } else {
