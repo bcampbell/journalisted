@@ -80,8 +80,13 @@ class CreateJourno {
         $err = array();
         if( $params['prettyname'] == '' )
             $err['prettyname'] = 'blank Pretty Name';
-        if( !preg_match( '/^[a-z]+(-[a-z0-9]+){1,}$/', $params['ref'] ) )
-            $err['ref'] = 'bad ref (needs at least one hyphen)';
+        if( !preg_match( '/^[a-z]+(-[a-z0-9]+){1,}$/', $params['ref'] ) ) {
+            $err['ref'] = 'bad ref (needs to be lowercase and contain at least one hyphen)';
+        } else {
+            if( db_getOne( "SELECT id FROM journo WHERE ref=?", $params['ref'] ) ) {
+                $err['ref'] = "Already a journo with that ref! <a href=\"/adm/{$params['ref']}\">{$params['ref']}</a>";
+            }
+        }
         if( !preg_match( '/^[a-z]+$/', $params['firstname'] ) )
             $err['firstname'] = 'bad first name';
         if( !preg_match( '/^[a-z]+$/', $params['lastname'] ) )
