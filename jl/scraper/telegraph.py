@@ -406,15 +406,14 @@ def Extract_HTML_Article( html, context ):
     # 'story' div contains byline and main article text
     storydiv = soup.find( 'div', {'class': 'story' } )
     bylinediv = storydiv.find( 'div', {'class':'byline'} )
-    # byline div contains both byline and pubdate
-    txt = bylinediv.renderContents(None)
-    txt = ukmedia.FromHTML( txt )
-    txt = u' '.join( txt.split() )
-    m = re.match( r"\s*(.*?)\s*(?:(?:Last Updated)|(?:Published)):\s+(.*)", txt )
-    art['byline'] = m.group(1)
-    pubdatetxt = m.group(2) # eg "11:52PM BST 22 Jul 2008"
-    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
-
+    # contains both byline and pubdate
+    bylinespan = bylinediv.find('span', {'class':'bylineBody'} )
+    if bylinespan is not None:
+        art['byline'] = ukmedia.FromHTMLOneLine( bylinespan.renderContents( None ) )
+    else:
+        art['byline'] = u''
+    datespan = bylinediv.find('span', {'class':'publishedDate'} )
+    art['pubdate'] = ukmedia.ParseDateTime( datespan.renderContents( None ) )
 
 
     # images
@@ -447,10 +446,10 @@ def Extract_HTML_Article( html, context ):
 
     # cull out cruft from the story div:
     bylinediv.extract()
-    for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\bslideshow\b') } ):
-        cruft.extract()
-    for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\brelated_links_inline\b') } ):
-        cruft.extract()
+    for bad_class in ('slideshow', 'related_links_inline', 'embeddedFirstVideo' ):
+        for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\b' + bad_class + r'\b') } ):
+            cruft.extract()
+
     for cruft in storydiv.findAll( 'ul', {'class': 'storylist'} ):
         cruft.extract()
     # inskin ad delivery thingy which wraps around brightcove video player
@@ -796,6 +795,12 @@ def CalcSrcID( url ):
     if o[1] == 'blogs.telegraph.co.uk':
         return 'telegraph_blogs' + o[2]
 
+    if o[1] == 'fashion.telegraph.co.uk':
+        return None
+
+    if re.search( r'/[a-z]*video/', url ):
+        return None
+
     m = srcidpat_html.search( o[2] )
     if m:
         return 'telegraph_' + m.group(1)
@@ -895,7 +900,7 @@ def FindArticles():
     return l
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
 
 #    l = FindArticles()
 #    print "=====%d OLD=====" %(len(l))

@@ -186,11 +186,10 @@ def FindArticlesFromSiteMap( sitemap_url ):
     if 'thetimes.co.uk/' in sitemap_url:
         sitemap = soup.find( 'div', {'id':'sitemap-body'} )
         for section in sitemap.findAll( 'div', {'class':'section'} ):
-            section_name = section.h2.a.img['alt']
-            for li in section.findAll( 'li' ):
-                a = li.a
+            for a in section.findAll( 'a' ):
                 name = a.string
                 url = urlparse.urljoin( sitemap_url, a.get('href') )
+
                 if url is not None:
                     o = urlparse.urlparse( url )
                     if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
@@ -207,6 +206,7 @@ def FindArticlesFromSiteMap( sitemap_url ):
                 o = urlparse.urlparse( url )
                 if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
                     pages.append( url )
+
 
     article_urls = set()
     for page_url in pages:
@@ -285,6 +285,9 @@ def CalcSrcID( url ):
         return None
 
     # main paper?
+
+    if '/News_multimedia/' in url:
+        return None # skip videos
 
     if o[1].startswith('feeds.' ):
         return None  # got wrong url from rss feed!
@@ -766,7 +769,7 @@ if __name__ == "__main__":
 
     Login()
 
-
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    # large maxerrors to handle video-only pages
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=200 )
 
 
