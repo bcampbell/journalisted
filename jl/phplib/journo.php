@@ -588,7 +588,7 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
 
     /* assorted bio things */
-    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC", $journo['id'] );
+    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo['id'] );
     foreach( $employers as &$emp ) { $emp['current'] = ($emp['current']=='t') ? TRUE:FALSE; } unset( $emp );
     $data['employers'] = $employers;
 
