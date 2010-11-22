@@ -225,9 +225,9 @@ $links = array_filter( $links, 'is_not_pingback_link' );
       <ul>
 <?php   foreach( $current_employment as $e ) { ?>
 <?php       if( $e['kind'] == 'e' ) { /* employment */ ?>
-        <li><?php if($e['job_title']){ ?><span class="jobtitle"><?= $e['job_title'] ?></span> at <?php } ?><span class="publication"><?= $e['employer'] ?></span></li>
+        <li><?php if($e['job_title']){ ?><span class="jobtitle"><?= h($e['job_title']) ?></span> at <?php } ?><span class="publication"><?= h($e['employer']) ?></span></li>
 <?php       } else { /* freelance */ ?>
-        <li>Freelance <?= $e['employer'] ? ' (' . $e['employer'] . ')' : '' ?></span></li>
+        <li>Freelance <?= $e['employer'] ? ' (' . h($e['employer']) . ')' : '' ?></span></li>
 <?php       } ?>
 <?php   } ?>
       </ul>
@@ -422,15 +422,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
       <li>
   <?php if( $e['kind'] == 'e' ) { ?>
-        <h4><?= $e['job_title'] ? $e['job_title'].', ' : '' ?><?= $e['employer'] ?></h4>
+        <h4><?= $e['job_title'] ? h($e['job_title']).', ' : '' ?><?= h($e['employer']) ?></h4>
   <?php } else { ?>
-        <h4>Freelance <?= $e['employer'] ? ' ('.$e['employer'].')' : ''?></h4>
+        <h4>Freelance <?= $e['employer'] ? ' ('.h($e['employer']).')' : ''?></h4>
   <?php } ?>
 
-  <?php $year_from = $e['year_from'] ? $e['year_from'] : ''; ?>
-  <?php $year_to = $e['current']?'present':$e['year_to']; ?>
+  <?php $year_from = $e['year_from'] ? h($e['year_from']) : ''; ?>
+  <?php $year_to = $e['current']?'present':h($e['year_to']); ?>
   <?php if( $e['year_from'] || $e['year_to'] || $e['current'] ) { ?>
-        <span class="daterange"><?= $year_from ?> - <?= $year_to ?></span>
+        <span class="daterange"><?= h($year_from) ?> - <?= h($year_to) ?></span>
   <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
@@ -461,12 +461,12 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <ul class="bio-list">
 <?php foreach( $education as $edu ) { ?>
       <li>
-        <h4><?= $edu['school']; ?></h4>
+        <h4><?= h($edu['school']); ?></h4>
 <?php if( $edu['qualification'] && $edu['field'] ) { ?>
-        <?= $edu['qualification']; ?>, <?=$edu['field']; ?><br/>
+        <?= h($edu['qualification']); ?>, <?= h($edu['field']); ?><br/>
 <?php } ?>
         <?php if( $edu['year_from'] || $edu['year_to'] ) { ?>
-        <span class="daterange"><?= $edu['year_from']; ?>-<?= $edu['year_to']; ?></span>
+        <span class="daterange"><?= h($edu['year_from']); ?>-<?= h($edu['year_to']); ?></span>
         <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[Edit]</a>
@@ -496,7 +496,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <li>
       <h4><?= $b['title']; ?></h4>
       <?php if( $b['publisher'] || $b['year_published'] ) { ?>
-      <?= $b['publisher']; ?>, <?= $b['year_published']; ?>
+      <?= h($b['publisher']); ?>, <?= h($b['year_published']); ?>
       <?php } ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_books?ref=<?= $ref ?>&action=edit&id=<?= $b['id'] ?>">[Edit]</a>
@@ -523,8 +523,8 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <ul class="bio-list">
 <?php foreach( $awards as $a ) { ?>
     <li>
-      <h4><?= $a['award']; ?></h4>
-      <?php if( $a['year'] ) { ?><?= $a['year'] ?><?php } ?>
+      <h4><?= h($a['award']); ?></h4>
+      <?php if( $a['year'] ) { ?><?= h($a['year']) ?><?php } ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">[Edit]</a>
       <?php } ?>
