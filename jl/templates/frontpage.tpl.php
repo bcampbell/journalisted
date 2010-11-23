@@ -26,7 +26,7 @@
    <li><a class="subscribe" href="/weeklydigest">Subscribe to the journa<i>listed</i> weekly digest</a></li>
    <li><a class="edit-profile" href="/profile">edit profile</a></li>
    <li><a class="search-articles" href="/search?type=article">search articles</a></li>
-   <li><a class="search-journos" href="/search?type=journo">search for journalists</a></li>
+   <li><a class="create-your-profile" href="/student">Student? Create your profile</a></li>
    <li><a class="alerts" href="/alert">alerts</a></li>
   </ul>
  </div>
