@@ -134,7 +134,13 @@ class Employment
             $v = get_http_var( $f, null );
             switch( $def['type'] ) {
                 case 'string': $this->$f = $v; break;
-                case 'int': $this->$f = intval($v); break;
+                case 'int':
+                    if( $v==='' or is_null( $v) ) {
+                        $this->$f = null;
+                    } else {
+                        $this->$f = intval($v);
+                    }
+                    break;
                 case 'bool': $this->$f = $v ? TRUE:FALSE; break;
                 default: $this->$f=null; break;
             }
