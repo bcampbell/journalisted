@@ -334,6 +334,7 @@ no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">cha
 <?php
 
 
+	EmitEmployment( $journo_id );
 	EmitEmailAddresses( $journo_id );
 	EmitWebLinks( $journo_id );
 	EmitBios( $journo_id );
@@ -493,8 +494,38 @@ print form_element_hidden( 'journo_id', $journo_id );
 
 }
 
+function EmitEmployment( $journo_id )
+{
+    $emps = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo_id );
+
+    $fields = array( "employer",'job_title','year_from','year_to','current','rank','kind' );
+
+?>
+<h3>Employment</h3>
+<table>
+<tr>
+<?php foreach( $fields as $f ) { ?><th><?= $f ?></th><?php } ?><th></th>
+</tr>
+</thead>
+<tbody>
+<?php
+    foreach( $emps as $emp ) {
+    $edit_url = "/adm/journo-employment?journo_id={$journo_id}&id={$emp['id']}";
+?>
+<tr>
+  <?php foreach( $fields as $f ) { ?><td><?= h($emp[$f]) ?></td><?php } ?>
+  <td><a href="<?= $edit_url ?>">edit</a></td>
+</tr>
+<?php } ?>
+</tbody>
+</table>
+
+<?php
+}
+
 
 function EmitBios( $journo_id )
+
 {
 	print "<h3>Bios</h3>\n";
 	$rows = db_getAll( "SELECT * FROM journo_bio WHERE journo_id=?", $journo_id );
