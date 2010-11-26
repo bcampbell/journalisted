@@ -357,6 +357,16 @@ function crack_url( $url )
 }
 
 
+// return domain part of url, stripped of www prefix
+function pretty_domain( $url )
+{
+    $bits = crack_url( $url );
+    $domain = $bits['host'];
+    $domain = preg_replace( "/^www./", '', $domain );
+    return $domain;
+}
+
+
 // return a value in an array if it exists, otherwise return the default.
 function arr_get( $key, &$arr, $default=NULL )
 {

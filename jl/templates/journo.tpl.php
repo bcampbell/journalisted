@@ -439,7 +439,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
         <span class="daterange"><?= h($year_from) ?> - <?= h($year_to) ?></span>
   <?php } ?>
   <?php if( isset( $e['src'] ) && $e['src'] ) { $src=$e['src']; ?>
-    <br/><span class="source">(source: <a href="<?= $src['url'] ?>"><?=$src['publication'] ?></a>)</span>
+    <br/><span class="source">(source: <a href="<?= $src['url'] ?>"><?= $src['publication'] ? $src['publication'] : pretty_domain( $src['url'] ) ?></a>)</span>
   <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>
