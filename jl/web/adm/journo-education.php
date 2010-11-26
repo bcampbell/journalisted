@@ -13,16 +13,16 @@ require_once '../phplib/admmodels.php';
 $id = get_http_var( "id",null );
 $journo_id = get_http_var( "journo_id",null );
 if( is_null( $journo_id ) ) {
-    $journo_id = db_getOne( "SELECT journo_id FROM journo_employment WHERE id=?", $id );
+    $journo_id = db_getOne( "SELECT journo_id FROM journo_education WHERE id=?", $id );
 }
 $journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
 
-admPageHeader( $journo['ref'] . " Employment Info" );
+admPageHeader( $journo['ref'] . " Education Info" );
 
 $action = get_http_var( '_action' );
 if($action == 'update' || $action=='create' ) {
     // form has been submitted
-    $obj = new Employment();
+    $obj = new Education();
     $obj->fromHTTPVars( $_POST );
 /*
     print"<hr/><pre><code>\n";
@@ -38,7 +38,7 @@ if($action == 'update' || $action=='create' ) {
 <?php
 
 } else {
-    $obj = new Employment();
+    $obj = new Education();
 
     if( !$id ) {
         // it's new.
@@ -52,7 +52,7 @@ SELECT e.*,
         l.title as src__title,
         l.pubdate as src__pubdate,
         l.publication as src__publication
-    FROM (journo_employment e LEFT JOIN link l ON e.src=l.id )
+    FROM (journo_education e LEFT JOIN link l ON e.src=l.id )
     WHERE e.id=?
 EOT;
         $row = db_getRow( $sql, $id );
@@ -65,7 +65,7 @@ EOT;
     $form = $obj->buildForm();
 
 ?>
-    <h2><?= $id ? "Edit" : "Create New" ?> employment entry for <?= $journo['ref'] ?></h2>
+    <h2><?= $id ? "Edit" : "Create New" ?> education entry for <?= $journo['ref'] ?></h2>
 <form action="" method="POST">
     <?= $form->render(); ?>
 </form>

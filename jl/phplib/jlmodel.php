@@ -202,7 +202,7 @@ class jlModel
             }
             $sql = "INSERT INTO {$this->table} (" . implode( ",", $insert_fields ) . ") ".
                 "VALUES (" . implode(',',$frags) . ")";
-            print $sql;
+            //print $sql;
             db_do( $sql, $params );
             $this->{$this->pk} = db_getOne( "SELECT lastval()" );
 //            eventlog_Add( "add-{$this->pageName}", $this->journo['id'], $item );

@@ -334,7 +334,9 @@ no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">cha
 <?php
 
 
-	EmitEmployment( $journo_id );
+	emitEmployment( $journo_id );
+	emitEducation( $journo_id );
+	emitAwards( $journo_id );
 	EmitEmailAddresses( $journo_id );
 	EmitWebLinks( $journo_id );
 	EmitBios( $journo_id );
@@ -494,14 +496,52 @@ print form_element_hidden( 'journo_id', $journo_id );
 
 }
 
-function EmitEmployment( $journo_id )
+
+function emitEmployment( $journo_id )
 {
-    $emps = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo_id );
+    $rows = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo_id );
 
     $fields = array( "employer",'job_title','year_from','year_to','current','rank','kind' );
 
 ?>
 <h3>Employment</h3>
+<?php
+
+    emitObjectTable( $rows, $fields, "/adm/journo-employment?journo_id={$journo_id}&id=%s" );
+}
+
+
+function emitEducation( $journo_id )
+{
+    $rows = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC, (kind='u') DESC", $journo_id );
+
+    $fields = array( 'kind','school','field','qualification','year_from','year_to' );
+
+?>
+<h3>Education</h3>
+<?php
+
+    emitObjectTable( $rows, $fields, "/adm/journo-education?journo_id={$journo_id}&id=%s" );
+}
+
+
+function emitAwards( $journo_id )
+{
+    $rows = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY year DESC", $journo_id );
+
+    $fields = array( 'award','year' );
+
+?>
+<h3>Awards</h3>
+<?php
+
+    emitObjectTable( $rows, $fields, "/adm/journo-awards?journo_id={$journo_id}&id=%s" );
+}
+
+
+function emitObjectTable( $rows, $fields, $editlink )
+{
+?>
 <table>
 <tr>
 <?php foreach( $fields as $f ) { ?><th><?= $f ?></th><?php } ?><th></th>
@@ -509,11 +549,11 @@ function EmitEmployment( $journo_id )
 </thead>
 <tbody>
 <?php
-    foreach( $emps as $emp ) {
-    $edit_url = "/adm/journo-employment?journo_id={$journo_id}&id={$emp['id']}";
+    foreach( $rows as $row ) {
+        $edit_url = sprintf( $editlink, $row['id'] );
 ?>
 <tr>
-  <?php foreach( $fields as $f ) { ?><td><?= h($emp[$f]) ?></td><?php } ?>
+  <?php foreach( $fields as $f ) { ?><td><?= h($row[$f]) ?></td><?php } ?>
   <td><a href="<?= $edit_url ?>">edit</a></td>
 </tr>
 <?php } ?>
