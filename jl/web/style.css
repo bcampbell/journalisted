@@ -195,6 +195,7 @@ a.remove {
   font-weight: bold;
   color: #ff0000;
 }
+.source { font-size: x-small; color: #888888; }
 
 /* default form styling */
 
@@ -1166,6 +1167,14 @@ ul.newList li a:focus {-moz-outline-style: none;}
   top: 10px;
   right: 0px;
 }
+
+.experience li { position: relative; }
+.experience .source {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+}
+
 /* Global submit style */
 
 input[type="submit"], input[type="button"], .button {

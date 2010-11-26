@@ -53,6 +53,12 @@
     year_from  - eg 2005
     year_to
     current    - boolean flag indicating still employed in this job
+    src        - null or array of:
+        url
+        title
+        pubdate
+        publication
+
 
  $education    - list of education entries
    for each one:
@@ -431,6 +437,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <?php $year_to = $e['current']?'present':h($e['year_to']); ?>
   <?php if( $e['year_from'] || $e['year_to'] || $e['current'] ) { ?>
         <span class="daterange"><?= h($year_from) ?> - <?= h($year_to) ?></span>
+  <?php } ?>
+  <?php if( isset( $e['src'] ) && $e['src'] ) { $src=$e['src']; ?>
+    <br/><span class="source">(source: <a href="<?= $src['url'] ?>"><?=$src['publication'] ?></a>)</span>
   <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit"  href="/profile_employment?ref=<?= $ref ?>&action=edit&id=<?= $e['id']; ?>">[Edit]</a>

@@ -588,7 +588,9 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
 
     /* assorted bio things */
-    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo['id'] );
+    //    $employers = db_getAll( "SELECT * FROM journo_employment WHERE journo_id=? ORDER BY current DESC, year_to DESC, rank DESC", $journo['id'] );
+    $employers = journo_collectEmployment( $journo['id'] );
+
     foreach( $employers as &$emp ) { $emp['current'] = ($emp['current']=='t') ? TRUE:FALSE; } unset( $emp );
     $data['employers'] = $employers;
 
@@ -688,6 +690,43 @@ EOT;
 
 }
 
+function journo_collectEmployment( $journo_id ) {
+    $sql = <<<EOT
+SELECT e.*,
+        l.id as src__id,
+        l.url as src__url,
+        l.title as src__title,
+        l.pubdate as src__pubdate,
+        l.publication as src__publication
+    FROM (journo_employment e LEFT JOIN link l ON e.src=l.id )
+    WHERE e.journo_id=?
+    ORDER BY current DESC, year_to DESC, year_from DESC, rank DESC
+EOT;
+    $rows = db_getAll( $sql, $journo_id );
+    $emps = array();
+    foreach( $rows as $row ) {
+        $src = null;
+        if( $row['src__id'] ) {
+            $src = array(
+                'id'=>$row['src__id'],
+                'url'=>$row['src__url'],
+                'title'=>$row['src__title'],
+                'pubdate'=>$row['src__pubdate'],
+                'publication'=>$row['src__publication'] );
+        }
+        $emp = array( 'kind'=>$row['kind'],
+            'id'=>$row['id'],
+            'employer'=>$row['employer'],
+            'job_title'=>$row['job_title'],
+            'year_from'=>$row['year_from'],
+            'year_to'=>$row['year_to'],
+            'current'=>$row['current'],
+            'src'=>$src );
+        $emps[] = $emp;
+    }
+
+    return $emps;
+}
 
 
 // return a list of journos which match the query text using metaphone
