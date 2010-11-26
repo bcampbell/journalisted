@@ -11,19 +11,22 @@ abstract class jlWidget
     public $name = null;
     public $value = null;
 
-    public function __construct( $name, $opts = array(), $attrs = array() )
+    public function __construct( $name, $value=null, $opts = array(), $attrs = array() )
     {
         $this->name = $name;
+        $this->value = $value;
         $this->opts['label'] = $name;
         $this->opts = array_merge($this->opts, $opts);
         $this->attrs = array_merge($this->attrs, $attrs);
     }
 
-    // returns true if this widget doesn't need any visual layout
+    public function label() { return $this->opts['label']; }
+    public function explain() { return $this->opts['explain']; }
+    // returns true if this part of normal widget grid arrangement.
     // (eg if you're using a <table> to arrange your form, you don't want
-    // empty cells for hidden input elements, so if hidden() returns true,
+    // empty cells for hidden input elements, so if inGrid() returns false,
     // it indicates that the widget should be shoved down below the </table>)
-    public function hidden() { return false; }
+    public function inGrid() { return true; }
 
     // helper fn for outputting html tag
     public function buildTag( $tag, $attrs, $content=null )
@@ -61,7 +64,7 @@ abstract class jlWidget
 
 class jlWidgetHidden extends jlWidget
 {
-    public function hidden() { return true; }
+    public function inGrid() { return false; }
     public function render( $errs=array() )
     {
         $id = $this->name;
@@ -76,14 +79,15 @@ class jlWidgetHidden extends jlWidget
 // submit button
 class jlWidgetSubmit extends jlWidget
 {
+    public function inGrid() { return false; }
     public function render( $errs=array() )
     {
         $id = $this->name;
         $input = $this->buildTag('input',
             array('type'=>'submit', 'id'=>$id, 'name'=>$this->name, 'value'=>$this->name ) );
 
-        $out = sprintf( "<tr><td colspan=\"2\">%s</td></tr>\n", $input );
-        return $out;
+//        $out = sprintf( "<tr><td colspan=\"2\">%s</td></tr>\n", $input );
+        return $input;
     }
 }
 
@@ -94,23 +98,12 @@ class jlWidgetInput extends jlWidget
     {
         $id = $this->name;
 
-        $label = '';
-        if( $this->opts['label'] ) {
-            $label = sprintf( '<label for="%s">%s</label>', $id, $this->opts['label'] );
-        }
 
         $input = $this->buildTag('input',
             array('type'=>'text', 'id'=>$id, 'name'=>$this->name, 'value'=>$this->value) );
 
-        $explain = '';
-        if( $this->opts['explain'] ) {
-            $explain = sprintf( '<span class="explain">%s</span>', $this->opts['explain'] );
-        }
+        return $input;
 
-        $out = sprintf("<tr><td>%s</td><td>%s<br/>%s</td>\n",
-            $label, $input, $explain );
-
-        return $out;
     }
 }
 
@@ -121,26 +114,13 @@ class jlWidgetCheckbox extends jlWidget
     {
         $id = $this->name;
 
-        $label = '';
-        if( $this->opts['label'] ) {
-            $label = sprintf( '<label for="%s">%s</label>', $id, $this->opts['label'] );
-        }
-
         $attrs = array('type'=>'checkbox', 'id'=>$id, 'name'=>$this->name, 'value'=>1 );
         if( $this->value ) {
             $attrs['checked'] = null;
         }
         $input = $this->buildTag('input', $attrs );
 
-        $explain = '';
-        if( $this->opts['explain'] ) {
-            $explain = sprintf( '<span class="explain">%s</span>', $this->opts['explain'] );
-        }
-
-        $out = sprintf("<tr><td>%s</td><td>%s<br/>%s</td>\n",
-            $label, $input, $explain );
-
-        return $out;
+        return $input;
     }
 }
 
@@ -149,11 +129,6 @@ class jlWidgetSelect extends jlWidget
     public function render( $errs=array() )
     {
         $id = $this->name;
-
-        $label = '';
-        if( $this->opts['label'] ) {
-            $label = sprintf( '<label for="%s">%s</label>', $id, $this->opts['label'] );
-        }
 
         $options = '';
         foreach( $this->opts['choices'] as $v=>$txt ) {
@@ -164,15 +139,7 @@ class jlWidgetSelect extends jlWidget
         $input = $this->buildTag('select',
             array( 'id'=>$id, 'name'=>$this->name ), $options );
 
-        $explain = '';
-        if( $this->opts['explain'] ) {
-            $explain = sprintf( '<span class="explain">%s</span>', $this->opts['explain'] );
-        }
-
-        $out = sprintf("<tr><td>%s</td><td>%s<br/>%s</td>\n",
-            $label, $input, $explain );
-
-        return $out;
+        return $input;
     }
 }
 
@@ -185,11 +152,11 @@ class jlForm extends jlWidget
 {
     protected $children = array();
 
-    public function __construct( $name, $opts = array(), $attrs = array() )
+    public function __construct( $name, $value=null, $opts = array(), $attrs = array() )
     {
         $this->attrs['action'] = '';
         $this->attrs['method'] = 'GET';
-        parent::__construct( $name, $opts, $attrs );
+        parent::__construct( $name, $value, $opts, $attrs );
     }
 
     public function addWidget( $w ) {
@@ -213,18 +180,32 @@ class jlForm extends jlWidget
     {
         $out = '<table>';
         foreach( $this->children as $name=>$w ) {
-            if( !$w->hidden() ) {
-                $out .= $w->render( $errs );
+            if( $w->inGrid() ) {
+                $id = $name;
+
+                $label = $w->label();
+                if( $label ) {
+                    $label = sprintf( '<label for="%s">%s</label>', $id, $w->label() );
+                }
+                $explain = $w->explain();
+                if( $explain) {
+                    $explain = sprintf( '<span class="explain">%s</span>', $w->explain() );
+                }
+
+                $widget_html = $w->render();
+
+                $out .= sprintf("<tr><td>%s</td><td>%s<br/>%s</td>\n",
+                    $label, $widget_html, $explain );
             }
         }
         $out .= "</table>\n";
         foreach( $this->children as $name=>$w ) {
-            if( $w->hidden() ) {
-                $out .= $w->render( $errs );
+            if( !$w->inGrid() ) {
+                $out .= $w->render();
             }
         }
 
-        return $this->buildTag( 'form', array(), $out );
+        return $out;
     }
 }
 ?>

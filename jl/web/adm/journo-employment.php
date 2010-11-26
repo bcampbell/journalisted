@@ -6,41 +6,86 @@ require_once '../conf/general';
 require_once '../../phplib/db.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/jlforms.php';
+require_once '../phplib/jlmodel.php';
 
-class EmpEditor extends jlForm
+
+class Link extends jlModel
+{
+    function __construct() {
+        $this->configure( 'link', array(
+            'id'=>array('type'=>'int', 'pk'=>true),
+            'url'=>array('type'=>'string'),
+            'title'=>array('type'=>'string'),
+            'pubdate'=>array('type'=>'datetime'),
+            'publication'=>array('type'=>'string'),
+        ) );
+
+        parent::__construct();
+    }
+}
+
+class Employment extends jlModel
 {
     static public $kinds = array( 'e'=>'employment', 'f'=>'freelance' );
 
-    public function __construct( $data=array() )
-    {
-        $this->addWidgets( array(
-            new jlWidgetInput('employer'),
-            new jlWidgetInput('job_title'),
-            new jlWidgetInput('year_from'),
-            new jlWidgetInput('year_to'),
-            new jlWidgetCheckbox('current'),
-            //'current' => new sfWidgetFormInputCheckbox(),
-            new jlWidgetInput('rank'),
-            new jlWidgetSelect('kind', array('choices'=>self::$kinds ) ),
-            new jlWidgetHidden( 'journo_id' ),
-            new jlWidgetHidden( '_action' ),
+    function __construct() {
+        $this->configure( 'journo_employment', array(
+            'id'=>array('type'=>'int', 'pk'=>true),
+            'journo_id'=>array('type'=>'int'),
+            'employer'=>array('type'=>'string'),
+            'job_title'=>array('type'=>'string'),
+            'year_from'=>array('type'=>'int'),
+            'year_to'=>array('type'=>'int'),
+            'current'=>array('type'=>'bool'),
+            'rank'=>array('type'=>'int','notnull'=>TRUE ),
+            'kind'=>array('type'=>'string'),
+            'src'=>array( 'type'=>'fk', 'othermodel'=>'Link' ),
         ) );
 
-        // are we editing, or creating?
-        if( isset( $data['id'] ) && $data['id'] ) {
-            // editing
-            $data['_action'] = 'update';
-            $this->addWidget( new jlWidgetHidden( 'id' ) );
-            $this->addWidget( new jlWidgetSubmit( 'update' ) );
+        parent::__construct();
+    }
+
+    function save() {
+        if( !$this->src->isBlank()) {
+            $this->src->save();
+        }
+        parent::save();
+    }
+
+    function buildForm() {
+        $form = new jlForm('');
+        $src_form = new jlForm('src');
+        $src = $this->src;
+        $src_form->addWidgets( array(
+            new jlWidgetHidden('src[id]', $src->id),
+            new jlWidgetInput('src[url]', $src->url),
+            new jlWidgetInput('src[title]', $src->title),
+            new jlWidgetInput('src[pubdate]', $src->pubdate),
+            new jlWidgetInput('src[publication]', $src->publication),
+        ) );
+
+        $form->addWidgets( array(
+            new jlWidgetHidden('id', $this->id ),
+            new jlWidgetInput('employer', $this->employer ),
+            new jlWidgetInput('job_title', $this->job_title),
+            new jlWidgetInput('year_from', $this->year_from ),
+            new jlWidgetInput('year_to', $this->year_to),
+            new jlWidgetCheckbox('current', $this->current),
+            new jlWidgetInput('rank', $this->rank),
+            new jlWidgetSelect('kind', $this->kind, array('choices'=>self::$kinds ) ),
+            new jlWidgetHidden( 'journo_id', $this->journo_id ),
+            $src_form,
+        ) );
+
+        if( is_null( $this->pk() ) ) {
+            $form->addWidget( new jlWidgetHidden( '_action','create' ) );
+            $form->addWidget( new jlWidgetSubmit( 'create' ) );
         } else {
-            // creating new
-            $data['_action'] = 'create';
-            $this->addWidget( new jlWidgetSubmit( 'add' ) );
+            $form->addWidget( new jlWidgetHidden( '_action','update' ) );
+            $form->addWidget( new jlWidgetSubmit( 'update' ) );
         }
 
-        $this->populate( $data );
-
-        parent::__construct( 'emp' );
+        return $form;
     }
 }
 
@@ -55,13 +100,18 @@ $journo = db_getRow( "SELECT * FROM journo WHERE id=?", $journo_id );
 
 admPageHeader( $journo['ref'] . " Employment Info" );
 
-
-
 $action = get_http_var( '_action' );
 if($action == 'update' || $action=='create' ) {
     // form has been submitted
     $emp = new Employment();
-    $emp->fromHTTPVars();
+    $emp->fromHTTPVars( $_POST );
+/*
+    print"<hr/><pre><code>\n";
+    print_r( $_POST );
+    print "--------\n";
+    print_r( $emp );
+    print"</code></pre><hr/>\n";
+*/
     $emp->save();
 
 ?>
@@ -70,137 +120,43 @@ if($action == 'update' || $action=='create' ) {
 
 } else {
     $emp = new Employment();
-    if( is_null( $id ) ) {
+
+    if( !$id ) {
         // it's new.
         $emp->journo_id = $journo_id;
     } else {
         // fetch from db
-        $row =  db_getRow( "SELECT * FROM journo_employment WHERE id=?", $id );
+        $sql = <<<EOT
+SELECT e.*,
+        l.id as src__id,
+        l.url as src__url,
+        l.title as src__title,
+        l.pubdate as src__pubdate,
+        l.publication as src__publication
+    FROM (journo_employment e LEFT JOIN link l ON e.src=l.id )
+    WHERE e.id=?
+EOT;
+        $row = db_getRow( $sql, $id );
         $emp->fromDBRow( $row );
     }
-    // show form
-    $f = new EmpEditor( $emp->data() );
+/*    print"<pre>\n";
+    print_r( $emp );
+    print"</pre>\n";
+ */
+    $form = $emp->buildForm();
 
 ?>
-    <h2><?= $id ? "Edit Employment" : "Create New" ?></h2>
-    <?= $f->render(); ?>
+    <h2><?= $id ? "Edit" : "Create New" ?> employment entry for <?= $journo['ref'] ?></h2>
+<form action="" method="POST">
+    <?= $form->render(); ?>
+</form>
 <?php
-
 }
 
 ?>
-    <a href="/adm/<?= $journo['ref'] ?>">Back to journo</a>
+    <a href="/adm/<?= $journo['ref'] ?>">Back to <?= $journo['ref'] ?></a>
 <?php
 
 admPageFooter();
-
-
-
-
-class Employment
-{
-    public $table = 'journo_employment';
-    public $pk = 'id';
-    public $fields = array(
-        'id'=>array('type'=>'int', 'pk'=>true),
-        'journo_id'=>array('type'=>'int'),
-        'employer'=>array('type'=>'string'),
-        'job_title'=>array('type'=>'string'),
-        'year_from'=>array('type'=>'int'),
-        'year_to'=>array('type'=>'int'),
-        'current'=>array('type'=>'bool'),
-        'rank'=>array('type'=>'int'),
-        'kind'=>array('type'=>'string'),
-    );
-
-    function __construct() {
-        foreach( $this->fields as $f=>&$def ) {
-            if( !isset($def['pk'] ) ) {
-                $def['pk'] = false;
-            }
-        }
-    }
-
-    function data() {
-        $data = array();
-        foreach( $this->fields as $f=>&$def ) {
-            $data[$f] = $this->$f;
-        }
-        return $data;
-    }
-
-    function fromHTTPVars() {
-        foreach( $this->fields as $f=>$def ) {
-            $v = get_http_var( $f, null );
-            switch( $def['type'] ) {
-                case 'string': $this->$f = $v; break;
-                case 'int':
-                    if( $v==='' or is_null( $v) ) {
-                        $this->$f = null;
-                    } else {
-                        $this->$f = intval($v);
-                    }
-                    break;
-                case 'bool': $this->$f = $v ? TRUE:FALSE; break;
-                default: $this->$f=null; break;
-            }
-        }
-    }
-
-    function fromDBRow( $row ) {
-        foreach( $this->fields as $f=>$def ) {
-            $v = $row[$f];
-            switch( $def['type'] ) {
-                case 'string': $this->$f = $v; break;
-                case 'int': $this->$f = intval($v); break;
-                case 'bool': $this->$f = ($v=='t') ? TRUE:FALSE; break;
-                default: $this->$f=null; break;
-            }
-        }
-    }
-
-    function save() {
-        if( $this->{$this->pk} ) {
-            // update existing entry
-            $frags = array();
-            $params = array();
-            foreach( $this->fields as $f=>$def ) {
-                if( !$def['pk'] ) {
-                    $frags[] = "$f=?";
-                    $params[] = $this->$f;
-                }
-            }
-
-            /* TODO: restrict by journo id to stop people hijacking others entries! */
-            $sql = "UPDATE {$this->table} SET " . implode( ',', $frags ) . " WHERE id=?";
-            $params[] = $this->{$this->pk};
-
-            db_do( $sql, $params );
-
-//           eventlog_Add( "modify-{$this->pageName}", $this->journo['id'], $item );
-
-        } else {
-            /* insert new entry */
-            $frags = array();
-            $params = array();
-            $insert_fields = array();
-            foreach( $this->fields as $f=>$def ) {
-                if( !$def['pk'] ) {
-                    $insert_fields[] = $f;
-                    $frags[] = "?";
-                    $params[] = $this->$f;
-                }
-            }
-            $sql = "INSERT INTO {$this->table} (" . implode( ",", $insert_fields ) . ") ".
-                "VALUES (" . implode(',',$frags) . ")";
-            print $sql;
-            db_do( $sql, $params );
-            $this->{$this->pk} = db_getOne( "SELECT lastval()" );
-//            eventlog_Add( "add-{$this->pageName}", $this->journo['id'], $item );
-        }
-        db_commit();
-    }
-}
-
 
 ?>
