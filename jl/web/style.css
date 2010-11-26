@@ -1168,8 +1168,14 @@ ul.newList li a:focus {-moz-outline-style: none;}
   right: 0px;
 }
 
-.experience li { position: relative; }
-.experience .source {
+.experience li,
+.education li,
+.awards li
+  { position: relative; }
+.experience .source,
+.education .source,
+.awards .source
+{
   position: absolute;
   bottom: 0px;
   right: 0px;

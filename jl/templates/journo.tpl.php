@@ -53,12 +53,7 @@
     year_from  - eg 2005
     year_to
     current    - boolean flag indicating still employed in this job
-    src        - null or array of:
-        url
-        title
-        pubdate
-        publication
-
+    src        - null or array of: url, title, pubdate, publication
 
  $education    - list of education entries
    for each one:
@@ -67,6 +62,7 @@
     qualification - qualification attained (or '')
     year_from     -
     year_to       -
+    src           - null or array of: url, title, pubdate, publication
 
  $books        - list of books written by this journo
    for each one:
@@ -477,6 +473,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
         <?php if( $edu['year_from'] || $edu['year_to'] ) { ?>
         <span class="daterange"><?= h($edu['year_from']); ?>-<?= h($edu['year_to']); ?></span>
         <?php } ?>
+        <?php if( isset( $edu['src'] ) && $edu['src'] ) { $src=$edu['src']; ?>
+          <span class="source">(source: <a href="<?= $src['url'] ?>"><?= $src['publication'] ? $src['publication'] : pretty_domain( $src['url'] ) ?></a>)</span>
+        <?php } ?>
         <?php if( $can_edit_page ) { ?>
         <a class="edit" href="/profile_education?ref=<?= $ref ?>&action=edit&id=<?= $edu['id'] ?>">[Edit]</a>
         <?php } ?>
@@ -534,6 +533,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     <li>
       <h4><?= h($a['award']); ?></h4>
       <?php if( $a['year'] ) { ?><?= h($a['year']) ?><?php } ?>
+      <?php if( isset( $a['src'] ) && $a['src'] ) { $src=$a['src']; ?>
+        <span class="source">(source: <a href="<?= $src['url'] ?>"><?= $src['publication'] ? $src['publication'] : pretty_domain( $src['url'] ) ?></a>)</span>
+      <?php } ?>
       <?php if( $can_edit_page ) { ?>
       <a class="edit" href="/profile_awards?ref=<?= $ref ?>&action=edit&id=<?= $a['id'] ?>">[Edit]</a>
       <?php } ?>

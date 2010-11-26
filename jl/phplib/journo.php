@@ -589,10 +589,8 @@ function journo_collectData( $journo, $quick_n_nasty=false )
 
     /* assorted bio things */
     $data['employers'] = journo_collectEmployment( $journo['id'] );
-
-    $data['education'] = db_getAll( "SELECT * FROM journo_education WHERE journo_id=? ORDER BY year_to DESC, (kind='u') DESC", $journo['id'] );
-
-    $data['awards'] = db_getAll( "SELECT * FROM journo_awards WHERE journo_id=? ORDER BY year DESC", $journo['id'] );
+    $data['education'] = journo_collectEducation( $journo['id'] );
+    $data['awards'] = journo_collectAwards( $journo['id'] );
 
     $data['books'] = db_getAll( "SELECT * FROM journo_books WHERE journo_id=? ORDER BY year_published DESC", $journo['id'] );
 
@@ -722,6 +720,76 @@ EOT;
     }
 
     return $emps;
+}
+
+
+function journo_collectEducation( $journo_id ) {
+    $sql = <<<EOT
+SELECT e.*,
+        l.id as src__id,
+        l.url as src__url,
+        l.title as src__title,
+        l.pubdate as src__pubdate,
+        l.publication as src__publication
+    FROM (journo_education e LEFT JOIN link l ON e.src=l.id )
+    WHERE e.journo_id=?
+    ORDER BY e.year_to DESC, (e.kind='u') DESC
+EOT;
+    $rows = db_getAll( $sql, $journo_id );
+    $entries = array();
+    foreach( $rows as $row ) {
+        $src = null;
+        if( $row['src__id'] ) {
+            $src = array(
+                'id'=>$row['src__id'],
+                'url'=>$row['src__url'],
+                'title'=>$row['src__title'],
+                'pubdate'=>$row['src__pubdate'],
+                'publication'=>$row['src__publication'] );
+        }
+        $entry = array();
+        foreach( array('id','school','field','qualification','year_from','year_to','kind' ) as $f ) {
+            $entry[$f] = $row[$f];
+        }
+        $entry['src'] = $src;
+        $entries[] = $entry;
+    }
+    return $entries;
+}
+
+
+function journo_collectAwards( $journo_id ) {
+    $sql = <<<EOT
+SELECT a.*,
+        l.id as src__id,
+        l.url as src__url,
+        l.title as src__title,
+        l.pubdate as src__pubdate,
+        l.publication as src__publication
+    FROM (journo_awards a LEFT JOIN link l ON a.src=l.id )
+    WHERE a.journo_id=?
+    ORDER BY a.year DESC
+EOT;
+    $rows = db_getAll( $sql, $journo_id );
+    $entries = array();
+    foreach( $rows as $row ) {
+        $src = null;
+        if( $row['src__id'] ) {
+            $src = array(
+                'id'=>$row['src__id'],
+                'url'=>$row['src__url'],
+                'title'=>$row['src__title'],
+                'pubdate'=>$row['src__pubdate'],
+                'publication'=>$row['src__publication'] );
+        }
+        $entry = array();
+        foreach( array( 'id','award','year' ) as $f ) {
+            $entry[$f] = $row[$f];
+        }
+        $entry['src'] = $src;
+        $entries[] = $entry;
+    }
+    return $entries;
 }
 
 
