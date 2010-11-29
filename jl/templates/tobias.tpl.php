@@ -35,7 +35,8 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No23_01_11_10_1750855a.swf',
     'Tg_No24_08_11_10_1756114a.swf',
     'TgNo25_15_11_10_1761989a.swf',
-    'The_Opinions_of_To_1767591a.swf'
+    'The_Opinions_of_To_1767591a.swf',
+    'The_Opinions_of_To_1773238a.swf',
 );
 
 
