@@ -35,7 +35,8 @@ $canned = array(
     new EventLog(),
     new RegisteredJournos(),
     new Pingbacks(),
-    new FakeJournos()
+    new FakeJournos(),
+    new MightBeStudents(),
 );
 
 
@@ -296,7 +297,7 @@ function Tabulate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 <tbody>
 <?php foreach( $rows as $row ) { ?>
   <tr>
-    <?php foreach( $columns as $col ) { ?><td><?php echo call_user_func( $colfunc, $row, $col, $prevrow ); ?></td><?php } ?>
+    <?php foreach( $columns as $col ) { ?><td><?php echo call_user_func( $colfunc, &$row, $col, $prevrow ); ?></td><?php } ?>
   </tr>
 <?php $prevrow=$row; } ?>
 
@@ -895,6 +896,26 @@ class FakeJournos extends CannedQuery {
     function perform($params) {
         $sql = <<<EOT
 SELECT ref, prettyname, oneliner FROM journo WHERE fake=true;
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+}
+
+
+class MightBeStudents extends CannedQuery {
+    function __construct() {
+        $this->name = get_class($this);
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show journos who look like they might still be students";
+    }
+
+    function perform($params) {
+        $sql = <<<EOT
+SELECT j.ref, j.prettyname, j.oneliner,j.created as journo_created, e.school,e.field,e.qualification,e.year_from
+    FROM journo j INNER JOIN journo_education e ON e.journo_id=j.id
+    WHERE e.year_to IS NULL;
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
