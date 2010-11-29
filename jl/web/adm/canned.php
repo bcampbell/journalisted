@@ -908,14 +908,15 @@ class MightBeStudents extends CannedQuery {
     function __construct() {
         $this->name = get_class($this);
         $this->ident = strtolower( $this->name );
-        $this->desc = "Show journos who look like they might still be students";
+        $this->desc = "Show journos who look like they might still be students (because they have an education entry with an open end date)";
     }
 
     function perform($params) {
         $sql = <<<EOT
 SELECT j.ref, j.prettyname, j.oneliner,j.created as journo_created, e.school,e.field,e.qualification,e.year_from
     FROM journo j INNER JOIN journo_education e ON e.journo_id=j.id
-    WHERE e.year_to IS NULL;
+    WHERE e.year_to IS NULL
+    ORDER BY journo_created DESC, j.ref
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
