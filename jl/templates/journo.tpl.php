@@ -74,6 +74,7 @@
    for each one:
     award          - description of the award (eg "Nobel Prize for Chemistry")
     year            - (eg "2009", or NULL)
+    src           - null or array of: url, title, pubdate, publication
 
  $articles     - list of the most recent articles the journo has written
    for each one:
@@ -147,6 +148,29 @@ foreach( $employers as $emp ) {
     if( $emp['current'] )
         $current_employment[] = $emp;
 }
+
+/* sort by rank, then year_from */
+function cmp_emp( $a, $b )
+{
+    if( isset($a['rank']) && isset($b['rank']) ) {
+        if( $a['rank'] < $b['rank'] )
+            return 1;   // want highest first
+        if( $a['rank'] > $b['rank'] )
+            return -1;
+    }
+    if( $a['year_from'] < $b['year_from'] )
+        return 1;  // want highest first
+    if( $a['year_from'] > $b['year_from'] )
+        return -1;
+
+/*    if( $a['year_to'] < $b['year_to'] )
+        return 1;  // want highest first
+    if( $a['year_to'] > $b['year_to'] )
+        return -1;
+*/
+    return 0;
+}
+usort( $current_employment, "cmp_emp" );
 
 /* list of previous employers (just employer name, nothing else) */
 $previous_employers = array();

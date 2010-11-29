@@ -714,6 +714,7 @@ EOT;
             'job_title'=>$row['job_title'],
             'year_from'=>$row['year_from'],
             'year_to'=>$row['year_to'],
+            'rank'=>$row['rank'],
             'current'=>$row['current']=='t'?TRUE:FALSE,
             'src'=>$src );
         $emps[] = $emp;
