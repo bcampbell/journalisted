@@ -180,6 +180,13 @@ foreach( $employers as $emp ) {
 }
 $previous_employers = array_unique( $previous_employers );
 
+
+/* is journo an editor? */
+$is_editor = FALSE;
+if( isset( $admin_tags ) && preg_match( '/\beditor\b/i', $admin_tags ) ) {
+    $is_editor = TRUE;
+}
+
 /* separate pingbacks from the other links */
 function is_pingback_link( &$l ) { return $l['kind']=='pingback'; }
 function is_not_pingback_link( &$l ) { return $l['kind']!='pingback'; }
@@ -714,6 +721,16 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot"></div>
 </div>
 
+<?php if( $is_editor ) { ?>
+<div class="box">
+ <div class="head"><h3>Do you have more information to add to this profile?</div>
+ <div class="body">
+ <?= SafeMailTo( OPTION_TEAM_EMAIL . "?subject=" . urlencode('Information about ' . $prettyname), 'Let us know' ) ?>
+ </div>
+ <div class="foot"></div>
+</div>
+<?php } ?>
+
 <div class="box actions you-can-also">
   <div class="head"><h3>You can also...</h3></div>
   <div class="body">
@@ -861,7 +878,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 
 
-
+<?php if( !$is_editor ) { ?>
 <div class="box mistake">
  <div class="head"><h3>Spotted a mistake?</h3></div>
  <div class="body">
@@ -870,6 +887,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
  </div>
  <div class="foot"></div>
 </div>
+<?php } ?>
 
 </div> <!-- end sidebar -->
 
