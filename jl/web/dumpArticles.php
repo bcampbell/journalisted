@@ -23,7 +23,7 @@ try {
     /* (TODO: any way to remove the hardcoded IP?) */
 
 
-    $ip_whitelist = array( '127.0.1.1','93.93.131.123','82.133.93.217' );
+    $ip_whitelist = array( '127.0.1.1','93.93.131.123','82.133.93.217','46.51.168.211' );
 
     if( !in_array( $_SERVER['REMOTE_ADDR'], $ip_whitelist ) ) {
         throw new Exception( "local access only" );
