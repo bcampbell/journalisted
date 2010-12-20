@@ -63,6 +63,8 @@ def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, post_fn=None, maxer
         found.append( context )
     else:
         found = found + findarticles_fn()
+        if len(found) == 0:
+            raise Exception( "No articles found" )
 
     # remove dupes (eg often articles appear in more than one RSS feed)
     found = unique_articles( found )
@@ -121,7 +123,7 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
         except (Exception), e:
             msg = u"ERROR fetching feed '%s' (%s): %s" % (feedname,feedurl,e.__class__)
-            print >>sys.stderr, msg.encode( 'utf-8' )
+            ukmedia.DBUG( msg + "\n" )
 #            print >>sys.stderr, '-'*60
 #            print >>sys.stderr, traceback.format_exc()
 #            print >>sys.stderr, '-'*60
@@ -318,14 +320,13 @@ def ProcessArticles( foundarticles, store, extractfn, postfn=None, maxerrors=10,
 
             report = traceback.format_exc()
 
-            if context.has_key( 'title' ):
-                msg = u"FAILED: '%s' (%s):" % (context['title'], context['srcurl'])
+            if 'title' in context:
+                msg = u"FAILED (%s): '%s' (%s)" % (err, context['title'], context['srcurl'])
             else:
-                msg = u"FAILED: (%s):" % (context['srcurl'])
-            print >>sys.stderr, msg.encode( 'utf-8' )
-            print >>sys.stderr, '-'*60
-            print >>sys.stderr, report
-            print >>sys.stderr, '-'*60
+                msg = u"FAILED (%s): (%s)" % (err,context['srcurl'])
+            ukmedia.DBUG( msg + "\n" )
+            ukmedia.DBUG2( report + "\n" )
+            ukmedia.DBUG2( '-'*60 + "\n" )
 
             if not store.dryrun:    # UGH.
                 LogScraperError( conn, context, report )

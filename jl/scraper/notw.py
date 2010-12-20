@@ -110,8 +110,7 @@ def FindArticles():
             except urllib2.HTTPError, e:
                 # continue even if we get http errors (bound to be a borked
                 # link or two)
-                traceback.print_exc()
-                print >>sys.stderr, "SKIP '%s' (%d error)\n" %(url, e.code)
+                ukmedia.DBUG( "SKIP '%s' (%d error)\n" %(url, e.code) )
                 continue
 
             prim_soup = BeautifulSoup( html2 )
@@ -156,10 +155,10 @@ def ScanPrimary( soup ):
             # continue even if we get urllib2 errors (bound to be a borked
             # link or two)
         except urllib2.HTTPError, e:
-            print >>sys.stderr, "ERROR fetching '%s' (code %d)\n" %(url, e.code)
+            ukmedia.DBUG( "ERROR fetching '%s' (code %d)\n" %(url, e.code) )
             continue
         except urllib2.URLError, e:
-            print >>sys.stderr, "ERROR connecting to '%s' (reason: %s)\n" %(url, e.reason)
+            ukmedia.DBUG( "ERROR connecting to '%s' (reason: %s)\n" %(url, e.reason) )
             continue
 
         soup_sec = BeautifulSoup( html )

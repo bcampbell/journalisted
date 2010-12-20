@@ -542,43 +542,6 @@ def GetPrettyNameFromRawName(conn, rawName ):
 #               print m.group(1),"+",m.group(2)
         newPrettyname = m.group(1)
         
-    # Now get rid of place names after the name if need be, like:
-    # | Washington, Beijing, Berlin, Boston, Colombo, Delhi, Dublin
-    places = GetPlaces()
-    for place in places:
-        # TODO get rid of accents in pretty name for sake of comparison
-        # SLOW MATCH:
-#               m = re.search(u'(.*?) '+place+u'$', newPrettyname, re.UNICODE|re.IGNORECASE)
-#               if m:
-        # faster match:
-#               print "<"+newPrettyname[-(len(place)+1):]+">"+place
-        if newPrettyname.lower()[-len(place):]==place:
-            possibleNewPrettynameUnstripped = newPrettyname[:-len(place)]
-            possibleNewPrettyname = possibleNewPrettynameUnstripped.strip() #m.group(1)
-            # only remove without a space if the placename is >=N characters 
-            #  (to stop Pritchard -> Prit/Chard and Lively -> Liv/Ely)
-            #  also Enfield in Greenfield
-            if possibleNewPrettyname==possibleNewPrettynameUnstripped and len(place)<=7:    
-#                       print "Skipped ",place
-                continue
-            # only remove the name if we'd leave at least 2 words behind
-            # (this stops getting rid of e.g. Hamilton which is a common surname, and also a place)
-            #   also surname must be 3 letters or more long (stops Rachel de Thame -> Rachel de)
-            if possibleNewPrettyname.find(u' ')!=-1:
-                lastName = getRestAndLastNameOf(possibleNewPrettyname,2)
-                # sort: Glenn Moorein Moscow
-#               print "testing ",possibleNewPrettyname
-                if possibleNewPrettyname[-2:]==u'in' and not IsReasonableLastName(conn,lastName):
-                    #print "take off in ",possibleNewPrettyname
-                    possibleNewPrettyname = possibleNewPrettyname[:-2]  # take off the 'in'
-                    #print "taken off in ",possibleNewPrettyname
-                if len(lastName)>=3:
-                    #print "last name ok"
-                    # actually hardcode... otherwise Paris gets treated as a possible name which is bad:
-                    if place==u'Wells':#IsReasonableLastName(conn,place):       # e.g. assume Wells is a surname, not a place (be conservative)
-                        continue
-                    print "! Place match        ",newPrettyname.encode('latin-1','replace'),"->",possibleNewPrettyname.encode('latin-1','replace')
-                    newPrettyname = possibleNewPrettyname
     return newPrettyname
 
 

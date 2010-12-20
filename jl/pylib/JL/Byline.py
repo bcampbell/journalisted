@@ -233,8 +233,6 @@ def CrackByline( byline ):
 #           print "        Cracked: "+cracker['fmt']+" ",ret
             return ret
 
-    if (byline!=u''):
-        print "        Failed to crack byline: "+byline.encode('latin-1','replace')
     # no matches
     return None
 

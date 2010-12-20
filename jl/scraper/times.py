@@ -231,7 +231,7 @@ def ReapArticles( page_url ):
         html = ukmedia.FetchURL( page_url ) 
     except urllib2.HTTPError, e:
         # bound to be some 404s...
-        print >>sys.stderr, "SKIP '%s' (%d error)" %(page_url, e.code)
+        ukmedia.DBUG( "SKIP '%s' (%d error)\n" %(page_url, e.code) )
         return article_urls
 
     soup = BeautifulSoup.BeautifulSoup( html )

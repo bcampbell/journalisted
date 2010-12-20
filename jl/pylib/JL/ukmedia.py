@@ -45,7 +45,8 @@ else:
 # min time between http requests in FetchURL()
 # (so we don't hammer servers and get banned)
 # in seconds (can be a fraction)
-FETCH_INTERVAL = 1
+#FETCH_INTERVAL = 1
+FETCH_INTERVAL = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
 
 debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
