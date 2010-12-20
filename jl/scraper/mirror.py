@@ -14,6 +14,7 @@ import time
 import string
 import sys
 import urlparse
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
@@ -104,7 +105,57 @@ def Extract( html, context ):
         return Extract_MainSite( html, context )
 
 
+
 def Extract_MainSite( html, context ):
+    art = context
+
+    if '/sunday-mirror/' in art['srcurl']:
+        art['srcorgname'] = u'sundaymirror'
+    else:
+        art['srcorgname'] = u'mirror'
+
+    #foo = html.decode('utf-8')
+    doc = lxml.html.document_fromstring( html )
+
+    foo = doc.cssselect( 'link[rel="canonical"]' )
+    if foo is not None:
+        canonical_url = foo[0].get('href')
+        if 'mirrorfootball.co.uk' in canonical_url:
+            ukmedia.DBUG("SKIP mirrorfootball.co.uk page '%s' [%s]\n" % (art['title'],art['srcurl']) )
+            return None
+
+
+    maindiv = doc.cssselect( 'div#three-col' )[0]
+
+    h1 = maindiv.find('h1')
+    art['title'] = unicode( h1.text_content().strip() )
+    foo = maindiv.cssselect('.article-date')
+    if len(foo)>0:
+        bylinetxt = unicode( foo[0].text_content() )
+        bylinepat = re.compile( ur'\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*' )
+        m = bylinepat.match( bylinetxt )
+        art['byline'] = m.group(1)
+        art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
+
+    # sometimes, only sundaymirror.co.uk in byline is only indicator
+    if u'sundaymirror' in art['byline'].lower():
+        art['srcorgname'] = u'sundaymirror'
+
+    bod = maindiv.cssselect( '#article-body' )[0]
+    for g in maindiv.cssselect( 'div.art-o' ):  # galleries
+        g.drop_tree()
+    for cruft in maindiv.cssselect( '.advert, .append-html'  ): # other cruft
+        cruft.drop_tree()
+    art['content'] = ukmedia.SanitiseHTML( unicode( lxml.html.tostring( bod ) ) )
+
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    return art
+
+
+
+
+def OLD_Extract_MainSite( html, context ):
     art = context
     soup = BeautifulSoup( html )
 
@@ -219,7 +270,6 @@ def Extract_MainSite( html, context ):
         cruft.extract()
 
     content = contentdiv.renderContents(None)
-
     art['content'] = content
     art['description'] = ukmedia.FirstPara( content )
 
@@ -348,6 +398,11 @@ def ScrubFunc( context, entry ):
 
     if '/video/' in url:
         ukmedia.DBUG2( "ignore video '%s' [%s]\n" % (title,url) )
+        return None
+
+    if '/cartoons/' in url:
+        ukmedia.DBUG2( "ignore cartoons '%s' [%s]\n" % (title,url) )
+        return None
 
 
     context[ 'srcid' ] = CalcSrcID( url )
@@ -389,6 +444,6 @@ def FindArticles():
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
 
 
