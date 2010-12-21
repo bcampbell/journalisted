@@ -587,7 +587,7 @@ class MostIndepthJournos extends CannedQuery {
 SELECT a.wordcount,a.id,a.title,a.srcorg,a.pubdate,a.permalink,j.prettyname, j.ref
     FROM article a INNER JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
-    ORDER BY a.wordcount DESC
+    ORDER BY a.wordcount DESC NULLS LAST
     LIMIT 100
 EOT;
 
