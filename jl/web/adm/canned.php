@@ -572,7 +572,7 @@ class MostIndepthJournos extends CannedQuery {
     function __construct() {
         $this->name = "MostIndepthJournos";
         $this->ident = strtolower( $this->name );
-        $this->desc = "Which journos have written the longest articles (top 100)";
+        $this->desc = "Which journos have written the longest articles (top 1000)";
 
 
         $this->param_spec = array(
@@ -587,8 +587,8 @@ class MostIndepthJournos extends CannedQuery {
 SELECT a.wordcount,a.id,a.title,a.srcorg,a.pubdate,a.permalink,j.prettyname, j.ref
     FROM article a INNER JOIN ( journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) ON a.id=attr.article_id
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
-    ORDER BY a.wordcount DESC
-    LIMIT 100
+    ORDER BY a.wordcount DESC NULLS LAST
+    LIMIT 1000
 EOT;
 
         $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
