@@ -12,10 +12,8 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/article.php';
+require_once '../phplib/jlforms.php';
 
-require_once "HTML/QuickForm.php";
-//require_once "HTML/QuickForm/Rule.php";
-//require_once "HTML/QuickForm/Renderer/Default.php";
 
 // handle either base-10 or base-36 articles
 $article_id = get_http_var( 'id36' );
@@ -188,33 +186,31 @@ EOT;
 /* Display a form for searching for articles */
 function EmitFindArticleForm()
 {
-	print( "<h2>Find Article(s)</h2>\n" );
+    print( "<h2>Find Article(s)</h2>\n" );
 	$orgs = get_org_names();
 
 	$orgs = array('any'=>'Any') + get_org_names();
 
 	$periods = array( 'all'=>'All', '24hrs'=>'Last 24 hrs', '7days'=>'Last 7 days' );
 
-    $form = new HTML_QuickForm('article_query','get' );
-	$form->addElement( 'select', 'srcorg', 'Organisation', $orgs );
-	$form->addElement( 'select', 'pubdate', 'Published within', $periods );
-	$form->addElement( 'select', 'lastscraped', 'Last scraped within', $periods);
-	$form->addElement( 'text', 'headline', 'Headline containing:',
-		array('size'=>80 ) );
-	$form->addElement( 'text', 'byline', 'Byline containing:',
-		array('size'=>80 ) );
-	$form->addElement( 'text', 'url', 'URL containing:',
-		array('size'=>80 ) );
-	$form->addElement( 'submit', 'submit', 'Search');
+    $form = new jlForm( 'article_query' );
+    $form->addWidget( new jlWidgetSelect( 'srcorg', null, array('choices'=>$orgs) ));
+    $form->addWidget( new jlWidgetSelect( 'pubdate', null, array('choices'=>$periods) ));
+    $form->addWidget( new jlWidgetSelect( 'lastscraped', null, array('choices'=>$periods) ));
+    $form->addWidget( new jlWidgetInput( 'headline', null, array() ));
+    $form->addWidget( new jlWidgetInput( 'byline', null, array() ));
+    $form->addWidget( new jlWidgetInput( 'url', null, array() ));
+    $form->addWidget( new jlWidgetSubmit( 'submit', null, array() ));
+    $form->populate( $_GET );
+?>
+<form method="GET" action="">
+<?= $form->render(); ?>
+</form>
+<?php
 
-	$form->setDefaults( array('pubdate'=>'24hrs' ) );
-
-//	$form->addElement( 'hidden', 'page', get_http_var( 'page' ) );
-
-	$form->display();
-
-	if( $form->validate() )
-		$form->process( 'process_article_query' );
+    if( isset( $_GET['submit'] ) ) {
+        process_article_query( $_GET );
+    }
 }
 
 
