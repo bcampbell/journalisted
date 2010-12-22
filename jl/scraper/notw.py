@@ -19,14 +19,53 @@ import sys
 import re
 from datetime import datetime
 import sys
+import cookielib
+import urllib   # for urlencode
 import urllib2
 import urlparse
 import traceback
+import ConfigParser
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup,Tag,Comment
 from JL import ukmedia, ScraperUtils
+
+NOTW_CONFIG_FILE = '../conf/notw.ini'
+
+# Storage for cookies we receive in this session
+cookiejar = cookielib.LWPCookieJar()
+
+def dump_cookies():
+    print "----------------------------------------"
+    print 'These are the cookies we have received so far :'
+    for index, cookie in enumerate(cookiejar):
+        print index, '  :  ', cookie
+    print "----------------------------------------"
+
+def Login():
+    global cookiejar
+
+    config = ConfigParser.ConfigParser()
+    config.read( NOTW_CONFIG_FILE )
+    username = config.defaults()[ 'username' ]
+    password = config.defaults()[ 'password' ]
+
+    ukmedia.DBUG2( "Logging in as %s\n" % (username,) )
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
+    urllib2.install_opener(opener)
+
+    postdata = urllib.urlencode( {'loginEmail':username,'loginPassword':password } )
+
+    req = urllib2.Request( "https://www.newsoftheworld.co.uk/iamreg/login.do", postdata );
+    handle = urllib2.urlopen( req )
+#    html = handle.read()
+
+    # OK... should now be logged in
+#    dump_cookies()
+
+
 
 notw_bloggers = (
     u'Ian Kirby',
@@ -36,7 +75,7 @@ notw_bloggers = (
 
 def ArticlesFromSoup( soup ):
 
-    blacklist = ( '/celebgallery/', '/yourscore/' )
+    blacklist = ( '/celebgallery/', '/yourscore/', '/_video/' )
 
     found = []
     for a in soup.findAll('a'):
@@ -66,6 +105,8 @@ def ArticlesFromSoup( soup ):
             found.append( context )
     return found
 
+
+
 def ScrubFunc( context, entry ):
     """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
 
@@ -88,18 +129,16 @@ def FindArticles():
 
 #    return found
 
-    found = []
+    all_articles = []
     html = ukmedia.FetchURL( 'http://www.newsoftheworld.co.uk/' )
     soup = BeautifulSoup( html )
 
-    nav_primary = soup.find('div',{'class':'nav-primary'})
-    # for each primary section...
-    for li in nav_primary.findAll('li'):
-        a = li.a
+    nav_main = soup.find('ul',{'id':'nav-main'} )
+
+    for a in nav_main.findAll('a'):
         url = a['href']
         url = urlparse.urljoin( "http://www.newsoftheworld.co.uk", url )
         name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
-        ukmedia.DBUG2( "scan %s [%s]\n" % (name,url) )
 
         # don't bother fetching home page again - we've already got it
         if url == 'http://www.newsoftheworld.co.uk/':
@@ -115,57 +154,15 @@ def FindArticles():
 
             prim_soup = BeautifulSoup( html2 )
 
-        found = found + ScanPrimary( prim_soup )
+        found = ArticlesFromSoup( prim_soup )
+        ukmedia.DBUG2( "scanned %s [%s], got %d articles\n" % (name,url,len(found)) )
+        all_articles = all_articles + found
 
-    return found
-
-
-def ScanPrimary( soup ):
-    found = ArticlesFromSoup( soup )
-    ukmedia.DBUG2("  %d articles\n" % ( len(found) ) )
- 
-    # find links to all the secondary sections
-    nav_sec = soup.find('div',{'class':'nav-secondary'})
-    nav_links = []
-    if nav_sec is not None:
-        for li in nav_sec.findAll('li'):
-            nav_links.append( li.a )
-    else:
-        # "fabulous" mag section has it's own layout.
-        # main nav menu on left column is done via javascript (why?)
-        # but there are links at the bottom we can use.
-        nav_sec = soup.find('div',{'id':'fabfooter-links-container'} )
-        if nav_sec is not None:
-            for li in nav_sec.findAll('li'):
-                nav_links.append( li.a )
+    # note: there'll be _loads_ of duplicate articles!
+    # but ScrapeUtils can handle that.
+    return all_articles
 
 
-    for a in nav_links:
-        name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
-        url = a['href']
-        if url == 'INVALID_ARTICLE_ID':
-            ukmedia.DBUG2( "  SKIP %s [%s]\n" % (name,url) )
-            continue
-        url = urlparse.urljoin( "http://www.newsoftheworld.co.uk", url )
-
-        ukmedia.DBUG2( "  scan %s [%s]..." % (name,url) )
-
-        try:
-            html = ukmedia.FetchURL( url )
-            # continue even if we get urllib2 errors (bound to be a borked
-            # link or two)
-        except urllib2.HTTPError, e:
-            ukmedia.DBUG( "ERROR fetching '%s' (code %d)\n" %(url, e.code) )
-            continue
-        except urllib2.URLError, e:
-            ukmedia.DBUG( "ERROR connecting to '%s' (reason: %s)\n" %(url, e.reason) )
-            continue
-
-        soup_sec = BeautifulSoup( html )
-        found_sec = ArticlesFromSoup( soup_sec )
-        ukmedia.DBUG2(" %d articles\n" % ( len(found_sec) ) )
-        found = found + found_sec
-    return found
 
 
 
@@ -174,11 +171,16 @@ def Extract( html, context ):
     o = urlparse.urlparse( context['srcurl'] )
 #    if o[1] == 'notw.typepad.com':
 #        return Extract_typepad( html, context )
+    if '<title>News Of The World - Page not found</title>' in html:
+        raise Exception( "Should-be-a-404-error" )
 
     if o[1] == 'blogs.notw.co.uk':
         return Extract_blog( html, context )
     else:
-        return Extract_notw( html, context )
+        if 'id="container1"' in html:
+            return Extract_notw_prepaywall( html, context )
+        else:
+            return Extract_notw( html, context )
 
 
 
@@ -240,11 +242,69 @@ def Extract_blog( html, context ):
 
 
 
-
-
-
 def Extract_notw( html, context ):
-    """extractor for newsoftheworld.co.uk articles"""
+    """extractor for post-paywall newsoftheworld.co.uk articles"""
+    art = context
+
+    art['srcorgname'] = u'notw'
+
+    soup = BeautifulSoup( html )
+
+    maindiv = soup.find( 'div', {'id': 'main'})
+
+    h1 = maindiv.h1
+    if h1 is None:
+        h1 = maindiv.h2 # fabulous magazine only?
+    art['title'] = ukmedia.FromHTMLOneLine( h1.renderContents(None) )
+
+    byline_span = maindiv.find('span', {'class':'byline'} )
+    if byline_span:
+        art['byline'] = ukmedia.FromHTMLOneLine( byline_span.renderContents(None) )
+    else:
+        art['byline'] = u''
+
+    date_div = maindiv.find('div', {'class':('byline-date','byline add-rule')} )
+    if date_div is not None:
+        art['pubdate'] = ukmedia.ParseDateTime( date_div.renderContents(None) )
+    else:
+        # no date... sigh...
+        # there is some likely-looking javascript:
+        pat = re.compile( r's[.]prop18="(\d{2})(\d{2})(\d{4})";' )
+        m = pat.search( html )
+        if m:
+            art['pubdate'] = datetime( int(m.group(3)), int(m.group(2)), int(m.group(1)) ) 
+
+
+    bod = maindiv.find( 'div', {'class':re.compile(r'\barticle-body\b' ) } )
+
+    # remove cruft
+    for cruft in bod.findAll( 'div', {'class':re.compile(r'\bpullquote-') } ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'class':'article-right-column'} ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'id':'rating'} ):
+        cruft.extract()
+    for cruft in bod.findAll( 'div', {'class': re.compile( r'\b(vid-canvas)|(vid-section)\b' ) } ):
+        cruft.extract()
+    for cruft in bod.findAll( 'object' ):
+        cruft.extract()
+
+    # TODO: should extract image links
+    for cruft in bod.findAll( 'span', {'class':re.compile(r'\binline-image')} ):
+        cruft.extract()
+    for cruft in bod.findAll( 'span', {'class': 'image-holder'} ):
+        cruft.extract()
+
+    art['content'] = ukmedia.SanitiseHTML( bod.renderContents(None) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+    return art
+
+
+
+
+
+def Extract_notw_prepaywall( html, context ):
+    """extractor for pre-paywall newsoftheworld.co.uk articles"""
     art = context
 
     art['srcorgname'] = u'notw'
@@ -400,5 +460,6 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50 )
+    Login()
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
 

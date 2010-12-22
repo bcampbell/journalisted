@@ -45,4 +45,4 @@ Log changes made due to website changes here!
 2010-11-20 times: sitemap markup changed
 2010-11-20 telegraph: byline markup changed
 2010-12-20 mirror: markup change scuppered beautifulsoup. Switched to lxml
-
+2010-12-22 notw: paywall+layout changes
