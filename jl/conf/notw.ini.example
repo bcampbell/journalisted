@@ -1,0 +1,5 @@
+;login details for notw
+[DEFAULT]
+username=user@example.com
+password=password
+
