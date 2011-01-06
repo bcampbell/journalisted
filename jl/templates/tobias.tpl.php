@@ -39,6 +39,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'The_Opinions_of_To_1773238a.swf',
     'Tg_No28_06_12_10_1778624a.swf',
     'Tg_No29_13_12_10_1784062a.swf',
+    'tg_xmas2010.jpg',
 );
 
 
@@ -127,11 +128,15 @@ $previous_employers = array_unique( $previous_employers );
   <div class="head"><h3>Tobias Grubbe's latest adventures</h3></div>
   <div class="body">
     <br/>
+<?php if( preg_match( '/[.]jpg$/i', $tg_file ) ) { ?>
+<img src="/tobias/<?=$tg_file; ?>" alt="Tobias Grubbe" />
+<?php } else { ?>
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
 <param name="movie" value="<?= $tg_file ?>">
 <param name="quality" value="high">
 <embed src="/tobias/<?= $tg_file ?>" quality="high" pluginspage="http://www.macromedia.com/go/getflashplayer" type="application/x-shockwave-flash" width="600" height="400"></embed>
 </object>
+<?php } ?>
     <div>
 Episode:
 <?php
