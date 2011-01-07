@@ -212,8 +212,64 @@ def Extract_article( html, context ):
     return art
 
 
-
 def Extract_blog( html, context ):
+    """ extract fn for FT blog entries
+    
+    basically hAtom, but missing proper author and date bits... sigh...
+    """
+
+    art = context
+    soup = BeautifulSoup( html )
+
+    # standard hAtom...
+
+    hentry = soup.find( True, {'class':re.compile(r'\bhentry\b')} )
+
+    entry_title = hentry.find( True, {'class': re.compile(r'\bentry-title\b') } )
+    art['title'] = ukmedia.FromHTMLOneLine( entry_title.renderContents(None) )
+
+    entry_contents = hentry.findAll( True, {'class': re.compile( r'\bentry-content\b' ) } )
+    art['content'] = ukmedia.SanitiseHTML( u''.join([ foo.renderContents(None) for foo in entry_contents ]) )
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+
+
+    # now we depart from hAtom for date and byline...
+
+    entry_date = hentry.find( True, { 'class': re.compile(r'\bentry-date\b') } )
+    # eg "December 29, 2010 4:35 pm "
+    art['pubdate'] = ukmedia.ParseDateTime( entry_date.renderContents(None) )
+
+    byline = u''
+    author_byline = hentry.find( True, {'class': re.compile(r'\bauthor_byline\b') } )
+    if author_byline is not None:
+        byline = ukmedia.FromHTMLOneLine( author_byline.renderContents(None) )
+    else:
+
+        specialcases = { '/material-world/':u'Vanessa Friedman',
+            '/gavyndavies/': u'Gavyn Davies',
+            '/martin-wolf-exchange/': u'Martin Wolf',
+        }
+        h1 = ukmedia.FromHTMLOneLine( soup.h1.renderContents( None) )
+        m = re.search( r"\s*(.*)'s blog", h1 )
+        if m:
+            byline = m.group(1)
+        else:
+            for k,v in specialcases.iteritems():
+                print k
+                if k in art['permalink']:
+                    byline = v
+                    break
+
+    art['byline'] = byline
+
+    # comments are added in using javascript (hosted on 'inferno')
+
+    return art
+
+
+
+def Extract_blog_OLD( html, context ):
     """ extract fn for FT blog entries """
     art = context
     soup = BeautifulSoup( html )
