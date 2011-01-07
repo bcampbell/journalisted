@@ -40,6 +40,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No28_06_12_10_1778624a.swf',
     'Tg_No29_13_12_10_1784062a.swf',
     'tg_xmas2010.jpg',
+    'Tg_No31_11_01_10_1796211a.swf',
 );
 
 
@@ -138,7 +139,7 @@ $previous_employers = array_unique( $previous_employers );
 </object>
 <?php } ?>
     <div>
-Episode:
+Number:
 <?php
 for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
     if( $i==$episode ) {
