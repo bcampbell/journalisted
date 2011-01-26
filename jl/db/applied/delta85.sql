@@ -1,7 +1,5 @@
 BEGIN;
 
-BEGIN;
-
 CREATE TABLE pub_set (
     id serial PRIMARY KEY,
     name text NOT NULL
