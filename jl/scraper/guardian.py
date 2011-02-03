@@ -1177,36 +1177,6 @@ def ScrubFunc( context, entry ):
 # transaction where the article is actually added to the db (in
 # ArticleDB).
 #
-def DupeCheckFunc( artid, art ):
-    if WhichFormat( art['srcurl'] ) != 'storyserver':
-        return
-
-    assert( false )    #     oh? DupeCheckFunc _is_ still needed?
-
-    srcorg = orgmap[ art['srcorgname'] ]
-    pubdatestr = '%s' % (art['pubdate'])
-
-    c = myconn.cursor()
-    # find any articles with the same title published a day either
-    # side of this one
-    s = art['pubdate'] - timedelta(days=1)
-    e = art['pubdate'] + timedelta(days=1)
-    c.execute( "SELECT id,srcid FROM article WHERE status='a' AND "
-        "srcorg=%s AND title=%s AND pubdate > %s AND pubdate < %s "
-        "ORDER BY srcid DESC",
-        srcorg,
-        art['title'].encode('utf-8'),
-        str(s), str(e) )
-
-    rows = c.fetchall()
-    if len(rows) > 1:
-        # there are dupes!
-        for dupe in rows[1:]:
-            c.execute( "UPDATE article SET status='d' WHERE id=%s",
-                dupe['id'] )
-            myconn.commit()
-            ukmedia.DBUG2( " hide dupe id=%s (srcid='%s')\n" % (dupe['id'],dupe['srcid']) )
-
 
 
 
@@ -1247,23 +1217,8 @@ def FindArticles():
 
 
 
-# connection and orgmap used by DupeCheckFunc()
-if 0:
-    myconn = DB.Connect()
-
-    orgmap = {}
-    c = myconn.cursor()
-    c.execute( "SELECT id,shortname FROM organisation" )
-    while 1:
-        row=c.fetchone()
-        if not row:
-            break
-        orgmap[ row[1] ] = row[0]
-    c.close()
-    c=None
-
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, DupeCheckFunc )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
 

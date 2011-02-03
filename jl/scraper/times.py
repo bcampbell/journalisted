@@ -767,9 +767,8 @@ if __name__ == "__main__":
 
 #    sys.exit(0)
 
-    Login()
 
     # large maxerrors to handle video-only pages
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=200 )
+    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=200, prep_fn=Login )
 
 
