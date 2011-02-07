@@ -45,6 +45,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No33_17_01_11_1804937a.swf',
     'Tg_No34_24_01_11_1809719a.swf',
     'Tg_No35_31_01_11_1814888a.swf',
+    'Tg_No36_07_02_11_1820179a.swf',
 );
 
 
@@ -151,7 +152,7 @@ for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
     } else {
 ?><a href="/<?= $ref ?>?episode=<?= $i ?>"><?= $i ?></a>&nbsp;&nbsp;<?php
     }
-    if( $i==20 ) {
+    if( $i==20 || $i==40 || $i==60 ) {
 ?><br/><?php
     }
 }

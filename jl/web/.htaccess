@@ -74,5 +74,6 @@ RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
   Allow from 72.14.194.33
   Allow from 64.233.172.18
   Allow from 79.77.49.90
+  Allow from 93.93.131.253
 </Files>
 
