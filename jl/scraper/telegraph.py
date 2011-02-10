@@ -900,16 +900,6 @@ def FindArticles():
     return l
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
-
-#    l = FindArticles()
-#    print "=====%d OLD=====" %(len(l))
-#    for a in l:
-#        print a['srcid'],a['title'].encode('utf-8')
-
-#    l = NEWEST_FindArticles()
-#    print "=====%d NEWEST=====" %(len(l))
-#    for a in l:
-#        print a['srcid'],a['title'].encode('utf-8')
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
 
 

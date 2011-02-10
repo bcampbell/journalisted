@@ -124,5 +124,5 @@ if __name__ == "__main__":
 #    feeds = FindFeeds()
 #    for title,url in feeds:
 #        print title, url
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
 

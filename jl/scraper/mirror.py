@@ -444,6 +444,6 @@ def FindArticles():
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
 
 

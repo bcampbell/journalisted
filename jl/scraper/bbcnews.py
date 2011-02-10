@@ -613,5 +613,5 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
     # high maxerrors to cope with photo gallerys, things-to-do pages etc... better culling needed :-)
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=100 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
 

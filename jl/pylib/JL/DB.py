@@ -63,3 +63,14 @@ def Connect():
 
 	return conn
 
+
+
+_conn = None
+def conn():
+    """ get the shared connection object for DB """
+    global _conn
+
+    if _conn is None:
+        _conn = Connect()
+    return _conn
+

@@ -38,7 +38,7 @@ class ArticleDB:
     """
 
     def __init__(self, dryrun=False, reallyverbose=False ):
-        self.conn = DB.Connect()
+        self.conn = DB.conn()
         self.dryrun = dryrun
         self.reallyverbose = reallyverbose
 

@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 import random
 
-import ukmedia, ArticleDB
+import ukmedia, DB, ArticleDB
 import feedparser
 
 
@@ -32,58 +32,131 @@ def unique_articles( arts ):
 
 
 
-def RunMain( findarticles_fn, contextfromurl_fn, extract_fn, maxerrors=20, prep_fn=None ):
-    """A generic(ish) main function that all scrapers can use
 
-    Scrapers pass in callbacks:
-    findarticles_fn: return a list of article contexts for a full scrape
-    contextfromurl_fn: create an article context from a bare url
-    extract_fn: function to process an HTML page and return an article
-    prep_fn: called immediately, eg to perform a login
-    """
+
+def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
+
 
     parser = OptionParser()
-    parser.add_option( "-u", "--url", dest="url", help="scrape a single article from URL", metavar="URL" )
-    parser.add_option( "-d", "--dryrun", action="store_true", dest="dryrun", help="don't touch the database" )
+    parser.add_option( "-d", "--dryrun", action="store_true", dest="dry_run", help="don't touch the database" )
     parser.add_option( "-f", "--force", action="store_true", dest="forcerescrape", help="force rescrape of article if already in DB" )
  
-    (options, args) = parser.parse_args()
+    (opts, args) = parser.parse_args()
 
-    if prep_fn is not None:
-        prep_fn()
+    # scraper might need to do a login
+    if prep is not None:
+        prep()
 
-    found = []
-    if options.url:
-        context = contextfromurl_fn( options.url )
-        found.append( context )
+    if len(args) == 0:
+        # do a full scraper run: discover articles and scrape 'em.
+        # expect lots of errors for a lot of sites.
+
+        found = find_articles()
     else:
-        found = found + findarticles_fn()
-        if len(found) == 0:
-            raise Exception( "No articles found" )
+        # urls passed in as params
+        found = []
+        for url in args:
+            found.append(contextfromurl_fn(url))
+
+    scrape_articles(found, extract, max_errors=max_errors, dry_run=opts.dry_run)
+
+
+
+
+def scrape_articles( found, extract, max_errors, dry_run):
+    """Scrape list of articles, return error counts.
+
+    found -- list of article contexts to scrape
+    extract -- extract function
+    max_errors -- tolerated number of errors before bailing
+    dry_run -- don't change database
+    """
+
+    extralogging = False
+
 
     # remove dupes (eg often articles appear in more than one RSS feed)
-    found = unique_articles( found )
+    found = unique_articles(found)
 
-    # randomise the order of articles, so that if the scraper does abort due to too many errors,
-    # successive runs should be able to pick up all the scrapable articles.
+    # randomise the order of articles, so that if the scraper does abort
+    # due to too many errors, successive runs should be able to pick up
+    # all the scrapable articles.
     random.shuffle(found)
+    assert(len(found)>0)
+    ukmedia.DBUG2("%d articles to scrape\n" % (len(found)))
 
-    ukmedia.DBUG2( "%d articles to scrape\n" % ( len(found) ) )
-
-
-    if options.dryrun:
+    if dry_run:
         store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )  # testing
     else:
         store = ArticleDB.ArticleDB()
 
-    ProcessArticles( found, store, extract_fn, maxerrors, forcerescrape = options.forcerescrape )
 
-    return 0
+    failcount = 0
+    abortcount = 0
+    newcount = 0
 
-article_store = None
+    for context in found:
+
+        conn = DB.conn()
+        srcid = context['srcid']
+        if not srcid:
+            ukmedia.DBUG2( u"WARNING: missing srcid! '%s' ( %s )\n" % (getattr(context,'title',''), context['srcurl'] ) )
+            continue
+
+        try:
+            article_id = store.ArticleExists( srcid )
+            if article_id:
+                if extralogging:
+                    ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(conn,article_id) ) )
+#                if not forcerescrape:
+#                    continue;   # skip it - we've already got it
+                continue
+
+            #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
+            html = ukmedia.FetchURL( context['srcurl'] )
+ 
+            # some extra, last minute context :-)
+            context[ 'lastscraped' ] = datetime.now()
+
+            art = extract( html, context )
 
 
+            if art:
+                if article_id:  # rescraping existing article?
+                    art['id'] = article_id
 
+                article_id = store.Add( art )
+                newcount = newcount + 1
+
+
+        except Exception, err:
+            # always just bail out upon ctrl-c
+            if isinstance( err, KeyboardInterrupt ):
+                raise
+
+            failcount = failcount+1
+            # TODO: phase out NonFatal! just get scraper to print out a warning message instead
+            if isinstance( err, ukmedia.NonFatal ):
+                continue
+
+            report = traceback.format_exc()
+
+            if 'title' in context:
+                msg = u"FAILED (%s): '%s' (%s)" % (err, context['title'], context['srcurl'])
+            else:
+                msg = u"FAILED (%s): (%s)" % (err,context['srcurl'])
+            ukmedia.DBUG( msg + "\n" )
+            ukmedia.DBUG2( report + "\n" )
+            ukmedia.DBUG2( '-'*60 + "\n" )
+
+            abortcount = abortcount + 1
+            if abortcount >= max_errors:
+                print >>sys.stderr, "Too many errors - ABORTING"
+                raise
+            #else just continue with next article
+
+    ukmedia.DBUG("%d new, %d failed\n" % (newcount, failcount))
+    return (newcount,failcount)
 
 
 # Assorted scraping stuff
@@ -242,6 +315,8 @@ SELECT j.id,j.ref,j.prettyname
     return ", ".join( [ "[j%d %s]" % (int(row['id']),row['prettyname']) for row in rows ] )
 
 
+
+# TODO: kill this (still used by scrape-tool for now)
 def ProcessArticles( foundarticles, store, extractfn, maxerrors=10, extralogging=False, forcerescrape=False ):
     """Download, scrape and load a list of articles
 
@@ -259,7 +334,7 @@ def ProcessArticles( foundarticles, store, extractfn, maxerrors=10, extralogging
 
     for context in foundarticles:
 
-        conn = store.conn   # ugh...
+        conn = DB.conn()
         srcid = context['srcid']
         if not srcid:
             ukmedia.DBUG2( u"WARNING: missing srcid! '%s' ( %s )\n" % (getattr(context,'title',''), context['srcurl'] ) )
