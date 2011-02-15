@@ -1,4 +1,4 @@
-#
+# General helpers for writing scrapers
 #
 #
 
@@ -12,9 +12,39 @@ import os
 from datetime import datetime
 import time
 import random
+import cookielib
 
-import ukmedia, DB, ArticleDB
+import ukmedia
+import DB
+import ArticleDB
 import feedparser
+
+import urllib2
+from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
+
+cookiejar = None
+
+def build_uber_opener(throttle_delay=1, cookiejar=None):
+    """ build a super url opener which handles redirects, throttling, caching, cookies... """
+
+    handlers = []
+
+    if os.getenv('JL_USE_CACHE','false').lower() not in ('0', 'false','off'):
+        handlers.append(CacheHandler(".jlcache"))
+
+    # throttling handler should be after caching handler, so
+    # cached requests return without being throttled.
+    handlers.append(ThrottlingProcessor(throttle_delay))
+
+    if cookiejar is not None:
+        handlers.append(urllib2.HTTPCookieProcessor(cookiejar))
+
+    # redirect handler needs to be last, as it adds "redirects"
+    # member to the final response object
+    handlers.append(CollectingRedirectHandler())
+
+    return urllib2.build_opener(*handlers)
+
 
 
 def unique_articles( arts ):
@@ -31,17 +61,37 @@ def unique_articles( arts ):
     return result
 
 
+def get_rel_canonical(soup):
+    """ returns the rel="canonical" url from soup, else None """
+
+    # cheesy as hell - should handle relative URLs and <base>...
+    l = soup.head.find('link',rel='canonical')
+    if l is not None:
+        url = l['href']
+        # only return absolute links
+        if url.startswith('http://'):
+            return url
+
+    return None
 
 
 
 def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
-
+    global cookiejar
 
     parser = OptionParser()
     parser.add_option( "-d", "--dryrun", action="store_true", dest="dry_run", help="don't touch the database" )
     parser.add_option( "-f", "--force", action="store_true", dest="forcerescrape", help="force rescrape of article if already in DB" )
  
     (opts, args) = parser.parse_args()
+
+    # install our uber url handler
+    if cookiejar is None:
+        cookiejar = cookielib.LWPCookieJar()
+    fetch_interval = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
+    opener = build_uber_opener(throttle_delay=fetch_interval, cookiejar=cookiejar)
+    urllib2.install_opener(opener)
+
 
     # scraper might need to do a login
     if prep is not None:
@@ -56,7 +106,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
         # urls passed in as params
         found = []
         for url in args:
-            found.append(contextfromurl_fn(url))
+            found.append(context_from_url(url))
 
     scrape_articles(found, extract, max_errors=max_errors, dry_run=opts.dry_run)
 
@@ -207,13 +257,8 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
 
     foundarticles = []
     ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
+    r = feedparser.parse( feedurl )
 
-    if ukmedia.USE_CACHE:
-        ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, "rssCache" )
-        r = feedparser.parse( os.path.join( "rssCache", ukmedia.GetCacheFilename(feedurl) ) )
-    else:
-        r = feedparser.parse( feedurl )
-        
     #debug:     print r.version;
 
     lastseen = datetime.now()
@@ -354,13 +399,20 @@ def ProcessArticles( foundarticles, store, extractfn, maxerrors=10, extralogging
                     continue;   # skip it - we've already got it
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
-            html = ukmedia.FetchURL( context['srcurl'] )
- 
-            # some extra, last minute context :-)
+            resp = urllib2.urlopen( context['srcurl'] )
+            html = resp.read()
+            # want to collect all URLs as we go
+            urls = set(context['srcurl'], context['permalink'])
+            for code,url in resp.redirects:
+                urls.add(url)
+                if code==301:
+                    # permanant redirect, so replace our permalink!
+                    context['permalink'] = url
+            context['urls'] = urls
+            # some extra last minute context
             context[ 'lastscraped' ] = datetime.now()
 
             art = extractfn( html, context )
-
 
             if art:
                 if article_id:  # rescraping existing article?

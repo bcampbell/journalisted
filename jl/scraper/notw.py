@@ -34,29 +34,15 @@ from JL import ukmedia, ScraperUtils
 
 NOTW_CONFIG_FILE = '../conf/notw.ini'
 
-# Storage for cookies we receive in this session
-cookiejar = cookielib.LWPCookieJar()
-
-def dump_cookies():
-    print "----------------------------------------"
-    print 'These are the cookies we have received so far :'
-    for index, cookie in enumerate(cookiejar):
-        print index, '  :  ', cookie
-    print "----------------------------------------"
 
 def Prep():
     """ perform a login """
-    global cookiejar
-
     config = ConfigParser.ConfigParser()
     config.read( NOTW_CONFIG_FILE )
     username = config.defaults()[ 'username' ]
     password = config.defaults()[ 'password' ]
 
     ukmedia.DBUG2( "Logging in as %s\n" % (username,) )
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
-    urllib2.install_opener(opener)
-
     postdata = urllib.urlencode( {'loginEmail':username,'loginPassword':password } )
 
     req = urllib2.Request( "https://www.newsoftheworld.co.uk/iamreg/login.do", postdata );
@@ -131,7 +117,8 @@ def FindArticles():
 #    return found
 
     all_articles = []
-    html = ukmedia.FetchURL( 'http://www.newsoftheworld.co.uk/' )
+    html = urllib2.urlopen( 'http://www.newsoftheworld.co.uk/' ).read()
+
     soup = BeautifulSoup( html )
 
     nav_main = soup.find('ul',{'id':'nav-main'} )

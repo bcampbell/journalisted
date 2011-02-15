@@ -23,7 +23,6 @@ from datetime import datetime
 import sys
 import urllib
 import urllib2
-import cookielib
 import urlparse
 
 import site
@@ -63,29 +62,15 @@ def FetchRSSFeeds( masterpage='http://www.ft.com/servicestools/newstracking/rss'
 
 
 
-# Storage for cookies we receive in this session, required
-# to access subscription content.
-# We won't bother saving it to disk - just throw it away after
-# this run of the scraper.
-cookiejar = cookielib.LWPCookieJar()
-
-
 # file with our FT subscription details
 FT_CONFIG_FILE = '../conf/ft.conf'
 
 def Prep():
     """ Prepare for scraping (by logging into FT with our user account) """ 
-    global cookiejar
-    # install Cookie handling - all further urllib2 activity
-    # should include cookies from now on. 
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
-    urllib2.install_opener(opener)
     Login()
 
 
-
 def Login():
-    global cookiejar
 
     # parse config file to get our username/password
     foo = open( FT_CONFIG_FILE, 'rt' ).read()
