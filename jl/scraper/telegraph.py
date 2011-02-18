@@ -5,7 +5,6 @@
 # (http://www.affero.org/oagpl.html)
 #
 #
-# telegraph blogs are hosted by onesite.com
 #
 # TODO:
 #
@@ -684,9 +683,10 @@ def FindColumnistArticles():
 
 def Extract_blog( html, context ):
     """extract fn for telegraph blog posts (wordpress?)"""
-
     art = context
     soup = BeautifulSoup.BeautifulSoup( html )
+
+    art['srcorgname']=u'telegraph'
 
     # there are bad links the the RSS feeds (pointing at the story in the old blog I think)
     # These redirect to the summary page (even though all the content appears to have been migrated! doh!)
@@ -736,40 +736,6 @@ def Extract_blog( html, context ):
     return art
 
 
-
-def Extract_blogOLD( html, context ):
-    """extract fn for telegraph blog posts"""
-
-    art = context
-    soup = BeautifulSoup.BeautifulSoup( html )
-
-
-    container = soup.find( 'div', {'id':'mainColumnContentContainer'} )
-
-    art['title'] = ukmedia.FromHTMLOneLine( container.h1.renderContents(None) )
-
-    smallprint = container.find( 'div',{'class':'oneBlogSmallPrint'} )
-    foo = ukmedia.FromHTMLOneLine( smallprint.renderContents( None ) )
-    # eg Posted By: Christian Adams at Feb 2, 2009 at 17:01:09 [ General ] Posted in: UK Correspondents , The Drawing Room Tags: snow , weather
-    m = re.compile( r"Posted By:\s+(.*?)\s+at\s+(\w+ \d+, \d{4}\s+at\s+\d\d:\d\d:\d\d)" ).search( foo )
-    art['byline'] = m.group(1)
-    art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
-
-    contentdiv = container.find( 'div', {'class':re.compile('fullTextContent')} )
-    art['content'] = contentdiv.renderContents( None )
-    art['description'] = ukmedia.FirstPara( art['content'] )
-
-    art['commentlinks'] = []
-    numcomment_div = soup.find('div',{'class':'numComments'})
-    if numcomment_div:
-        a = numcomment_div.a
-        m = re.compile( r'(\d+)\scomment' ).search( a.renderContents(None) )
-        if m:
-            num_comments = int( m.group(1) )
-            comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
-            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
-
-    return art
 
 
 # eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html
