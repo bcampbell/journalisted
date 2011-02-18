@@ -346,7 +346,12 @@ rssfeeds = [
 
 #anny shaw's blog not linked from rest of site, so manually added here:
 rssfeeds.append(
-    ( "Anny Shaw's blog", 'http://rss.blogs.telegraph.co.uk/rest/ugcBlog?action=getBlogs&rss=1&pCount=3&pullFrom=1&userID=16103657' ) );
+    ( "Anny Shaw's blog", 'http://rss.blogs.telegraph.co.uk/rest/ugcBlog?action=getBlogs&rss=1&pCount=3&pullFrom=1&userID=16103657' ) )
+
+# the blogs
+rssfeeds.append(
+    ('blogs', 'http://blogs.telegraph.co.uk/feed-2/')
+)
 
 
 def Extract( html, context ):
