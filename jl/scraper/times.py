@@ -146,66 +146,40 @@ puzzle_blacklist = (
 )
 
 
-def ScrubFunc( context, entry ):
-    """mungefunc for ScraperUtils.FindArticlesFromRSS()"""
-
-    url = context[ 'srcurl' ]
-    o = urlparse.urlparse( url )
-
-    if o[1] == 'feeds.timesonline.co.uk':
-        # sigh... obsfucated url (presumably for tracking)
-        # Luckily the guid has proper link, marked as non-permalink
-        url = entry.guid
-
-    url = re.sub( '#cid=OTC-RSS&attr=[0-9]+', '', url )
-
-    context[ 'srcid' ] = CalcSrcID( url )
-    context[ 'srcurl' ] = url
-    context[ 'permalink'] = url
-    return context
 
 
 def FindArticles():
-    sitemap_times = "http://www.thetimes.co.uk/tto/public/?view=sitemap&section=News"
-    sitemap_sundaytimes = "http://www.thesundaytimes.co.uk/sto/public/Sitemap/?view=sitemap"
 
     arts = []
-    arts = arts + FindArticlesFromSiteMap( sitemap_times )
-    arts = arts + FindArticlesFromSiteMap( sitemap_sundaytimes )
+    arts = arts + FindTimesArticles()
+    arts = arts + FindSundayTimesArticles()
     return arts
 
 
-def FindArticlesFromSiteMap( sitemap_url ):
+
+def FindTimesArticles():
     """ fetch list of articles by crawling for links using the sitemap"""
+
+    # use full a-z sitemap, as otherwise lots of stuff missing
+    sitemap_url = "http://www.thetimes.co.uk/tto/public/?view=sitemap&layout=atoz"
+
 
     html = ukmedia.FetchURL( sitemap_url )
     soup = BeautifulSoup.BeautifulSoup( html )
 
     pages = []
 
-    if 'thetimes.co.uk/' in sitemap_url:
-        sitemap = soup.find( 'div', {'id':'sitemap-body'} )
-        for section in sitemap.findAll( 'div', {'class':'section'} ):
-            for a in section.findAll( 'a' ):
-                name = a.string
-                url = urlparse.urljoin( sitemap_url, a.get('href') )
+    sitemap = soup.find( 'div', {'id':'sitemap-body'} )
+    for a in sitemap.findAll( 'a' ):
+        name = a.string
+        url = urlparse.urljoin( sitemap_url, a.get('href') )
 
-                if url is not None:
-                    o = urlparse.urlparse( url )
-                    if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
-                        pages.append( url )
-                    elif o[1].endswith( '.typepad.com' ):
-                        pages.append( url )
-    elif 'thesundaytimes.co.uk/' in sitemap_url:
-        sitemap = soup.find('div',{'id':'sitemap'})
-        for a in sitemap.findAll('a'):
-            name = a.string
-            url = a.get('href')
-            if a:
-                url = urlparse.urljoin( sitemap_url, url )
-                o = urlparse.urlparse( url )
-                if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
-                    pages.append( url )
+        if url is not None:
+            o = urlparse.urlparse( url )
+            if o[1] in ('www.thetimes.co.uk', 'thetimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
+                pages.append( url )
+            elif o[1].endswith( '.typepad.com' ):
+                pages.append( url )
 
 
     article_urls = set()
@@ -218,7 +192,43 @@ def FindArticlesFromSiteMap( sitemap_url ):
         if context is not None:
             foundarticles.append( context )
 
-    ukmedia.DBUG2( "Found %d articles\n" % ( len(foundarticles) ) )
+    ukmedia.DBUG2( "Found %d times articles\n" % ( len(foundarticles) ) )
+    return foundarticles
+
+
+
+
+def FindSundayTimesArticles():
+    """ fetch list of articles by crawling for links using the sitemap"""
+
+    sitemap_url = "http://www.thesundaytimes.co.uk/sto/public/Sitemap/?view=sitemap"
+    html = ukmedia.FetchURL( sitemap_url )
+    soup = BeautifulSoup.BeautifulSoup( html )
+
+    pages = []
+
+    sitemap = soup.find('div',{'id':'sitemap'})
+    for a in sitemap.findAll('a'):
+        name = a.string
+        url = a.get('href')
+        if a:
+            url = urlparse.urljoin( sitemap_url, url )
+            o = urlparse.urlparse( url )
+            if o[1] in ('www.thesundaytimes.co.uk', 'thesundaytimes.co.uk', 'www.timesonline.co.uk', 'timesonline.co.uk' ):
+                pages.append( url )
+
+
+    article_urls = set()
+    for page_url in pages:
+        article_urls.update( ReapArticles( page_url ) )
+
+    foundarticles =[]
+    for url in article_urls:
+        context = ContextFromURL( url )
+        if context is not None:
+            foundarticles.append( context )
+
+    ukmedia.DBUG2( "Found %d sundaytimes articles\n" % ( len(foundarticles) ) )
     return foundarticles
 
 
@@ -250,6 +260,7 @@ def ReapArticles( page_url ):
         #print url,":",srcid
         if srcid is not None:
             article_urls.add(url)
+
 
     ukmedia.DBUG2( "scanned %s, found %d articles\n" % ( page_url, len(article_urls) ) );
     return article_urls
@@ -444,6 +455,18 @@ def Extract_ece_thesundaytimes( html, context ):
 
     art['byline'] = u', '.join( authors )
 
+    # special case to handle non-bylined columnists
+    if art['byline'].lower() == u'the sunday times' and '/columns/' in art['srcurl']:
+        m = re.compile(r'^\s*(\w+\s+\w+)\s*:\s*(.*)').match(art['title'])
+        if m:
+            columnist = m.group(1)
+            slugpart = '/columns/'+''.join(columnist.split()).lower()
+            if slugpart in art['srcurl']:
+                art['byline'] = columnist
+                art['title'] = m.group(2)
+
+
+
 
     # process and remove photos from content
     art['images'] = []
@@ -466,9 +489,10 @@ def Extract_ece_thesundaytimes( html, context ):
     content_div.h2.extract()
     for cruft in content_div.findAll( 'p',{'class':re.compile(r'hideinprint')}):
         cruft.extract()
-    for cruft in content_div.findAll( 'div',{'class':'tools'}):
+    for cruft in content_div.findAll( 'div',{'class':re.compile(r'\btools_border\b')}):
         cruft.extract()
-
+    for cruft in content_div.findAll( 'div',{'class':re.compile(r'\btools\b')}):
+        cruft.extract()
     art['content'] = ukmedia.SanitiseHTML( content_div.renderContents(None) )
     art['description'] = ukmedia.FirstPara( art['content'] )
     return art
@@ -755,10 +779,7 @@ def ContextFromURL( url ):
 if __name__ == "__main__":
 
 #    Login()
-#    articles = FindArticles()
-#    for a in articles:
-#        url = a[ 'srcurl' ]
-#        print url
+#    articles = FindTimesArticles()
 #        try:
 #            ukmedia.FetchURL( url )
 #        except urllib2.HTTPError, e:
