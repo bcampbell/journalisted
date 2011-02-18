@@ -37,7 +37,7 @@ from JL import ukmedia, ScraperUtils
 #   http://www.dailyexpress.co.uk/blogs/post/36635/blog/2009/08/20/121709/America-may-have-a-black-president-but-racism-is-still-deeply-rooted
 #   http://www.dailyexpress.co.uk/blogs/post/267/blog/2009/08/18/121246/Prince-Charles-should-stop-bullying-opponents
 
-main_srcidpat = re.compile( "/(?:posts|features)/view/(\d+)(/.*)?$" )
+main_srcidpat = re.compile( "/view/(\d+)(/.*)?$" )
 blog_srcidpat = re.compile( "/blogs/.*/(\d+)(?:/[^/]+/?)?$" )
 
 
@@ -253,7 +253,6 @@ def FindArticlesFromNavPages():
     while queued:
         page_url = queued.pop()
         visited.add( page_url )
-        ukmedia.DBUG2( "fetching %s\n" % (page_url) )
         html = ukmedia.FetchURL( page_url )
         soup = BeautifulSoup( html )
         # first, look for any sections (or subsections) we might want to scrape
@@ -276,7 +275,9 @@ def FindArticlesFromNavPages():
             art_url = TidyURL( urlparse.urljoin( page_url, a['href'] ) )
             srcid = CalcSrcID( art_url )
             if srcid is not None:
+                artcnt += 1
                 article_urls[srcid] = art_url
+        ukmedia.DBUG2("scanning %s: %d articles\n" % (page_url,artcnt))
 
     articles = []
     for art_url in article_urls.itervalues():
