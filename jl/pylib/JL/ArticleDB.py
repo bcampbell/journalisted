@@ -87,6 +87,12 @@ class ArticleDB:
         cursor.execute( "select currval('article_id_seq')" )
         id = cursor.fetchone()[0]
 
+        # add the known urls for the article
+        if not 'urls' in art:
+            art['urls'] = set(art['permalink'],art['srcurl'])
+        for url in art['urls']:
+            cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,id))
+
         # add content, if included
         if content is not None:
             q = 'INSERT INTO article_content (article_id, content) VALUES ( %s,%s )'
