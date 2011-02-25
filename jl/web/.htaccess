@@ -9,7 +9,7 @@ RewriteEngine on
 #RewriteRule !down.html$ /down.html [R,L]
 
 # API
-RewriteRule ^api/(get.*)$ api.php?method=$1 [QSA]
+RewriteRule ^api/((?:get|find).*)$ api.php?method=$1 [QSA]
 RewriteRule ^api/docs/?$            api.php [QSA]
 RewriteRule ^api/docs/(.*)$         api.php?docs=1&method=$1 [QSA]
 
@@ -74,5 +74,6 @@ RewriteRule ^[Ll]/([^?/]*)$ login?t=$1 [PT,QSA]
   Allow from 72.14.194.33
   Allow from 64.233.172.18
   Allow from 79.77.49.90
+  Allow from 93.93.131.253
 </Files>
 

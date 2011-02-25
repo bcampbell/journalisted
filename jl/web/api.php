@@ -136,7 +136,7 @@ Output:
         print '<h4><a name="output"></a>Output</h4>';
         print '<p>URL for this: <strong>' . OPTION_BASE_URL . '/api/';
         print $method . '?' . join('&amp;', $qs) . '&amp;output='.get_http_var('output').'</strong></p>';
-        print '<pre>' . htmlspecialchars($explorer) . '</pre>';
+        print '<pre><code>' . htmlspecialchars($explorer) . '</code></pre>';
     }
 ?>
 </div>  <!-- end main -->
