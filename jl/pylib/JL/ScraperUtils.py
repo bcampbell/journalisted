@@ -39,7 +39,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
 
     parser = OptionParser()
     parser.add_option( "-d", "--dryrun", action="store_true", dest="dry_run", help="don't touch the database" )
-    parser.add_option( "-f", "--force", action="store_true", dest="forcerescrape", help="force rescrape of article if already in DB" )
+    parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
  
     (opts, args) = parser.parse_args()
 
@@ -56,20 +56,20 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
         # urls passed in as params
         found = []
         for url in args:
-            found.append(contextfromurl_fn(url))
+            found.append(context_from_url(url))
 
-    scrape_articles(found, extract, max_errors=max_errors, dry_run=opts.dry_run)
-
-
+    scrape_articles(found, extract, max_errors, opts)
 
 
-def scrape_articles( found, extract, max_errors, dry_run):
+
+
+def scrape_articles( found, extract, max_errors, opts):
     """Scrape list of articles, return error counts.
 
     found -- list of article contexts to scrape
     extract -- extract function
     max_errors -- tolerated number of errors before bailing
-    dry_run -- don't change database
+    opts -- dry_run, force_rescrape etc...
     """
 
     extralogging = False
@@ -85,7 +85,7 @@ def scrape_articles( found, extract, max_errors, dry_run):
     assert(len(found)>0)
     ukmedia.DBUG2("%d articles to scrape\n" % (len(found)))
 
-    if dry_run:
+    if opts.dry_run:
         store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )  # testing
     else:
         store = ArticleDB.ArticleDB()
@@ -94,6 +94,8 @@ def scrape_articles( found, extract, max_errors, dry_run):
     failcount = 0
     abortcount = 0
     newcount = 0
+    had_count = 0
+    rescrape_count = 0
 
     for context in found:
 
@@ -108,9 +110,9 @@ def scrape_articles( found, extract, max_errors, dry_run):
             if article_id:
                 if extralogging:
                     ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(conn,article_id) ) )
-#                if not forcerescrape:
-#                    continue;   # skip it - we've already got it
-                continue
+                if not opts.force_rescrape:
+                    had_count += 1
+                    continue;   # skip it - we've already got it
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
             html = ukmedia.FetchURL( context['srcurl'] )
@@ -122,11 +124,15 @@ def scrape_articles( found, extract, max_errors, dry_run):
 
 
             if art:
-                if article_id:  # rescraping existing article?
+                if article_id:
+                    # rescraping existing article
                     art['id'] = article_id
-
-                article_id = store.Add( art )
-                newcount = newcount + 1
+                    article_id = store.upsert( art )
+                    rescrape_count += 1
+                else:
+                    #
+                    article_id = store.upsert( art )
+                    newcount += 1
 
 
         except Exception, err:
@@ -155,8 +161,7 @@ def scrape_articles( found, extract, max_errors, dry_run):
                 raise
             #else just continue with next article
 
-    ukmedia.DBUG("%d new, %d failed\n" % (newcount, failcount))
-    return (newcount,failcount)
+    ukmedia.DBUG("%d new, %d already had, %d rescraped, %d failed\n" % (newcount, had_count, rescrape_count, failcount))
 
 
 # Assorted scraping stuff
