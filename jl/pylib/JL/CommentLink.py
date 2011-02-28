@@ -84,7 +84,7 @@ def AddCommentLink( conn, commentlink ):
 
 
 
-def Add( conn, article_id, commentlink ):
+def upsert( conn, article_id, commentlink ):
     """insert/replace commentlink"""
     c = conn.cursor()
 

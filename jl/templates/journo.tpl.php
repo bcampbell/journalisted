@@ -23,6 +23,8 @@
 
  $writtenfor   - eg "The Sun, The Mirror and The Daily Telegraph"
 
+ TODO: should tidy up contact details arrangement... (align with getJourno() API result format?)
+
  $known_email  - email address details (or null)
     email      - email address
     srcurl     - source of address (eg a news article)

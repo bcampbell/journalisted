@@ -55,7 +55,8 @@ def dump_cookies():
         print index, '  :  ', cookie
     print "----------------------------------------"
 
-def Login():
+def Prep():
+    """ perform a login """
     global cookiejar
 
     config = ConfigParser.ConfigParser()
@@ -757,12 +758,6 @@ def Extract_typepad( html, context ):
 
 
 
-
-
-
-
-
-
 def ContextFromURL( url ):
     """Build up an article scrape context from a bare url."""
     context = {}
@@ -778,18 +773,7 @@ def ContextFromURL( url ):
 
 if __name__ == "__main__":
 
-#    Login()
-#    articles = FindTimesArticles()
-#        try:
-#            ukmedia.FetchURL( url )
-#        except urllib2.HTTPError, e:
-#            # bound to be some 404s...
-#            print >>sys.stderr, "HTTPError on '%s' (%d error)" %(url, e.code)
-
-#    sys.exit(0)
-
-
     # large maxerrors to handle video-only pages
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=200, prep_fn=Login )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200, prep=Prep )
 
 

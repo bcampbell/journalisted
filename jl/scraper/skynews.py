@@ -132,5 +132,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
 

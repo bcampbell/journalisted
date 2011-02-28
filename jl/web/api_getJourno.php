@@ -1,5 +1,8 @@
 <?php
-
+// ISSUES:
+// - no indication _why_ a journo returns as null.
+//   maybe should bail out if _any_ journos are bad?
+//
 
 function api_getJourno_front() {
 ?>
@@ -24,7 +27,7 @@ function api_getJourno_front() {
 <?php
 }
 
-function api_getJourno_invoke($params) {
+function OLD_api_getJourno_invoke($params) {
     $j = $params['journo'];
     if( is_null($j) ) {
         api_error( "missing required parameter: 'journo'" );
@@ -47,5 +50,127 @@ function api_getJourno_invoke($params) {
 	$output = array( 'results' => $journo );
     api_output( $output);
 }
+
+
+
+
+// take a mixed list of journo ids/refs and
+// return an array of ids, in the same order (with null for any
+// refs that weren't found in the db).
+function resolve_ids( $idents ) {
+
+    /* build up map for all refs to translate them to id */
+    $refs = array();
+    $refmap = array();
+    $qs = array();
+    foreach( $idents as $ident ) {
+        if( !is_numeric( $ident ) ) {
+            $refs[] = $ident;
+            $refmap[$ident] = null;
+            $qs[]='?';
+        }
+    }
+    if( $refmap ) {
+        // to db lookup to fetch IDs for the refs (any spurious refs will be left with a null id)
+        $rows = db_getAll( "SELECT ref,id FROM journo WHERE ref in (" . implode(',',$qs) .")", $refs );
+        foreach( $rows as $r ) {
+            $refmap[ $r['ref'] ] = intval($r['id']);
+        }
+    }
+
+    // now we can build up the finished list:
+    $journo_ids = array();
+    foreach( $idents as $ident ) {
+        if( is_numeric( $ident ) ) {
+            $journo_ids[] = intval( $ident );
+        } else{
+            $journo_ids[] = $refmap[$ident];
+        }
+    }
+
+    return $journo_ids;
+}
+
+
+
+function api_getJourno_invoke($params) {
+
+    /* input can be a journo or list of journos */
+    $j = $params['journo'];
+    if( is_null($j) ) {
+        api_error( "missing required parameter: 'journo'" );
+        return;
+    }
+
+    $idents = preg_split('/\s*,\s*/', $j );
+    $journo_ids = resolve_ids( $idents );
+
+    // TODO: impose a max number of journos here...
+
+    // fetch cached versions
+    $cache_ids = array();
+    $qs = array();
+    foreach( $journo_ids as $id ) {
+        $cache_ids[] = "json_$id";
+        $qs[] = '?';
+    }
+
+    $q = db_query( "SELECT content FROM htmlcache WHERE name in (".implode(',',$qs).")", $cache_ids );
+
+    // cook up the results!
+    $temp_results = array();
+    foreach( $journo_ids as $id ) {
+        $temp_results[ $id ] = null;
+    }
+
+    $basic_fields = array( 'id','ref','prettyname', 'firstname', 'lastname', 'oneliner' );
+    while( $row=db_fetch_array($q) ) {
+        $cached_json = $row['content'];
+        $raw = json_decode( $cached_json,true );
+        if( $raw['status'] != 'a' ) {
+            //continue;
+        }
+
+        // the basics:
+        $journo = array_cherrypick( $raw, $basic_fields );
+
+        // pick out contact details
+        $known_emails = array();
+        if( $raw['known_email'] ) {
+            $known_emails[] = $raw['known_email']['email'];
+        }
+
+        $guessed_emails = array();
+        if( $raw['guessed'] ) {
+            $guessed_emails = $raw['guessed']['emails'];
+        }
+
+        $contact = array('known_emails'=>$known_emails,
+            'guessed_emails'=>$guessed_emails,
+            'twitter_id'=>$raw['twitter_id'],
+            'phone_number'=>$raw['phone_number'] );
+        $journo['contact'] = $contact;
+
+        // tags
+        if( !$raw['quick_n_nasty'] ) {
+            $journo['tags'] = $raw['tags'];
+        } else {
+            $journo['tags'] = array();
+        }
+        
+        $id = intval( $journo['id'] );
+        $temp_results[ $id ] = &$journo;
+    }
+
+    // reorder the results to match input params
+    $results = array();
+    foreach( $journo_ids as $id ) {
+        $results[] = $temp_results[ $id ];
+    }
+
+	$output = array( 'results' => $results );
+    api_output( $output);
+}
+
 
 ?>

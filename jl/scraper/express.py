@@ -227,7 +227,7 @@ def ScrubFunc( context, entry ):
 
 def FindArticles():
     """ collect article list for the express"""
-    ukmedia.DBUG2( "express - finding articles" )
+    ukmedia.DBUG2( "express - finding articles\n" )
     articles = FindArticlesFromNavPages()
 
     # special case for blogs - use the rss feed
@@ -314,6 +314,6 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
 
 

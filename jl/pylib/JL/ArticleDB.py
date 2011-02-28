@@ -38,7 +38,7 @@ class ArticleDB:
     """
 
     def __init__(self, dryrun=False, reallyverbose=False ):
-        self.conn = DB.Connect()
+        self.conn = DB.conn()
         self.dryrun = dryrun
         self.reallyverbose = reallyverbose
 
@@ -46,11 +46,20 @@ class ArticleDB:
             ukmedia.DBUG( u"**** (DRY RUN) ****\n" )
 
 
+    # TODO: KILL THIS
     def Add( self, art ):
         """Store an article in the DB
 
         returns id of newly-added article
         """
+
+        assert 'id' not in art
+        return self.upsert(art)
+
+
+
+    def upsert( self, art ):
+        """Insert or update an article"""
 
         if self.reallyverbose:
             ukmedia.PrettyDump( art )
@@ -81,60 +90,89 @@ class ArticleDB:
 
         # send to db!
         cursor = self.conn.cursor()
-        q = 'INSERT INTO article (title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
-        cursor.execute( q, ( title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, lastscraped ) )
 
-        cursor.execute( "select currval('article_id_seq')" )
-        id = cursor.fetchone()[0]
+        updating = False
+        if 'id' in art:
+            updating = True
 
-        # add content, if included
-        if content is not None:
-            q = 'INSERT INTO article_content (article_id, content) VALUES ( %s,%s )'
-            cursor.execute( q, ( id, content ) )
+        if updating:
+            # update existing
+            article_id = art['id']
+            q = 'UPDATE article SET (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) = (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) WHERE id=%s'
+            cursor.execute(q, (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, srcid, wordcount, lastscraped, article_id))
+        else:
+            # insert new
+            q = 'INSERT INTO article (title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, last_comment_check) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'
+            cursor.execute( q, ( title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, srcid, wordcount, lastscraped ) )
+            # get the newly-allocated id
+            cursor.execute( "select currval('article_id_seq')" )
+            article_id = cursor.fetchone()[0]
+
+
+        # update content, if included
+        if content is None:
+            insert_content = False
+        else:
+            insert_content = True
+            if updating:
+                # TODO: keep multiple revisions to track changes
+                # has the content actually changed?
+                cursor.execute("SELECT id FROM article_content WHERE article_id=%s AND content=%s", (article_id,content))
+                foo = cursor.fetchall()     # gah... couldn't get cursor.rowcount to work...
+                if len(foo)>=1:
+                    # no change, so just leave it as is
+                    insert_content = False
+
+        if insert_content:
+            cursor.execute("DELETE FROM article_content WHERE article_id=%s", (article_id,))
+            q = 'INSERT INTO article_content (article_id, content,scraped) VALUES ( %s,%s,%s )'
+            cursor.execute(q, (article_id, content, lastscraped))
 
         # queue it for xapian indexing
-        cursor.execute( "DELETE FROM article_needs_indexing WHERE article_id=%s", (id) )
-        cursor.execute( "INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (id) )
+        cursor.execute("DELETE FROM article_needs_indexing WHERE article_id=%s", (article_id))
+        cursor.execute("INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (article_id))
 
         # if there was a scraper error entry for this article, delete it now
         cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid) )
 
         # if there were images, add them too
+        if updating:
+            cursor.execute("DELETE FROM article_image WHERE article_id=%s", (article_id,))
         if 'images' in art:
             for im in art['images']:
                 cap = im['caption'].encode('utf-8')
                 cred = ''
                 if 'credit' in im:
                     cred = im['credit'].encode('utf-8')
-                cursor.execute( "INSERT INTO article_image (article_id,url,caption,credit) VALUES (%s,%s,%s,%s)",
-                    (id, im['url'], cap, cred ) )
+                cursor.execute("INSERT INTO article_image (article_id,url,caption,credit) VALUES (%s,%s,%s,%s)",
+                    (article_id, im['url'], cap, cred))
 
         # if there were commentlinks, add them too
         if 'commentlinks' in art:
             for c in art['commentlinks']:
                 c['source'] = art['srcorgname']
-                CommentLink.Add( self.conn, id, c )
+                CommentLink.upsert(self.conn, article_id, c)
 
         # add tags
-        Tags.Generate( self.conn, id, art['content'] )
+        Tags.Generate(self.conn, article_id, art['content'])
 
         # parse byline to assign/create journos
-        journos = ProcessByline( self.conn, id, art )
+        journos = ProcessByline(self.conn, article_id, art)
 
         if self.dryrun:
             self.conn.rollback()
         else:
             self.conn.commit()
 
-
-        ukmedia.DBUG2( u"%s: [a%s %s ] ('%s' %s)\n" % (
+        ukmedia.DBUG2( u"%s: %s [a%s %s ] ('%s' %s)\n" % (
             art['srcorgname'],
-            id,
+            'update' if updating else '',
+            article_id,
             art['srcurl'],
             art['byline'],
             ','.join( [ '[j%s]'%(j) for j in journos ] )
             ))
-        return id
+        return article_id
 
 
     def ArticleExists( self, srcid ):
@@ -220,7 +258,7 @@ def FixLinkURLs(html):
         url = re.sub(r'^(?=[a-zA-Z\.]+@[a-zA-Z\.]+)', 'mailto:', url)
         url = re.sub(r'^(?:http\.)?www\.', 'http://www.', url)
         return 'href="%s"' % url
-    
+
     return re.sub(r'''href\s*=\s*(?:['"](.*?)['"]|(\S*?)(?=\>))''', fixup, html)
 
 
@@ -234,6 +272,11 @@ def ProcessByline( conn, article_id, art ):
     srcorgid = Misc.GetOrgID( conn, art['srcorgname'] )
 
     attributed = []
+
+
+    c = conn.cursor()
+    # in case we're rescraping...
+    c.execute("DELETE FROM journo_attr WHERE article_id=%s", (article_id,))
 
     # reminder: a byline can contain multiple journos
     for d in details:

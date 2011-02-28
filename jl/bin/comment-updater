@@ -65,7 +65,7 @@ def UpdateArticle( conn, options, article_id, srcurl ):
                 if options.verbose:
                     print " %d comments" % c['num_comments']
                 c['source'] = art['srcorgname']
-                CommentLink.Add( conn, article_id, c )
+                CommentLink.upsert( conn, article_id, c )
     else:
         print >>sys.stderr, "WARNING: didn't rescrape [a%d] %s" %(article_id,srcurl)
 

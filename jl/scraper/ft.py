@@ -418,5 +418,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.RunMain( FindArticles, ContextFromURL, Extract, maxerrors=50, prep_fn=Prep )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50, prep=Prep )
 
