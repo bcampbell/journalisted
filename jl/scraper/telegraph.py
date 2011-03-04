@@ -18,7 +18,7 @@
 #
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import sys
 import os
 import urlparse
@@ -353,6 +353,8 @@ rssfeeds.append(
     ('blogs', 'http://blogs.telegraph.co.uk/feed-2/')
 )
 
+
+#
 
 def Extract( html, context ):
     # blog url format: (handled by blogs.py)
@@ -867,8 +869,34 @@ def ContextFromURL( url ):
     return context
 
 def FindArticles():
-    l = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
-    return l
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
+    found = found + FindArticlesFromArchive()
+    return found
+
+
+def FindArticlesFromArchive():
+    found=[]
+
+    today = date.today()
+    # fetch the last 5 days worth...
+    days = [today-timedelta(days=i) for i in (0,1,2,3,4)]
+    for d in days:
+        archive_url = "http://www.telegraph.co.uk/archive/%d-%d-%d.html" % (d.year,d.month,d.day)
+        ukmedia.DBUG2("fetching %s\n" % (archive_url))
+        html = ukmedia.FetchURL(archive_url)
+        soup = BeautifulSoup.BeautifulSoup( html )
+        indexaz = soup.find('div',{'class':re.compile(r'\bindexaz\b')})
+        for a in indexaz.findAll('a'):
+            url = a['href']
+            if url.startswith('#'):
+                continue
+            # discard section links
+            if re.match(r'^http://www.telegraph.co.uk.*/$', url):
+                continue
+            url = urlparse.urljoin(archive_url, url)
+            found.append(ContextFromURL(url))
+
+    return found
 
 if __name__ == "__main__":
     ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
