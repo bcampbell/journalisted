@@ -36,8 +36,13 @@ def unique_articles( arts ):
 
 def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
 
+    usage = """usage: %prog [options] <urls>
 
-    parser = OptionParser()
+    If no <urls> are provided, the scraper will scan the site for
+    articles and try to scrape them all.
+    """
+
+    parser = OptionParser(usage=usage)
     parser.add_option( "-d", "--dryrun", action="store_true", dest="dry_run", help="don't touch the database" )
     parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
  
