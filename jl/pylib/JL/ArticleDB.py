@@ -164,9 +164,15 @@ class ArticleDB:
         else:
             self.conn.commit()
 
+        op = 'update' if updating else 'new'
+        if insert_content:
+            op += ' meta+content'
+        else:
+            op += ' meta'
+
         ukmedia.DBUG2( u"%s: %s [a%s %s ] ('%s' %s)\n" % (
             art['srcorgname'],
-            'update' if updating else '',
+            op,
             article_id,
             art['srcurl'],
             art['byline'],
