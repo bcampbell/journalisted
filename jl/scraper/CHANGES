@@ -47,4 +47,4 @@ Log changes made due to website changes here!
 2010-12-20 mirror: markup change scuppered beautifulsoup. Switched to lxml
 2010-12-22 notw: paywall+layout changes
 2011-01-06 ft: ft blogs on new software
-
+2011-03-08 bbc: fix/streamline article discovery

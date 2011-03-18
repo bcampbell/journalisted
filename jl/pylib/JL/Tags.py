@@ -138,6 +138,7 @@ def Generate( conn, article_id, article_content ):
 
     # write the tags into the DB
     c2 = conn.cursor()
+    c2.execute("DELETE FROM article_tag WHERE article_id=%s", (article_id,))
     for tagkey,tagfreq in tags.items():
 
         tagname = tagkey[0].encode('utf-8')

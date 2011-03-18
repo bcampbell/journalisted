@@ -5,7 +5,6 @@
 # (http://www.affero.org/oagpl.html)
 #
 #
-# telegraph blogs are hosted by onesite.com
 #
 # TODO:
 #
@@ -19,7 +18,7 @@
 #
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import sys
 import os
 import urlparse
@@ -347,8 +346,15 @@ rssfeeds = [
 
 #anny shaw's blog not linked from rest of site, so manually added here:
 rssfeeds.append(
-    ( "Anny Shaw's blog", 'http://rss.blogs.telegraph.co.uk/rest/ugcBlog?action=getBlogs&rss=1&pCount=3&pullFrom=1&userID=16103657' ) );
+    ( "Anny Shaw's blog", 'http://rss.blogs.telegraph.co.uk/rest/ugcBlog?action=getBlogs&rss=1&pCount=3&pullFrom=1&userID=16103657' ) )
 
+# the blogs
+rssfeeds.append(
+    ('blogs', 'http://blogs.telegraph.co.uk/feed-2/')
+)
+
+
+#
 
 def Extract( html, context ):
     # blog url format: (handled by blogs.py)
@@ -684,9 +690,10 @@ def FindColumnistArticles():
 
 def Extract_blog( html, context ):
     """extract fn for telegraph blog posts (wordpress?)"""
-
     art = context
     soup = BeautifulSoup.BeautifulSoup( html )
+
+    art['srcorgname']=u'telegraph'
 
     # there are bad links the the RSS feeds (pointing at the story in the old blog I think)
     # These redirect to the summary page (even though all the content appears to have been migrated! doh!)
@@ -736,40 +743,6 @@ def Extract_blog( html, context ):
     return art
 
 
-
-def Extract_blogOLD( html, context ):
-    """extract fn for telegraph blog posts"""
-
-    art = context
-    soup = BeautifulSoup.BeautifulSoup( html )
-
-
-    container = soup.find( 'div', {'id':'mainColumnContentContainer'} )
-
-    art['title'] = ukmedia.FromHTMLOneLine( container.h1.renderContents(None) )
-
-    smallprint = container.find( 'div',{'class':'oneBlogSmallPrint'} )
-    foo = ukmedia.FromHTMLOneLine( smallprint.renderContents( None ) )
-    # eg Posted By: Christian Adams at Feb 2, 2009 at 17:01:09 [ General ] Posted in: UK Correspondents , The Drawing Room Tags: snow , weather
-    m = re.compile( r"Posted By:\s+(.*?)\s+at\s+(\w+ \d+, \d{4}\s+at\s+\d\d:\d\d:\d\d)" ).search( foo )
-    art['byline'] = m.group(1)
-    art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
-
-    contentdiv = container.find( 'div', {'class':re.compile('fullTextContent')} )
-    art['content'] = contentdiv.renderContents( None )
-    art['description'] = ukmedia.FirstPara( art['content'] )
-
-    art['commentlinks'] = []
-    numcomment_div = soup.find('div',{'class':'numComments'})
-    if numcomment_div:
-        a = numcomment_div.a
-        m = re.compile( r'(\d+)\scomment' ).search( a.renderContents(None) )
-        if m:
-            num_comments = int( m.group(1) )
-            comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
-            art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
-
-    return art
 
 
 # eg http://www.telegraph.co.uk/travel/759562/Is-cabin-air-making-us-sick.html
@@ -896,8 +869,34 @@ def ContextFromURL( url ):
     return context
 
 def FindArticles():
-    l = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
-    return l
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
+    found = found + FindArticlesFromArchive()
+    return found
+
+
+def FindArticlesFromArchive():
+    found=[]
+
+    today = date.today()
+    # fetch the last 5 days worth...
+    days = [today-timedelta(days=i) for i in (0,1,2,3,4)]
+    for d in days:
+        archive_url = "http://www.telegraph.co.uk/archive/%d-%d-%d.html" % (d.year,d.month,d.day)
+        ukmedia.DBUG2("fetching %s\n" % (archive_url))
+        html = ukmedia.FetchURL(archive_url)
+        soup = BeautifulSoup.BeautifulSoup( html )
+        indexaz = soup.find('div',{'class':re.compile(r'\bindexaz\b')})
+        for a in indexaz.findAll('a'):
+            url = a['href']
+            if url.startswith('#'):
+                continue
+            # discard section links
+            if re.match(r'^http://www.telegraph.co.uk.*/$', url):
+                continue
+            url = urlparse.urljoin(archive_url, url)
+            found.append(ContextFromURL(url))
+
+    return found
 
 if __name__ == "__main__":
     ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )

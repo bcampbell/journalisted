@@ -50,10 +50,10 @@ function api_findArticles_invoke($params) {
         $xap->set_query( $search );
         $results = $xap->run($start, $num,'date');
 
-        foreach( $results as &$a ) {
-            // convert datetime objects to strings
-            $a['pubdate'] = $a['pubdate']->format('c');
-        }
+//        foreach( $results as &$a ) {
+//            // convert datetime objects to strings
+//            $a['pubdate'] = $a['pubdate']->format('c');
+//        }
 
     	$output = array(
 	    	'results' => $results,

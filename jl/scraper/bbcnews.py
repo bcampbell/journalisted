@@ -11,6 +11,7 @@ import re
 from datetime import datetime
 import sys
 import urlparse
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
@@ -20,130 +21,13 @@ from JL import ukmedia, ScraperUtils
 
 
 
-# bbc blog feedlist automatically scraped by ./bbcblogs-scrape-rsslist.py
-# (run 2009-02-16 12:03:24)
-# got 95 feeds
-# THEN HAND EDITED!
-blog_feeds = [
-#    ("BBC Internet blog", "http://www.bbc.co.uk/blogs/bbcinternet/rss.xml"),
-#    ("BBCi Labs", "http://www.bbc.co.uk/blogs/bbcilabs/rss.xml"),
-    ("The Editors", "http://www.bbc.co.uk/blogs/theeditors/rss.xml"),
-    ("JZ's diary (Radio Scotland)", "http://www.bbc.co.uk/blogs/jeffzycinski/index.xml"),
-#    ("Radio Labs", "http://www.bbc.co.uk/blogs/radiolabs/index.xml"),
-    ("Sport Editors' blog", "http://www.bbc.co.uk/blogs/sporteditors/index.xml"),
-#    ("Ouch", "http://www.bbc.co.uk/blogs/ouch/rss.xml"),
-    ("Peston's Picks", "http://www.bbc.co.uk/blogs/thereporters/robertpeston/rss.xml"),
-    ("The Devenport Diaries", "http://www.bbc.co.uk/blogs/thereporters/markdevenport/rss.xml"),
-#    ("Stuart Bailie", "http://www.bbc.co.uk/blogs/stuartbailie/rss.xml"),
-    ("Will & Testament", "http://www.bbc.co.uk/blogs/ni/index.xml"),
-    ("Blether with Brian", "http://www.bbc.co.uk/blogs/thereporters/briantaylor/rss.xml"),
-#    ("Bryan Burnett", "http://www.bbc.co.uk/blogs/bryanburnett//index.xml"),
-#    ("JZ's diary", "http://www.bbc.co.uk/blogs/jeffzycinski/index.xml"),
-    ("Pauline McLean", "http://www.bbc.co.uk/blogs/thereporters/paulinemclean/rss.xml"),
-#    ("Scottish Symphony Orchestra", "http://www.bbc.co.uk/blogs/bbcsso//index.xml"),
-    ("Betsan's blog", "http://www.bbc.co.uk/blogs/thereporters/betsanpowys/rss.xml"),
-#    ("Blog C2", "http://www.bbc.co.uk/blogs/c2/rss.xml"),
-#    ("North-east Wales weblog", "http://blogs.bbc.co.uk/walesnortheast/index.xml"),
-
-# WELSH
-###     ("Vaughan Roderick", "http://www.bbc.co.uk/blogs/thereporters/vaughanroderick/rss.xml"),
-
-#    ("Wales Nature", "http://www.bbc.co.uk/blogs/gardenersworld/alysfowlerrss.xml"),
-#    ("Bobby Friction", "http://www.bbc.co.uk/blogs/friction//index.xml"),
-#    ("Bollywood blog", "http://www.bbc.co.uk/blogs/bollywood//index.xml"),
-#    ("Chart blog", "http://www.bbc.co.uk/blogs/chartblog//index.xml"),
-#    ("The Culture Show", "http://www.bbc.co.uk/blogs/thecultureshow/rss.xml"),
-#    ("Introducing", "http://www.bbc.co.uk/blogs/introducing//index.xml"),
-#    ("Kermode Uncut", "http://www.bbc.co.uk/blogs/markkermode/rss.xml"),
-#    ("Mike Harding's Folk blog", "http://www.bbc.co.uk/blogs/folk//index.xml"),
-#    ("Pauline McLean", "http://www.bbc.co.uk/blogs/thereporters/paulinemclean/rss.xml"),
-#    ("Stuart Bailie", "http://www.bbc.co.uk/blogs/stuartbailie/rss.xml"),
-#    ("Writers' Room", "http://www.bbc.co.uk/blogs/writersroom/index.xml"),
-#    ("Scottish Symphony Orchestra", "http://www.bbc.co.uk/blogs/bbcsso//index.xml"),
-#    ("Betsan's blog", "http://www.bbc.co.uk/blogs/thereporters/betsanpowys/rss.xml"),
-#    ("Blether with Brian", "http://www.bbc.co.uk/blogs/thereporters/briantaylor/rss.xml"),
-#    ("The Devenport Diaries", "http://www.bbc.co.uk/blogs/thereporters/markdevenport/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/10_things/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/caption_comp/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/crunch_creep/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/daily_miniquiz/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/housekeeping/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/how_to_say/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/paper_monitor/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/quote_of_the_day/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/random_stat/rss.xml"),
-#    ("Magazine Monitor", "http://www.bbc.co.uk/blogs/magazinemonitor/your_letters/rss.xml"),
-    ("Mark Easton's UK", "http://www.bbc.co.uk/blogs/thereporters/markeaston/rss.xml"),
-    ("Mark Urban", "http://www.bbc.co.uk/blogs/newsnight/markurban/index.xml"),
-    ("Michael Crick", "http://www.bbc.co.uk/blogs/newsnight/michaelcrick/index.xml"),
-    ("Nick Robinson's Newslog", "http://blogs.bbc.co.uk/nickrobinson/rss.xml"),
-    ("Open Secrets", "http://www.bbc.co.uk/blogs/opensecrets/rss.xml"),
-    ("James Reynolds' China", "http://www.bbc.co.uk/blogs/thereporters/jamesreynolds/rss.xml"),
-    ("Justin Webb's America", "http://www.bbc.co.uk/blogs/thereporters/justinwebb/rss.xml"),
-    ("Mark Mardell's Europe", "http://www.bbc.co.uk/blogs/thereporters/markmardell/rss.xml"),
-    ("Nick Bryant's Australia", "http://www.bbc.co.uk/blogs/thereporters/nickbryant/rss.xml"),
-    ("5 Live Breakfast", "http://www.bbc.co.uk/blogs/fivelivebreakfast/index.xml"),
-#    ("Ace & Vis (1Xtra)", "http://www.bbc.co.uk/blogs/aceandvis/index.xml"),
-#    ("Bryan Burnett (Radio Scotland)", "http://www.bbc.co.uk/blogs/bryanburnett//index.xml"),
-#    ("Chris Evans (Radio 2)", "http://www.bbc.co.uk/blogs/chrisevans//index.xml"),
-#    ("Chris Moyles (Radio 1)", "http://www.bbc.co.uk/blogs/chrismoyles/index.xml"),
-#    ("Greg James (Radio 1)", "http://www.bbc.co.uk/blogs/gregjames//index.xml"),
-
-# UNSURE if we should do iPM blog
-###    ("iPM (Radio 4)", "http://www.bbc.co.uk/blogs/ipm//index.xml"),
-#    ("Jo Whiley (Radio 1)", "http://www.bbc.co.uk/blogs/jowhiley/index.xml"),
-#    ("Mistajam (1Xtra)", "http://www.bbc.co.uk/blogs/mistajam/rss.xml"),
-    ("PM (Radio 4)", "http://www.bbc.co.uk/blogs/pm/index.xml"),
-#    ("Pods and Blogs (Radio 5 Live)", "http://www.bbc.co.uk/blogs/podsandblogs/index.xml"),
-#    ("Steve Lamacq (6 Music)", "http://www.bbc.co.uk/blogs/stevelamacq/index.xml"),
-    ("Today - Evan Davis (Radio 4)", "http://www.bbc.co.uk/blogs/today/evandavis/index.xml"),
-    ("Today - Tom Feilden (Radio 4)", "http://www.bbc.co.uk/blogs/today/tomfeilden/index.xml"),
-    ("Today - Jim Naughtie (Radio 4)", "http://www.bbc.co.uk/blogs/today/jimnaughtie/index.xml"),
-#    ("Victoria Derbyshire (Radio 5 Live)", "http://www.bbc.co.uk/blogs/victoriaderbyshire/index.xml"),
-    ("World Tonight (Radio 4)", "http://www.bbc.co.uk/blogs/worldtonight//index.xml"),
-#    ("World Update (World Service)", "http://www.bbc.co.uk/blogs/worldupdate/index.xml"),
-#    ("Toby Buckland (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/tobybuckland/rss.xml"),
-#    ("Alys Fowler (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/alysfowler/rss.xml"),
-#    ("Joe Swift (gardening)", "http://www.bbc.co.uk/blogs/gardenersworld/joeswift/rss.xml"),
-#    ("Euro 2008", "http://www.bbc.co.uk/blogs/football/index.xml"),
-
-    # MIHIR BOSE link is wrong!
-#    ("Mihir Bose", "http://www.bbc.co.uk/blogs/mihirbose/rss.xml"),
-    # corrected:
-    ("Mihir Bose", "http://www.bbc.co.uk/blogs/thereporters/mihirbose/rss.xml"),
-
-#    ("Olympics", "http://www.bbc.co.uk/blogs/olympics/rss.xml"),
-#    ("Test Match Special", "http://www.bbc.co.uk/blogs/tms/index.xml"),
-    ("Dot.life", "http://www.bbc.co.uk/blogs/technology/rss.xml"),
-#    ("Amazon", "http://www.bbc.co.uk/blogs/amazon/rss.xml"),
-#    ("Autumnwatch", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
-#    ("The Culture Show", "http://www.bbc.co.uk/blogs/thecultureshow/rss.xml"),
-#    ("Gardeners' World", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
-#    ("Last Chance to See", "http://www.bbc.co.uk/blogs/lastchancetosee/rss.xml"),
-    ("Newsnight", "http://www.bbc.co.uk/blogs/newsnight/index.xml"),
-#    ("The One Show - Backstage", "http://www.bbc.co.uk/blogs/theoneshow/backstage/rss.xml"),
-#    ("The One Show - Consumer", "http://www.bbc.co.uk/blogs/theoneshow/consumer/rss.xml"),
-#    ("The One Show - One Passions", "http://www.bbc.co.uk/blogs/theoneshow/onepassions/rss.xml"),
-#    ("Springwatch", "http://www.bbc.co.uk/blogs/gardenersworld/rss.xml"),
-#    ("Watchdog", "http://www.bbc.co.uk/blogs/watchdog/styles.css"),
-#    ("BBC Brazil", "http://www.bbc.co.uk/blogs/portuguese/index.xml"),
-#    ("BBC Mundo", "http://www.bbc.co.uk/blogs/spanish/index.xml"),
-#    ("BBC Urdu", "http://www.bbc.co.uk/blogs/urdu/index.xml"),
-
-    # HMMM.. she isn't listed on bbc.co.uk/blogs...
-    ("Razia Iqbal", "http://www.bbc.co.uk/blogs/thereporters/raziaiqbal/rss.xml" ),
-]
-
-
-
 
 
 
 # example bbc news url:
 # "http://news.bbc.co.uk/1/hi/world/africa/7268903.stm"
-news_srcid_pat = re.compile( '/(\d+)\.stm$' )
-
+old_news_srcid_pat = re.compile( '/(\d+)\.stm$' )
+news_srcid_pat = re.compile( '(\d{4,})/?$' )
 
 # some blog url patterns:
 # http://www.bbc.co.uk/blogs/thereporters/robertpeston/2009/02/chelsea_reduces_dependence_on.html
@@ -162,10 +46,19 @@ def CalcSrcID( url ):
     if o[1] not in ('news.bbc.co.uk','bbc.co.uk', 'www.bbc.co.uk' ):
         return None
 
-    m = news_srcid_pat.search( url )
+    m = old_news_srcid_pat.search( url )
     if m:
         return 'bbcnews_' + m.group(1)
-    return url
+
+
+    if '/iplayer/' in url:
+        return None
+
+    m = news_srcid_pat.search( url )
+    if m:
+        return url
+
+    return None
 
 
 def Extract( html, context ):
@@ -183,7 +76,9 @@ def Extract( html, context ):
             # old style
             return Extract_hi( html, context )
         else:
+            # new, eg http://www.bbc.co.uk/news/world-latin-america-12629647
             return Extract_tableless( html, context )
+
 
 def Extract_low( html, context ):
     """parse html of a low-graphics page"""
@@ -322,57 +217,6 @@ def Extract_hi( html, context ):
 
 
 
-def Extract_OLDtableless( html, context ):
-    # new(?) format, tableless, some linked data appearing?...
-    # eg /1/hi/technology/10102126.stm
-    #
-
-    art = context
-    soup = BeautifulSoup( html )
-
-    # get pubdate from meta tag
-    date_meta = soup.find( 'meta', { 'name': 'OriginalPublicationDate' } )
-    if date_meta:
-        art['pubdate'] = ukmedia.ParseDateTime( date_meta['content'] )
-
-    # headline
-    meta_div = soup.find('div',{'id':'meta-information'})
-    art['title'] = ukmedia.FromHTMLOneLine( meta_div.h1.renderContents(None) )
-
-
-    bod = soup.find('div',{'id':'story-body'})
-
-    authors = []
-    byline = bod.find('span',{'class':'byline'})
-    if byline:
-        for author in byline.findAll('span',{'class':'author-name'}):
-            authors.append( ukmedia.FromHTMLOneLine( author.renderContents(None) ) )
-        #TODO: could also use "span.author-position" info
-        byline.extract()
-    art['byline'] = u' and '.join(authors)
-
-
-    # images
-    art['images'] = []
-    for cap in bod.findAll('span',{'class':'caption'}):
-        if cap.img:
-            img_url = cap.img['src']
-            cap.img.extract()
-            img_caption = ukmedia.FromHTMLOneLine( cap.renderContents(None) )
-            img_credit = u''
-            art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
-        cap.extract()
-
-    for cruft in bod.findAll( 'div', {'class':re.compile('^video') } ):
-        cruft.extract()
-    for cruft in bod.findAll( 'div', {'class':'story-feature' } ):
-        cruft.extract()
-
-    art['content'] = bod.renderContents(None)
-    art['description'] = ukmedia.FirstPara( art['content'] )
-
-    return art
-
 
 
 
@@ -388,7 +232,10 @@ def Extract_blog( html, context ):
     meta_div = post_div.find('div', {'class':'meta'} )
 
     author = meta_div.find('span', {'class':'vcard author'} )
-    art['byline'] = ukmedia.FromHTMLOneLine( author.renderContents(None) )
+    if author is not None:
+        art['byline'] = ukmedia.FromHTMLOneLine( author.renderContents(None) )
+    else:
+        art['byline'] = u''
 
     # <abbr class="published" title="2010-04-02T12:35:44+00:00">12:35 UK time, Friday,  2 April 2010</abbr>
     pub = meta_div.find('abbr', {'class':'published'} )
@@ -456,11 +303,24 @@ def Extract_tableless(html,context):
     art = context
     soup = BeautifulSoup( html )
 
+    # or "<!-- START CPS_SITE CLASS: story -->" for story
+    # or could use class of "#main-content" div to determine
+
+    bod = soup.find('div',{'class':'story-body'})
+    if bod is None:
+        bod = soup.find('div',{'id':'story-body'})
+
+    if bod is None:
+        ukmedia.DBUG2( "IGNORE non-story page ( %s )\n" %( context['srcurl'] ) )
+        return None
+
     if "<!-- START CPS_SITE CLASS: media_asset -->" in html:
         ukmedia.DBUG2( "IGNORE video page ( %s )\n" %( context['srcurl'] ) )
         return None
-    # or "<!-- START CPS_SITE CLASS: story -->" for story
-    # or could use class of "#main-content" div to determine
+
+    # strip out html comments
+    comments = bod.findAll(text=lambda text:isinstance(text, Comment))
+    [comment.extract() for comment in comments]
 
 
     # get pubdate from meta tag
@@ -472,14 +332,13 @@ def Extract_tableless(html,context):
     meta = soup.find( 'meta', { 'name': 'Headline' } )
     art['title'] = ukmedia.FromHTMLOneLine( meta['content'] )
 
-    bod = soup.find('div',{'class':'story-body'})
 
     authors = []
 
-    for byline in bod.findAll('span',{'class':'byline'}):
-        for author in byline.findAll('span',{'class':'byline-name'}):
+    for byline in bod.findAll('span',{'class':re.compile(r'\bbyline\b')}):
+        for author in byline.findAll('span',{'class':re.compile(r'\b((byline-name)|(author-name))\b')}):
             authors.append( ukmedia.FromHTMLOneLine( author.renderContents(None) ) )
-            #TODO: could also use "byline-title" span
+            #TODO: could also use "byline-title"/"author-position" span to get jobtitle
         byline.extract()
     art['byline'] = u' and '.join(authors)
 
@@ -494,6 +353,11 @@ def Extract_tableless(html,context):
             art['images'].append( {'url': img_url, 'caption': img_caption, 'credit': img_credit } )
         cap.extract()
 
+    comments_div = bod.find('div',{'class':re.compile(r'\bdna-comments_module\b')})
+    if comments_div:
+        # TODO: could get comment count
+        comments_div.extract()
+
     for cruft in bod.findAll( 'div', {'class':re.compile('^video') } ):
         cruft.extract()
     for cruft in bod.findAll( 'span', {'class':'story-date'} ):
@@ -506,6 +370,8 @@ def Extract_tableless(html,context):
         cruft.extract()
     for cruft in bod.findAll( 'script' ):
         cruft.extract()
+    for cruft in bod.findAll( 'div', {'class':'embedded-hyper' } ):
+        cruft.extract()
 
 
     art['content'] = ukmedia.SanitiseHTML( bod.renderContents(None) )
@@ -516,82 +382,70 @@ def Extract_tableless(html,context):
 
 
 
-def FindFeeds():
-    """ scrape the BBC news site to find all the RSS feeds """
+def FindArticles():
+    """ crawl the bbc news site for articles """
 
+    root_url = "http://www.bbc.co.uk/news/"
+
+    err_cnt = 0
+    max_errs = 10
+
+    article_urls = set()
     visited = set()
     queued = set()
-    queued.add( "http://www.bbc.co.uk/news/" )                  # main starting point
-    queued.add( "http://news.bbc.co.uk/local/hi/default.stm" )  # for local new list
-
-    feeds = []
+    queued.add( root_url )
 
     while queued:
         page_url = queued.pop()
-        visited.add( page_url )
-        ukmedia.DBUG2( "fetching %s\n" % (page_url) )
-        html = ukmedia.FetchURL( page_url )
-        soup = BeautifulSoup( html )
-        # first, look for any other pages we might want to scrape
+        visited.add(page_url)
+        try:
+            html = ukmedia.FetchURL(page_url)
+        except urllib2.HTTPError, e:
+            err_cnt += 1
+            if err_cnt >= max_errs:
+                ukmedia.DBUG('error count exceeded - BAILING\n')
+                raise
+            ukmedia.DBUG('%s: %s\n' % (page_url,str(e)))
+            continue
+        doc = lxml.html.fromstring(html)
+        doc.make_links_absolute(page_url)
 
-        found = []
-        # use the nav bars....
-        for nav in soup.findAll( 'ul', {'id':['nav','sub-nav']}):
-            for a in nav.findAll('a'):
-                section_url = urlparse.urljoin( page_url, a['href'] )
-                found.append( section_url )
-        # ...and also look for local news sections
-        local_list = soup.find( 'div', {'class':'local_site_list' } )
-        if local_list:
-            for a in local_list.findAll( 'a'):
-                url = urlparse.urljoin( page_url, a['href'] )
-                found.append( url )
-
-        # queue up any additional pages we found
-        for url in found:
-            if url not in visited and url not in queued:
-                queued.add( url )
-
-        # now check this page for stories (or rss feeds...)
-        for foo in soup.head.findAll('link', type='application/rss+xml' ):
-            feeds.append( (foo['title'], foo['href']) )
-
-    return feeds
+        art_cnt = 0
+        nav_cnt = 0
+        for a in doc.cssselect('a'):
+            url = a.get('href')
+            if url is None:
+                continue
 
 
+            # kill query and fragment parts
+            # TODO: should save originals as alternate urls (maybe with query, but no fragment)
+            o = urlparse.urlparse(url)
+            url = urlparse.urlunparse((o[0], o[1], o[2], o[3], '', ''))
+            # skip the mobile version of articles
+            # TODO: should collect mobile urls and map them to the non-mobile versions
+            if '/mobile/' in url:
+                continue
+            if '/weather/forecast/' in url:
+                continue
+            #if '/in_pictures/' in url:
+            #    continue
+            if CalcSrcID(url):
+                # it looks like an article url...
+                if url not in article_urls:
+                    art_cnt += 1
+                    article_urls.add(url)
+            elif url not in visited and url.startswith(page_url):
+                if not url.endswith('.stm'):
+                    # treat it as a navigation page
+                    nav_cnt += 1
+                    queued.add(url)
+
+        ukmedia.DBUG2("scan %s (%d articles)\n" % (page_url,art_cnt))
+    ukmedia.DBUG2("scanned %d pages, found %d articles" %(len(visited),len(article_urls)))
+    return [ContextFromURL(url) for url in article_urls]
 
 
-
-
-def ScrubFunc( context, entry ):
-    """ per-article callback for processing RSS feeds """
-
-    url = context['srcurl']
-    # BBC has special rss versions which redirect to real article...
-    if '/rss/' in url:
-        # ...luckily the guid has proper link (marked as non-permalink)
-        url = entry.guid
-
-    # a story can have multiple paths (eg uk vs international version)
-    srcid = CalcSrcID( url )
-    if not srcid:
-        return None # suppress it
-
-    if '/in_pictures/' in url:
-        return None
-
-    context['srcid'] = srcid
-    context['srcurl'] = url
-
-    return context
-
-
-def FindArticles():
-    """ get a set of articles to scrape from the bbc rss feeds """
-    news_feeds = FindFeeds()
-    articles = ScraperUtils.FindArticlesFromRSS( blog_feeds, u'bbcnews', ScrubFunc )
-    articles = articles + ScraperUtils.FindArticlesFromRSS( news_feeds, u'bbcnews', ScrubFunc )
-    return articles
 
 
 def ContextFromURL( url ):
@@ -612,6 +466,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    # high maxerrors to cope with photo gallerys, things-to-do pages etc... better culling needed :-)
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
 
