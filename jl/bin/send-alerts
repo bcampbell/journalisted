@@ -123,7 +123,7 @@ function DoPerson( $person_id, $fmt )
 		/* find new articles by the journo in this alert */
 		$q2 = db_query( "SELECT title,byline,firstseen,permalink " .
 			"FROM ( article a INNER JOIN journo_attr j ON a.id=j.article_id ) " .
-			"WHERE j.journo_id=? AND a.lastscraped>(NOW()-'1 day'::interval) AND a.status='a' " .
+			"WHERE j.journo_id=? AND a.pubdate>(NOW()-'1 day'::interval) AND a.status='a' " .
 			"ORDER BY pubdate DESC", $journo_id );
 
 		$artcnt = db_num_rows( $q2 );
