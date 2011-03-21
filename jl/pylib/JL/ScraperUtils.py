@@ -413,7 +413,7 @@ def ProcessArticles( foundarticles, store, extractfn, maxerrors=10, extralogging
             resp = urllib2.urlopen( context['srcurl'] )
             html = resp.read()
             # want to collect all URLs as we go
-            urls = set(context['srcurl'], context['permalink'])
+            urls = set((context['srcurl'], context['permalink']))
             for code,url in resp.redirects:
                 urls.add(url)
                 if code==301:
