@@ -141,7 +141,11 @@ def Extract_MainSite( html, context ):
     if u'sundaymirror' in art['byline'].lower():
         art['srcorgname'] = u'sundaymirror'
 
-    bod = maindiv.cssselect( '#article-body' )[0]
+    foo = maindiv.cssselect('#article-body')
+    if len(foo)<1:
+        foo = maindiv.cssselect('.article-body')
+        assert len(foo)>0
+    bod = foo[0]
     for g in maindiv.cssselect( 'div.art-o' ):  # galleries
         g.drop_tree()
     for cruft in maindiv.cssselect( '.advert, .append-html'  ): # other cruft
