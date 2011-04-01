@@ -790,7 +790,6 @@ def ScrubFunc( context, entry ):
     """ tidy up context, work out srcid etc... entry param not used """
 
     url = context['srcurl']
-
     o = urlparse.urlparse( url )
 
     # blog?
@@ -800,6 +799,12 @@ def ScrubFunc( context, entry ):
         context['srcid'] = CalcSrcID( url )
         context['srcorgname'] = u'telegraph'
         return context
+
+    # grr.
+    if o[1] == 'telegraph.feedsportal.com':
+        url = entry.guid
+        context['srcurl']=url
+        o = urlparse.urlparse( url )
 
     # we'll assume that all articles published on a Sunday are from
     # the sunday telegraph...
@@ -828,6 +833,7 @@ def ScrubFunc( context, entry ):
 #        context['srcurl'] = urlparse.urlunparse( (o[0],o[1],o[2],'','service=print','') );
 
         context['srcid'] = CalcSrcID( url )
+
         return context
 
     # xml article?
