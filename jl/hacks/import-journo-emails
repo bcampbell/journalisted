@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+""" import a bunch of journo email addresses from a csv file """
+
+import sys
+import csv
+import re
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB
+
+opts = None
+new_cnt = 0
+
+def read_csv( f ):
+    """ read a csv file in as an array of dictionaries (one per row, indexed by column name) """
+    out = []
+    reader = csv.reader( f )
+    fields = reader.next()
+    fields = [ f.lower() for f in fields ]
+    for row in reader:
+        record = {}
+        for col in range( len(fields) ):
+            record[ fields[col] ] = row[col]
+        out.append(record)
+    return out
+
+
+def cleanup_email(email):
+    email = email.strip()
+    # trim any trailing dot(s)
+    email = re.sub('[.]+$','',email)
+    return email
+
+
+email_pat = re.compile( r"""\b[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b""", re.IGNORECASE)
+
+def sanitycheck_email(email):
+    if email_pat.match(email) is None:
+        return False
+    return True
+
+
+def process_row(row):
+    """ journo_ref,email,srcurl,srcdate """
+
+    global new_cnt
+    c = DB.conn().cursor()
+
+    email = cleanup_email(row['email'])
+    if not sanitycheck_email(email):
+        print >>sys.stderr, "SKIP bad email %s" % (email,)
+        return
+
+    # email already in db?
+    sql = "SELECT id FROM journo_email WHERE journo_id=(SELECT id FROM journo WHERE ref=%s) AND lower(email)=%s"
+
+    c.execute(sql, (row['journo_ref'],email.lower()))
+    foo = c.fetchall()
+    if len(foo)==0:
+        sql = "INSERT INTO journo_email (email,srcurl,srctype,journo_id,approved) VALUES (%s,%s,%s,(SELECT id FROM journo WHERE ref=%s),%s)"
+        c.execute(sql, (email,row['srcurl'],'article',row['journo_ref'],True))
+        if opts.verbose:
+            print "new: %s %s" % (row['journo_ref'],email)
+        new_cnt += 1
+
+
+def main():
+    global opts
+
+    parser = OptionParser()
+    parser.add_option("-d", "--dry-run", action="store_true", dest="dryrun", help="dry run - don't touch DB")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+
+    (opts, args) = parser.parse_args()
+
+    data = read_csv(open(args[0],'r'))
+    for row in data:
+        process_row(row)
+
+    print "total new: %d" % (new_cnt,)
+    if opts.dryrun:
+        DB.conn().rollback()
+#    else:
+#        DB.conn().commit()
+
+
+
+if __name__ == "__main__":
+    main()
+
