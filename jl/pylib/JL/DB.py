@@ -5,6 +5,8 @@ sys.path.append("../../pylib")
 import psycopg2
 import psycopg2.extras as pe
 
+
+# TODO: Phase this out...
 class PgSQL:
     '''
     A PgSQL-compatible wrapper over psycopg2.
@@ -26,42 +28,44 @@ class FakeConn(object):
 
 
 class FakeCursor(object):
-	def __init__(self, cur):
-		self.cur = cur
-	def __getattr__(self, name):
-		if name in ('execute', 'commit', 'rollback'):
-			return lambda *args, **kwargs: getattr(FakeCursor, name)(self, *args, **kwargs)
-		method = getattr(self.cur, name)
-		return lambda *args, **kwargs: method(*args, **kwargs)
+    def __init__(self, cur):
+        self.cur = cur
+    def __getattr__(self, name):
+        if name in ('execute', 'commit', 'rollback'):
+            return lambda *args, **kwargs: getattr(FakeCursor, name)(self, *args, **kwargs)
+        method = getattr(self.cur, name)
+        return lambda *args, **kwargs: method(*args, **kwargs)
 
-	def execute(self, query, *args, **kwargs):
-		if len(args)!=1 or not isinstance(args[0], (dict, list, tuple)):
-			args = [args]
-		return self.cur.execute(query, *args, **kwargs)
-	def commit(self):
-		return self.cur.execute('COMMIT')
-	def rollback(self):
-		return self.cur.execute('ROLLBACK')
+    def execute(self, query, *args, **kwargs):
+        if len(args)!=1 or not isinstance(args[0], (dict, list, tuple)):
+            args = [args]
+        return self.cur.execute(query, *args, **kwargs)
+    def commit(self):
+        return self.cur.execute('COMMIT')
+    def rollback(self):
+        return self.cur.execute('ROLLBACK')
 
 
 import mysociety.config
 mysociety.config.set_file("../conf/general")
 
+
+# TODO: Phase this out...
 def Connect():
-	# all a bit hacky...
-	u = mysociety.config.get('JL_DB_USER')
-	pwd = mysociety.config.get('JL_DB_PASS', 'UNSET' )
-	db = mysociety.config.get('JL_DB_NAME')
-	p = mysociety.config.get('JL_DB_PORT', 'UNSET')
+    # all a bit hacky...
+    u = mysociety.config.get('JL_DB_USER')
+    pwd = mysociety.config.get('JL_DB_PASS', 'UNSET' )
+    db = mysociety.config.get('JL_DB_NAME')
+    p = mysociety.config.get('JL_DB_PORT', 'UNSET')
 
-	if pwd == 'UNSET':
-		# for dev machine
-		conn = PgSQL.connect( user=u, database=db, port=p )
-	else:
-		conn = PgSQL.connect( user=u, password=pwd, database=db )
+    if pwd == 'UNSET':
+        # for dev machine
+        conn = PgSQL.connect( user=u, database=db, port=p )
+    else:
+        conn = PgSQL.connect( user=u, password=pwd, database=db )
 
 
-	return conn
+    return conn
 
 
 
@@ -71,6 +75,16 @@ def conn():
     global _conn
 
     if _conn is None:
-        _conn = Connect()
+        # all a bit hacky...
+        u = mysociety.config.get('JL_DB_USER')
+        pwd = mysociety.config.get('JL_DB_PASS', 'UNSET' )
+        db = mysociety.config.get('JL_DB_NAME')
+        p = mysociety.config.get('JL_DB_PORT', 'UNSET')
+
+        if pwd == 'UNSET':
+            _conn = psycopg2.connect( user=u, database=db, port=p, connection_factory=pe.DictConnection )
+        else:
+            _conn = psycopg2.connect( user=u, password=pwd, database=db, connection_factory=pe.DictConnection )
+
     return _conn
 
