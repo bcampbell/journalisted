@@ -37,6 +37,9 @@ def cleanup_email(email):
 email_pat = re.compile( r"""\b[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b""", re.IGNORECASE)
 
 def sanitycheck_email(email):
+    if '%' in email:
+        return False
+
     if email_pat.match(email) is None:
         return False
     return True
@@ -79,11 +82,13 @@ def main():
     for row in data:
         process_row(row)
 
-    print "total new: %d" % (new_cnt,)
     if opts.dryrun:
+        print "dry run - rolling back."
         DB.conn().rollback()
-#    else:
-#        DB.conn().commit()
+    else:
+        print "committing."
+        DB.conn().commit()
+    print "total new: %d" % (new_cnt,)
 
 
 
