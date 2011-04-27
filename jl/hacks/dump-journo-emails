@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+#
+""" Dump out csv file of contact details for journos who've written >100 articles total, and >10 within the last year """
+
+
+import sys
+import csv
+import re
+from optparse import OptionParser
+
+sys.path.append( "../pylib" )
+from JL import DB
+
+
+
+
+def Thingy():
+    sql = """
+        SELECT j.ref as journo_ref,
+            j.oneliner,
+            (SELECT COUNT(*) FROM journo_attr WHERE journo_id=j.id) AS total_articles,
+            (SELECT COUNT(*) FROM journo_attr attr INNER JOIN article a ON a.id=attr.article_id
+                WHERE attr.journo_id=j.id AND a.pubdate > NOW()-interval '1 year') AS total_over_last_year,
+            array_to_string(array(SELECT email FROM journo_email where journo_id=j.id and approved='t'), E'\n') as email,
+            array_to_string(array(SELECT phone_number FROM journo_phone where journo_id=j.id), E'\n') as phone,
+            array_to_string(array(SELECT url FROM journo_weblink where journo_id=j.id AND approved='t' AND kind='twitter'), E'\n') as twitter
+        FROM journo j
+        WHERE j.status='a'
+        ORDER BY total_over_last_year DESC"""
+
+    c = DB.conn().cursor()
+
+    c.execute(sql)
+    out = csv.writer(sys.stdout)
+    fields = ['journo_ref','total_articles','total_over_last_year', 'oneliner','email','phone','twitter']
+    out.writerow(fields)
+    for row in c:
+        data = [ str(row.get(f,'')).replace( 'http://twitter.com/','@') for f in fields ]
+
+
+        if row['total_articles'] > 100 and row['total_over_last_year']>10:
+            out.writerow(data)
+
+
+def main():
+    global opts
+
+    parser = OptionParser()
+    parser.add_option("-d", "--dry-run", action="store_true", dest="dryrun", help="dry run - don't touch DB")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output progress information")
+
+    (opts, args) = parser.parse_args()
+
+    Thingy()
+
+
+
+if __name__ == "__main__":
+    main()
+
