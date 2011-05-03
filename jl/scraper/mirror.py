@@ -125,11 +125,16 @@ def Extract_MainSite( html, context ):
             return None
 
 
-    maindiv = doc.cssselect( 'div#three-col' )[0]
+    foo = doc.cssselect( 'div#three-col' )
+    if len(foo)<1:
+        foo = doc.cssselect( '#body-content')
+    maindiv = foo[0]
 
-    h1 = maindiv.find('h1')
+    h1 = maindiv.cssselect('h1')[0]
     art['title'] = unicode( h1.text_content().strip() )
-    foo = maindiv.cssselect('.article-date')
+    foo = maindiv.cssselect('.byline')
+    if len(foo)<1:
+        foo = maindiv.cssselect('.article-date')
     if len(foo)>0:
         bylinetxt = unicode( foo[0].text_content() )
         bylinepat = re.compile( ur'\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*' )
@@ -148,7 +153,7 @@ def Extract_MainSite( html, context ):
     bod = foo[0]
     for g in maindiv.cssselect( 'div.art-o' ):  # galleries
         g.drop_tree()
-    for cruft in maindiv.cssselect( '.advert, .append-html'  ): # other cruft
+    for cruft in maindiv.cssselect( '.advert, .inline-ad, .article-image, .append-html, .related, .article-tags'  ): # other cruft
         cruft.drop_tree()
     art['content'] = ukmedia.SanitiseHTML( unicode( lxml.html.tostring( bod ) ) )
 
