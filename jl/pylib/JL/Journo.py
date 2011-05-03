@@ -142,19 +142,19 @@ def MergeJourno(conn, fromRef, intoRef):
     c = conn.cursor()
     
     # FROM
-    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", [fromRef])
+    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", (fromRef,))
     row = c.fetchone()
     assert row, "fromRef doesn't exist:"+fromRef
     fromId = row[0]
     fromPrettyname = row[2]
     
     # INTO
-    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", [intoRef])
+    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", (intoRef,))
     row = c.fetchone()
     if not row:
         print "> Renaming Journo    ",fromRef,"->",intoRef
         # INTO REF DOESN'T EXIST, SO JUST RENAME:
-        c.execute(u'UPDATE journo SET ref=%s WHERE ref=%s', [intoRef, fromRef])
+        c.execute(u'UPDATE journo SET ref=%s WHERE ref=%s', (intoRef, fromRef))
     else:
         intoId = row[0]
         intoPrettyname = row[2]     
@@ -173,12 +173,12 @@ def MergeJourno(conn, fromRef, intoRef):
         else:
             print "* Merging Journo     ",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
     
-            c.execute( "UPDATE journo_attr     SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-            c.execute( "UPDATE journo_alias    SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-            c.execute( "UPDATE journo_jobtitle SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-            c.execute( "UPDATE journo_weblink  SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-            c.execute( "UPDATE journo_bio      SET journo_id=%d WHERE journo_id=%d" % (intoId, fromId) )
-            c.execute( "DELETE FROM journo WHERE id=%d" % fromId )
+            c.execute( "UPDATE journo_attr     SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
+            c.execute( "UPDATE journo_alias    SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
+            c.execute( "UPDATE journo_jobtitle SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
+            c.execute( "UPDATE journo_weblink  SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
+            c.execute( "UPDATE journo_bio      SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
+            c.execute( "DELETE FROM journo WHERE id=%s", (fromId,) )
 
     c.close()
     if not DEBUG_NO_COMMITS:
@@ -225,14 +225,14 @@ def GenerateUniqueRef( conn, prettyname ):
     nameToProcessForRef = StripPrefixesAndSuffixes(prettyname)
     ref = BaseRef( nameToProcessForRef )
     q = conn.cursor()
-    q.execute( "SELECT id FROM journo WHERE ref=%s", ref )
+    q.execute( "SELECT id FROM journo WHERE ref=%s", (ref,) )
     if not q.fetchone():
         q.close()
         return ref
     i = 1
     while 1:
         candidate = u'%s-%d' %(ref,i)
-        q.execute( "SELECT id FROM journo WHERE ref=%s", candidate )
+        q.execute( "SELECT id FROM journo WHERE ref=%s", (candidate,) )
         if not q.fetchone():
             q.close()
             return candidate
@@ -257,7 +257,7 @@ def GetNoOfArticlesWrittenById( conn, journo_id ):
     assert journo_id, "Can't find journo: "+journo_ref
 
     c = conn.cursor()
-    c.execute((u"SELECT COUNT(journo_id) FROM journo_attr WHERE journo_id=%d" % journo_id).encode('utf-8'))
+    c.execute("SELECT COUNT(journo_id) FROM journo_attr WHERE journo_id=%s", (journo_id,))
     row = c.fetchone()
     c.close()
     if not row:
@@ -269,7 +269,7 @@ def IsReasonableFirstName( conn, firstName, mustFindNOrMore=2 ):
     firstName = firstName.lower()
     firstName = re.sub(u"\'", u'\\\'', firstName, re.UNICODE) # escape e.g. o\'connor
     c = conn.cursor()
-    c.execute((u"SELECT COUNT(id) FROM journo WHERE firstname='%s'" % firstName).encode('utf-8'))
+    c.execute("SELECT COUNT(id) FROM journo WHERE firstname=%s", (firstName.encode('utf-8'),))
     row = c.fetchone()
     c.close()
     if not row:
@@ -281,7 +281,7 @@ def IsReasonableLastName( conn, lastName, mustFindNOrMore=2 ):
     lastName = lastName.lower()
     lastName = re.sub(u"\'", u'\\\'', lastName, re.UNICODE) # escape e.g. o\'connor
     c = conn.cursor()
-    c.execute((u"SELECT COUNT(id) FROM journo WHERE lastname='%s'" % lastName).encode('utf-8'))
+    c.execute("SELECT COUNT(id) FROM journo WHERE lastname=%s", (lastName.encode('utf-8'),))
     row = c.fetchone()
     c.close()
     if not row:
@@ -291,7 +291,7 @@ def IsReasonableLastName( conn, lastName, mustFindNOrMore=2 ):
 
 def GetFirstName( conn, ref ):
     c = conn.cursor()
-    c.execute((u"SELECT firstname FROM journo WHERE ref='%s'" % ref).encode('utf-8'))
+    c.execute("SELECT firstname FROM journo WHERE ref='%s'", (ref,))
     row = c.fetchone()
     c.close()
     if not row:
@@ -300,7 +300,7 @@ def GetFirstName( conn, ref ):
 
 def GetLastName( conn, ref ):
     c = conn.cursor()
-    c.execute((u"SELECT lastname FROM journo WHERE ref='%s'" % ref).encode('utf-8'))
+    c.execute("SELECT lastname FROM journo WHERE ref='%s'", (ref,))
     row = c.fetchone()
     c.close()
     if not row:
@@ -310,7 +310,7 @@ def GetLastName( conn, ref ):
 
 def GetJournoIdFromRef( conn, ref):
     c = conn.cursor()
-    c.execute( "SELECT id FROM journo WHERE ref=%s", ref.encode('utf-8') ) 
+    c.execute( "SELECT id FROM journo WHERE ref=%s", (ref,))
     while 1:
         row = c.fetchone()
         if not row:
@@ -322,9 +322,7 @@ def GetJournoIdFromRef( conn, ref):
 
 def GetOrgsFor( conn, id ):
     c = conn.cursor()
-    sql = "SELECT DISTINCT a.srcorg FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id='"+str(id)+"'"
-
-    c.execute( sql )
+    c.execute("SELECT DISTINCT a.srcorg FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id=%s", (id,))
     matching = c.fetchall()
     found = []
     # want to make sure that only one of our possible journos has written for this org
@@ -404,7 +402,7 @@ def FindJourno( conn, rawname, hint_context = None ):
     c = conn.cursor()
     sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in journos]) + ") AND a.srcorg=%s"
 
-    c.execute( sql, srcorgid )
+    c.execute( sql, (srcorgid,) )
     matching = c.fetchall()
 
     # want to make sure that only one of our possible journos has written for this org
@@ -601,16 +599,16 @@ def AttributeArticle( conn, journo_id, article_id ):
     #print "Attribute article %d to journo %d" %(article_id,journo_id)
 
     q = conn.cursor()
-    q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", journo_id, article_id )
+    q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", (journo_id, article_id))
     if not q.fetchone():
-        q.execute( "INSERT INTO journo_attr (journo_id,article_id) VALUES(%s,%s)", journo_id, article_id )
+        q.execute( "INSERT INTO journo_attr (journo_id,article_id) VALUES(%s,%s)", (journo_id, article_id) )
 
         # activate journalist if need be
         UpdateJournoStatus( conn, journo_id )
 
         # also clear the html cache for that journos page
         cachename = 'j%s' % (journo_id)
-        q.execute( "DELETE FROM htmlcache WHERE name=%s", cachename )
+        q.execute( "DELETE FROM htmlcache WHERE name=%s", (cachename,) )
     q.close()
 
 
@@ -619,10 +617,10 @@ def UpdateJournoStatus( conn, journo_id ):
 
     q = conn.cursor()
     # count number of articles
-    q.execute( "SELECT COUNT(*) FROM journo_attr ja INNER JOIN article a ON (a.id=ja.article_id AND a.status='a') WHERE ja.journo_id=%s", journo_id )
+    q.execute( "SELECT COUNT(*) FROM journo_attr ja INNER JOIN article a ON (a.id=ja.article_id AND a.status='a') WHERE ja.journo_id=%s", (journo_id,))
     r = q.fetchone()
     if r[0] > 1:
-        q.execute( "UPDATE journo SET status='a' WHERE id=%s AND status='i'", journo_id )
+        q.execute( "UPDATE journo SET status='a' WHERE id=%s AND status='i'",(journo_id,))
     q.close()
 
 
@@ -641,28 +639,28 @@ def SeenJobTitle( conn, journo_id, jobtitle, whenseen, srcorg ):
     q.execute( "SELECT jobtitle, firstseen, lastseen "
         "FROM journo_jobtitle "
         "WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s) AND org_id=%s",
-        journo_id,
+        (journo_id,
         jobtitle.encode('utf-8'),
-        srcorg )
+        srcorg))
 
     row = q.fetchone()
     if not row:
         # it's new
         q.execute( "INSERT INTO journo_jobtitle (journo_id,jobtitle,firstseen,lastseen,org_id) VALUES (%s,%s,%s,%s,%s)",
-            journo_id,
+            (journo_id,
             jobtitle.encode('utf-8'),
             str(whenseen),
             str(whenseen),
-            srcorg )
+            srcorg))
     else:
         # already got it - extend out the time period
         q.execute( "UPDATE journo_jobtitle "
             "SET lastseen=%s "
             "WHERE journo_id=%s AND LOWER(jobtitle)=LOWER(%s) AND org_id=%s",
-            str(whenseen),
+            (str(whenseen),
             journo_id,
             jobtitle.encode('utf-8'),
-            srcorg )
+            srcorg))
 
     q.close()
 
@@ -792,7 +790,7 @@ def load_or_update_bio( conn, journo_id, bio, default_approval=False ):
 
     assert( 'kind' in bio and bio['kind']!='' )
     c = conn.cursor()
-    c.execute( "SELECT * FROM journo_bio WHERE journo_id=%s AND kind=%s", journo_id, bio['kind'] )
+    c.execute( "SELECT * FROM journo_bio WHERE journo_id=%s AND kind=%s", (journo_id, bio['kind']) )
     old_bios = c.fetchall()
 
     # each journo can only have one bio of a kind
@@ -800,11 +798,11 @@ def load_or_update_bio( conn, journo_id, bio, default_approval=False ):
 
     if len(old_bios) > 0:
         # update existing bio, keeping the approval status
-        c.execute( "UPDATE journo_bio SET bio=%s,srcurl=%s WHERE journo_id=%s AND kind=%s", bio['bio'].encode('utf-8'), bio['srcurl'], journo_id, bio['kind'] )
+        c.execute( "UPDATE journo_bio SET bio=%s,srcurl=%s WHERE journo_id=%s AND kind=%s",(bio['bio'].encode('utf-8'), bio['srcurl'], journo_id, bio['kind'] ))
 
     else:
         # create new bio entry
-        c.execute( "INSERT INTO journo_bio (journo_id, bio, kind,srcurl, approved ) VALUES (%s,%s,%s,%s,%s)", journo_id, bio['bio'].encode('utf-8'), bio['kind'], bio['srcurl'], default_approval )
+        c.execute( "INSERT INTO journo_bio (journo_id, bio, kind,srcurl, approved ) VALUES (%s,%s,%s,%s,%s)",( journo_id, bio['bio'].encode('utf-8'), bio['kind'], bio['srcurl'], default_approval))
 
 
 

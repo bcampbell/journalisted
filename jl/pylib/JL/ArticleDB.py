@@ -129,11 +129,11 @@ class ArticleDB:
             cursor.execute(q, (article_id, content, lastscraped))
 
         # queue it for xapian indexing
-        cursor.execute("DELETE FROM article_needs_indexing WHERE article_id=%s", (article_id))
-        cursor.execute("INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (article_id))
+        cursor.execute("DELETE FROM article_needs_indexing WHERE article_id=%s", (article_id,))
+        cursor.execute("INSERT INTO article_needs_indexing (article_id) VALUES (%s)", (article_id,))
 
         # if there was a scraper error entry for this article, delete it now
-        cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid) )
+        cursor.execute( "DELETE FROM error_articlescrape WHERE srcid=%s", (srcid,) )
 
         # if there were images, add them too
         if updating:
@@ -186,7 +186,7 @@ class ArticleDB:
         article_id = None
         cursor = self.conn.cursor()
         q = 'SELECT id FROM article WHERE srcid=%s'
-        cursor.execute( q, ( srcid ) )
+        cursor.execute( q, ( srcid, ) )
         r = cursor.fetchone()
         if r:
             article_id = r[0]
