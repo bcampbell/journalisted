@@ -39,6 +39,7 @@ $canned = array(
     new MightBeStudents(),
     new UserCreatedJournoProfiles(),
     new RecentlyEditedJournos(),
+    new WeeklyStats(),
 );
 
 
@@ -977,6 +978,63 @@ EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
         Tabulate( $rows );
+    }
+
+}
+
+
+class WeeklyStats extends CannedQuery {
+    function __construct() {
+        $this->name = get_class($this);
+        $this->ident = strtolower( $this->name );
+        $this->desc = "A bunch of weekly stats (profiles created etc)";
+    }
+
+    function perform($params) {
+
+
+        // profiles created in last 7 days
+        $sql = <<<EOT
+SELECT count(*)
+    FROM journo j INNER JOIN person_permission perm ON perm.journo_id=j.id
+    WHERE date(j.created) = date(perm.created)
+        AND perm.permission='edit'
+        AND j.created > NOW()-interval '7 days'
+EOT;
+        $profiles_created_last_7_days = intval(db_getOne($sql));
+
+        // profiles created overall
+        $sql = <<<EOT
+SELECT count(*)
+    FROM journo j INNER JOIN person_permission perm ON perm.journo_id=j.id
+    WHERE date(j.created) = date(perm.created)
+        AND perm.permission='edit'
+EOT;
+        $profiles_created_all_time = intval(db_getOne($sql));
+
+        // profiles claimed in last 7 days
+        $sql = "SELECT COUNT(*) from person_permission WHERE permission IN ('claimed','edit') AND created>NOW()-interval '7 days'";
+        $profiles_claimed_last_7_days = intval(db_getOne($sql));
+
+        // total profiles edited overall
+        $sql = "SELECT COUNT( DISTINCT journo_id) FROM event_log";
+        $profiles_edited_all_time = intval(db_getOne($sql));
+
+        // total alert subscribers
+        $sql = "SELECT COUNT( DISTINCT person_id) FROM alert";
+        $num_alert_subscribers = intval(db_getOne($sql));
+
+?>
+<table border=0>
+<tr><th>Profiles created over last 7 days<th><td><?= $profiles_created_last_7_days ?></td><tr>
+<tr><th>Profiles created ever<th><td><?= $profiles_created_all_time ?></td><tr>
+<tr><th>Profiles claimed over last 7 days<th><td><?= $profiles_claimed_last_7_days ?></td><tr>
+<tr><th>Profiles edited ever<th><td><?= $profiles_edited_all_time ?></td><tr>
+<tr><th>Number of alert subscribers<th><td><?= $num_alert_subscribers ?></td><tr>
+</table>
+<?php
+
+
     }
 
 }
