@@ -223,6 +223,7 @@ if( $fmt == 'text' ) {
 function extra_head()
 {
     global $journo;
+    global $data;
 
 ?>
 <link rel="alternate" type="application/rdf+xml" href="/data/journo/<?= $journo['ref'] ?>" />
@@ -231,6 +232,9 @@ function extra_head()
 <!-- <script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
 <script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
+<?php if($data['twitter_id']) { ?>
+<script language="javascript" type="text/javascript" src="/js/jquery.tweet.js"></script>
+<?php } ?>
 <script language="javascript" type="text/javascript">
     $(document).ready(
     function () {
@@ -274,6 +278,22 @@ function extra_head()
                 $('#findarticles').val('');
             }
         });
+
+<?php if($data['twitter_id']) { ?>
+        $(".twat").tweet({
+            username: "<?= $data['twitter_id'] ?>",
+            join_text: "auto",
+            avatar_size: 32,
+            count: 3,
+/*            auto_join_text_default: "we said,",
+            auto_join_text_ed: "we",
+            auto_join_text_ing: "we were",
+            auto_join_text_reply: "we replied to",
+            auto_join_text_url: "we were checking out",
+*/
+            loading_text: "loading tweets..."
+        });
+<?php } ?>
 
 
 });

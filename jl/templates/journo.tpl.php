@@ -753,6 +753,16 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot"></div>
 </div>
 
+<?php if($twitter_id) { ?>
+<div class="box tweets">
+  <div class="head"><h3>Latest tweets</h3></div>
+  <div class="body">
+   <div class="twat"></div>
+  </div>
+  <div class="foot">
+  </div>
+</div>
+<?php } ?>
 
 <div class="box pingbacks">
   <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
