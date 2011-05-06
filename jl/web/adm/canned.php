@@ -970,7 +970,7 @@ class RecentlyEditedJournos extends CannedQuery {
     function perform($params) {
 
         $sql = <<<EOT
-SELECT distinct j.id,j.ref,j.prettyname, (SELECT MAX(event_time) FROM event_log WHERE journo_id=j.id) last_edited
+SELECT distinct j.id,j.ref,j.prettyname, (SELECT MAX(event_time) FROM event_log WHERE journo_id=j.id) as last_edited
     FROM journo j
     WHERE j.id in (select distinct journo_id from event_log) ORDER BY last_edited DESC;
 EOT;
