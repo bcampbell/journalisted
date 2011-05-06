@@ -37,6 +37,8 @@ $canned = array(
     new Pingbacks(),
     new FakeJournos(),
     new MightBeStudents(),
+    new UserCreatedJournoProfiles(),
+    new RecentlyEditedJournos(),
 );
 
 
@@ -55,7 +57,7 @@ function ShowMenu()
 <dd>groups of very-similar articles</dd>
 <?php foreach( $canned as $c ) { ?>
 <dt><a href="/adm/canned?action=<?php echo $c->ident; ?>"><?php echo $c->name; ?></a></dt>
-<dd><?php echo $c->desc; ?></dd>
+<dd><?= $c->desc; ?></dd>
 <?php } ?>
 </dl>
 <?php
@@ -407,6 +409,9 @@ class CannedQuery {
     function go() {
         echo "<h2>{$this->name}</h2>\n";
         echo "<p>{$this->desc}</p>\n";
+        if( isset($this->longdesc) ) {
+            echo "<p>{$this->longdesc}</p>\n";
+        }
 
         $params = array();
         if( $this->param_spec ) {
@@ -923,5 +928,58 @@ EOT;
         Tabulate( $rows );
     }
 }
+
+
+class UserCreatedJournoProfiles extends CannedQuery {
+    function __construct() {
+        $this->name = get_class($this);
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show journo profiles which were created by users";
+        $this->longdesc = <<<EOT
+NOTE: we don't actually have any way to tell if a journo was created by
+a user claim or automatically via article scraping.
+So this list just shows journo profiles which were created on the same
+day as being claimed.
+EOT;
+    }
+
+    function perform($params) {
+        $sql = <<<EOT
+SELECT j.status, j.ref, j.prettyname, j.created
+    FROM journo j INNER JOIN person_permission perm ON perm.journo_id=j.id
+    WHERE date(j.created) = date(perm.created)
+        AND perm.permission='edit'
+        AND j.status='a'
+    ORDER BY j.created DESC;
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+
+}
+
+
+class RecentlyEditedJournos extends CannedQuery {
+    function __construct() {
+        $this->name = get_class($this);
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Show journo profiles in order of most recent edit";
+    }
+
+    function perform($params) {
+
+        $sql = <<<EOT
+SELECT distinct j.id,j.ref,j.prettyname, (SELECT MAX(event_time) FROM event_log WHERE journo_id=j.id) last_edited
+    FROM journo j
+    WHERE j.id in (select distinct journo_id from event_log) ORDER BY last_edited DESC;
+EOT;
+        $rows = db_getAll( $sql ); 
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
+
+}
+
 
 ?>
