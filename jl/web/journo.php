@@ -280,19 +280,35 @@ function extra_head()
         });
 
 <?php if($data['twitter_id']) { ?>
-        $(".twat").tweet({
+        $("#tweets").tweet({
             username: "<?= $data['twitter_id'] ?>",
             join_text: "auto",
             avatar_size: 32,
             count: 3,
-/*            auto_join_text_default: "we said,",
-            auto_join_text_ed: "we",
-            auto_join_text_ing: "we were",
-            auto_join_text_reply: "we replied to",
-            auto_join_text_url: "we were checking out",
-*/
+            auto_join_text_default: "said,",
+            auto_join_text_ed: "",
+            auto_join_text_ing: "was",
+            auto_join_text_reply: "replied to",
+            auto_join_text_url: "was checking out",
+
             loading_text: "loading tweets..."
         });
+
+//        $("#twitter_profile").bind("load", function(){
+        //
+            var proto = ('https:' == document.location.protocol ? 'https:' : 'http:');
+            var foo_url = proto+'//api.twitter.com/1/users/show.json?screen_name=<?= $data['twitter_id'] ?>&callback=?';
+            //alert(foo_url);
+            $.getJSON(foo_url, function(data){
+                var args = data;
+                var profile = '<img src="{profile_image_url}" />{screen_name}, tweets: {statuses_count} following: {friends_count}, followers: {followers_count}';
+                profile = profile.replace(/\{([_a-z]+)\}/g, function (m, n) { return args[n]; });
+
+               $("#twitter_profile").append(profile);
+            });
+//        });
+
+
 <?php } ?>
 
 
