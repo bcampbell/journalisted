@@ -755,11 +755,11 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 <?php if($twitter_id) { ?>
 <div class="box twitter">
-  <div class="head"><h3>Lastest Tweets</h3></div>
+  <div class="head"><h3>On Twitter</h3></div>
   <div class="body">
-   <div id="tweets"></div>
    <div id="twitter_profile"></div>
-  </div>
+   <div id="tweets"></div>
+     </div>
   <div class="foot">
   </div>
 </div>

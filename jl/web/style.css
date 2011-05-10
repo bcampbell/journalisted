@@ -1088,6 +1088,25 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 	
 }
+
+/* twitter box - latest tweets + basic profile info */
+.box.twitter .head h3 {
+  background: url( "http://si0.twimg.com/images/dev/cms/intents/bird/bird_blue/bird_32_blue.png" ) right center no-repeat;
+  padding-right: 40px;
+}
+
+#twitter_profile .screen_name {/* font-size: 125%;*/ }
+#twitter_profile img { float: left; margin-right: 4px; }
+#twitter_profile span { display:block; float:left; margin-right: 8px; }
+#twitter_profile span .count { display: block; }
+#twitter_profile span .stat { clear: both; display: block; }
+
+#tweets { clear: both; }
+.tweet_list { list-style: none; padding: 0px; margin: 0px; }
+.tweet_list li { border-top: 1px solid #cccccc; padding-top: 4px; margin-top: 8px; }
+.tweet_text { }
+.tweet_time { font-style: italic; font-size: 80%; }
+
 /* overview section on journo page */
 
 .overview {

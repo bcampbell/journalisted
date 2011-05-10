@@ -285,12 +285,15 @@ function extra_head()
             join_text: "auto",
             avatar_size: 32,
             count: 3,
+/*
             auto_join_text_default: "said,",
             auto_join_text_ed: "",
             auto_join_text_ing: "was",
             auto_join_text_reply: "replied to",
             auto_join_text_url: "was checking out",
-
+*/
+//            template: '{text}{time}<div style="clear:both;"></div>',  //"{avatar}{time}{join}{text}",
+            template: '{time}:<br/>{text}',  //"{avatar}{time}{join}{text}",
             loading_text: "loading tweets..."
         });
 
@@ -301,7 +304,12 @@ function extra_head()
             //alert(foo_url);
             $.getJSON(foo_url, function(data){
                 var args = data;
-                var profile = '<img src="{profile_image_url}" />{screen_name}, tweets: {statuses_count} following: {friends_count}, followers: {followers_count}';
+                var profile = '<img src="{profile_image_url}" />';
+                profile += '<span class="screen_name">@<a href="http://www.twitter.com/<?= $data['twitter_id']; ?>">{screen_name}</a></span><br/>';
+                profile += '<span><span class="count">{statuses_count}</span><span class="stat">Tweets</span></span>';
+                profile += '<span><span class="count">{friends_count}</span><span class="stat">Following</span></span>';
+                profile += '<span><span class="count">{followers_count}</span><span class="stat">Followers</span></span>';
+                profile += '<div style="clear:both;"></div>';
                 profile = profile.replace(/\{([_a-z]+)\}/g, function (m, n) { return args[n]; });
 
                $("#twitter_profile").append(profile);
