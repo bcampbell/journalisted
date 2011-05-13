@@ -22,56 +22,56 @@ page_header( "Search Help" );
 <p>
 Firstly, with all these searches make sure to select 'articles' from the drop-down box next to the search box on the homepage.
 </p>
-<p> Let's with start some examples...</p>
+<p>Let's start with some examples...</p>
 
 <div class="example-search">
-articles containing "iraq" and "war":
+Articles containing "iraq" and "war":
 <span class="query"><a href="/search?type=article&q=iraq+war">iraq war</a></span>
 </div>
 
 
 <div class="example-search">
-articles containing the exact phrase "iraq war":
+Articles containing the exact phrase "iraq war":
 <span class="query"><a href="/search?type=article&q=%22iraq+war%22">"iraq war"</a></span>
 </div>
 
 <p>Did you know that you can mix special search terms into your usual searches on journa<i>listed</i>?<br/>
 
 <div class="example-search">
-articles about the G20 protests by Paul Lewis:
+Articles about the G20 protests by Paul Lewis:
 <span class="query"><a href="http://journalisted.com/search?type=article&q=G20+author%3Apaul-lewis">G20 author:paul-lewis</a></span>
 </div>
 
 <div class="example-search">
-articles containing "citrus" but not "lemon":
+Articles containing "citrus" but not "lemon":
 <span class="query"><a href="/search?type=article&q=citrus+-lemon">citrus -lemon</a></span>
 </div>
 
 
 <div class="example-search">
-anything about David Cameron in the Times or Telegraph:
+Anything about David Cameron in the Times or Telegraph:
 <span class="query"><a href="/search?type=article&q=(srcorg%3A8+OR+srcorg%3A7)+David+Cameron">(srcorg:8 OR srcorg:7) David Cameron</a></span>
 </div>
 
 <div class="example-search">
-articles written by Gillian Tett for the FT:
+Articles written by Gillian Tett for the FT:
 <span class="query"><a href="/search?type=article&q=author%3Agillian-tett+srcorg%3A18">author:gillian-tett srcorg:18</a></span>
 (see <a href="#publication-search">Publication Search</a> for numbers of other publications).
 </div>
 
 <div class="example-search">
-to check out the Guardian's coverage on phone hacking:
+To check out the Guardian's coverage on phone hacking:
 <span class="query"><a href="/search?type=article&q=phone+hacking+srcorg%3A4">phone hacking srcorg:4</a></span>
 </div>
 
 <div class="example-search">
-phone hacking articles mentioning Rebekah Brooks:
+Phone hacking articles mentioning Rebekah Brooks:
 <span class="query"><a href="/search?type=article&q=Rebekah+Brooks+title%3A(phone+hacking)">Rebekah Brooks title:(phone hacking)</a></span>
 Note the use of parentheses to make sure the title includes both "phone" and "hacking".
 </div>
 
 <div class="example-search">
-the Independent's coverage of Libya and Gaddafi for the first 4 months of 2011:
+The Independent's coverage of Libya and Gaddafi for the first 4 months of 2011:
 <span class="query"><a href="/search?type=article&q=libya+gaddafi+srcorg%3A1+20110101..20110501">libya gaddafi srcorg:1 20110101..20110501</a></span>
 </div>
 
@@ -191,21 +191,23 @@ or
 
   <a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
+
   <div class="box">
-    <div class="head"><h3>FAQs</h3></div>
+    <div class="head"><h3>Using journa<i>listed</i> for research</h3></div>
     <div class="body">
       <ul>
-        <li><a href="/faq/what-news-outlets-does-journalisted-cover">What news outlets does Journalisted cover?</a></li>
-        <li><a href="/faq/why-doesnt-journalisted-cover-more-news-outlets">Why doesn’t Journalisted cover more news outlets?</a></li>
-        <li><a href="/faq/how-does-journalisted-work">How does Journalisted work?</a></li>
-        <li><a href="/faq/how-is-journalisted-funded">How is Journalisted funded?</a></li>
-        <li><a href="/faq/why-are-some-articles-missing">Why are some articles missing?</a></li>
+        <li>
+        Judith Townend used journa<i>listed</i> to examine the media coverage of the phone hacking story. Read her blog post
+        <a class="extlink" href="http://inforrm.wordpress.com/2011/04/29/how-the-media-told-the-phone-hacking-story-part-2-%E2%80%93-judith-townend/">here</a>.
+        </li>
       </ul>
-      <div class="box-action"><a href="/faq">See all FAQs</a></div>
-      <div style="clear: both;"></div>
+      <br/>
+      <p>Have you used journalisted to do something interesting?
+<?=SafeMailto( OPTION_TEAM_EMAIL . '?subject=Interesting use of journalisted', 'Let us know!' );?> </p>
     </div>
-    <div class="foot"></div>
+    <div class="foot">
   </div>
+
 </div> <!-- end sidebar -->
 <?php
 
