@@ -26,59 +26,59 @@ Firstly, with all these searches make sure to select 'articles' from the drop-do
 
 <div class="example-search">
 articles containing "iraq" and "war":
-<span class="query">iraq war</span>
+<span class="query"><a href="/search?type=article&q=iraq+war">iraq war</a></span>
 </div>
 
 
 <div class="example-search">
 articles containing the exact phrase "iraq war":
-<span class="query">"iraq war"</span>
+<span class="query"><a href="/search?type=article&q=%22iraq+war%22">"iraq war"</a></span>
 </div>
 
 <p>Did you know that you can mix special search terms into your usual searches on journa<i>listed</i>?<br/>
 
 <div class="example-search">
 articles about the G20 protests by Paul Lewis:
-<span class="query">G20 author:paul-lewis</span>
+<span class="query"><a href="http://journalisted.com/search?type=article&q=G20+author%3Apaul-lewis">G20 author:paul-lewis</a></span>
 </div>
 
 <div class="example-search">
 articles containing "citrus" but not "lemon":
-<span class="query">citrus -lemon</span>
+<span class="query"><a href="/search?type=article&q=citrus+-lemon">citrus -lemon</a></span>
 </div>
 
 
 <div class="example-search">
 anything about David Cameron in the Times or Telegraph:
-<span class="query">(srcorg:8 OR srcorg:7) David Cameron</span>
+<span class="query"><a href="/search?type=article&q=(srcorg%3A8+OR+srcorg%3A7)+David+Cameron">(srcorg:8 OR srcorg:7) David Cameron</a></span>
 </div>
 
 <div class="example-search">
 articles written by Gillian Tett for the FT:
-<span class="query">author:gillian-tett srcorg:18</span>
+<span class="query"><a href="/search?type=article&q=author%3Agillian-tett+srcorg%3A18">author:gillian-tett srcorg:18</a></span>
 (see <a href="#publication-search">Publication Search</a> for numbers of other publications).
 </div>
 
 <div class="example-search">
 to check out the Guardian's coverage on phone hacking:
-<span class="query">phone hacking srcorg:4</span>
+<span class="query"><a href="/search?type=article&q=phone+hacking+srcorg%3A4">phone hacking srcorg:4</a></span>
 </div>
 
 <div class="example-search">
 phone hacking articles mentioning Rebekah Brooks:
-<span class="query">Rebekah Brooks title:(phone hacking)</span>
+<span class="query"><a href="/search?type=article&q=Rebekah+Brooks+title%3A(phone+hacking)">Rebekah Brooks title:(phone hacking)</a></span>
 Note the use of parentheses to make sure the title includes both "phone" and "hacking".
 </div>
 
 <div class="example-search">
 the Independent's coverage of Libya and Gaddafi for the first 4 months of 2011:
-<span class="query">libya gaddafi srcorg:1 20110101..20110501 srcorg:1</span>
+<span class="query"><a href="/search?type=article&q=libya+gaddafi+srcorg%3A1+20110101..20110501">libya gaddafi srcorg:1 20110101..20110501</a></span>
 </div>
 
 <div class="example-search">
 What have the previous two UK Prime Ministers been up during the first year of the
 coalition government?
-<span class="query">("tony blair" OR "gordon brown") 2010-05-12..2011-05-12</span>
+<span class="query"><a href="/search?type=article&q=(%22tony+blair%22+OR+%22gordon+brown%22)+2010-05-12..2011-05-12">("tony blair" OR "gordon brown") 2010-05-12..2011-05-12</a></span>
 Note the use of parentheses - without them, the date range would only apply to the "Gordon Brown" term!
 </div>
 
@@ -86,7 +86,7 @@ Note the use of parentheses - without them, the date range would only apply to t
 <h3>Phrase searching</h3>
 
 <p>Surround a phrase with double quotes ("") to match articles containing that exact phrase. Hyphenated words are treated as phrases.</p>
-<div class="example-search"><span class="query">phone hacking</span>
+<div class="example-search"><span class="query"><a href="/search?type=article&q=%22phone+hacking%22">"phone hacking"</a></span>
 Matches "phone hacking" and "phone-hacking", but not "phone hack" or "phone hackery".
 </div>
 
@@ -95,9 +95,9 @@ Matches "phone hacking" and "phone-hacking", but not "phone hack" or "phone hack
 <p>Use parentheses to group terms to avoid confusion, especially if you are using <tt>OR</tt>.</p>
 <div class="example-search">
 For example:
-<span class="query">"tony blair" OR "gordon brown" 2010-05-12..2011-05-12</span>
+<span class="query"><a href="/search?type=article&q=%22tony+blair%22+OR+%22gordon+brown%22+2010-05-12..2011-05-12">"tony blair" OR "gordon brown" 2010-05-12..2011-05-12</a></span>
 is interpreted as:
-<span class="query">"tony blair" OR ("gordon brown" 2010-05-12..2011-05-12)</span>
+<span class="query"><a href="/search?type=article&q=%22tony+blair%22+OR+(%22gordon+brown%22+2010-05-12..2011-05-12)">"tony blair" OR ("gordon brown" 2010-05-12..2011-05-12)</a></span>
 that is, recent articles about Gordon Brown and _any_ article about Tony Blair...
 which is probably not what you wanted.
 </div>
@@ -111,13 +111,13 @@ Prefix a term with <tt>title:</tt> to match headlines.
 
 <div class="example-search">
 For example, to search for all articles with "grapefruit" in the headline:
-<span class="query">title:grapefruit</span></div>
+<span class="query"><a href="/search?type=article&q=title%3Agrapefruit">title:grapefruit</a></span></div>
 
 <h3>Journalist search</h3>
 
 <p>To search for articles written by a specific journalist, use an <tt>author:</tt> prefix.</p>
 
-<div class="example-search">for example:<span class="query">author:fred-bloggs</span></div>
+<div class="example-search">for example:<span class="query"><a href="">author:fred-bloggs</a></span></div>
 
 <p>
 The journalist identifier is usually of the form <tt>firstname-lastname</tt>,
@@ -162,8 +162,8 @@ the UK publications we cover:
 </table>
 
 <div class="example-search">
-For example, to look for articles published in The Sun:
-<span class="query">srcorg:6</span>
+For example, to look for articles published in The Mirror:
+<span class="query"><a href="/search?type=article&q=srcorg%3A5">srcorg:5</a></span>
 </div>
 
 
@@ -177,9 +177,9 @@ are equivalent.
 
 <div class="example-search">
 For example, to search for articles published during July 2010: 
-<span class="query">2010-07-01..2010-07-31</span>
+<span class="query"><a href="/search?type=article&q=afghanistan+2010-07-01..2010-07-31">afghanistan 2010-07-01..2010-07-31</a></span>
 or 
-<span class="query">20100701..20100731</span>
+<span class="query"><a href="/search?type=article&q=afghanistan+20100701..20100731">afghanistan 20100701..20100731</a></span>
 </div>
 
 
