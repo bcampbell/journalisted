@@ -42,7 +42,7 @@ blockquote, q {
 /* BASIC STYLES */
 
 p { margin: 4px 0px; }
-code { font-family: monospace; }
+code, tt { font-family: monospace; }
 pre code { display: block; border: 1px solid #444; overflow: auto; padding: 4px; }
 em { font-style: italic; }
 
@@ -59,6 +59,9 @@ h2 { font-size: 200%; }
 h3 { font-size: 130%; }
 h4 { font-size: 125%; }
 h5 { font-size: 112%; }
+
+td { padding: 0px 2px; }
+
 
 body {
   margin: 0 auto;
@@ -742,6 +745,23 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 /* PAGE-SPECIFIC STUFF (everything below here is page-specific) */
 
+/* search help page */
+
+.example-search {
+  padding: 4px;
+  margin: 2px 16px 2px 16px;
+}
+
+.example-search .query {
+  display: block;
+  border: 1px solid #ccc;
+  font-family: monospace;
+  background-color: #eee;
+  color: #444;
+  margin: 2px 0px;
+  padding: 2px;
+}
+
 /* FRONT PAGE (no sidebar): */
 
 .main.front-page {
@@ -1088,6 +1108,25 @@ ul.newList li a:focus {-moz-outline-style: none;}
 
 	
 }
+
+/* twitter box - latest tweets + basic profile info */
+.box.twitter .head h3 {
+  background: url( "http://si0.twimg.com/images/dev/cms/intents/bird/bird_blue/bird_32_blue.png" ) right center no-repeat;
+  padding-right: 40px;
+}
+
+#twitter_profile .screen_name {/* font-size: 125%;*/ }
+#twitter_profile img { float: left; margin-right: 4px; }
+#twitter_profile span { display:block; float:left; margin-right: 8px; }
+#twitter_profile span .count { display: block; }
+#twitter_profile span .stat { clear: both; display: block; }
+
+#tweets { clear: both; }
+.tweet_list { list-style: none; padding: 0px; margin: 0px; }
+.tweet_list li { border-top: 1px solid #cccccc; padding-top: 4px; margin-top: 8px; }
+.tweet_text { }
+.tweet_time { font-style: italic; font-size: 80%; }
+
 /* overview section on journo page */
 
 .overview {

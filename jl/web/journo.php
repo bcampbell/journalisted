@@ -223,6 +223,7 @@ if( $fmt == 'text' ) {
 function extra_head()
 {
     global $journo;
+    global $data;
 
 ?>
 <link rel="alternate" type="application/rdf+xml" href="/data/journo/<?= $journo['ref'] ?>" />
@@ -231,6 +232,9 @@ function extra_head()
 <!-- <script language="javascript" type="text/javascript" src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script> -->
 <script language="javascript" type="text/javascript" src="/js/raphael-min.js"></script>
 <script language="javascript" type="text/javascript" src="/js/jquery.ba-hashchange.min.js"></script>
+<?php if($data['twitter_id']) { ?>
+<script language="javascript" type="text/javascript" src="/js/jquery.tweet.js"></script>
+<?php } ?>
 <script language="javascript" type="text/javascript">
     $(document).ready(
     function () {
@@ -274,6 +278,46 @@ function extra_head()
                 $('#findarticles').val('');
             }
         });
+
+<?php if($data['twitter_id']) { ?>
+        $("#tweets").tweet({
+            username: "<?= $data['twitter_id'] ?>",
+            join_text: "auto",
+            avatar_size: 32,
+            count: 3,
+/*
+            auto_join_text_default: "said,",
+            auto_join_text_ed: "",
+            auto_join_text_ing: "was",
+            auto_join_text_reply: "replied to",
+            auto_join_text_url: "was checking out",
+*/
+//            template: '{text}{time}<div style="clear:both;"></div>',  //"{avatar}{time}{join}{text}",
+            template: '{time}:<br/>{text}',  //"{avatar}{time}{join}{text}",
+            loading_text: "loading tweets..."
+        });
+
+//        $("#twitter_profile").bind("load", function(){
+        //
+            var proto = ('https:' == document.location.protocol ? 'https:' : 'http:');
+            var foo_url = proto+'//api.twitter.com/1/users/show.json?screen_name=<?= $data['twitter_id'] ?>&callback=?';
+            //alert(foo_url);
+            $.getJSON(foo_url, function(data){
+                var args = data;
+                var profile = '<img src="{profile_image_url}" />';
+                profile += '<span class="screen_name">@<a href="http://www.twitter.com/<?= $data['twitter_id']; ?>">{screen_name}</a></span><br/>';
+                profile += '<span><span class="count">{statuses_count}</span><span class="stat">Tweets</span></span>';
+                profile += '<span><span class="count">{friends_count}</span><span class="stat">Following</span></span>';
+                profile += '<span><span class="count">{followers_count}</span><span class="stat">Followers</span></span>';
+                profile += '<div style="clear:both;"></div>';
+                profile = profile.replace(/\{([_a-z]+)\}/g, function (m, n) { return args[n]; });
+
+               $("#twitter_profile").append(profile);
+            });
+//        });
+
+
+<?php } ?>
 
 
 });
