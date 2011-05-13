@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+#
+# dump_article_urls
+#
+# dump out srcurl and permalink from articles, ready for loading
+# into the newly-added article_url table.
+# _Should_ have just done all this in the DB, but I couldn't get it
+# working in a way that'd take less than a couple of hours to run!
+#
+# usage:
+#
+# $ dump_article_urls >/tmp/urldump
+# $ cat /tmp/urldump | psql -U jl jl -c "COPY article_url (url,article_id) FROM stdin"
+
+
+import csv
+import sys
+from optparse import OptionParser
+
+sys.path.append("../pylib")
+from JL import DB
+
+
+def main():
+    parser = OptionParser()
+    (opts, args) = parser.parse_args()
+
+
+    c = DB.conn().cursor("superdupercursor")
+
+    c.execute("SELECT id,srcurl,permalink FROM article")
+
+    for row in c:
+        print "%s\t%s" %(row['permalink'],row['id'])
+        if row['srcurl'] != row['permalink']:
+            print "%s\t%s" %(row['srcurl'],row['id'])
+
+
+
+
+
+if __name__ == "__main__":
+    main()
