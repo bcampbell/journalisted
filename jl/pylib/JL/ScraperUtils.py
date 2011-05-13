@@ -351,7 +351,7 @@ def ShouldSkip( conn, srcid ):
     """ returns True if an article has a skip order on it (ie don't scrape!) """
     skip = False
     c = conn.cursor()
-    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s",(srcid) )
+    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s",(srcid,) )
     row = c.fetchone()
     if row:
         if row['action'] == 's':
@@ -366,7 +366,7 @@ def LogScraperError( conn, context, report ):
 
     title = getattr(context, 'title', u'' )
 
-    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s", srcid )
+    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s", (srcid,) )
     row = c.fetchone()
     if row:
         # article has an existing error entry...
@@ -387,7 +387,7 @@ SELECT j.id,j.ref,j.prettyname
     FROM ( JOURNO j INNER JOIN journo_attr attr ON attr.journo_id=j.id )
     WHERE attr.article_id=%s
 """
-    c.execute( sql, article_id )
+    c.execute( sql, (article_id,) )
     rows = c.fetchall()
     return ", ".join( [ "[j%d %s]" % (int(row['id']),row['prettyname']) for row in rows ] )
 

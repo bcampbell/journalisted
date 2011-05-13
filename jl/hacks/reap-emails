@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+""" got through article text looking for email addresses of journos """
+
+import re
+import csv
+import sys
+
+from pprint import pprint
+
+import site
+site.addsitedir("../pylib")
+from JL import DB,ukmedia
+
+
+email_pat = re.compile( r"""\b[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b""", re.IGNORECASE)
+
+
+def iterate():
+    cursor = DB.conn().cursor("superdude")
+
+    sql = """
+SELECT j.ref,j.firstname, j.lastname, j.id, a.permalink, a.pubdate, c.content
+    FROM article_content c
+        INNER JOIN article a ON c.article_id=a.id
+        INNER JOIN journo_attr attr ON c.article_id=attr.article_id
+        INNER JOIN journo j ON attr.journo_id=j.id
+    WHERE c.content like '%@%'
+"""
+#    WHERE now()-a.pubdate < interval '6 months'
+#    """
+    cursor.execute(sql)
+
+    while 1:
+        batch = cursor.fetchmany(100)
+        if len(batch) == 0:
+            return
+        for row in batch:
+            yield row
+
+
+def is_likely(email, firstname, lastname):
+    return lastname in email.lower()
+
+
+
+
+def main():
+    out = csv.writer(sys.stdout)
+    out.writerow(['journo_ref','email','srcurl','srcdate'])
+    n=0
+    for row in iterate():
+#        emails = re.findall(r'[a-zA-Z0-9\_\.\-]+@[a-zA-Z0-9\_\.\-]+', row['content'])
+        emails = email_pat.findall(row['content'])
+
+        likely = set([e for e in emails if is_likely(e, row['firstname'], row['lastname'])])
+
+        for e in likely:
+            data = [row['ref'],e,row['permalink'],row['pubdate'] ]
+#            print row['ref'],e,row['permalink']
+            out.writerow(data)
+#        print n, row['ref'], row['title'], ' '.join(emails)
+        n += 1
+
+if __name__ == "__main__":
+    main()
+

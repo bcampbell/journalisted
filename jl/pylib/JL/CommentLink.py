@@ -60,7 +60,7 @@ def AddCommentLink( conn, commentlink ):
     e = commentlink
 
     # do we have this article in the db?
-    c.execute( "SELECT id FROM article WHERE srcid=%s", e['srcid'] )
+    c.execute( "SELECT id FROM article WHERE srcid=%s", (e['srcid'],) )
     articles = c.fetchall()
     if len(articles) < 1:
         # can't find article in DB
@@ -71,13 +71,13 @@ def AddCommentLink( conn, commentlink ):
     article_id = articles[0]['id']
 
     # found it - insert/replace commentlink
-    c.execute( """DELETE FROM article_commentlink WHERE article_id=%s and source=%s""", article_id, e['source'] )
+    c.execute( """DELETE FROM article_commentlink WHERE article_id=%s and source=%s""", (article_id, e['source']) )
     c.execute( """INSERT INTO article_commentlink (article_id,source,comment_url,num_comments,score ) VALUES (%s,%s,%s,%s,%s)""",
-        article_id,
+        (article_id,
         e['source'],
         e['comment_url'],
         e['num_comments'],
-        e['score'] )
+        e['score']) )
 
     conn.commit()
     return True

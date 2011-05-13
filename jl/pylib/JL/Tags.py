@@ -144,6 +144,6 @@ def Generate( conn, article_id, article_content ):
         tagname = tagkey[0].encode('utf-8')
         tagkind = tagkey[1]
         c2.execute( "INSERT INTO article_tag (article_id, tag, kind, freq) VALUES (%s,%s,%s,%s)",
-            article_id, tagname, tagkind, tagfreq )
+            (article_id, tagname, tagkind, tagfreq))
     c2.close()
 
