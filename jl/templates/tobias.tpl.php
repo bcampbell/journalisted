@@ -58,6 +58,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_No46_26_04_11_1880085a.swf',
     'Tg_No47_03_05_11_1885941a.swf',
     'Tg_No48_09_05_11_1890761a.swf',
+    'Tg_No49_16_05_11_1896672a.swf',
 );
 
 
@@ -356,6 +357,17 @@ for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
   <div class="foot"></div>
 </div>
 
+<?php if($twitter_id) { ?>
+<div class="box twitter">
+  <div class="head"><h3>On Twitter</h3></div>
+  <div class="body">
+   <div id="twitter_profile"></div>
+   <div id="tweets"></div>
+     </div>
+  <div class="foot">
+  </div>
+</div>
+<?php } ?>
 
 <div class="box links">
   <div class="head"><h3><?= $prettyname ?> on the web</h3></div>
