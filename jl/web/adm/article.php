@@ -104,13 +104,22 @@ EOT;
         $sim['srcorgname'] = $orgs[$sim['srcorg'] ];
     unset($sim);
 
+    $urls = db_getAll("SELECT url FROM article_url WHERE article_id=?",$art['id']);
+
 ?>
 <table border="1">
 <tr><th>title</th><td><h2><?php echo $art['title']; ?></h2></td></tr>
 <tr><th>status</th><td><?php echo $art['status']; ?></td></tr>
 <tr><th>id</th><td><?php echo $art['id']; ?> [<a href="<?= article_url( $art['id'] ); ?>">go to article page</a>]
 <tr><th>srcorg</th><td><?php echo $orgname;?> (id <?php echo $art['srcorg'];?>)</td></tr>
-<tr><th>permalink</th><td><a href="<?php echo $art['permalink'];?>"><?php echo $art['permalink']; ?></a></td></tr>
+<tr><th>urls</th><td>
+    permalink: <a href="<?php echo $art['permalink'];?>"><?php echo $art['permalink']; ?></a><br/>
+    srcurl: <a href="<?php echo $art['srcurl'];?>"><?php echo $art['srcurl']; ?></a><br/>
+    all urls <?= sizeof($urls); ?>:
+    <ul><?php foreach($urls as $foo) { $url=$foo['url']; ?>
+        <li><a href="<?= $url ?>"><?= $url ?></a></li>
+    <?php } ?></ul>
+</td></tr>
 <tr><th>pubdate</th><td><?php echo $art['pubdate']; ?></td></tr>
 <tr><th>lastscraped</th><td><?php echo $art['lastscraped']; ?></td></tr>
 <tr><th>byline</th>
@@ -121,7 +130,6 @@ EOT;
   </td>
 </tr>
 <tr><th>description</th><td><?php echo $art['description']; ?></td></tr>
-<tr><th>srcurl</th><td><?php echo $art['srcurl']; ?></td></tr>
 <tr><th>srcid</th><td><?php echo $art['srcid']; ?></td></tr>
 <tr><th>total_comments</th><td><?php echo $art['total_comments']; ?></td></tr>
 <tr><th>total_bloglinks</th><td><?php echo $art['total_bloglinks']; ?></td></tr>

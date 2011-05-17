@@ -11,7 +11,6 @@ from datetime import datetime,timedelta
 import sys
 import os
 import urlparse
-import cookielib
 import urllib   # for urlencode
 import urllib2
 import ConfigParser
@@ -23,8 +22,6 @@ from JL import ukmedia, ScraperUtils
 
 TIMESPLUS_CONFIG_FILE = '../conf/timesplus.ini'
 
-# Storage for cookies we receive in this session
-cookiejar = cookielib.LWPCookieJar()
 
 # NOTES:
 # 
@@ -48,16 +45,9 @@ cookiejar = cookielib.LWPCookieJar()
 
 
 
-def dump_cookies():
-    print "----------------------------------------"
-    print 'These are the cookies we have received so far :'
-    for index, cookie in enumerate(cookiejar):
-        print index, '  :  ', cookie
-    print "----------------------------------------"
 
 def Prep():
     """ perform a login """
-    global cookiejar
 
     config = ConfigParser.ConfigParser()
     config.read( TIMESPLUS_CONFIG_FILE )
@@ -70,8 +60,6 @@ def Prep():
     # so you end up doing about 7 HTTP requests in all before you can start
     # fetching stories. Ugh.
     ukmedia.DBUG2( "Logging in as %s\n" % (timesplus_username) )
-    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar))
-    urllib2.install_opener(opener)
     postdata = urllib.urlencode( {'userName':timesplus_username,'password':timesplus_password, 'keepMeLoggedIn':'false' } )
 
     req = urllib2.Request( "https://www.timesplus.co.uk/iam/app/barrier?execution=e2s1&_eventId=loginEvent", postdata );

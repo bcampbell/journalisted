@@ -7,10 +7,11 @@ date :-)
 basedata.sql is a dump of just the organisation table, which the scrapers
 need.
 
-All these notes assume your database is called 'mst' and there is a database
-user also called 'mst'.
-To create mst user:
-  $ sudo -u postgres createuser --no-superuser --no-createrole --createdb mst
+All these notes assume your database is called 'jl' and there is a database
+user also called 'jl'.
+To create jl user:
+  $ sudo -u postgres createuser --no-superuser --no-createrole --createdb jl
+
 
 
 Text is utf-8 encoded and stored in an ascii DB. So the DB _thinks_ it's
@@ -18,29 +19,23 @@ got ascii text, but the backend and website know that that text is really
 in utf-8). At some point we'll tidy it up so the database knows it's storing
 utf-8.
 
+following commands assume you're running as postgres user, eg:
+  $ sudo -u postgres bash
 
-To restore from a backup or initialize fresh database:
+To kill old db:
+  $  dropdb jl
 
-(Windows users should use "psql -U postgres" as an Administrator wherever
-"sudo -u postgres psql" appears.)
+Create database:
+  $ createdb -U jl -E utf8 jl
 
-Kill the old db:
-  $ dropdb -U mst mst
+OR to load initial schema+data:
+  $ psql -U jl jl -f schema.sql
+  $ psql -U jl jl -f basedata.sql
 
-Create the new one:
-  $ createdb -U mst -E sql_ascii mst
-
-Allow PL/PgSQL stored procedures:
-  $ sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;" mst
-
-To initialize database:
-  $ psql -U mst mst -f jl/db/schema.sql
-  $ psql -U mst mst -f jl/db/basedata.sql
-
-Load backup:
-  $ bzcat [backupfile] | psql -U mst mst
-or if you have a password set on the mst user:
-  $ bzcat [backupfile] > /tmp/blah  &&  psql -U mst mst -f /tmp/blah  &&  rm /tmp/blah
+Load a database dump:
+  $ bzcat [backupfile] | psql -U jl jl
+or if you have a password set on the jl user:
+  $ bzcat [backupfile] > /tmp/blah  &&  psql -U jl jl -f /tmp/blah  &&  rm /tmp/blah
 
 
 Postgres 8.3 notes
@@ -49,7 +44,7 @@ Postgres 8.3 notes
 - can no longer create DBs which have encoding other than what the cluster uses.
 - can turn this off by settings locale to POSIX (or C):
 sudo pg_createcluster --locale POSIX 8.3 main
-- alternative is to use "sql_ascii" encoding when creating the database with
+- alternative is to use "-E sql_ascii" encoding when creating the database with
   createdb (as specified above)
 
 

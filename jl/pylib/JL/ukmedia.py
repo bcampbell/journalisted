@@ -42,11 +42,6 @@ else:
     USE_CACHE = True
 
 
-# min time between http requests in FetchURL()
-# (so we don't hammer servers and get banned)
-# in seconds (can be a fraction)
-#FETCH_INTERVAL = 1
-FETCH_INTERVAL = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
 
 debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
@@ -484,69 +479,11 @@ def BylineOMatic2(para):
     #import pdb; pdb.set_trace()  # for debugging failures
 
 
-def GetCacheFilename(url):
-    """ use a md5 hash to cache files, as some urls are waaaaay too long for the filesystem """
-    hash = hashlib.md5()
-    hash.update(url)
-    return hash.hexdigest()
-
-
-indyurlpat = re.compile( '^(http://)?[^/]*independent[^/]*' )
-
-lastfetchtime = 0.0
-
 def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
-    global lastfetchtime
+    resp = urllib2.urlopen(url, data=None, timeout=timeout)
+    return resp.read()
 
-    socket.setdefaulttimeout( timeout )
-    # some URLs are down as https erroneously, fix this:
-    url = re.sub(u'\\bhttps\\b',u'http',url)
 
-    attempt = 0
-    while 1:
-        try:
-            if USE_CACHE:
-                if not os.path.exists(cacheDirName):
-                    os.makedirs(cacheDirName)
-                cachedFilename = os.path.join( cacheDirName, GetCacheFilename(url) )
-            if USE_CACHE and os.path.exists(cachedFilename):
-                # read from cache instead of from the internet:
-                f = open(cachedFilename,'r')
-                dat = f.read()
-            else:
-                if OFFLINE:
-                    return None
-                if not url.startswith('file:'):
-                    # throttle the fetch rate
-                    now = time.clock()
-                    elapsed = now-lastfetchtime
-                    if elapsed < FETCH_INTERVAL:
-                        time.sleep( FETCH_INTERVAL-elapsed )
-                    lastfetchtime = time.clock()
-
-                req = urllib2.Request(url, headers={'User-Agent': 'JournalistedBot'})
-                f = urllib2.urlopen(req)
-                dat = f.read()
-                # cache it:
-                if USE_CACHE:
-                    f = open(cachedFilename,'w')
-                    f.write(dat)
-            return dat
-        except urllib2.HTTPError, e:
-            if not indyurlpat.match( url ):
-                raise
-            if e.code!=500:
-                raise
-
-            DBUG2( "FetchURL INDY500 error (%s)\n" % (url) )
-
-            attempt = attempt + 1
-            if attempt >= 5:
-                DBUG2( "  aborting - too many retries\n" )
-                raise
-
-            # give server a few seconds to get its act together and retry!
-            time.sleep( 10 )
 
 
 

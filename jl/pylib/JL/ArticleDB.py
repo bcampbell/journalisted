@@ -10,14 +10,6 @@ import Tags
 import Misc
 import CommentLink
 
-class Error(Exception):
-    pass
-
-class FieldNotUnicodeError(Error):
-    def __init__(self, fieldname):
-        self.fieldname = fieldname
-    def __str__(self):
-        return repr(self.fieldname)
 
 
 class ArticleDB:
@@ -64,6 +56,10 @@ class ArticleDB:
         if self.reallyverbose:
             ukmedia.PrettyDump( art )
 
+        # if no separate 'urls' set, create it
+        if not 'urls' in art:
+            art['urls'] = set((art['permalink'], art['srcurl']))
+
         CheckArticle( art )
 
         # send text to the DB as utf-8
@@ -108,6 +104,10 @@ class ArticleDB:
             cursor.execute( "select currval('article_id_seq')" )
             article_id = cursor.fetchone()[0]
 
+
+        # add the known urls for the article
+        for url in set(art['urls']):
+            cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))
 
         # update content, if included
         if content is None:
@@ -202,41 +202,36 @@ def CheckArticle(art):
     tagpat = re.compile( "<.*?>", re.UNICODE )
 #   entpat = re.compile( "&((\w\w+)|(#[0-9]+)|(#[xX][0-9a-fA-F]+));", re.UNICODE )
 
+    # make sure all the urls are listed
+    assert art['permalink'] in art['urls']
+    assert art['srcurl'] in art['urls']
+
     # check for missing/null fields
     for f in ('title','content','description', 'permalink', 'srcurl','srcid','srcorgname','lastscraped','pubdate' ):
-        if not (f in art):
-            raise Exception, ( "missing '%s' field!" % (f) )
-        if not art[f]:
-            raise Exception, ( "null '%s' field!" % (f) )
+        assert f in art, "missing '%s' field!" % (f,)
+        assert art[f] is not None, "null '%s' field!" % (f,)
 
     # check for empty strings
     for f in ('title','content','description', 'permalink', 'srcurl','srcid' ):
-        s= art[f]
-        if s.strip() == u'':
-            raise Exception, ( "blank '%s' field!" % (f) )
-
+        s = art[f]
+        assert s.strip() != u'', "blank '%s' field!" % (f,)
 
 #   print "CheckArticle byline: ["+art['byline']+"]"
     # make sure assorted fields are unicode
     for f in ( 'title', 'byline', 'description', 'content' ):   #, 'permalink', 'srcurl','srcid' ):
-        if not isinstance( art[f], unicode ):
-            raise FieldNotUnicodeError(f)
+        assert isinstance(art[f], unicode), "'%s' is not unicode" % (f,)
 
     # check title and byline are single-line
     for f in ( 'title','byline' ):
         s = art[f]
-        if s != s.strip():
-            raise Exception, ( "%s has leading/trailing whitespace ('%s')" % (f,s.encode('latin-1','replace')) )
-        if s.find("\n") != -1:
-            raise Exception, ( "multi-line %s ('%s')" % (f,s.encode('latin-1','replace')) )
+        assert s == s.strip(), "%s has leading/trailing whitespace ('%s')" % (f, s.encode('utf-8','replace'))
+        assert s.find("\n") == -1, "multi-line %s ('%s')" % (f,s.encode('utf-8','replace'))
 
     # check for unwanted html tags & entities
     for f in ( 'title','byline','description' ):
         s = art[f]
-        if s != ukmedia.DescapeHTML( s ):
-            raise Exception, ( "%s contains html entities ('%s')" % (f,s.encode('latin-1','replace')) )
-        if tagpat.search( s ):
-            raise Exception, ( "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace')) )
+        assert s==ukmedia.DescapeHTML( s ), "%s contains html entities ('%s')" % (f,s.encode('utf-8','replace'))
+        assert not tagpat.search(s), "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace'))
     
     # fix link URLs, then check for relative links
     for f in ('content', 'bio'):

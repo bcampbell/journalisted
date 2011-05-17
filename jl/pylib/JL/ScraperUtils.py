@@ -1,4 +1,4 @@
-#
+# General helpers for writing scrapers
 #
 #
 
@@ -6,15 +6,45 @@ from optparse import OptionParser
 import sys
 import socket
 import traceback
-import urllib2
-import httplib
+#import httplib
 import os
+import re
 from datetime import datetime
 import time
 import random
+import cookielib
 
-import ukmedia, DB, ArticleDB
+import ukmedia
+import DB
+import ArticleDB
 import feedparser
+
+import urllib2
+from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
+
+cookiejar = None
+
+def build_uber_opener(throttle_delay=1, cookiejar=None):
+    """ build a super url opener which handles redirects, throttling, caching, cookies... """
+
+    handlers = []
+
+    if os.getenv('JL_USE_CACHE','false').lower() not in ('0', 'false','off'):
+        handlers.append(CacheHandler(".jlcache"))
+
+    # throttling handler should be after caching handler, so
+    # cached requests return without being throttled.
+    handlers.append(ThrottlingProcessor(throttle_delay))
+
+    if cookiejar is not None:
+        handlers.append(urllib2.HTTPCookieProcessor(cookiejar))
+
+    # redirect handler needs to be last, as it adds "redirects"
+    # member to the final response object
+    handlers.append(CollectingRedirectHandler())
+
+    return urllib2.build_opener(*handlers)
+
 
 
 def unique_articles( arts ):
@@ -31,10 +61,25 @@ def unique_articles( arts ):
     return result
 
 
+canonical_url_pat = re.compile(r'<link\s+(?:[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)")|(?:[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical")', re.DOTALL|re.IGNORECASE)
+
+def extract_rel_canonical(html):
+    """ scan html for rel="canonical" url. Returns url or None """
+
+    m = canonical_url_pat.search(html)
+    if m is None:
+        return None
+    url = m.group(1)
+    if url is None:
+       url = m.group(2)
+    return url
+
 
 
 
 def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
+    """ a commandline frontend and loop for scrapers to use """
+    global cookiejar
 
     usage = """usage: %prog [options] <urls>
 
@@ -47,6 +92,14 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
  
     (opts, args) = parser.parse_args()
+
+    # install our uber url handler
+    if cookiejar is None:
+        cookiejar = cookielib.LWPCookieJar()
+    fetch_interval = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
+    opener = build_uber_opener(throttle_delay=fetch_interval, cookiejar=cookiejar)
+    urllib2.install_opener(opener)
+
 
     # scraper might need to do a login
     if prep is not None:
@@ -111,6 +164,7 @@ def scrape_articles( found, extract, max_errors, opts):
             continue
 
         try:
+            # TODO: change existence check to use urls
             article_id = store.ArticleExists( srcid )
             if article_id:
                 if extralogging:
@@ -120,8 +174,26 @@ def scrape_articles( found, extract, max_errors, opts):
                     continue;   # skip it - we've already got it
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
-            html = ukmedia.FetchURL( context['srcurl'] )
- 
+            resp = urllib2.urlopen( context['srcurl'] )
+            html = resp.read()
+            # collect any URLs we were redirected via...
+            urls = set((context['srcurl'], context['permalink']))
+            for code,url in resp.redirects:
+                urls.add(url)
+                if code==301:    # permanant redirect
+                    context['permalink'] = url
+
+            # check html for a rel="canonical" link:
+            canonical_url = extract_rel_canonical(html)
+            if canonical_url is not None:
+                urls.add(canonical_url)
+                context['permalink'] = canonical_url
+
+            context['urls'] = urls
+
+            # TODO: repeat url-based existence check with the urls we now have
+            # if so, add any new urls... maybe rescrape and update article? 
+
             # some extra, last minute context :-)
             context[ 'lastscraped' ] = datetime.now()
 
@@ -217,13 +289,8 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
 
     foundarticles = []
     ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
+    r = feedparser.parse( feedurl )
 
-    if ukmedia.USE_CACHE:
-        ukmedia.FetchURL(feedurl, ukmedia.defaulttimeout, "rssCache" )
-        r = feedparser.parse( os.path.join( "rssCache", ukmedia.GetCacheFilename(feedurl) ) )
-    else:
-        r = feedparser.parse( feedurl )
-        
     #debug:     print r.version;
 
     lastseen = datetime.now()
@@ -325,90 +392,4 @@ SELECT j.id,j.ref,j.prettyname
     return ", ".join( [ "[j%d %s]" % (int(row['id']),row['prettyname']) for row in rows ] )
 
 
-
-# TODO: kill this (still used by scrape-tool for now)
-def ProcessArticles( foundarticles, store, extractfn, maxerrors=10, extralogging=False, forcerescrape=False ):
-    """Download, scrape and load a list of articles
-
-    Each entry in foundarticles must have at least:
-        srcurl, srcorgname, srcid
-    Assumes entire article can be grabbed from srcurl.
-
-    extractfn - function to extract an article from the html
-    extralogging - enables extra debug output (eg when article already is in DB, etc)
-    forcerescrape - if True, rescrape articles already in DB
-    """
-    failcount = 0
-    abortcount = 0
-    newcount = 0
-
-    for context in foundarticles:
-
-        conn = DB.conn()
-        srcid = context['srcid']
-        if not srcid:
-            ukmedia.DBUG2( u"WARNING: missing srcid! '%s' ( %s )\n" % (getattr(context,'title',''), context['srcurl'] ) )
-            continue
-
-
-        if ShouldSkip( conn, srcid ):
-            ukmedia.DBUG2( u"s for skip: %s (%s)\n" % (getattr(context,'title',''), context['srcurl'] ) )
-            continue
-
-        try:
-            article_id = store.ArticleExists( srcid )
-            if article_id:
-                if extralogging:
-                    ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(conn,article_id) ) )
-                if not forcerescrape:
-                    continue;   # skip it - we've already got it
-
-            #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
-            html = ukmedia.FetchURL( context['srcurl'] )
- 
-            # some extra, last minute context :-)
-            context[ 'lastscraped' ] = datetime.now()
-
-            art = extractfn( html, context )
-
-
-            if art:
-                if article_id:  # rescraping existing article?
-                    art['id'] = article_id
-
-                article_id = store.Add( art )
-                newcount = newcount + 1
-
-
-        except Exception, err:
-            # always just bail out upon ctrl-c
-            if isinstance( err, KeyboardInterrupt ):
-                raise
-
-            failcount = failcount+1
-            # TODO: phase out NonFatal! just get scraper to print out a warning message instead
-            if isinstance( err, ukmedia.NonFatal ):
-                continue
-
-            report = traceback.format_exc()
-
-            if 'title' in context:
-                msg = u"FAILED (%s): '%s' (%s)" % (err, context['title'], context['srcurl'])
-            else:
-                msg = u"FAILED (%s): (%s)" % (err,context['srcurl'])
-            ukmedia.DBUG( msg + "\n" )
-            ukmedia.DBUG2( report + "\n" )
-            ukmedia.DBUG2( '-'*60 + "\n" )
-
-            if not store.dryrun:    # UGH.
-                LogScraperError( conn, context, report )
-
-            abortcount = abortcount + 1
-            if abortcount >= maxerrors:
-                print >>sys.stderr, "Too many errors - ABORTING"
-                raise
-            #else just skip this one and go on to the next...
-
-    ukmedia.DBUG( "%s: %d new, %d failed\n" % (sys.argv[0], newcount, failcount ) )
-    return (newcount,failcount)
 
