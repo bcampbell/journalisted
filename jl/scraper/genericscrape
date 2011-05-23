@@ -3,33 +3,58 @@
 
 import urllib2
 import logging
+from datetime import datetime
 from optparse import OptionParser
 
 import metareadability
 import decruft
 
+import site
+site.addsitedir("../pylib")
+from JL import ScraperUtils
+from JL import ukmedia
+
+
+
+def context_from_url(url):
+    context = {}
+    context['permalink']=url
+    context['srcurl']=url
+    context['lastseen'] = datetime.now()
+    return context
+
+def extract(html,context):
+    art = context
+    headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
+    art['title'] = headline
+    art['byline'] = byline
+    art['pubdate'] = pubdate
+
+    txt = decruft.Document(html).summary()
+    art['content'] = ukmedia.SanitiseHTML(txt)
+    return art
+
+
 def main():
     parser = OptionParser(usage="%prog: [options] urls")
     parser.add_option('-v', '--verbose', action='store_true')
-    parser.add_option('-d', '--debug', action='store_true')
+    parser.add_option('-d', '--dry_run', action='store_true')
+    parser.add_option('-f', '--force_rescrape', action='store_true')
     (options, args) = parser.parse_args()
 
     log_level = logging.ERROR
-    if options.debug:
-        log_level = logging.DEBUG
-    elif options.verbose:
+#    if options.debug:
+#        log_level = logging.DEBUG
+    if options.verbose:
         log_level = logging.INFO
 
     logging.basicConfig(level=log_level, format='%(message)s')
 
-    for url in args:
-        html = urllib2.urlopen(url).read()
-        headline,byline,pubdate = metareadability.extract(html,url)
-        print "%s,%s,%s,%s" % (url,headline,byline,pubdate)
-        txt = decruft.Document(html).summary()
-        print "="*78
-        print txt
-        print "="*78
+    max_errors = 20
+    arts = [context_from_url(url) for url in args]
+    print arts
+
+    ScraperUtils.scrape_articles(arts, extract, max_errors, options)
 
 if __name__ == '__main__':
     main()

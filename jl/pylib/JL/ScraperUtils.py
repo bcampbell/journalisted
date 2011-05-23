@@ -22,7 +22,9 @@ import feedparser
 import urllib2
 from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
 
-cookiejar = None
+
+
+
 
 def build_uber_opener(throttle_delay=1, cookiejar=None):
     """ build a super url opener which handles redirects, throttling, caching, cookies... """
@@ -44,6 +46,13 @@ def build_uber_opener(throttle_delay=1, cookiejar=None):
     handlers.append(CollectingRedirectHandler())
 
     return urllib2.build_opener(*handlers)
+
+
+# install our uber url handler to collect redirects and throttle request rate
+cookiejar = cookielib.LWPCookieJar()
+fetch_interval = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
+opener = build_uber_opener(throttle_delay=fetch_interval, cookiejar=cookiejar)
+urllib2.install_opener(opener)
 
 
 
@@ -79,7 +88,6 @@ def extract_rel_canonical(html):
 
 def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
     """ a commandline frontend and loop for scrapers to use """
-    global cookiejar
 
     usage = """usage: %prog [options] <urls>
 
@@ -92,14 +100,6 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
  
     (opts, args) = parser.parse_args()
-
-    # install our uber url handler
-    if cookiejar is None:
-        cookiejar = cookielib.LWPCookieJar()
-    fetch_interval = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
-    opener = build_uber_opener(throttle_delay=fetch_interval, cookiejar=cookiejar)
-    urllib2.install_opener(opener)
-
 
     # scraper might need to do a login
     if prep is not None:
@@ -157,42 +157,51 @@ def scrape_articles( found, extract, max_errors, opts):
 
     for context in found:
 
-        conn = DB.conn()
-        srcid = context['srcid']
-        if not srcid:
-            ukmedia.DBUG2( u"WARNING: missing srcid! '%s' ( %s )\n" % (getattr(context,'title',''), context['srcurl'] ) )
-            continue
-
         try:
-            # TODO: change existence check to use urls
-            article_id = store.ArticleExists( srcid )
-            if article_id:
+            known_urls = set((context['srcurl'], context['permalink']))
+            got = store.find_article(known_urls)
+            if len(got) > 0:
                 if extralogging:
-                    ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(conn,article_id) ) )
+                    for article_id in got:
+                        ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(article_id)))
                 if not opts.force_rescrape:
                     had_count += 1
                     continue;   # skip it - we've already got it
+                else:
+                    assert(len(got) == 1)
+                    article_id = got[0]
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
             resp = urllib2.urlopen( context['srcurl'] )
             html = resp.read()
-            # collect any URLs we were redirected via...
-            urls = set((context['srcurl'], context['permalink']))
+            # add any URLs we were redirected via...
             for code,url in resp.redirects:
-                urls.add(url)
+                known_urls.add(url)
                 if code==301:    # permanant redirect
                     context['permalink'] = url
 
             # check html for a rel="canonical" link:
             canonical_url = extract_rel_canonical(html)
             if canonical_url is not None:
-                urls.add(canonical_url)
+                known_urls.add(canonical_url)
                 context['permalink'] = canonical_url
 
-            context['urls'] = urls
+            context['urls'] = known_urls
 
-            # TODO: repeat url-based existence check with the urls we now have
-            # if so, add any new urls... maybe rescrape and update article? 
+            # repeat url-based existence check with the urls we now have
+            # TODO: if so, add any new urls... maybe rescrape and update article? 
+            article_id = None
+            got = store.find_article(known_urls)
+            if len(got) > 0:
+                if extralogging:
+                    for article_id in got:
+                        ukmedia.DBUG( u"already got %s [a%s] (attributed to: %s)\n" % (context['srcurl'], article_id,GetAttrLogStr(article_id)))
+                if not opts.force_rescrape:
+                    had_count += 1
+                    continue;   # skip it - we've already got it
+                else:
+                    assert(len(got) == 1)
+                    article_id = got[0]
 
             # some extra, last minute context :-)
             context[ 'lastscraped' ] = datetime.now()
@@ -347,41 +356,13 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
     return foundarticles
 
 
-def ShouldSkip( conn, srcid ):
-    """ returns True if an article has a skip order on it (ie don't scrape!) """
-    skip = False
-    c = conn.cursor()
-    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s",(srcid,) )
-    row = c.fetchone()
-    if row:
-        if row['action'] == 's':
-            skip = True
-    c.close()
-    return skip
 
 
-def LogScraperError( conn, context, report ):
-    c = conn.cursor()
-    srcid = context['srcid']
-
-    title = getattr(context, 'title', u'' )
-
-    c.execute( "SELECT * FROM error_articlescrape WHERE srcid=%s", (srcid,) )
-    row = c.fetchone()
-    if row:
-        # article has an existing error entry...
-        c.execute( "UPDATE error_articlescrape SET report=%s, attempts=attempts+1,lastattempt=NOW() WHERE srcid=%s", (report,srcid) )
-    else:
-        # log the error
-        params = ( srcid, '', title, context['srcurl'], 1, report, ' ' )
-        c.execute( "INSERT INTO error_articlescrape (srcid,scraper,title,srcurl,attempts,report,action,firstattempt,lastattempt) VALUES( %s,%s,%s,%s,%s,%s,%s,NOW(),NOW() )", params )
-    c.commit()
-    c.close()
 
 
-def GetAttrLogStr( conn,article_id ):
+def GetAttrLogStr(article_id ):
     """ return a list of attributed journos for logging eg "[a1234 fred blogs], [a4321 bob roberts]" """
-    c = conn.cursor()
+    c = DB.conn().cursor()
     sql = """
 SELECT j.id,j.ref,j.prettyname
     FROM ( JOURNO j INNER JOIN journo_attr attr ON attr.journo_id=j.id )

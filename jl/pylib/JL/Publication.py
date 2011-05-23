@@ -1,15 +1,14 @@
 import re
 import unicodedata
 
+import DB
+
 class AmbiguousPublication(Exception):
     pass
 
 
-def resolve(conn, domain, name=None):
+def find(domain, name=None):
     """ look up a publication, return publication id or None """
-
-    if name is not None:
-        assert len(name)>0      # (to flag up legacy code)
 
     # use domain to look them up
     # want to look for both www. and bare versions
@@ -20,7 +19,7 @@ def resolve(conn, domain, name=None):
     else:
         candidates.append( 'www.' + domain )
 
-    c = conn.cursor()
+    c = DB.conn().cursor()
     c.execute( "SELECT pub_id FROM pub_domain WHERE domain in ( %s,%s )",
         (candidates[0], candidates[1]) )
     matched_domains = [ row['pub_id'] for row in c.fetchall() ]
@@ -75,36 +74,41 @@ def slugify( fancytext ):
     return slug
 
 
-def create( conn, domain, publication=u'' ):
+def create(domain, prettyname=None):
     """ eg: create('www.dailymail.co.uk','The Daily Mail') """
-    if publication is not None:
-        assert len(publication)>0      # (to flag up legacy code)
 
-    publication = publication.strip()
-    if publication == u'':
-        # use domain as publication name
-        publication = unicode( domain )
-        publication = re.sub( u'^www.',u'',publication )
-        shortname = publication
+    if prettyname is None:
+        # use domain as prettyname name
+        prettyname = unicode( domain )
+        prettyname = re.sub( u'^www.',u'',prettyname )
+        shortname = prettyname
     else:
-        shortname = publication.lower()
+        prettyname = prettyname.strip()
+        shortname = prettyname.lower()
         # replace accented chars
         shortname = unicodedata.normalize('NFKD',shortname).encode('ascii','ignore')
         # get rid of non-alphas:
         shortname = re.sub(u'[^-a-z]',u'',shortname)
 
     # for more natural-seeming sort order...
-    sortname = publication.lower()
+    sortname = prettyname.lower()
     sortname = re.sub(u'^the\s+',u'',sortname)
 
 
-    c = conn.cursor()
+    c = DB.conn().cursor()
     c.execute( """INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, %s,%s,%s,%s) RETURNING id""",
-        ( shortname, publication, sortname, "http://" + domain ) )
+        ( shortname, prettyname, sortname, "http://" + domain ) )
     pub_id = c.fetchone()[0]
 
     c.execute( """INSERT INTO pub_domain (pub_id,domain) VALUES (%s,%s)""", (pub_id,domain) )
-    c.execute( """INSERT INTO pub_alias (pub_id,alias) VALUES (%s,%s)""", (pub_id,publication) )
+    c.execute( """INSERT INTO pub_alias (pub_id,alias) VALUES (%s,%s)""", (pub_id,prettyname) )
 
+    return pub_id
+
+
+def find_or_create(domain,prettyname=None):
+    pub_id = find(domain,prettyname)
+    if pub_id is None:
+        pub_id = create(domain,prettyname)
     return pub_id
 

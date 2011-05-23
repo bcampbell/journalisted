@@ -9,7 +9,8 @@ import ukmedia
 import Tags
 import Misc
 import CommentLink
-
+import Publication
+import urlparse
 
 
 class ArticleDB:
@@ -79,7 +80,12 @@ class ArticleDB:
         firstseen = lastseen    # it's a new entry
         srcurl = art['srcurl']
         permalink = art['permalink']
-        srcid = art['srcid']
+
+        # phasing out srcid...
+        if 'srcid' in art:
+            srcid = art['srcid']
+        else:
+            srcid = art['permalink']
 
         wordcount = None
         content = None
@@ -94,11 +100,13 @@ class ArticleDB:
         cursor = DB.conn().cursor()
 
 
-        # resolve publication (or create if needed!)
         if 'srcorgname' in art:
             srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
-
-
+        else:
+            # no publication specified - look up using domain name
+            o = urlparse.urlparse(art['permalink'])
+            domain = o[1].lower()
+            srcorg = Publication.find_or_create(domain)
 
         updating = False
         if 'id' in art:
@@ -184,7 +192,7 @@ class ArticleDB:
             op += ' meta'
 
         ukmedia.DBUG2( u"%s: %s [a%s %s ] ('%s' %s)\n" % (
-            art['srcorgname'],
+            art['srcorgname'] if 'srcorgname' in art else srcorg,
             op,
             article_id,
             art['srcurl'],
@@ -207,7 +215,11 @@ class ArticleDB:
 
         return article_id
 
-
+    def find_article(self,known_urls):
+        sql = "SELECT article_id FROM article_url WHERE url IN (" + ','.join(['%s' for u in known_urls]) + ")"
+        c = DB.conn().cursor()
+        c.execute(sql,list(known_urls))
+        return [row['article_id'] for row in c]
 
 
 
@@ -220,12 +232,12 @@ def CheckArticle(art):
     assert art['srcurl'] in art['urls']
 
     # check for missing/null fields
-    for f in ('title','content','description', 'permalink', 'srcurl','srcid','srcorgname','lastscraped','pubdate' ):
+    for f in ('title','content','description','permalink','srcurl','lastscraped','pubdate' ):
         assert f in art, "missing '%s' field!" % (f,)
         assert art[f] is not None, "null '%s' field!" % (f,)
 
     # check for empty strings
-    for f in ('title','content','description', 'permalink', 'srcurl','srcid' ):
+    for f in ('title','content','description', 'permalink', 'srcurl'):
         s = art[f]
         assert s.strip() != u'', "blank '%s' field!" % (f,)
 
@@ -283,7 +295,7 @@ def process_byline(article_id, art):
     if details is None:
         return []
 
-    srcorgid = Misc.GetOrgID(art['srcorgname'])
+#    srcorgid = Misc.GetOrgID(art['srcorgname'])
 
     attributed = []
 
@@ -301,8 +313,8 @@ def process_byline(article_id, art):
 
         attributed.append( journo_id )
 
-        if d.has_key('title'):
-            Journo.SeenJobTitle( DB.conn(), journo_id, d['title'], datetime.now(), srcorgid )
+#        if d.has_key('title'):
+#            Journo.SeenJobTitle( DB.conn(), journo_id, d['title'], datetime.now(), srcorgid )
 
     return attributed
 
