@@ -524,6 +524,12 @@ def PrettyDump( art ):
     print
 
 
+def truncate_words(s, maxwords):
+    foo = s.split()
+    if len(foo)<=maxwords:
+        return s
+    else:
+        return u' '.join(foo[:maxwords]) + u"..."
 
 def FirstPara( html ):
     """ try and extract the first paragraph from some html
@@ -531,27 +537,24 @@ def FirstPara( html ):
     result is single line of unicode text with all html tags stripped
     """
 
+    maxwords = 50
 
     # first try text before first <p> (or </p>, because it might be broken)
     m = re.match( "\\s*(.*?)\\s*<([/])?p>", html, re.IGNORECASE|re.DOTALL )
     if m:
         p = FromHTMLOneLine(m.group(1))
         if len(p) > 10:
-            return p
+            return truncate_words(p, maxwords)
 
     # get first non-empty para
     cnt=0
     for m in re.finditer( "<p>\\s*(.*?)\\s*</p>", html, re.IGNORECASE|re.DOTALL ):
         p = FromHTMLOneLine( m.group(1) )
         if len(p) > 0:
-            return p;
+            return truncate_words(p, maxwords)
 
     # no joy - just try and return the first 50 words
-    words = FromHTMLOneLine(html).split()
-    if len( words ) > 0:
-        return u' '.join(words[:50] ) + "..."
-
-    return u''
+    return truncate_words(FromHTMLOneLine(html), maxwords)
 
 
 
