@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+""" commandline tool to grab parse article text and metadata from a given url """
+
+import urllib2
+import logging
+from optparse import OptionParser
+
+import metareadability
+import decruft
+
+def main():
+    parser = OptionParser(usage="%prog: [options] urls")
+    parser.add_option('-v', '--verbose', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
+    (options, args) = parser.parse_args()
+
+    log_level = logging.ERROR
+    if options.debug:
+        log_level = logging.DEBUG
+    elif options.verbose:
+        log_level = logging.INFO
+
+    logging.basicConfig(level=log_level, format='%(message)s')
+
+    for url in args:
+        html = urllib2.urlopen(url).read()
+        headline,byline,pubdate = metareadability.extract(html,url)
+        print "%s,%s,%s,%s" % (url,headline,byline,pubdate)
+        txt = decruft.Document(html).summary()
+        print "="*78
+        print txt
+        print "="*78
+
+if __name__ == '__main__':
+    main()
+
