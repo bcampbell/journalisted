@@ -2,7 +2,8 @@
 -- PostgreSQL database dump
 --
 
-SET client_encoding = 'SQL_ASCII';
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = off;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
@@ -22,14 +23,14 @@ SET search_path = public, pg_catalog;
 --
 
 CREATE FUNCTION article_setjournomodified_onupdate() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     -- whenever article is modified, set the modified flag on any attributed jounos
     UPDATE journo SET modified=true WHERE id IN (SELECT journo_id FROM journo_attr WHERE article_id=NEW.id);
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -37,6 +38,7 @@ $$
 --
 
 CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -49,8 +51,7 @@ CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
 
         RETURN new;
     END
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -58,6 +59,7 @@ $$
 --
 
 CREATE FUNCTION article_update_total_comments() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -74,8 +76,7 @@ CREATE FUNCTION article_update_total_comments() RETURNS trigger
 
         RETURN new;
     END
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -83,13 +84,13 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_ondelete() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -97,13 +98,13 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_oninsert() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -111,14 +112,14 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_onupdate() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -126,12 +127,12 @@ $$
 --
 
 CREATE FUNCTION ms_current_timestamp() RETURNS timestamp without time zone
+    LANGUAGE plpgsql
     AS $$
     begin
         return current_timestamp;
     end;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 SET default_tablespace = '';
@@ -154,6 +155,7 @@ CREATE TABLE alert (
 --
 
 CREATE SEQUENCE alert_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -179,7 +181,6 @@ CREATE TABLE article (
     pubdate timestamp without time zone,
     firstseen timestamp without time zone NOT NULL,
     lastseen timestamp without time zone NOT NULL,
-    content text,
     permalink text NOT NULL,
     srcurl text NOT NULL,
     srcorg integer NOT NULL,
@@ -218,6 +219,7 @@ CREATE TABLE article_bloglink (
 --
 
 CREATE SEQUENCE article_bloglink_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -245,6 +247,37 @@ CREATE TABLE article_commentlink (
 
 
 --
+-- Name: article_content; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE article_content (
+    id integer NOT NULL,
+    article_id integer,
+    content text DEFAULT ''::text NOT NULL,
+    scraped timestamp without time zone
+);
+
+
+--
+-- Name: article_content_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_content_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: article_content_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE article_content_id_seq OWNED BY article_content.id;
+
+
+--
 -- Name: article_dupe; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -259,6 +292,7 @@ CREATE TABLE article_dupe (
 --
 
 CREATE SEQUENCE article_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -283,6 +317,7 @@ CREATE TABLE article_image (
 --
 
 CREATE SEQUENCE article_image_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -326,6 +361,36 @@ CREATE TABLE article_tag (
     freq integer NOT NULL,
     kind character(1) DEFAULT ' '::bpchar NOT NULL
 );
+
+
+--
+-- Name: article_url; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE article_url (
+    id integer NOT NULL,
+    url text NOT NULL,
+    article_id integer NOT NULL
+);
+
+
+--
+-- Name: article_url_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_url_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: article_url_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE article_url_id_seq OWNED BY article_url.id;
 
 
 --
@@ -387,6 +452,7 @@ CREATE TABLE custompaper_criteria_text (
 --
 
 CREATE SEQUENCE custompaper_criteria_text_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -405,6 +471,7 @@ ALTER SEQUENCE custompaper_criteria_text_id_seq OWNED BY custompaper_criteria_te
 --
 
 CREATE SEQUENCE custompaper_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -453,6 +520,7 @@ CREATE TABLE event_log (
 --
 
 CREATE SEQUENCE event_log_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -464,6 +532,16 @@ CREATE SEQUENCE event_log_id_seq
 --
 
 ALTER SEQUENCE event_log_id_seq OWNED BY event_log.id;
+
+
+--
+-- Name: fook; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE fook (
+    url text,
+    article_id text
+);
 
 
 --
@@ -495,6 +573,7 @@ CREATE TABLE image (
 --
 
 CREATE SEQUENCE image_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -527,6 +606,7 @@ CREATE TABLE journo (
     lastname_metaphone text DEFAULT ''::text NOT NULL,
     admin_notes text DEFAULT ''::text NOT NULL,
     admin_tags text DEFAULT ''::text NOT NULL,
+    fake boolean DEFAULT false NOT NULL,
     CONSTRAINT journo_status_check CHECK ((((status = 'a'::bpchar) OR (status = 'h'::bpchar)) OR (status = 'i'::bpchar)))
 );
 
@@ -547,6 +627,7 @@ CREATE TABLE journo_address (
 --
 
 CREATE SEQUENCE journo_address_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -577,6 +658,7 @@ CREATE TABLE journo_admired (
 --
 
 CREATE SEQUENCE journo_admired_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -632,7 +714,8 @@ CREATE TABLE journo_awards (
     id integer NOT NULL,
     journo_id integer NOT NULL,
     award text DEFAULT ''::text NOT NULL,
-    year smallint
+    year smallint,
+    src integer
 );
 
 
@@ -641,6 +724,7 @@ CREATE TABLE journo_awards (
 --
 
 CREATE SEQUENCE journo_awards_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -673,6 +757,7 @@ CREATE TABLE journo_bio (
 --
 
 CREATE SEQUENCE journo_bio_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -704,6 +789,7 @@ CREATE TABLE journo_books (
 --
 
 CREATE SEQUENCE journo_books_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -729,7 +815,8 @@ CREATE TABLE journo_education (
     qualification text DEFAULT ''::text NOT NULL,
     year_from smallint,
     year_to smallint,
-    kind character(1) DEFAULT 'u'::bpchar NOT NULL
+    kind character(1) DEFAULT 'u'::bpchar NOT NULL,
+    src integer
 );
 
 
@@ -738,6 +825,7 @@ CREATE TABLE journo_education (
 --
 
 CREATE SEQUENCE journo_education_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -770,6 +858,7 @@ CREATE TABLE journo_email (
 --
 
 CREATE SEQUENCE journo_email_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -795,7 +884,9 @@ CREATE TABLE journo_employment (
     year_from smallint,
     year_to smallint,
     kind character(1) DEFAULT 'e'::bpchar NOT NULL,
-    current boolean DEFAULT false NOT NULL
+    current boolean DEFAULT false NOT NULL,
+    rank integer DEFAULT 0 NOT NULL,
+    src integer
 );
 
 
@@ -804,6 +895,7 @@ CREATE TABLE journo_employment (
 --
 
 CREATE SEQUENCE journo_employment_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -822,6 +914,7 @@ ALTER SEQUENCE journo_employment_id_seq OWNED BY journo_employment.id;
 --
 
 CREATE SEQUENCE journo_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -847,6 +940,7 @@ CREATE TABLE journo_jobtitle (
 --
 
 CREATE SEQUENCE journo_jobtitle_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -880,6 +974,7 @@ CREATE TABLE journo_other_articles (
 --
 
 CREATE SEQUENCE journo_other_articles_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -909,6 +1004,7 @@ CREATE TABLE journo_phone (
 --
 
 CREATE SEQUENCE journo_phone_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -939,6 +1035,7 @@ CREATE TABLE journo_photo (
 --
 
 CREATE SEQUENCE journo_photo_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -983,10 +1080,43 @@ CREATE TABLE journo_weblink (
 --
 
 CREATE SEQUENCE journo_weblink_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
     CACHE 1;
+
+
+--
+-- Name: link; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE link (
+    id integer NOT NULL,
+    url text,
+    title text,
+    pubdate timestamp without time zone,
+    publication text
+);
+
+
+--
+-- Name: link_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE link_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: link_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE link_id_seq OWNED BY link.id;
 
 
 --
@@ -1007,6 +1137,7 @@ CREATE TABLE missing_articles (
 --
 
 CREATE SEQUENCE missing_articles_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1043,6 +1174,7 @@ CREATE TABLE news (
 --
 
 CREATE SEQUENCE news_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1068,7 +1200,8 @@ CREATE TABLE organisation (
     email_format text DEFAULT ''::text NOT NULL,
     home_url text DEFAULT ''::text NOT NULL,
     sop_name text DEFAULT ''::text NOT NULL,
-    sop_url text DEFAULT ''::text NOT NULL
+    sop_url text DEFAULT ''::text NOT NULL,
+    sortname text DEFAULT ''::text NOT NULL
 );
 
 
@@ -1103,6 +1236,7 @@ CREATE TABLE person (
 --
 
 CREATE SEQUENCE person_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1134,6 +1268,7 @@ CREATE TABLE person_permission (
 --
 
 CREATE SEQUENCE person_permission_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1157,6 +1292,215 @@ CREATE TABLE person_receives_newsletter (
 
 
 --
+-- Name: pub_adr; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_adr (
+    id integer NOT NULL,
+    pub_id integer,
+    adr text DEFAULT ''::text NOT NULL
+);
+
+
+--
+-- Name: pub_adr_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_adr_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_adr_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_adr_id_seq OWNED BY pub_adr.id;
+
+
+--
+-- Name: pub_alias; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_alias (
+    id integer NOT NULL,
+    pub_id integer NOT NULL,
+    alias text NOT NULL
+);
+
+
+--
+-- Name: pub_alias_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_alias_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_alias_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_alias_id_seq OWNED BY pub_alias.id;
+
+
+--
+-- Name: pub_domain; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_domain (
+    id integer NOT NULL,
+    pub_id integer NOT NULL,
+    domain text NOT NULL
+);
+
+
+--
+-- Name: pub_domain_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_domain_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_domain_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_domain_id_seq OWNED BY pub_domain.id;
+
+
+--
+-- Name: pub_email_format; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_email_format (
+    id integer NOT NULL,
+    pub_id integer NOT NULL,
+    fmt text NOT NULL
+);
+
+
+--
+-- Name: pub_email_format_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_email_format_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_email_format_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_email_format_id_seq OWNED BY pub_email_format.id;
+
+
+--
+-- Name: pub_phone; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_phone (
+    id integer NOT NULL,
+    pub_id integer NOT NULL,
+    phone text NOT NULL
+);
+
+
+--
+-- Name: pub_phone_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_phone_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_phone_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_phone_id_seq OWNED BY pub_phone.id;
+
+
+--
+-- Name: pub_set; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_set (
+    id integer NOT NULL,
+    name text NOT NULL
+);
+
+
+--
+-- Name: pub_set_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_set_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_set_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_set_id_seq OWNED BY pub_set.id;
+
+
+--
+-- Name: pub_set_map; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE pub_set_map (
+    id integer NOT NULL,
+    pub_id integer,
+    pub_set_id integer
+);
+
+
+--
+-- Name: pub_set_map_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE pub_set_map_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: pub_set_map_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE pub_set_map_id_seq OWNED BY pub_set_map.id;
+
+
+--
 -- Name: recently_viewed; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1172,6 +1516,7 @@ CREATE TABLE recently_viewed (
 --
 
 CREATE SEQUENCE recently_viewed_id_seq
+    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1231,6 +1576,16 @@ CREATE TABLE tag_synonym (
 
 
 --
+-- Name: tmp_article_urls; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE tmp_article_urls (
+    url text NOT NULL,
+    article_id integer
+);
+
+
+--
 -- Name: token; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1260,7 +1615,21 @@ ALTER TABLE article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_blogli
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE article_content ALTER COLUMN id SET DEFAULT nextval('article_content_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE article_image ALTER COLUMN id SET DEFAULT nextval('article_image_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE article_url ALTER COLUMN id SET DEFAULT nextval('article_url_id_seq'::regclass);
 
 
 --
@@ -1386,6 +1755,13 @@ ALTER TABLE journo_photo ALTER COLUMN id SET DEFAULT nextval('journo_photo_id_se
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE link ALTER COLUMN id SET DEFAULT nextval('link_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE missing_articles ALTER COLUMN id SET DEFAULT nextval('missing_articles_id_seq'::regclass);
 
 
@@ -1408,6 +1784,55 @@ ALTER TABLE person ALTER COLUMN id SET DEFAULT nextval('person_id_seq'::regclass
 --
 
 ALTER TABLE person_permission ALTER COLUMN id SET DEFAULT nextval('person_permission_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_adr ALTER COLUMN id SET DEFAULT nextval('pub_adr_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_alias ALTER COLUMN id SET DEFAULT nextval('pub_alias_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_domain ALTER COLUMN id SET DEFAULT nextval('pub_domain_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_email_format ALTER COLUMN id SET DEFAULT nextval('pub_email_format_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_phone ALTER COLUMN id SET DEFAULT nextval('pub_phone_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_set ALTER COLUMN id SET DEFAULT nextval('pub_set_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE pub_set_map ALTER COLUMN id SET DEFAULT nextval('pub_set_map_id_seq'::regclass);
 
 
 --
@@ -1439,6 +1864,14 @@ ALTER TABLE ONLY article_bloglink
 
 ALTER TABLE ONLY article_commentlink
     ADD CONSTRAINT article_commentlink_pkey PRIMARY KEY (article_id, source);
+
+
+--
+-- Name: article_content_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY article_content
+    ADD CONSTRAINT article_content_pkey PRIMARY KEY (id);
 
 
 --
@@ -1495,6 +1928,14 @@ ALTER TABLE ONLY article
 
 ALTER TABLE ONLY article_tag
     ADD CONSTRAINT article_tag_pkey PRIMARY KEY (article_id, tag);
+
+
+--
+-- Name: article_url_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY article_url
+    ADD CONSTRAINT article_url_pkey PRIMARY KEY (id);
 
 
 --
@@ -1682,6 +2123,14 @@ ALTER TABLE ONLY journo_weblink
 
 
 --
+-- Name: link_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY link
+    ADD CONSTRAINT link_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: missing_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1727,6 +2176,62 @@ ALTER TABLE ONLY person
 
 ALTER TABLE ONLY person_receives_newsletter
     ADD CONSTRAINT person_receives_newsletter_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: pub_adr_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_adr
+    ADD CONSTRAINT pub_adr_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_alias_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_alias
+    ADD CONSTRAINT pub_alias_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_domain_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_domain
+    ADD CONSTRAINT pub_domain_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_email_format_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_email_format
+    ADD CONSTRAINT pub_email_format_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_phone_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_phone
+    ADD CONSTRAINT pub_phone_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_set_map_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_set_map
+    ADD CONSTRAINT pub_set_map_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pub_set_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY pub_set
+    ADD CONSTRAINT pub_set_pkey PRIMARY KEY (id);
 
 
 --
@@ -1784,6 +2289,27 @@ CREATE INDEX article_bloglink_article_id_idx ON article_bloglink USING btree (ar
 
 
 --
+-- Name: article_content_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_content_article_id_idx ON article_content USING btree (article_id);
+
+
+--
+-- Name: article_content_scraped_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_content_scraped_idx ON article_content USING btree (scraped);
+
+
+--
+-- Name: article_id_status_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_id_status_idx ON article USING btree (id, status);
+
+
+--
 -- Name: article_image_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1823,6 +2349,13 @@ CREATE INDEX article_similar_other_id_idx ON article_similar USING btree (other_
 --
 
 CREATE INDEX article_srcid_idx ON article USING btree (srcid);
+
+
+--
+-- Name: article_srcorg_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_srcorg_idx ON article USING btree (srcorg);
 
 
 --
@@ -1931,10 +2464,45 @@ CREATE UNIQUE INDEX person_email_idx ON person USING btree (email);
 
 
 --
+-- Name: pub_adr_pub_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX pub_adr_pub_id_idx ON pub_adr USING btree (pub_id);
+
+
+--
+-- Name: pub_alias_lower_alias_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX pub_alias_lower_alias_idx ON pub_alias USING btree (lower(alias));
+
+
+--
+-- Name: pub_domain_domain_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX pub_domain_domain_idx ON pub_domain USING btree (domain);
+
+
+--
 -- Name: requeststash_whensaved_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE INDEX requeststash_whensaved_idx ON requeststash USING btree (whensaved);
+
+
+--
+-- Name: tmp_article_urls_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX tmp_article_urls_article_id_idx ON tmp_article_urls USING btree (article_id);
+
+
+--
+-- Name: tmp_article_urls_url_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX tmp_article_urls_url_idx ON tmp_article_urls USING btree (url);
 
 
 --
@@ -2448,6 +3016,14 @@ ALTER TABLE ONLY article_commentlink
 
 
 --
+-- Name: article_content_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_content
+    ADD CONSTRAINT article_content_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
 -- Name: article_dupe_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2501,6 +3077,14 @@ ALTER TABLE ONLY article_similar
 
 ALTER TABLE ONLY article_tag
     ADD CONSTRAINT article_tag_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
+-- Name: article_url_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_url
+    ADD CONSTRAINT article_url_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE;
 
 
 --
@@ -2600,6 +3184,14 @@ ALTER TABLE ONLY journo_awards
 
 
 --
+-- Name: journo_awards_src_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_awards
+    ADD CONSTRAINT journo_awards_src_fkey FOREIGN KEY (src) REFERENCES link(id) ON DELETE SET NULL;
+
+
+--
 -- Name: journo_bio_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2624,6 +3216,14 @@ ALTER TABLE ONLY journo_education
 
 
 --
+-- Name: journo_education_src_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_education
+    ADD CONSTRAINT journo_education_src_fkey FOREIGN KEY (src) REFERENCES link(id) ON DELETE SET NULL;
+
+
+--
 -- Name: journo_email_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2637,6 +3237,14 @@ ALTER TABLE ONLY journo_email
 
 ALTER TABLE ONLY journo_employment
     ADD CONSTRAINT journo_employment_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_employment_src_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_employment
+    ADD CONSTRAINT journo_employment_src_fkey FOREIGN KEY (src) REFERENCES link(id) ON DELETE SET NULL;
 
 
 --
@@ -2724,7 +3332,7 @@ ALTER TABLE ONLY missing_articles
 --
 
 ALTER TABLE ONLY person_permission
-    ADD CONSTRAINT person_permission_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id);
+    ADD CONSTRAINT person_permission_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
 
 
 --
@@ -2732,7 +3340,7 @@ ALTER TABLE ONLY person_permission
 --
 
 ALTER TABLE ONLY person_permission
-    ADD CONSTRAINT person_permission_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(id);
+    ADD CONSTRAINT person_permission_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE;
 
 
 --
@@ -2741,6 +3349,62 @@ ALTER TABLE ONLY person_permission
 
 ALTER TABLE ONLY person_receives_newsletter
     ADD CONSTRAINT person_receives_newsletter_person_id_fkey FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_adr_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_adr
+    ADD CONSTRAINT pub_adr_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_alias_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_alias
+    ADD CONSTRAINT pub_alias_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_domain_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_domain
+    ADD CONSTRAINT pub_domain_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_email_format_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_email_format
+    ADD CONSTRAINT pub_email_format_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_phone_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_phone
+    ADD CONSTRAINT pub_phone_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_set_map_pub_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_set_map
+    ADD CONSTRAINT pub_set_map_pub_id_fkey FOREIGN KEY (pub_id) REFERENCES organisation(id) ON DELETE CASCADE;
+
+
+--
+-- Name: pub_set_map_pub_set_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_set_map
+    ADD CONSTRAINT pub_set_map_pub_set_id_fkey FOREIGN KEY (pub_set_id) REFERENCES pub_set(id) ON DELETE CASCADE;
 
 
 --
