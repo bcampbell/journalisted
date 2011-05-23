@@ -30,7 +30,6 @@ class ArticleDB:
     """
 
     def __init__(self, dryrun=False, reallyverbose=False ):
-        self.conn = DB.conn()
         self.dryrun = dryrun
         self.reallyverbose = reallyverbose
 
@@ -60,6 +59,14 @@ class ArticleDB:
         if not 'urls' in art:
             art['urls'] = set((art['permalink'], art['srcurl']))
 
+        # fill in some defaults if missing
+        if 'lastscraped' not in art:
+            art['lastscraped'] = datetime.now()
+        if 'lastseen' not in art:
+            art['lastseen'] = datetime.now()
+        if 'description' not in art:
+            art['description'] = ukmedia.FirstPara(art['content'])
+
         CheckArticle( art )
 
         # send text to the DB as utf-8
@@ -72,7 +79,6 @@ class ArticleDB:
         firstseen = lastseen    # it's a new entry
         srcurl = art['srcurl']
         permalink = art['permalink']
-        srcorg = Misc.GetOrgID( self.conn, art[ 'srcorgname' ] )
         srcid = art['srcid']
 
         wordcount = None
@@ -85,7 +91,14 @@ class ArticleDB:
             wordcount = len( txt.split() );
 
         # send to db!
-        cursor = self.conn.cursor()
+        cursor = DB.conn().cursor()
+
+
+        # resolve publication (or create if needed!)
+        if 'srcorgname' in art:
+            srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
+
+
 
         updating = False
         if 'id' in art:
@@ -151,18 +164,18 @@ class ArticleDB:
         if 'commentlinks' in art:
             for c in art['commentlinks']:
                 c['source'] = art['srcorgname']
-                CommentLink.upsert(self.conn, article_id, c)
+                CommentLink.upsert(article_id, c)
 
         # add tags
-        Tags.Generate(self.conn, article_id, art['content'])
+        Tags.generate(article_id, art['content'])
 
         # parse byline to assign/create journos
-        journos = ProcessByline(self.conn, article_id, art)
+        journos = process_byline(article_id, art)
 
         if self.dryrun:
-            self.conn.rollback()
+            DB.conn().rollback()
         else:
-            self.conn.commit()
+            DB.conn().commit()
 
         op = 'update' if updating else 'new'
         if insert_content:
@@ -184,7 +197,7 @@ class ArticleDB:
     def ArticleExists( self, srcid ):
         """returns article id, if article is already in the DB"""
         article_id = None
-        cursor = self.conn.cursor()
+        cursor = DB.conn().cursor()
         q = 'SELECT id FROM article WHERE srcid=%s'
         cursor.execute( q, ( srcid, ) )
         r = cursor.fetchone()
@@ -263,47 +276,47 @@ def FixLinkURLs(html):
     return re.sub(r'''href\s*=\s*(?:['"](.*?)['"]|(\S*?)(?=\>))''', fixup, html)
 
 
-def ProcessByline( conn, article_id, art ):
+def process_byline(article_id, art):
     """ Parse byline and assign to journos (creates journos along the way) """
     byline = art['byline']
     details = Byline.CrackByline( byline )
     if details is None:
         return []
 
-    srcorgid = Misc.GetOrgID( conn, art['srcorgname'] )
+    srcorgid = Misc.GetOrgID(art['srcorgname'])
 
     attributed = []
 
 
-    c = conn.cursor()
+    c = DB.conn().cursor()
     # in case we're rescraping...
     c.execute("DELETE FROM journo_attr WHERE article_id=%s", (article_id,))
 
     # reminder: a byline can contain multiple journos
     for d in details:
-        journo_id = StoreJourno(conn, d['name'], art )
-        
+        journo_id = store_journo(d['name'], art )
+
         # credit journo with writing this article
-        Journo.AttributeArticle( conn, journo_id, article_id )
+        Journo.AttributeArticle( DB.conn(), journo_id, article_id )
 
         attributed.append( journo_id )
 
         if d.has_key('title'):
-            Journo.SeenJobTitle( conn, journo_id, d['title'], datetime.now(), srcorgid )
+            Journo.SeenJobTitle( DB.conn(), journo_id, d['title'], datetime.now(), srcorgid )
 
     return attributed
 
 
-def StoreJourno(conn, name, hints ):
+def store_journo(name, hints):
     ''' Finds or creates a journo, returning their id.
 
     hints - extra data for looking up journo. Must include at least 'srcorgname'.
     Can be a whole article, if available.
     '''
 
-    journo_id = Journo.FindJourno( conn, name, hints )
+    journo_id = Journo.FindJourno( DB.conn(), name, hints )
     if not journo_id:
-        journo_id = Journo.CreateNewJourno( conn, name )
+        journo_id = Journo.CreateNewJourno( DB.conn(), name )
         ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, name) )
     return journo_id
 

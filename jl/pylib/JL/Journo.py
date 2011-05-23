@@ -138,52 +138,6 @@ def ArrayIsSubset(a,b):
     return True
 
 
-def MergeJourno(conn, fromRef, intoRef):
-    c = conn.cursor()
-    
-    # FROM
-    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", (fromRef,))
-    row = c.fetchone()
-    assert row, "fromRef doesn't exist:"+fromRef
-    fromId = row[0]
-    fromPrettyname = row[2]
-    
-    # INTO
-    c.execute("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=%s", (intoRef,))
-    row = c.fetchone()
-    if not row:
-        print "> Renaming Journo    ",fromRef,"->",intoRef
-        # INTO REF DOESN'T EXIST, SO JUST RENAME:
-        c.execute(u'UPDATE journo SET ref=%s WHERE ref=%s', (intoRef, fromRef))
-    else:
-        intoId = row[0]
-        intoPrettyname = row[2]     
-    #   print fromId
-    #   print toId
-
-        # TODO make Times and Sunday Times be counted the same
-        
-        fromN = GetNoOfArticlesWrittenBy(conn,fromRef)
-        intoN = GetNoOfArticlesWrittenBy(conn,intoRef)
-        # Refuse to merge if they're writing for different newspapers!
-        fromOrgs = GetOrgsFor(conn,fromId)
-        intoOrgs = GetOrgsFor(conn,intoId)
-        if not ArrayIsSubset(fromOrgs,intoOrgs):
-            print "* No merge, too diff?",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
-        else:
-            print "* Merging Journo     ",fromRef,"(%d)"%fromN,"->",intoRef,"(%d)"%intoN
-    
-            c.execute( "UPDATE journo_attr     SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
-            c.execute( "UPDATE journo_alias    SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
-            c.execute( "UPDATE journo_jobtitle SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
-            c.execute( "UPDATE journo_weblink  SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
-            c.execute( "UPDATE journo_bio      SET journo_id=%s WHERE journo_id=%s", (intoId, fromId) )
-            c.execute( "DELETE FROM journo WHERE id=%s", (fromId,) )
-
-    c.close()
-    if not DEBUG_NO_COMMITS:
-        conn.commit()
-
 
 def BaseRef( prettyname ):
     """Generate reference for a journo, suitable as a URL part
