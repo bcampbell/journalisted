@@ -100,7 +100,7 @@ class ArticleDB:
         cursor = DB.conn().cursor()
 
 
-        if 'srcorgname' in art:
+        if 'srcorgname' in art and art['srcorgname'] is not None:
             srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
         else:
             # no publication specified - look up using domain name

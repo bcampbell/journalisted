@@ -6,6 +6,11 @@ import logging
 from datetime import datetime
 from optparse import OptionParser
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 import metareadability
 import decruft
 
@@ -38,23 +43,33 @@ def extract(html,context):
 def main():
     parser = OptionParser(usage="%prog: [options] urls")
     parser.add_option('-v', '--verbose', action='store_true')
+    parser.add_option('-V', '--debug', action='store_true')
     parser.add_option('-d', '--dry_run', action='store_true')
     parser.add_option('-f', '--force_rescrape', action='store_true')
+    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
     (options, args) = parser.parse_args()
 
     log_level = logging.ERROR
-#    if options.debug:
-#        log_level = logging.DEBUG
+    if options.debug:
+        log_level = logging.DEBUG
     if options.verbose:
         log_level = logging.INFO
 
     logging.basicConfig(level=log_level, format='%(message)s')
 
-    max_errors = 20
-    arts = [context_from_url(url) for url in args]
-    print arts
+    if options.source_feeds:
+        feeds = json.loads(open(options.source_feeds, "rt").read())
+        max_errors = 20
+        arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None)
+        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
 
-    ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+
+    else:
+        # individual urls
+        max_errors = 20
+        arts = [context_from_url(url) for url in args]
+
+        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
 
 if __name__ == '__main__':
     main()
