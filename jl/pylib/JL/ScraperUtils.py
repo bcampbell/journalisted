@@ -70,12 +70,12 @@ def unique_articles( arts ):
     return result
 
 
+# TODO: this regex is slooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooow!
 canonical_url_pat = re.compile(r'<link\s+(?:[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)")|(?:[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical")', re.DOTALL|re.IGNORECASE)
 
 def extract_rel_canonical(html):
     """ scan html for rel="canonical" url. Returns url or None """
 
-    print "extract_rel_canonical (%d bytes)" % (len(html),)
 
     m = re.compile(r'<head[^>]*>(.*?)</head\s*>',re.DOTALL|re.IGNORECASE).search(html)
     html = m.group(1)
@@ -83,12 +83,10 @@ def extract_rel_canonical(html):
 
     m = canonical_url_pat.search(html)
     if m is None:
-        print "->none"
         return None
     url = m.group(1)
     if url is None:
        url = m.group(2)
-    print "-> got %s" %(url,)
     return url
 
 
