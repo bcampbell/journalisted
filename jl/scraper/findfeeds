@@ -2,6 +2,7 @@
 """ crawl a site for rss feeds """
 
 import urllib2
+import httplib # for HTTPExeption
 import urlparse
 import logging
 from datetime import datetime
@@ -47,7 +48,7 @@ def crawl(root_url, max_depth=2):
 #                known_urls.add(url)
 #                if code==301:    # permanant redirect
 #                    context['permalink'] = url
-        except urllib2.HTTPError, e:
+        except (urllib2.HTTPError, httplib.HTTPException), e:
             err_cnt += 1
             if err_cnt >= max_errs:
                 logging.critical('error count exceeded - BAILING')
@@ -59,7 +60,8 @@ def crawl(root_url, max_depth=2):
         doc.make_links_absolute(page_url)
 
         # any rss feeds on this page?
-        feed_types = ('application/rss+xml','application/atom+xml','text/xml')
+        feed_types = ('application/rss+xml','application/atom+xml','text/xml', 'application/rssxml' )   # rssxml found on arstechnica (bug?)
+
         for alt in doc.cssselect('head link[rel="alternate"]'):
             type = alt.get('type','')
             title = alt.get('title', '')
