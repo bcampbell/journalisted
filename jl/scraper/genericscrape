@@ -31,9 +31,11 @@ def context_from_url(url):
 def extract(html,context):
     art = context
     headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
-    art['title'] = headline
+    if headline is not None:
+        art['title'] = headline
+    if pubdate is not None:
+        art['pubdate'] = pubdate
     art['byline'] = byline
-    art['pubdate'] = pubdate
 
     txt = decruft.Document(html).summary()
     art['content'] = ukmedia.SanitiseHTML(txt)
@@ -56,17 +58,16 @@ def main():
         log_level = logging.INFO
 
     logging.basicConfig(level=log_level, format='%(message)s')
+    max_errors = 100
 
     if options.source_feeds:
         feeds = json.loads(open(options.source_feeds, "rt").read())
-        max_errors = 20
         arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None)
         ScraperUtils.scrape_articles(arts, extract, max_errors, options)
 
 
     else:
         # individual urls
-        max_errors = 20
         arts = [context_from_url(url) for url in args]
 
         ScraperUtils.scrape_articles(arts, extract, max_errors, options)
