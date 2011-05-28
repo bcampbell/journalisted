@@ -16,38 +16,45 @@ import StringIO
 class CollectingRedirectHandler(urllib2.HTTPRedirectHandler):
     """ follows redirects, collecting urls and http 3xx codes
 
-    upon return, redirects will contain a list of (code,url) pairs.
-    should be last handler, as it adds a member to the response
+    response will return with an extra attribute, 'redirects', which
+    will contain a list of (code,url) pairs for any redirects followed,
+    in the order in which they were followed.
     """
 
-    def __init__(self):
-        self.redirects = []
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        # we want to migrate 'redirects' attr to the new request
+        redirects = getattr(req,'redirects',[])
+        newreq = urllib2.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
+        newreq.redirects = redirects
+        return newreq
 
-    def default_open(self,request):
-        self.redirects = []
-        return None
 
     def http_error_301(self, req, fp, code, msg, headers):
         loc = headers['Location']
         loc = urlparse.urljoin(req.get_full_url(), loc)
-        self.redirects.insert(0,(code,loc))
 
-        return urllib2.HTTPRedirectHandler.http_error_301(
-            self, req, fp, code, msg, headers)
+        # accumulate the redirects on the request
+        # (default HTTPRedirectHandler already does something similar
+        # by adding a 'redirect_dict' attr for loop detection, but it
+        # doesn't record the HTTP code, which we want)
+        redirects = getattr(req,'redirects',[])
+        redirects.append((code,loc))
+        req.redirects = redirects
 
-    def http_error_302(self, req, fp, code, msg, headers):
-        loc = headers['Location']
-        loc = urlparse.urljoin(req.get_full_url(), loc)
-        self.redirects.insert(0,(code,loc))
-        return urllib2.HTTPRedirectHandler.http_error_302(
-            self, req, fp, code, msg, headers)
+        func = getattr(urllib2.HTTPRedirectHandler, 'http_error_'+str(code))
+        resp = func( self, req, fp, code, msg, headers)
 
-    def http_response(self,request,response):
-        response.redirects = self.redirects
-        self.redirects=[]
+        # add the redirects to the response
+        resp.redirects = redirects
+        return resp
+
+    http_error_302= http_error_303 = http_error_307 = http_error_301
+
+    def http_response(self, request, response):
+        # make sure that even non-redirected responses get a 'redirect' attr
+        if not hasattr(response,'redirects'):
+            response.redirects = []
         return response
-
-
 
 
 # ThrottlingProcessor and CacheHandler by Staffan Malmgren <staffan@tomtebo.org>
