@@ -112,19 +112,13 @@ class CacheHandler(urllib2.BaseHandler):
     def default_open(self,request):
         if ((request.get_method() == "GET") and 
             (CachedResponse.ExistsInCache(self.cacheLocation, request.get_full_url()))):
-#            print "CacheHandler: Returning CACHED response for %s" % request.get_full_url()
             return CachedResponse(self.cacheLocation, request.get_full_url(), setCacheHeader=True)	
         else:
             return None # let the next handler try to handle the request
 
     def http_response(self, request, response):
-        # (BenC) only cache successful requests
-        # TODO: _proper_ solutuion would be to cache response code too...
-        if not (200 <= response.code < 300):
-            return response
-
         if request.get_method() == "GET":
-            if 'x-cache' not in response.info():
+            if 'x-cachehandler' not in response.info():
                 CachedResponse.StoreInCache(self.cacheLocation, request.get_full_url(), response)
                 return CachedResponse(self.cacheLocation, request.get_full_url(), setCacheHeader=False)
             else:
@@ -140,17 +134,19 @@ class CachedResponse(StringIO.StringIO):
     
     def ExistsInCache(cacheLocation, url):
         hash = md5(url).hexdigest()
-        return (os.path.exists(cacheLocation + "/" + hash + ".headers") and 
-                os.path.exists(cacheLocation + "/" + hash + ".body"))
+        return (os.path.exists(os.path.join(cacheLocation, hash + ".meta")) and 
+                os.path.exists(os.path.join(cacheLocation, hash + ".body")))
     ExistsInCache = staticmethod(ExistsInCache)
 
     def StoreInCache(cacheLocation, url, response):
         hash = md5(url).hexdigest()
-        f = open(cacheLocation + "/" + hash + ".headers", "w")
+
+        f = open(os.path.join(cacheLocation, hash + ".meta"), "w")
+        f.write("%s\n%s\n%s\n" % (url,response.code, response.msg))
         headers = str(response.info())
         f.write(headers)
         f.close()
-        f = open(cacheLocation + "/" + hash + ".body", "w")
+        f = open(os.path.join(cacheLocation, hash + ".body"), "w")
         f.write(response.read())
         f.close()
     StoreInCache = staticmethod(StoreInCache)
@@ -159,12 +155,16 @@ class CachedResponse(StringIO.StringIO):
         self.cacheLocation = cacheLocation
         hash = md5(url).hexdigest()
         StringIO.StringIO.__init__(self, file(self.cacheLocation + "/" + hash+".body").read())
-        self.url     = url
-        self.code    = 200
-        self.msg     = "OK"
-        headerbuf = file(self.cacheLocation + "/" + hash+".headers").read()
+
+        mf = file(os.path.join(self.cacheLocation, hash+'.meta'))
+        self.url = mf.readline().strip()
+        assert self.url == url
+        self.code = int(mf.readline().strip())
+        self.msg = mf.readline().strip()
+
+        headerbuf = mf.read()
         if setCacheHeader:
-            headerbuf += "x-cache: %s/%s\r\n" % (self.cacheLocation,hash)
+            headerbuf += "x-cachehandler: %s/%s\r\n" % (self.cacheLocation,hash)
         self.headers = httplib.HTTPMessage(StringIO.StringIO(headerbuf))
 
     def info(self):
@@ -188,9 +188,9 @@ class Tests(unittest.TestCase):
     def testCache(self):
         opener = urllib2.build_opener(CacheHandler(".urllib2cache"))
         resp = opener.open("http://www.python.org/")
-        self.assert_('x-cache' not in resp.info())
+        self.assert_('x-cachehandler' not in resp.info())
         resp = opener.open("http://www.python.org/")
-        self.assert_('x-cache' in resp.info())
+        self.assert_('x-cachehandler' in resp.info())
         
     def testThrottle(self):
         opener = urllib2.build_opener(ThrottlingProcessor(5))
@@ -199,20 +199,28 @@ class Tests(unittest.TestCase):
         resp = opener.open("http://www.python.org/")
         self.assert_('x-throttling' in resp.info())
 
-    def testCombined(self):
-        opener = urllib2.build_opener(CacheHandler(".urllib2cache"), ThrottlingProcessor(10))
-        resp = opener.open("http://www.python.org/")
-        self.assert_('x-cache' not in resp.info())
-        self.assert_('x-throttling' not in resp.info())
-        resp = opener.open("http://www.python.org/")
-        self.assert_('x-cache' in resp.info())
-        self.assert_('x-throttling' not in resp.info())
-
     def testRedirectCollection(self):
         opener = urllib2.build_opener( CollectingRedirectHandler() )
         resp = opener.open( "http://bit.ly/VDcn" )
         expected = [(301, 'http://example.com/'), (302, 'http://www.iana.org/domains/example/')]
+        self.assert_(resp.redirects == expected)
+
+    def testCombined(self):
+        opener = urllib2.build_opener(CacheHandler(".urllib2cache"), ThrottlingProcessor(10))
+        resp = opener.open("http://www.python.org/")
+        self.assert_('x-cachehandler' not in resp.info())
+        self.assert_('x-throttling' not in resp.info())
+        resp = opener.open("http://www.python.org/")
+        self.assert_('x-cachehandler' in resp.info())
+        self.assert_('x-throttling' not in resp.info())
+
+        # make sure they all play nice together...
+        opener = urllib2.build_opener( CacheHandler(".urllib2cache"),ThrottlingProcessor(1),CollectingRedirectHandler() )
+        resp = opener.open( "http://bit.ly/VDcn" )
+        expected = [(301, 'http://example.com/'), (302, 'http://www.iana.org/domains/example/')]
         self.assert_(resp.redirects == expected) 
+
+
 
 if __name__ == "__main__":
     unittest.main()
