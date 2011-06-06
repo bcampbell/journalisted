@@ -304,7 +304,8 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
 
     foundarticles = []
     ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
-    r = feedparser.parse( feedurl )
+    stream = urllib2.urlopen(feedurl)
+    r = feedparser.parse(stream)
 
     #debug:     print r.version;
 
