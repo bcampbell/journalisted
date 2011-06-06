@@ -413,12 +413,12 @@ def Extract_HTML_Article( html, context ):
     storydiv = soup.find( 'div', {'class': 'story' } )
     bylinediv = storydiv.find( 'div', {'class':'byline'} )
     # contains both byline and pubdate
-    bylinespan = bylinediv.find('span', {'class':'bylineBody'} )
+    bylinespan = bylinediv.find(['span','p'], {'class':'bylineBody'} )
     if bylinespan is not None:
         art['byline'] = ukmedia.FromHTMLOneLine( bylinespan.renderContents( None ) )
     else:
         art['byline'] = u''
-    datespan = bylinediv.find('span', {'class':'publishedDate'} )
+    datespan = bylinediv.find(['span','p'], {'class':'publishedDate'} )
     art['pubdate'] = ukmedia.ParseDateTime( datespan.renderContents( None ) )
 
 
