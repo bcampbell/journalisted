@@ -48,7 +48,10 @@ def crawl(root_url, max_depth=2):
 #                known_urls.add(url)
 #                if code==301:    # permanant redirect
 #                    context['permalink'] = url
-        except (urllib2.HTTPError, httplib.HTTPException), e:
+            doc = lxml.html.fromstring(html)
+            doc.make_links_absolute(page_url)
+
+        except (Exception,), e:
             err_cnt += 1
             if err_cnt >= max_errs:
                 logging.critical('error count exceeded - BAILING')
@@ -56,8 +59,6 @@ def crawl(root_url, max_depth=2):
             logging.error('%s: %s\n' % (page_url,str(e)))
             continue
 
-        doc = lxml.html.fromstring(html)
-        doc.make_links_absolute(page_url)
 
         # any rss feeds on this page?
         feed_types = ('application/rss+xml','application/atom+xml','text/xml', 'application/rssxml' )   # rssxml found on arstechnica (bug?)
