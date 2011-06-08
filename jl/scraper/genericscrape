@@ -35,7 +35,10 @@ def extract(html,context):
         art['title'] = headline
     if pubdate is not None:
         art['pubdate'] = pubdate
-    art['byline'] = byline
+    if byline is not None:
+        art['byline'] = byline
+    else:
+        art['byline'] = u''
 
     txt = decruft.Document(html).summary()
     art['content'] = ukmedia.SanitiseHTML(txt)
