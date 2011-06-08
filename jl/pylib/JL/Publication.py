@@ -64,6 +64,14 @@ def find(domain, name=None):
     assert False    # shouldn't get this far
 
 
+
+def strip_subdomain(domain):
+    domain = domain.lower().encode('ascii').strip()
+    parts = domain.split('.')
+    return parts[0], '.'.join(parts[1:])
+
+
+
 def slugify( fancytext ):
     slug = fancytext
     # replace accented chars if there is a good equivalent
@@ -76,6 +84,8 @@ def slugify( fancytext ):
 
 def create(domain, prettyname=None):
     """ eg: create('www.dailymail.co.uk','The Daily Mail') """
+
+    assert re.compile(r'[.](com|org|net|gov)|(co[.]\w{2})').match(domain) is None
 
     if prettyname is None:
         # use domain as prettyname name
@@ -108,7 +118,20 @@ def create(domain, prettyname=None):
 
 def find_or_create(domain,prettyname=None):
     pub_id = find(domain,prettyname)
-    if pub_id is None:
-        pub_id = create(domain,prettyname)
+    if pub_id is not None:
+        return pub_id
+
+    # try a less specific domain name
+    # (eg "blogs.newspaper.com" should go under "www.newspaper.com")
+    sub,parent = strip_subdomain(domain)
+    if len(parent.split('.'))>=2:
+        pub_id = find(parent,prettyname)
+        if pub_id is not None:
+            # add the new domain to the publication
+            c = DB.conn().cursor()
+            c.execute( """INSERT INTO pub_domain (pub_id,domain) VALUES (%s,%s)""", (pub_id,domain) )
+            return pub_id
+
+    pub_id = create(domain,prettyname)
     return pub_id
 
