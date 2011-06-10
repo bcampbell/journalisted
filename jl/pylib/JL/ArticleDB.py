@@ -30,12 +30,8 @@ class ArticleDB:
     text, title, content, description, byline should all be unicode
     """
 
-    def __init__(self, dryrun=False, reallyverbose=False ):
-        self.dryrun = dryrun
-        self.reallyverbose = reallyverbose
-
-        if dryrun:
-            ukmedia.DBUG( u"**** (DRY RUN) ****\n" )
+    def __init__(self):
+        pass
 
 
     # TODO: KILL THIS
@@ -53,8 +49,6 @@ class ArticleDB:
     def upsert( self, art ):
         """Insert or update an article"""
 
-        if self.reallyverbose:
-            ukmedia.PrettyDump( art )
 
         # if no separate 'urls' set, create it
         if not 'urls' in art:
@@ -180,10 +174,7 @@ class ArticleDB:
         # parse byline to assign/create journos
         journos = process_byline(article_id, art)
 
-        if self.dryrun:
-            DB.conn().rollback()
-        else:
-            DB.conn().commit()
+
 
         op = 'update' if updating else 'new'
         if insert_content:
@@ -202,6 +193,7 @@ class ArticleDB:
         return article_id
 
 
+    # TODO Kill this
     def ArticleExists( self, srcid ):
         """returns article id, if article is already in the DB"""
         article_id = None

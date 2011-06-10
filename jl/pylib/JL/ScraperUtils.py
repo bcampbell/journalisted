@@ -150,9 +150,9 @@ def scrape_articles( found, extract, max_errors, opts):
     ukmedia.DBUG2("%d articles to scrape\n" % (len(found)))
 
     if opts.dry_run:
-        store = ArticleDB.ArticleDB( dryrun=True, reallyverbose=True )  # testing
-    else:
-        store = ArticleDB.ArticleDB()
+        ukmedia.DBUG("DRY RUN\n")
+
+    store = ArticleDB.ArticleDB()
 
 
     failcount = 0
@@ -176,6 +176,25 @@ def scrape_articles( found, extract, max_errors, opts):
                 else:
                     assert(len(got) == 1)
                     article_id = got[0]
+
+            # TODO: Kill this some time!
+            # if we've got a srcid, see if the article is already
+            # there (but under another url)
+            if context.get('srcid',None) is not None:
+                article_id = store.ArticleExists(context['srcid'])
+                if article_id is not None:
+                    # we've got it! So add the missing url(s)...
+                    had_count += 1
+                    cursor = DB.conn().cursor()
+                    for url in known_urls:
+                        ukmedia.DBUG2("add missing url to [a%s]: '%s'\n" %(article_id,url))
+                        cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))
+                    if opts.dry_run:
+                        DB.conn().rollback()
+                    else:
+                        DB.conn().commit()
+                    continue
+
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
             resp = urllib2.urlopen( context['srcurl'] )
@@ -214,8 +233,10 @@ def scrape_articles( found, extract, max_errors, opts):
 
             art = extract( html, context )
 
-
             if art:
+                if opts.dry_run:
+                    ukmedia.PrettyDump( art )
+
                 if article_id:
                     # rescraping existing article
                     art['id'] = article_id
@@ -226,8 +247,15 @@ def scrape_articles( found, extract, max_errors, opts):
                     article_id = store.upsert( art )
                     newcount += 1
 
+                if opts.dry_run:
+                    DB.conn().rollback()
+                else:
+                    DB.conn().commit()
+
 
         except Exception, err:
+            DB.conn().rollback()
+
             # always just bail out upon ctrl-c
             if isinstance( err, KeyboardInterrupt ):
                 raise
