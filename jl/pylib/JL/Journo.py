@@ -9,6 +9,7 @@ from datetime import datetime
 
 import Misc
 import metaphone
+import ukmedia
 
 class FindJournoException(Exception):
     '''Base for exceptions raised by FindJourno logic.'''
