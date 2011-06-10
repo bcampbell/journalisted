@@ -348,11 +348,13 @@ def FindJourno( conn, rawname, hint_context = None ):
     if hint_context == None:
         raise MultipleJournosException, "Multiple journos found called '%s'" % (rawname)
 
-
-
-
+    ukmedia.DBUG2("Resolving ambiguous journo '%s'" % (rawname,))
     # which journos have articles in this srcorg?
-    srcorgid = Misc.GetOrgID( conn, hint_context['srcorgname'] )
+    if 'srcorg' in hint_context:
+        srcorgid = hint_context['srcorg']
+    else:
+        srcorgid = Misc.GetOrgID(hint_context['srcorgname'])
+
     c = conn.cursor()
     sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in journos]) + ") AND a.srcorg=%s"
 

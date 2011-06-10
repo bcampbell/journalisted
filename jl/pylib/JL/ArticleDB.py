@@ -102,6 +102,8 @@ class ArticleDB:
             domain = o[1].lower()
             srcorg = Publication.find_or_create(domain)
 
+        art['srcorg'] = srcorg
+
         updating = False
         if 'id' in art:
             updating = True
