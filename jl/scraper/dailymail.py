@@ -125,15 +125,15 @@ def Extract( html, context ):
     h1 = maindiv.find('h1')
     titletxt = ukmedia.FromHTMLOneLine( h1.renderContents(None) );
 
-    # extract byline and date - first one or two paras after headline
+    # extract byline and date - first few paras after headline
     txt = u''
-    for p in h1.findNextSiblings( 'p', limit=2 ):
+    for p in h1.findNextSiblings( 'p', limit=4 ):
         foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
         if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
             txt = u' '.join( (txt, foo) )
             p.extract()
 
-    foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" );
+    foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" )
     m = foo.search( txt )
     bylinetxt = m.group(1)
     if bylinetxt is None:
