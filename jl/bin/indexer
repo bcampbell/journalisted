@@ -251,6 +251,7 @@ def PerformIndexing( xapdb,  options ):
     batch_cnt=0
     zap_cnt=0
     indexed_ids = []
+    unicode_error_count = 0
     while 1:
         row = c.fetchone()
         if not row:
@@ -281,6 +282,15 @@ def PerformIndexing( xapdb,  options ):
                 ukmedia.DBUG2( "zap   '%s' [%d]\n" %(art['title'].encode('utf-8'), art['id'] ) );
 
             indexed_ids.append( art['id'] )
+        except UnicodeDecodeError,e:
+            sys.stderr.write('UNICODE ERROR: article %d - %s\n' % (row['id'],str(e)) )
+            # be tolerant of a little crap in the db...
+            unicode_error_count += 1
+            if unicode_error_count>100:
+                raise Exception("Too many unicode errors")
+            else:
+                continue
+
         except Exception,e:
             sys.stderr.write('ERROR: failed on article %d - %s\n' % (row['id'],str(e)) )
             raise
