@@ -12,6 +12,39 @@ require_once 'xapian.php';
 define( 'XAP_PUBDATETIME_ID', 0 );  // "YYYYMMDDHHMMSS"
 define( 'XAP_PUBDATE_ID', 1 );      // "YYYYMMDD"
 
+function expand_pubset($matches)
+{
+    $pubset = $matches[2];
+    $pub_ids = db_getAll("SELECT m.pub_id FROM (pub_set_map m INNER JOIN pub_set s ON s.id=m.pub_set_id) WHERE s.name=?", $pubset);
+    if(is_null($pub_ids)) {
+        throw new Exception("Unknown pubset '".$pubset."'");
+    }
+    $parts = array();
+    foreach($pub_ids as $foo) {
+        $parts[] ="srcorg:".$foo['pub_id'];
+    }
+    return "(" . implode(' OR ', $parts) . ")";
+}
+
+// custom queryparser to expand publication sets
+// eg "pubset:national_uk"
+class JLQueryParser extends XapianQueryParser
+{
+    function parse_query($query_string,$flags=null,$default_prefix=null) {
+        assert( func_num_args()==1 );   // xapian php bindings seem to have some issue with the additional args...
+
+        $query_string = preg_replace_callback(
+            "/(pubset:([-\w0-9]+))/",
+            "expand_pubset",
+            $query_string);
+        //print $query_string;
+        return parent::parse_query($query_string);  //,$flags,$default_prefix);
+    }
+#    Query 	parse_query (const std::string &query_string, unsigned flags=FLAG_DEFAULT, const std::string &default_prefix=std::string())
+}
+
+
+
 
 class XapSearch {
 
@@ -26,7 +59,7 @@ class XapSearch {
         // Start an enquire session.
         $this->enquire = new XapianEnquire($this->database);
 
-        $this->qp = new XapianQueryParser();
+        $this->qp = new JLQueryParser();
         $this->stemmer = new XapianStem("english");
         $this->qp->set_stemmer($this->stemmer);
         $this->qp->set_database($this->database);
