@@ -18,7 +18,6 @@ function article_id36_to_id( $id ) {
 }
 
 
-
 // prepare an article for display by adding a few derived fields
 function article_augment( &$a )
 {
@@ -48,6 +47,10 @@ function article_url( $article_id, $sim_orderby='score', $sim_showall='no' )
         $url = $url . "?" . implode( '&',$extra );
     }
     return $url;
+}
+
+function article_adm_url($art_id) {
+    return sprintf('/adm/article/%s', article_id_to_id36($art_id));
 }
 
 // collect up all the data we've got about an article, ready for displaying
