@@ -29,10 +29,11 @@ function extra_head()
           if( q.search(' ')!=-1 ) {
              q = '"' + q + '"';
           }
+          q = q + " pubset:national_uk"
           if( daterange ) {
               q = q + " " + daterange;
           }
-          var url = "/search?a=" + escape(q);
+          var url = "/search?a=" + encodeURIComponent(q);
           var out = "[" + query + "](" + url + ")";
           return out;
         }
