@@ -1,13 +1,14 @@
 #!/bin/sh
 JL=/srv/vhost/journalisted.com/journalisted/jl
-PAPERS='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
+NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
+REGIONAL_UK='walesonline'
 
 cd $JL/scraper
-for p in $PAPERS
+for p in $NATIONAL_UK $REGIONAL_UK
 do
-    echo "******** START $p"
-    time nice ./$p
-    echo "******** END $p"
+    #echo "******** START $p"
+    nice ./$p
+    #echo "******** END $p"
 done
 
 echo "***** DONE!"
