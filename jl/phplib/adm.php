@@ -45,6 +45,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 	header( 'Content-Type: text/html; charset=utf-8' );
 
 ?>
+<!DOCTYPE html>
 <html>
 <head>
 <title>JL admin<?php if( $title ) { print " - $title"; }; ?></title>
