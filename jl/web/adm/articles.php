@@ -20,14 +20,98 @@ $_time_choices = array('all'=>'All', '1hr'=>'Last 1 hr', '24hrs'=>'Last 24 hrs',
 $_time_intervals = array( 'all'=>null, '1hr'=>'1 hour', '24hrs'=>'24 hours', '7days'=>'7 days', '30days'=>'30 days');
 
 
-$_order_choices = array('pubdate'=>'PubDate', 'lastscraped'=>"LastScraped", "title"=>'title');
+
+$_sortable_fields= array('id','pubdate','lastscraped','title','publication','byline');
+
+
+class Paginator
+{
+    /* page indexes begin at 0 (but are displayed to user as pagenum+1) */
+    function __construct($total, $per_page, $page_var="p") {
+        $this->page_var = $page_var;
+        $this->total = $total;
+        $this->per_page = $per_page;
+        $this->num_pages = intval(($total+$per_page-1)/$per_page);
+
+        /* remember current page might not be valid :-) */
+        $page = intval(arr_get($this->page_var, $_GET));
+/*        if($page < 0)
+            $page = 0;
+        if($page > $this->num_pages-1)
+            $page = $this->num_pages-1;*/
+        $this->page = $page;
+    }
+
+    function link($pagenum) {
+        if($pagenum == $this->page) {
+            return sprintf('<span class="this-page">%d</span>', $pagenum+1);
+        }
+        $params = array_merge($_GET, array($this->page_var=>$pagenum));
+        list($path) = explode("?", $_SERVER["REQUEST_URI"], 2);
+        $url = $path . "?" . http_build_query($params);
+        # TODO: rel="next/prev" etc...
+        return sprintf( '<a href="%s">%d</a>', $url, $pagenum+1);
+    }
+
+    function render() {
+        $endmargin = 2;
+        $midmargin = 3;
+
+        if( $this->num_pages<2 )
+            return '';
+
+        $current = $this->page;
+/*        if($current<0)
+            $current =0;
+        if($current>$this->num_pages-1)
+            $current = $this->num_pages-1;
+ */
+        $sections = array();
+
+        // each section is range: [startpage,endpage)
+        $sections[] = array(0,$endmargin);
+        $sections[] = array($current - $midmargin, $current + $midmargin + 1);
+        $sections[] = array($this->num_pages-$endmargin, $this->num_pages);
+        // clip sections
+        foreach($sections as &$s) {
+            if($s[0] < 0)
+                $s[0] = 0;
+            if($s[1] > $this->num_pages)
+                $s[1] = $this->num_pages;
+        }
+        unset($s);
+
+        // coallese adjoining/overlapping sections
+        if($sections[1][1] >= $sections[2][0]) {
+            $sections[1][1] = $sections[2][1];
+            unset($sections[2]);
+        }
+        if($sections[0][1] >= $sections[1][0]) {
+            $sections[0][1] = $sections[1][1];
+            unset($sections[1]);
+        }
+
+        $parts = array();
+        foreach($sections as $s) {
+            $pagelinks=array();
+            for($n=$s[0]; $n<$s[1]; ++$n) {
+                $pagelinks[] = $this->link($n);
+            }
+            $parts[] = implode(' ', $pagelinks);
+        }
+
+        return implode(' ... ',$parts);
+    }
+};
+
+
 
 // form for filtering article list
-class FilterForm extends Form {
+class FilterForm extends Form
+{
 
     function __construct($data,$files,$opts) {
         global $_time_choices;
-        global $_order_choices;
 
         $publication_choices = array('any'=>'Any');
         $r = db_query("SELECT shortname, prettyname FROM organisation");
@@ -36,23 +120,19 @@ class FilterForm extends Form {
         }
 
         parent::__construct($data,$files,$opts);
-        $this->fields['pub'] = new ChoiceField(array('choices'=>$publication_choices,'required'=>FALSE));
-        $this->fields['headline'] = new CharField(array('max_length'=>200,'required'=>FALSE));
+        $this->fields['publication'] = new ChoiceField(array('choices'=>$publication_choices,'required'=>FALSE));
+        $this->fields['title'] = new CharField(array('max_length'=>200,'required'=>FALSE));
         $this->fields['byline'] = new CharField(array('max_length'=>200,'required'=>FALSE));
         $this->fields['url'] = new CharField(array('max_length'=>200,'required'=>FALSE));
         $this->fields['pubdate'] = new ChoiceField(array('choices'=>$_time_choices,'required'=>FALSE));
         $this->fields['lastscraped'] = new ChoiceField(array('choices'=>$_time_choices,'required'=>FALSE));
-        $this->fields['orderby'] = new ChoiceField(array('choices'=>$_order_choices,'required'=>FALSE));
     }
 }
 
 
-
-function grab_articles($f, $offset, $limit)
+function build_query($f)
 {
     global $_time_intervals;
-    global $_order_choices;
-
     $params = array();
     $conds = array();
 
@@ -68,15 +148,14 @@ function grab_articles($f, $offset, $limit)
         $params[] = $interval;
     }
 
-/*    if( $f['srcorg'] != 'any' ) {
-        $conds[] = "srcorg = ?";
-        $params[] = $values['srcorg'];
+    if( $f['publication'] != 'any' ) {
+        $conds[] = "o.shortname=?";
+        $params[] = $f['publication'];
     }
- */
 
-	if( $f['headline'] ) {
+	if( $f['title'] ) {
         $conds[] = "title ilike ?";
-        $params[] = '%' . $f['headline'] . '%';
+        $params[] = '%' . $f['title'] . '%';
 	}
 
 	if( $f['byline'] ) {
@@ -91,35 +170,78 @@ function grab_articles($f, $offset, $limit)
     }
  */
 
-    $sql = "SELECT id,title,byline,description,permalink,srcorg,pubdate " .
-       'FROM article';
+    return array($conds,$params);
+}
 
-    if( $conds ) {
-        $sql = $sql . ' WHERE ' . implode( ' AND ', $conds );
-    }
 
-    $orderby = arr_get('orderby',$f,'pubdate');
-    if(!isset($_order_choices[$orderby]))
-        throw new Exception("bad orderby.");
+function grab_articles($f, $o, $ot, $offset, $limit)
+{
+    global $_time_intervals;
+    global $_sortable_fields;
 
-    $sql = $sql . ' ORDER BY ' . $orderby . ' DESC OFFSET ? LIMIT ?';
-    $params[] = $offset;
-    $params[] = $limit;
+    list($conds, $params) = build_query($f);
 
-//    $q = db_query( $sql, $params );
-    return db_getAll( $sql, $params );
+    // make sure ordering params are sensible
+    $o = strtolower($o);
+    assert(in_array($o,$_sortable_fields));
+    $ot = strtolower($ot);
+    assert($ot=='asc' || $ot=='desc');
+
+    $from_clause = "  FROM (article a INNER JOIN organisation o ON o.id=a.srcorg)\n";
+
+    $where_clause = '';
+    if( $conds )
+        $where_clause = '  WHERE ' . implode( ' AND ', $conds ) . "\n";
+
+    if( $o=='publication' )
+        $o = 'lower(o.prettyname)';
+    if( $o =='byline')
+        $o = 'lower(byline)';
+    if( $o =='title')
+        $o = 'lower(title)';
+
+    $order_clause = sprintf("  ORDER BY %s %s\n",
+        $o, $ot );
+    $limit_clause = sprintf("  OFFSET %d LIMIT %d\n",
+        $offset, $limit );
+
+    $sql = "SELECT a.id,a.title,a.byline,a.description,a.permalink, a.pubdate, a.lastscraped, ".
+       "o.id as pub_id, o.shortname as pub_shortname, o.prettyname as pub_name, o.home_url as pub_home_url\n" .
+       $from_clause .
+       $where_clause .
+       $order_clause .
+       $limit_clause;
+
+    $arts = db_getAll($sql, $params);
+
+    $sql = "SELECT COUNT(*)\n" . $from_clause . $where_clause;
+    $total = intval(db_getOne($sql, $params));
+    print_r($total);
+
+    return array(&$arts,$total);
 }
 
 
 
 function view()
 {
+    $per_page = 100;
+
     $f= new FilterForm($_GET,array(),array());
     $arts = null;
+    $pager = null;
+    $total = null;
     if($f->is_valid()) {
-        $arts = grab_articles($f->cleaned_data, 0, 200);
+        $page = arr_get('p',$_GET,0);
+        $o = arr_get('o',$_GET,'pubdate');
+        $ot = arr_get('ot',$_GET,'desc');
+        $offset = $page * $per_page;
+        $limit = $per_page;
+        list($arts, $total) = grab_articles($f->cleaned_data, $o, $ot, $offset, $limit);
+        $pager = new Paginator($total,$per_page,'p');
     }
-    $v = array('filter'=>$f, 'arts'=>$arts );
+
+    $v = array('filter'=>$f, 'arts'=>$arts, 'paginator'=>$pager);
     template($v);
 }
 
@@ -135,17 +257,25 @@ class ArtColumn extends Column {
     }
 }
 
+class LinkColumn extends Column {
+    function fmt($row) {
+        $text = $row[$this->opts['text']];
+        $url = $row[$this->opts['href']];
+        return sprintf('<a href="%s">%s</a>', $url, $text);
+    }
+}
 
 function template($vars)
 {
 
     $tabulator = new Tabulator(array(
-        new Column('id'),
+        new Column('id',array('sortable'=>TRUE)),
         new Column('pubdate',array('sortable'=>TRUE)),
-//        new LinkColumn('publication',array('sortable'=>TRUE,'display'=>'srcorgname', href=>'srcorgurl')),
-        new ArtColumn('article'),
-        new Column('byline')));
+        new LinkColumn('publication',array('sortable'=>TRUE, 'text'=>'pub_name', 'href'=>'pub_home_url')),
+        new ArtColumn('title',array('sortable'=>TRUE)),
+        new Column('byline',array('sortable'=>TRUE))));
     // article_admin_link($a)
+
 
     extract($vars);
     admPageHeader();
@@ -159,6 +289,9 @@ function template($vars)
 </form>
 
 <?php if( $arts) { ?>
+<p class="paginator">
+<?= $paginator->render() ?> <?= $paginator->total ?> articles
+</p>
 <table>
 <?= $tabulator->as_table($arts); ?>
 </table>

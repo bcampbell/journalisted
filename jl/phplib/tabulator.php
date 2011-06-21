@@ -14,6 +14,8 @@ class Column {
         );
         $this->name = $name;
         $this->opts = array_merge($default_opts,$opts);
+        $this->orderfield = 'o';
+        $this->orderdir = 'ot';
     }
 
     // override this to customise data presentation
@@ -24,10 +26,42 @@ class Column {
     }
 
 
+    function gen_url($ot) {
+        assert($ot=='asc' || $ot='desc');
+        assert($this->opts['sortable']);
+        $params = $_GET;
+        $params[$this->orderfield] = $this->name;
+        $params[$this->orderdir] = $ot;
+
+        // scrub the page number
+        unset($params['p']);
+
+        list($path) = explode("?", $_SERVER["REQUEST_URI"], 2);
+        $url = $path . "?" . http_build_query($params);
+
+        return $url;
+    }
+
+
     function heading() {
         if($this->opts['sortable']) {
-            $heading = sprintf('<a href="%s">%s</a>',
-                "#", $this->name );
+
+            $params = $_GET;
+            if(arr_get($this->orderfield,$params)==$this->name) {
+                // this is the active column!
+                $ot = arr_get($this->orderdir,$_GET,'asc');
+                $ot = $ot=='asc' ? 'desc':'asc';  // toggle
+                $url = $this->gen_url($ot);
+                // &#8595; downwards arrow
+                // &#8593; upwards arrow
+                $heading = sprintf('<em><a href="%s">%s %s</a></em>',
+                    $url,
+                    $this->name,
+                    $ot=='asc'?'&uarr;':'&darr;');
+            } else {
+                $url = $this->gen_url('asc');
+                $heading = sprintf('<a href="%s">%s</a>', $url, $this->name);
+            }
         }
         else {
             $heading = $this->name;
