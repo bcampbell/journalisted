@@ -14,7 +14,7 @@ require_once '../phplib/paginator.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
-require_once '../phplib/drongo-forms/lib/forms.php';
+require_once '../phplib/drongo-forms/forms.php';
 
 $_time_choices = array('all'=>'All', '1hr'=>'Last 1 hr', '24hrs'=>'Last 24 hrs', '7days'=>'Last 7 days', '30days'=>'Last 30 days');
 // map to postgres intervals
