@@ -30,8 +30,7 @@ admPageHeader();
 
 if( !$article_id )
 {
-	/* default - show the search form */
-	EmitFindArticleForm();
+    print "<p>missing article id</p>";
 }
 else
 {
@@ -191,128 +190,6 @@ EOT;
 
 
 
-/* Display a form for searching for articles */
-function EmitFindArticleForm()
-{
-    print( "<h2>Find Article(s)</h2>\n" );
-	$orgs = get_org_names();
-
-	$orgs = array('any'=>'Any') + get_org_names();
-
-	$periods = array( 'all'=>'All', '24hrs'=>'Last 24 hrs', '7days'=>'Last 7 days' );
-
-    $form = new jlForm( 'article_query' );
-    $form->addWidget( new jlWidgetSelect( 'srcorg', null, array('choices'=>$orgs) ));
-    $form->addWidget( new jlWidgetSelect( 'pubdate', null, array('choices'=>$periods) ));
-    $form->addWidget( new jlWidgetSelect( 'lastscraped', null, array('choices'=>$periods) ));
-    $form->addWidget( new jlWidgetInput( 'headline', null, array() ));
-    $form->addWidget( new jlWidgetInput( 'byline', null, array() ));
-    $form->addWidget( new jlWidgetInput( 'url', null, array() ));
-    $form->addWidget( new jlWidgetSubmit( 'submit', null, array() ));
-    $form->populate( $_GET );
-?>
-<form method="GET" action="">
-<?= $form->render(); ?>
-</form>
-<?php
-
-    if( isset( $_GET['submit'] ) ) {
-        process_article_query( $_GET );
-    }
-}
-
-
-/* translate our period identifiers into postgres interval */
-function period_to_pginterval( $period ) {
-	if( $period == '24hrs' ) {
-		return '24 hours';
-	} else if( $period == '7days' ) {
-		return '7 days';
-	}
-	return null;
-}
-
-
-
-/* Callback to process the article search form.
- * builds and executes the query, and displays a list of matches.
- */
-function process_article_query( $values )
-{
-
-    $params = array();
-    $conds = array();
-
-	$period = period_to_pginterval( $values['lastscraped'] );
-	if( $period ) {
-        $conds[] = "lastscraped >= (now() - interval ?)";
-        $params[] = $period;
-    }
-
-	$period = period_to_pginterval( $values['pubdate'] );
-	if( $period ) {
-        $conds[] = "pubdate >= (now() - interval ?)";
-        $params[] = $period;
-    }
-
-    if( $values['srcorg'] != 'any' ) {
-        $conds[] = "srcorg = ?";
-        $params[] = $values['srcorg'];
-    }
-
-	if( $values['headline'] ) {
-		/* search for any headline containing this snippet */
-        $conds[] = "title ilike ?";
-        $params[] = '%' . $values['headline'] . '%';
-	}
-
-	if( $values['byline'] ) {
-		/* search for any byline containing this snippet */
-        $conds[] = "byline ilike ?";
-        $params[] = '%' . $values['byline'] . '%';
-	}
-
-	if( $values['url'] ) {
-		/* search for any byline containing this snippet */
-        $conds[] = "permalink ilike ?";
-        $params[] = '%' . $values['url'] . '%';
-	}
-
-    $sql = "SELECT id,title,byline,description,permalink,srcorg,to_char(pubdate, 'YYYY-MM-DD') as when " .
-       'FROM article';
-
-    if( $conds ) {
-        $sql = $sql . ' WHERE ' . implode( ' AND ', $conds );
-    }
-    $sql = $sql . ' ORDER BY pubdate DESC';
- 
-//    print "<pre>\n";
-//    print db_subst( $sql, $params );
-//    print "</pre>\n";
-    $orgs = get_org_names();
-
-    $q = db_query( $sql, $params );
-
-    printf( "<p>%d matches</p>\n", db_num_rows( $q ) );
-    
-    print "<table border=1>\n";
-	print "<tr>\n";
-	print " <th>pubdate</th>\n";
-	print " <th>headline</th>\n";
-	print " <th>byline</th>\n";
-	print "</tr>\n";
-    while( $r=db_fetch_array($q) ) {
-
-        $arturl = "/adm/article?id={$r['id']}";
-
-        $out = '';
-		$out .= "<td>{$r['when']}</td>\n";
-        $out .= "<td>\"<a href=\"{$arturl}\">{$r['title']}\"</a><br />\n<small>(<a href=\"{$r['permalink']}\">original at {$orgs[$r['srcorg']] }</a>)</small></td>";
-        $out .= "<td>{$r['byline']}</td>";
-        print "<tr>$out</tr>\n";
-    }
-    print "</table>";
-}
 
 
 /* output a list of the journos attributed with this article,

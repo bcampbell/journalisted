@@ -68,7 +68,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <body>
 <h1>Journalisted admin</h1>
 <a href="/">Home</a>
-<a href="article">Articles</a>
+<a href="articles">Articles</a>
  (<small>
  <a href="scrape">Scrape</a> |
  <a href="missingarticles">MissingArticles</a> |
