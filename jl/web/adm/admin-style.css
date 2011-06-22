@@ -13,6 +13,8 @@ sup, sub {line-height: 0;}
 
 
 
+form { padding: 0.2em; background-color: #eec; }
+input[type="text"] { width: 40em; }
 
 .bio_approved { background-color: #CCFFCC }
 .bio_unapproved { background-color: #FFCCCC }
@@ -69,7 +71,7 @@ blockquote {
     padding: 0.1em;
 }
 
-tbody tr:nth-child(odd) {
+table.results tbody tr:nth-child(odd) {
   background-color: #ddddff;
 }
 

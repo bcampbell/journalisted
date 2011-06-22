@@ -207,8 +207,8 @@ function template($vars)
     admPageHeader();
 
 ?>
-<form action="articles" method="GET">
 <h2>Show articles</h2>
+<form action="articles" method="GET">
 <table>
 <?= $filter->as_table(); ?>
 </table>
@@ -217,7 +217,7 @@ function template($vars)
 
 <?php if( $arts) { ?>
 <p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> articles</p>
-<table>
+<table class="results">
 <?= $tabulator->as_table($arts); ?>
 </table>
 <p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> articles</p>
