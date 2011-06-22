@@ -10,6 +10,7 @@ require_once '../phplib/misc.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/article.php';
 require_once '../phplib/tabulator.php';
+require_once '../phplib/paginator.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
@@ -23,86 +24,6 @@ $_time_intervals = array( 'all'=>null, '1hr'=>'1 hour', '24hrs'=>'24 hours', '7d
 
 $_sortable_fields= array('id','pubdate','lastscraped','title','publication','byline');
 
-
-class Paginator
-{
-    /* page indexes begin at 0 (but are displayed to user as pagenum+1) */
-    function __construct($total, $per_page, $page_var="p") {
-        $this->page_var = $page_var;
-        $this->total = $total;
-        $this->per_page = $per_page;
-        $this->num_pages = intval(($total+$per_page-1)/$per_page);
-
-        /* remember current page might not be valid :-) */
-        $page = intval(arr_get($this->page_var, $_GET));
-/*        if($page < 0)
-            $page = 0;
-        if($page > $this->num_pages-1)
-            $page = $this->num_pages-1;*/
-        $this->page = $page;
-    }
-
-    function link($pagenum) {
-        if($pagenum == $this->page) {
-            return sprintf('<span class="this-page">%d</span>', $pagenum+1);
-        }
-        $params = array_merge($_GET, array($this->page_var=>$pagenum));
-        list($path) = explode("?", $_SERVER["REQUEST_URI"], 2);
-        $url = $path . "?" . http_build_query($params);
-        # TODO: rel="next/prev" etc...
-        return sprintf( '<a href="%s">%d</a>', $url, $pagenum+1);
-    }
-
-    function render() {
-        $endmargin = 2;
-        $midmargin = 3;
-
-        if( $this->num_pages<2 )
-            return '';
-
-        $current = $this->page;
-/*        if($current<0)
-            $current =0;
-        if($current>$this->num_pages-1)
-            $current = $this->num_pages-1;
- */
-        $sections = array();
-
-        // each section is range: [startpage,endpage)
-        $sections[] = array(0,$endmargin);
-        $sections[] = array($current - $midmargin, $current + $midmargin + 1);
-        $sections[] = array($this->num_pages-$endmargin, $this->num_pages);
-        // clip sections
-        foreach($sections as &$s) {
-            if($s[0] < 0)
-                $s[0] = 0;
-            if($s[1] > $this->num_pages)
-                $s[1] = $this->num_pages;
-        }
-        unset($s);
-
-        // coallese adjoining/overlapping sections
-        if($sections[1][1] >= $sections[2][0]) {
-            $sections[1][1] = $sections[2][1];
-            unset($sections[2]);
-        }
-        if($sections[0][1] >= $sections[1][0]) {
-            $sections[0][1] = $sections[1][1];
-            unset($sections[1]);
-        }
-
-        $parts = array();
-        foreach($sections as $s) {
-            $pagelinks=array();
-            for($n=$s[0]; $n<$s[1]; ++$n) {
-                $pagelinks[] = $this->link($n);
-            }
-            $parts[] = implode(' ', $pagelinks);
-        }
-
-        return implode(' ... ',$parts);
-    }
-};
 
 
 
@@ -121,9 +42,18 @@ class FilterForm extends Form
 
         parent::__construct($data,$files,$opts);
         $this->fields['publication'] = new ChoiceField(array('choices'=>$publication_choices,'required'=>FALSE));
-        $this->fields['title'] = new CharField(array('max_length'=>200,'required'=>FALSE));
-        $this->fields['byline'] = new CharField(array('max_length'=>200,'required'=>FALSE));
-        $this->fields['url'] = new CharField(array('max_length'=>200,'required'=>FALSE));
+        $this->fields['title'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>FALSE,
+            'label'=>'Title containing'));
+        $this->fields['byline'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>FALSE,
+            'label'=>'Byline containing'));
+        $this->fields['url'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>FALSE,
+            'label'=>'URL containing'));
         $this->fields['pubdate'] = new ChoiceField(array('choices'=>$_time_choices,'required'=>FALSE));
         $this->fields['lastscraped'] = new ChoiceField(array('choices'=>$_time_choices,'required'=>FALSE));
     }
@@ -160,15 +90,13 @@ function build_query($f)
 
 	if( $f['byline'] ) {
         $conds[] = "byline ilike ?";
-        $params[] = '%' . $values['byline'] . '%';
+        $params[] = '%' . $f['byline'] . '%';
 	}
 
-/*
 	if( $f['url'] ) {
         $conds[] = "permalink ilike ?";
-        $params[] = '%' . $values['url'] . '%';
+        $params[] = '%' . $f['url'] . '%';
     }
- */
 
     return array($conds,$params);
 }
@@ -216,13 +144,12 @@ function grab_articles($f, $o, $ot, $offset, $limit)
 
     $sql = "SELECT COUNT(*)\n" . $from_clause . $where_clause;
     $total = intval(db_getOne($sql, $params));
-    print_r($total);
 
     return array(&$arts,$total);
 }
 
 
-
+// pull together everything we need to display the page, then invoke the template
 function view()
 {
     $per_page = 100;
@@ -246,7 +173,7 @@ function view()
 }
 
 
-// custom column type for tabulator
+// custom column types for tabulator used in the template
 class ArtColumn extends Column {
     function fmt($row) {
         $url = article_url($row['id']);
@@ -267,7 +194,6 @@ class LinkColumn extends Column {
 
 function template($vars)
 {
-
     $tabulator = new Tabulator(array(
         new Column('id',array('sortable'=>TRUE)),
         new Column('pubdate',array('sortable'=>TRUE)),
@@ -282,6 +208,7 @@ function template($vars)
 
 ?>
 <form action="articles" method="GET">
+<h2>Show articles</h2>
 <table>
 <?= $filter->as_table(); ?>
 </table>
@@ -289,12 +216,11 @@ function template($vars)
 </form>
 
 <?php if( $arts) { ?>
-<p class="paginator">
-<?= $paginator->render() ?> <?= $paginator->total ?> articles
-</p>
+<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> articles</p>
 <table>
 <?= $tabulator->as_table($arts); ?>
 </table>
+<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> articles</p>
 <?php }?>
 
 <?php
