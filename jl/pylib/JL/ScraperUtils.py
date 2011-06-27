@@ -362,6 +362,7 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
 
         title = ukmedia.DescapeHTML( title )
         desc = ukmedia.FromHTML( desc )
+        desc = ukmedia.truncate_words(desc,50)
             
 
         context = {
