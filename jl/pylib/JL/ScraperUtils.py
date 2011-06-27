@@ -146,7 +146,7 @@ def scrape_articles( found, extract, max_errors, opts):
     # due to too many errors, successive runs should be able to pick up
     # all the scrapable articles.
     random.shuffle(found)
-    assert(len(found)>0)
+    #assert(len(found)>0)
     ukmedia.DBUG2("%d articles to scrape\n" % (len(found)))
 
     if opts.dry_run:

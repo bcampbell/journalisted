@@ -12,7 +12,6 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/article.php';
-require_once '../phplib/jlforms.php';
 
 
 // handle either base-10 or base-36 articles
