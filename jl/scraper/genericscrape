@@ -30,6 +30,7 @@ def context_from_url(url):
 
 def extract(html,context):
     art = context
+
     headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
     if headline is not None:
         art['title'] = headline
