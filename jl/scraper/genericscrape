@@ -66,7 +66,7 @@ def main():
 
     if options.source_feeds:
         feeds = json.loads(open(options.source_feeds, "rt").read())
-        arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None)
+        arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None, maxerrors=20 )
         ScraperUtils.scrape_articles(arts, extract, max_errors, options)
 
 
