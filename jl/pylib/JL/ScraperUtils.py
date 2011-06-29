@@ -96,6 +96,20 @@ def extract_canonical_url(html):
     return None
 
 
+def tidy_url(url):
+    """ Apply some general rules to clean up urls which have obvious cruft in them """
+
+    # remove silly rss indicators...
+
+    tidy_pats = [
+        re.compile(r"[?]rss=yes$", re.I),
+        re.compile(r"[?]r=rss$", re.I),
+        ]
+
+    for pat in tidy_pats:
+        url = pat.sub('',url)
+    return url
+
 
 
 
@@ -218,6 +232,12 @@ def scrape_articles( found, extract, max_errors, opts):
             if canonical_url is not None:
                 known_urls.add(canonical_url)
                 context['permalink'] = canonical_url
+
+            # strip off "?rss=yes" etc from permalink
+            tidied_url = tidy_url(context['permalink'])
+            if tidied_url != context['permalink']:
+                context['permalink'] = tidied_url
+                known_urls.add(tidied_url)
 
             context['urls'] = known_urls
 
