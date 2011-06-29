@@ -674,8 +674,8 @@ class QueryFight extends CannedQuery {
         $q2 = $params['q2'];
 
         if( $q1 && $q2 ) {
-            $q1 = $params['q1'];
-            $q2 = $params['q2'];
+            $q1 = '(' . $params['q1'] . ') pubset:national_uk';
+            $q2 = '(' . $params['q2'] . ') pubset:national_uk';
             if( $params['from_date'] || $params['to_date'] ) {
                 $from = date_create( $params['from_date'])->format('Ymd');
                 $to = date_create( $params['to_date'])->format('Ymd');
@@ -724,10 +724,10 @@ class WhosWritingAbout extends CannedQuery {
         $from = date_create( $params['from_date'])->format('Ymd');
         $to = date_create( $params['to_date'])->format('Ymd');
         $range = " $from..$to";
+        $pubset = " pubset:national_uk";
 
         if( $params['q'] ) {
-            $q = $params['q'] . $range;
-
+            $q = '(' . $params['q'] . ')' . $range . " pubset:uk_national";
 
             $xap = new XapSearch();
             $xap->set_query( $q );
