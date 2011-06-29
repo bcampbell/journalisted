@@ -27,7 +27,7 @@ function article_augment( &$a )
     // fill in prettyname of publisher, if possible
     if( !array_key_exists('srcorgname', $a ) && array_key_exists('srcorg',$a) ) {
         $orgs = get_org_names();
-        $a['srcorgname'] = $orgs[ $a['srcorg'] ];
+        $a['srcorgname'] = arr_get($a['srcorg'],$orgs,'(unknown)');
     }
 }
 
