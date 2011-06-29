@@ -73,21 +73,29 @@ def unique_articles( arts ):
 # TODO: this regex is slooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooow!
 canonical_url_pat = re.compile(r'<link\s+(?:[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)")|(?:[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical")', re.DOTALL|re.IGNORECASE)
 
-def extract_rel_canonical(html):
-    """ scan html for rel="canonical" url. Returns url or None """
+canonical_url_pats = [
+    re.compile(r'<link\s+[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)"', re.DOTALL|re.IGNORECASE),
+    re.compile(r'<link\s+[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical"', re.DOTALL|re.IGNORECASE),
+    # opengraph url property (makes huge "og:" namespace assumptions but hey :-)
+    re.compile(r'<meta\s+property\s*=\s*"og:url"\s+content="(.*?)"\s*/>', re.DOTALL|re.IGNORECASE),
+    ]
 
+def extract_canonical_url(html):
+    """ scan html for canonical page url. Returns url or None
+ 
+    supports rel=canonical and og:url
+    """
 
     m = re.compile(r'<head[^>]*>(.*?)</head\s*>',re.DOTALL|re.IGNORECASE).search(html)
-    html = m.group(1)
+    head_html = m.group(1)
+
+    for pat in canonical_url_pats:
+        m = pat.search(head_html)
+        if m is not None:
+            return m.group(1)
+    return None
 
 
-    m = canonical_url_pat.search(html)
-    if m is None:
-        return None
-    url = m.group(1)
-    if url is None:
-       url = m.group(2)
-    return url
 
 
 
@@ -206,7 +214,7 @@ def scrape_articles( found, extract, max_errors, opts):
                     context['permalink'] = url
 
             # check html for a rel="canonical" link:
-            canonical_url = extract_rel_canonical(html)
+            canonical_url = extract_canonical_url(html)
             if canonical_url is not None:
                 known_urls.add(canonical_url)
                 context['permalink'] = canonical_url
