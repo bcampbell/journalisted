@@ -43,11 +43,6 @@ def crawl(root_url, max_depth=2):
             logging.debug("fetch %s (depth %d)" % (page_url,depth))
             resp = urllib2.urlopen(page_url)
             html = resp.read()
-            # add any URLs we were redirected via...
-#            for code,url in resp.redirects:
-#                known_urls.add(url)
-#                if code==301:    # permanant redirect
-#                    context['permalink'] = url
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(page_url)
 
@@ -64,9 +59,9 @@ def crawl(root_url, max_depth=2):
         feed_types = ('application/rss+xml','application/atom+xml','text/xml', 'application/rssxml' )   # rssxml found on arstechnica (bug?)
 
         for alt in doc.cssselect('head link[rel="alternate"]'):
-            type = alt.get('type','')
-            title = alt.get('title', '')
-            href = alt.get('href','')
+            type = unicode(alt.get('type',''))
+            title = unicode(alt.get('title', ''))
+            href = unicode(alt.get('href',''))
 
             if title.lower().endswith('comments feed'):
                 logging.info("skip comments feed %s" % (href,))
@@ -101,26 +96,35 @@ def crawl(root_url, max_depth=2):
 
 
 def main():
-    parser = OptionParser(usage="%prog: [options] urls")
+    desc = """Tool to crawl website(s) looking for rss feeds.
+Writes resultant list to stdout.
+        """
+    parser = OptionParser(usage="%prog: [options] url", description=desc)
     parser.add_option('-j', '--json', help="output feeds as json", action='store_true')
     parser.add_option('-v', '--verbose', action='store_true')
-    parser.add_option('-V', '--debug', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
     parser.add_option('-m', '--max_depth', type="int", default=1, dest="max_depth")
     (options, args) = parser.parse_args()
 
-    log_level = logging.ERROR
+    log_level = logging.WARNING
     if options.verbose:
         log_level = logging.INFO
     if options.debug:
         log_level = logging.DEBUG
     logging.basicConfig(level=log_level, format='%(message)s')
 
+    if len(args)<1:
+        parser.error("No url specified")
+    if len(args)>1:
+        parser.error("Only one url at a time, please")
+
     feeds = crawl(args[0],int(options.max_depth))
     if options.json:
         print json.dumps(feeds)
     else:
         for f in feeds:
-            print '%s "%s" (%s)' % (f[0],f[1],f[2])
+            g = [foo.encode('utf-8') for foo in f]
+            print '%s "%s" (%s)' % (g[0],g[1],g[2])
 
 
 if __name__ == '__main__':
