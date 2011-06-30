@@ -124,7 +124,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     """
 
     parser = OptionParser(usage=usage)
-    parser.add_option( "-d", "--dryrun", action="store_true", dest="dry_run", help="don't touch the database" )
+    parser.add_option( "-t", "--test", action="store_true", dest="test", help="test with a dry run - don't commit to the database" )
     parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
  
     (opts, args) = parser.parse_args()
@@ -155,7 +155,7 @@ def scrape_articles( found, extract, max_errors, opts):
     found -- list of article contexts to scrape
     extract -- extract function
     max_errors -- tolerated number of errors before bailing
-    opts -- dry_run, force_rescrape etc...
+    opts -- test, force_rescrape etc...
     """
 
     extralogging = False
@@ -171,7 +171,7 @@ def scrape_articles( found, extract, max_errors, opts):
     #assert(len(found)>0)
     ukmedia.DBUG2("%d articles to scrape\n" % (len(found)))
 
-    if opts.dry_run:
+    if opts.test:
         ukmedia.DBUG("DRY RUN\n")
 
     store = ArticleDB.ArticleDB()
@@ -211,7 +211,7 @@ def scrape_articles( found, extract, max_errors, opts):
                     for url in known_urls:
                         ukmedia.DBUG2("add missing url to [a%s]: '%s'\n" %(article_id,url))
                         cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))
-                    if opts.dry_run:
+                    if opts.test:
                         DB.conn().rollback()
                     else:
                         DB.conn().commit()
@@ -262,7 +262,7 @@ def scrape_articles( found, extract, max_errors, opts):
             art = extract( html, context )
 
             if art:
-                if opts.dry_run:
+                if opts.test:
                     ukmedia.PrettyDump( art )
 
                 if article_id:
@@ -275,7 +275,7 @@ def scrape_articles( found, extract, max_errors, opts):
                     article_id = store.upsert( art )
                     newcount += 1
 
-                if opts.dry_run:
+                if opts.test:
                     DB.conn().rollback()
                 else:
                     DB.conn().commit()

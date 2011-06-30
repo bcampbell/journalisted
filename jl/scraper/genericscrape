@@ -49,8 +49,8 @@ def extract(html,context):
 def main():
     parser = OptionParser(usage="%prog: [options] urls")
     parser.add_option('-v', '--verbose', action='store_true')
-    parser.add_option('-V', '--debug', action='store_true')
-    parser.add_option('-d', '--dry_run', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
+    parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
     parser.add_option('-f', '--force_rescrape', action='store_true')
     parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
     (options, args) = parser.parse_args()
