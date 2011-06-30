@@ -24,6 +24,7 @@ import sys
 import urllib
 import urllib2
 import urlparse
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
@@ -105,11 +106,43 @@ def Extract( html, context ):
     if o[1] == 'blogs.ft.com':
         return Extract_blog( html, context ) 
     else:
-        return Extract_article( html, context ) 
+        if '<div class="ft-story-header">' in html:
+            return Extract_article_old_cms(html, context)
+        else:
+            return Extract_article_new_cms(html, context)
 
-
-def Extract_article( html, context ):
+def Extract_article_new_cms( html, context ):
     """ extract fn for FT main articles """
+
+    art = context
+    doc = lxml.html.fromstring(html)
+
+    storyheader = doc.cssselect('.fullstoryHeader')[0]
+    byline_txt = u''
+    foo = storyheader.cssselect('.byline')
+    if len(foo)>0:
+        byline_txt = unicode(foo[0].text_content()).strip()
+    title_txt = unicode(storyheader.cssselect('h1')[0].text_content()).strip()
+    pubdate_txt = storyheader.cssselect('.lastUpdated')[0].text_content()
+
+    bod = doc.cssselect('.fullstoryBody')[0]
+    for foo in ('.storyTools','#ft-story-tools-bottom','.screen-copy','.story-package'):
+        for cruft in bod.cssselect(foo):
+            cruft.drop_tree()
+    content = unicode(lxml.html.tostring(bod))
+    content = ukmedia.SanitiseHTML(content)
+
+    art['title'] = title_txt
+    art['byline'] = byline_txt
+    art['pubdate'] = ukmedia.ParseDateTime(pubdate_txt)
+    art['content'] = content
+    art['srcorgname'] = u'ft'
+
+    return art
+
+
+def Extract_article_old_cms( html, context ):
+    """ extract fn for FT main articles in old cms system"""
     art = context
     soup = BeautifulSoup( html )
 
