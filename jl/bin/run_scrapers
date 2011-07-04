@@ -1,7 +1,7 @@
 #!/bin/sh
 JL=/srv/vhost/journalisted.com/journalisted/jl
 NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
-REGIONAL_UK='walesonline'
+REGIONAL_UK='uk_assorted'
 
 cd $JL/scraper
 for p in $NATIONAL_UK $REGIONAL_UK
