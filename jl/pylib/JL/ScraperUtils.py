@@ -13,13 +13,14 @@ from datetime import datetime
 import time
 import random
 import cookielib
+import urlparse
+import urllib2
 
 import ukmedia
 import DB
 import ArticleDB
 import feedparser
 
-import urllib2
 from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
 
 
@@ -70,9 +71,6 @@ def unique_articles( arts ):
     return result
 
 
-# TODO: this regex is slooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooow!
-canonical_url_pat = re.compile(r'<link\s+(?:[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)")|(?:[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical")', re.DOTALL|re.IGNORECASE)
-
 canonical_url_pats = [
     re.compile(r'<link\s+[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)"', re.DOTALL|re.IGNORECASE),
     re.compile(r'<link\s+[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical"', re.DOTALL|re.IGNORECASE),
@@ -80,7 +78,7 @@ canonical_url_pats = [
     re.compile(r'<meta\s+property\s*=\s*"og:url"\s+content="(.*?)"\s*/>', re.DOTALL|re.IGNORECASE),
     ]
 
-def extract_canonical_url(html):
+def extract_canonical_url(html, base_url):
     """ scan html for canonical page url. Returns url or None
  
     supports rel=canonical and og:url
@@ -92,7 +90,11 @@ def extract_canonical_url(html):
     for pat in canonical_url_pats:
         m = pat.search(head_html)
         if m is not None:
-            return m.group(1)
+            url = m.group(1)
+            o = urlparse.urlparse(url)
+            if o[0]=='' or o[1]=='':    # relative url?
+                url = urlparse.urljoin(base_url,url)
+            return url
     return None
 
 
@@ -228,7 +230,7 @@ def scrape_articles( found, extract, max_errors, opts):
                     context['permalink'] = url
 
             # check html for a rel="canonical" link:
-            canonical_url = extract_canonical_url(html)
+            canonical_url = extract_canonical_url(html, context['permalink'])
             if canonical_url is not None:
                 known_urls.add(canonical_url)
                 context['permalink'] = canonical_url
