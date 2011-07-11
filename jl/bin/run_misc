@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 JL=/srv/vhost/journalisted.com/journalisted/jl
 
 cd $JL/bin
@@ -14,9 +14,9 @@ echo "***** START journo-oneliner-tool"
 time nice ./journo-oneliner-tool
 echo "***** START comment-updater"
 time nice ./comment-updater -n 500
-cd $JL/misc_scrapers
-echo "***** START icerocket-scraper"
-time nice ./icerocket-scraper
+#cd $JL/misc_scrapers
+#echo "***** START icerocket-scraper"
+#time nice ./icerocket-scraper
 
 echo "***** DONE!"
 
