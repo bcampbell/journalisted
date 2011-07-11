@@ -378,8 +378,14 @@ def Extract_ece_thetimes( html, context ):
 
             image = {}
             image[ 'url' ] = urlparse.urljoin( art['srcurl'], img.get('src') )
-            image['caption'] = ukmedia.FromHTMLOneLine( caption.renderContents(None) )
-            image['credit'] = ukmedia.FromHTMLOneLine( credit.renderContents(None) )
+            if caption:
+                image['caption'] = ukmedia.FromHTMLOneLine( caption.renderContents(None) )
+            else:
+                image['caption'] = u''
+            if credit:
+                image['credit'] = ukmedia.FromHTMLOneLine( credit.renderContents(None) )
+            else:
+                image['credit'] = u''
             art['images'].append( image )
 
     # check for single-image articles
