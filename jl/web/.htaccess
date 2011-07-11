@@ -2,6 +2,9 @@ DirectoryIndex index.php
 
 RewriteEngine on
 
+#RewriteCond %{REQUEST_URI} !/down.html$ 
+#RewriteRule $ /down.html [R=302,L]
+
 # badly-kludged rules to take site offline for now
 #RewriteRule ^style.css$ - [L]
 #RewriteRule ^text.css$ - [L]
