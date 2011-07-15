@@ -84,13 +84,17 @@ def extract_canonical_url(html, base_url):
     supports rel=canonical and og:url
     """
 
+    # TODO: handle malformed <head>
+    # eg "http://www.theeastafrican.co.ke/business/Kenya+allows+public+online+access+to+govt+data/-/2560/1197916/-/hh4v0e/-/"
+    # (missing opening <head> tag)
+
     m = re.compile(r'<head[^>]*>(.*?)</head\s*>',re.DOTALL|re.IGNORECASE).search(html)
     head_html = m.group(1)
 
     for pat in canonical_url_pats:
         m = pat.search(head_html)
         if m is not None:
-            url = m.group(1)
+            url = m.group(1).strip()
             o = urlparse.urlparse(url)
             if o[0]=='' or o[1]=='':    # relative url?
                 url = urlparse.urljoin(base_url,url)
