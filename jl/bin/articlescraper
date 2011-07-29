@@ -1,0 +1,148 @@
+#!/usr/bin/env python
+""" scrape articles and load them into the JL database """
+
+import urllib2
+import urlparse
+import logging
+from datetime import datetime
+from optparse import OptionParser
+import re
+from pprint import pprint
+import os
+import subprocess
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+import site
+site.addsitedir("../pylib")
+
+import metareadability
+import decruft
+from JL import ScraperUtils
+from JL import ukmedia
+
+CUSTOM_SCRAPERS = '../conf/custom_scrapers'
+SCRAPER_DIR = '../scraper'
+
+
+class ScraperPicker:
+    """ helper class to pick appropriate scraper based on url """
+    def __init__(self, config_file):
+        self.lookup = {}
+
+        pat = re.compile(r'(?P<scraper>.*?):\s+(?P<domains>.*?)\s*$')
+        fp = open(config_file,'r')
+        for line in fp:
+            line = line.strip()
+            if line.startswith('#') or line=='':
+                continue
+
+            m = pat.match(line)
+            scraper = m.group('scraper')
+            domains = m.group('domains').split()
+
+            for d in domains:
+                self.lookup[d] = scraper
+
+    def pick(self,candidate_url):
+        """ return name of scraper to handle given url, or None """
+        o = urlparse.urlparse(candidate_url)
+        for domain,scraper in self.lookup.iteritems():
+            if o[1].lower().endswith(domain):
+                return scraper
+        return None
+
+
+def context_from_url(url):
+    context = {}
+    context['permalink']=url
+    context['srcurl']=url
+    context['lastseen'] = datetime.now()
+    return context
+
+def extract(html,context):
+    art = context
+
+    headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
+    if headline is not None:
+        art['title'] = headline
+    if pubdate is not None:
+        art['pubdate'] = pubdate
+    if byline is not None:
+        art['byline'] = byline
+    else:
+        art['byline'] = u''
+
+    txt = decruft.Document(html).summary()
+    art['content'] = ukmedia.SanitiseHTML(txt)
+    return art
+
+
+def do_batch(scraper,arts,options):
+    if scraper is None:
+        # TODO: error handling?...
+        max_errors = 100
+        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+        return
+
+    cmd = os.path.join(SCRAPER_DIR,scraper)
+    args = [ cmd ]
+    if options.test:
+        args.append('-t')
+
+    args += [art['srcurl'] for art in arts]
+    logging.info("invoke %s" % (' '.join(args),))
+    ret = subprocess.call(args)
+    if ret != 0:
+        logging.error("%s failed (%d)" %(scraper,ret))
+
+
+def main():
+
+    parser = OptionParser(usage="%prog: [options] urls")
+    parser.add_option('-v', '--verbose', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
+    parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
+    parser.add_option('-f', '--force_rescrape', action='store_true')
+    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
+    (options, args) = parser.parse_args()
+
+    log_level = logging.ERROR
+    if options.debug:
+        log_level = logging.DEBUG
+    if options.verbose:
+        log_level = logging.INFO
+
+    logging.basicConfig(level=log_level, format='%(message)s')
+    max_errors = 100
+
+    picker = ScraperPicker(CUSTOM_SCRAPERS)
+
+    if options.source_feeds:
+        feeds = json.loads(open(options.source_feeds, "rt").read())
+        arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None, maxerrors=20 )
+    else:
+        # individual urls
+        arts = [context_from_url(url) for url in args]
+
+    # batch up according to domain name
+    batches = {}
+    for art in arts:
+        scraper = picker.pick(art['srcurl'])
+        if scraper not in batches:
+            batches[scraper] = []
+        batches[scraper].append(art)
+
+#    pprint(batches)
+#    ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+    for scraper in batches:
+        do_batch(scraper, batches[scraper], options)
+
+
+
+if __name__ == '__main__':
+    main()
+

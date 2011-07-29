@@ -1,0 +1,16 @@
+# domain names which invoke custom scrapers
+bbcnews.py: bbc.co.uk
+dailymail.py: dailymail.co.uk mailonsunday.co.uk
+express.py: dailyexpress.co.uk express.co.uk
+ft.py: ft.com
+guardian.py: guardian.co.uk
+herald.py: heraldscotland.com theherald.co.uk
+independent.py: independent.co.uk indyblogs.typepad.com
+mirror.py: mirror.co.uk sundaymirror.co.uk
+#notw.py: newsoftheworld.co.uk notw.co.uk
+scotsman.py: scotsman.com
+skynews.py: blogs.news.sky.com
+sun.py: thesun.co.uk thescottishsun.co.uk
+telegraph.py: telegraph.co.uk
+times.py: timesonline.co.uk thetimes.co.uk thesundaytimes.co.uk
+
