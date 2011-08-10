@@ -9,6 +9,7 @@ from optparse import OptionParser
 import re
 from pprint import pprint
 import os
+import sys
 import subprocess
 
 try:
@@ -82,23 +83,30 @@ def extract(html,context):
 
 
 def do_batch(scraper,arts,options):
+    max_errors = len(arts) / 20    # 5% errors acceptable
     if scraper is None:
-        # TODO: error handling?...
-        max_errors = 100
-        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+        options.max_errors = max_errors
+        ScraperUtils.scrape_articles(arts, extract, options)
         return
 
+    # TODO: better error handling conditions for custom scrapers
+    # (they all have big error thresholds, which are great for bulk
+    # scraping, but crap for handling single articles)
     cmd = os.path.join(SCRAPER_DIR,scraper)
     args = [ cmd ]
     if options.test:
         args.append('-t')
+
+    args.append('-m')
+    args.append(str(max_errors))
 
     args += [art['srcurl'] for art in arts]
     logging.info("invoke %s" % (' '.join(args),))
     ret = subprocess.call(args)
     if ret != 0:
         logging.error("%s failed (%d)" %(scraper,ret))
-
+        # gah. need better error handling/reporting for batches....
+        sys.exit(ret)
 
 def main():
 
