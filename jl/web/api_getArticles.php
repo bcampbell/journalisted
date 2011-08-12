@@ -1,6 +1,5 @@
 <?php
 require_once '../phplib/article.php';
-require_once '../phplib/scrapeutils.php';
 
 
 $api_getArticles_params = array(
@@ -67,17 +66,12 @@ function api_getArticles_invoke($params) {
     if( $params['url'] ) {
         // look up article by its original url
         $url = $params['url'];
-        $srcid = scrape_CalcSrcID( $url );
-        if( is_null($srcid) ) {
+        $art_id = article_find($url);
+        if(is_null($art_id)) {
             api_error( "couldn't find article with url: '" . $url . "'" );
             return;
         }
-        $id = db_getOne( 'SELECT id FROM article WHERE srcid=?', $srcid );
-        if( is_null($id) ) {
-            api_error( "don't have article with url: '" . $url . "'" );
-            return;
-        }
-        $article_ids[] = $id;
+        $article_ids[] = $art_id;
     }
 
     if( !$article_ids ) {
