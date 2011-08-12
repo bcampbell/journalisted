@@ -99,7 +99,7 @@ function api_documentation_front($method, $explorer) {
 <?php
 
  //   include_once 'api_' . $method . '.php';
-    api_call_user_func_or_error('api_' . $method . '_front', null, 'No documentation yet', 'html');
+    api_call_user_func_or_error('api_' . $method . '_front', array(), 'No documentation yet', 'html');
 
 ?>
 <h4>Explorer</h4>
