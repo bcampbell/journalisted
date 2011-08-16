@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+""" tool to scrape lists of trinity mirror newspapers
+
+outputs title+website
+"""
+
+import lxml.html
+import urllib2
+import re
+
+
+def scrape_index(top_url):
+    html = urllib2.urlopen(top_url).read()
+    doc = lxml.html.fromstring(html)
+
+    for a in doc.cssselect('li.toplevelsite'):
+        for foo in a.cssselect('ul'):
+            foo.drop_tree()
+
+        txt = a.text_content().strip()
+        (title,url) = re.compile(r'\s*-\s+').split(txt)
+
+        assert ',' not in title
+        assert ',' not in url
+        print 'http://%s,%s' %(url,title)
+
+
+def main():
+    regionals = "http://www.trinitymirror.com/our-portfolio/regionals/index-of-digital-sites/regionals-index/"
+    scrape_index(regionals)
+
+if __name__ == '__main__':
+    main()
+
