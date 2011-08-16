@@ -11,6 +11,11 @@ $JLBIN = OPTION_JL_FSROOT . '/bin';
 // from url which we use to decide if we've already got an article in the db
 // or not).
 // returns srcid, or NULL if none could be worked out.
+//
+//
+// TODO: KILL KILL KILL!!!!! TODO
+//
+//
 function scrape_CalcSrcID( $url )
 {
     global $JLBIN;
@@ -32,15 +37,15 @@ function scrape_CalcSrcID( $url )
 }
 
 
-// returns text output, or NULL if error
+// returns array(return code, text output)
 function scrape_ScrapeURL( $url )
 {
     global $JLBIN;
 
 	putenv("JL_DEBUG=2");
 
-	$cmd = $JLBIN . "/scrape-tool";
-	$cmd .= ' -u ' . escapeshellarg( $url );
+	$cmd = $JLBIN . "/articlescraper ";
+	$cmd .= ' ' . escapeshellarg( $url );
 	$cmd = $cmd . ' 2>&1';
 
 	ob_start();
@@ -49,73 +54,22 @@ function scrape_ScrapeURL( $url )
 	$out = ob_get_contents();
 	ob_end_clean();
 
-    if($ret == 0 )
-        return $out;
-    else
-        return NULL;
+    return array($ret,$out);
 }
 
 
 
-//
-// returns array with results:
-// status - string, one of:
-//    'fail'  Failed to scrape
-//    'new' a new article was added to DB
-//    'already_had' article was already in db
-//
-// article - array with keys:
-//    id - article id
-//    journos - array of attributed journos
-//
-function scrape_ScrapeArticle( $url )
+
+// parse articles id markers in scraper output and flesh out the results
+function scrape_ParseOutput($out)
 {
-    global $JLBIN;
+    preg_match_all('/\[a(?P<artid>\d+).*?\]/', $out, $matches );
 
-	putenv("JL_DEBUG=2");
-
-	$cmd = $JLBIN . "/scrape-tool";
-	$cmd .= ' -u ' . escapeshellarg( $url );
-	$cmd = $cmd . ' 2>/dev/null';
-
-	ob_start();
-    $ret = -1;
-    passthru($cmd, $ret );
-	$out = ob_get_contents();
-	ob_end_clean();
-
-    $result = array();
-    $result['status'] = 'fail';
-
-    if($ret != 0 ) {
-        return $result;
+    $arts = array();
+    foreach($matches[1] as $art_id) {
+        $arts[] = array('id'=>$art_id);
     }
-
-
-    preg_match('/: (?P<newcnt>\d+) new, (?P<failcnt>\d+) failed\s*$/', $out, $matches );
-    $newcnt = $matches['newcnt'];
-    $failcnt = $matches['failcnt'];
-
-    if( $failcnt > 0 ) {
-        return $result;
-    }
-
-    preg_match('/\[a(?P<artid>\d+).*?\]/', $out, $matches );
-
-    $art = array();
-
-    $art['id'] = $matches['artid'];
-    $art['journos'] = db_getAll( "SELECT j.* FROM journo j INNER JOIN journo_attr attr ON attr.journo_id=j.id WHERE attr.article_id=?", $art['id'] );
-
-    $result['article'] = $art;
-    if( $newcnt > 0 ) {
-        $result['status'] = 'new';
-    } else {
-        $result['status'] = 'already_had';
-    }
-
-    return $result;
-
+    return $arts;
 }
 
 

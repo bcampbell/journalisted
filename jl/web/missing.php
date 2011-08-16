@@ -110,10 +110,7 @@ class ArticleSubmitter
 
     public $url = '';
     public $prev_url = '';
-    public $title = '';
-    public $pubdate = ''; // as input by a user (ie a string in "dd/mm/yyyy" format)
-    public $pubdate_dt = null; // as converted into a DateTime obj (null if $pubdate is bad)
-    public $publication = '';
+    public $article = null; // array with id, title, pubdate, srcorg, journos
 
     public $state = 'initial';
     public $errs = array();
@@ -134,14 +131,6 @@ class ArticleSubmitter
                 $this->url = clean_url( $this->url );
             }
 
-            $this->title = get_http_var( 'title','' );
-            $this->pubdate = get_http_var( 'pubdate','' );
-            $dt = parse_date( $this->pubdate );
-            if( $dt )
-                $this->pubdate_dt = $dt;
-
-            $this->publication = get_http_var( 'publication','' );
-
             // so we can detect if url is changed
             $this->prev_url = get_http_var( 'prev_url', '' );
         }
@@ -158,71 +147,62 @@ class ArticleSubmitter
             return;
         }
 
-        $srcid = scrape_CalcSrcID( $this->url );
-        if( $srcid ) {
-            // we should be able to scrape it
-            $r = scrape_ScrapeArticle( $this->url );
-            if( $r['status'] == 'fail' ) {
+        // article already in DB?
+        $art_id = article_find($this->url);
+        if(is_null($art_id)) {
+            // nope - try and scrape it
+            list($ret,$txt) = scrape_ScrapeURL($this->url);
+            if($ret != 0) {
                 $this->_queue_missing( 'failed to scrape' );
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 $this->state = 'scrape_failed';
                 return;
             }
-
-            // fetch the details of the articles
-            $art = db_getRow( "SELECT title,pubdate FROM article WHERE id=?", $r['article']['id'] );
-
-            $this->title = $art['title'];
-            $this->pubdate = $art['pubdate'];
-
-            // result was 'new' or 'already_had'
-            // make sure it's attributed to _this_ journo.
-            $got_expected_journo = FALSE;
-            foreach( $r['article']['journos'] as $j ) {
-                if( $j['id'] == $this->journo['id'] ) {
-                    $got_expected_journo = TRUE;
-                    break;
-                }
-            }
-
-            if( $got_expected_journo ) {
-                $this->state = 'done';
-                return;
-            } else {
-                $this->_queue_missing( "scraped, but didn't get expected journo" );
-                $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
-                $this->state = 'journo_mismatch';
+ 
+            $arts = scrape_ParseOutput($txt);
+            if(sizeof($arts)<1) {
+                $this->_queue_missing( 'failed to scrape' );
+                $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
+                $this->state = 'scrape_failed';
                 return;
             }
-        } else {
-            // it's an article we don't cover - need to collect title,pubdate,publication...
+            $art_id = $arts[0];
+        }
 
-            // check for dupes
-            if( db_getOne( "SELECT id FROM journo_other_articles WHERE url=? AND journo_id=? AND status='a'", $this->url, $this->journo['id'] ) ) {
-                $this->errs['url'] = "This article has already been added";
-                $this->state = 'bad_url';
-                return;
-            }
+        // if we get this far, $art_id will be set
 
-            if( $this->url != $this->prev_url ) {
-                // url is new or has changed - try and autofill
-                // fields by scraping the page
-                $this->_guess_details();
-                $this->state = 'details_required';
-                return;
-            } else {
-                // submitting again - see if we can store 'em
-                if( $this->_check_details() ) {
-                    $this->_add_other_article();
-                    $this->state = 'done';
-                    return;
-                } else {
-                    $this->state = 'details_required';
-                    return;
-                }
+        // fetch some basic details about the article
+        $art = db_getRow("SELECT id,title,permalink,pubdate,srcorg FROM article WHERE id=?",$art_id);
+        $sql = <<<EOT
+            SELECT j.id,j.prettyname,j.ref
+                FROM (journo j INNER JOIN journo_attr attr ON attr.journo_id=j.id)
+                WHERE attr.article_id=?
+EOT;
+        $journos = db_getAll($sql, $art_id);
+
+        $art['journos'] = $journos;
+        $this->article = $art;
+
+        // attributed to the expected journo?
+        $got_expected_journo = FALSE;
+        foreach($journos as $j) {
+            if($j['id'] == $this->journo['id']) {
+                $got_expected_journo = TRUE;
+                break;
             }
         }
+        if($got_expected_journo) {
+            // all is well.
+            $this->state = 'done';
+            return;
+        } else {
+            $this->_queue_missing( "scraped, but didn't get expected journo" );
+            $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
+            $this->state = 'journo_mismatch';
+            return;
+        }
     }
+
 
     // have we reached the end of processing for this article?
     // We still might be display an info or error message in emit(), but the
@@ -250,9 +230,6 @@ class ArticleSubmitter
 <?php
 */
         switch( $this->state ) {
-            case 'details_required':
-                $this->_emit_form( TRUE );
-                break;
             case 'journo_mismatch':
             case 'scrape_failed':
                 $this->_emit_failed();
@@ -263,7 +240,7 @@ class ArticleSubmitter
             case 'initial':
             case 'bad_url':
             default:
-                $this->_emit_form(FALSE);
+                $this->_emit_form();
                 break;
         }
     }
@@ -276,19 +253,11 @@ class ArticleSubmitter
         }
     }
 
-    function _emit_form( $show_extra )
+    function _emit_form()
     {
 ?>
 <form action="<?= $this->pagePath ?>" method=POST>
-<?php if( $show_extra ) { ?>
-We need some details about this article.<br/>
-<?php if( $this->guessed_flag ) { ?>
-We've made some guesses - <em>please check and correct any mistakes</em><br/>
-<?php } ?>
-<?php } ?>
-<?php if( $this->state=='initial' or $this->state=='bad_url' ) { ?>
 Please enter the URL of the article:<br/>
-<?php } ?>
 <dl>
   <dt><label for="url">URL</label></dt>
   <dd>
@@ -296,28 +265,6 @@ Please enter the URL of the article:<br/>
     <span class="explain">e.g. "http://www.thedailynews.com/articles/12345.html"</span></br/>
 <?= $this->errhint('url') ?>
   </dd>
-<?php if( $show_extra ) { ?>
-
-  <dt><label for="title">article title</label></dt>
-  <dd>
-    <input type="text" name="title" id="title" class="headline" value="<?= h($this->title); ?>" />
-<?= $this->errhint('title') ?>
-  </dd>
-
-  <dt><label for="pubdate">date of publication</label></dt>
-  <dd>
-    <input type="text" name="pubdate" id="pubdate" class="date" value="<?= h($this->pubdate); ?>" />
-    <span class="explain">(dd/mm/yyyy)</span>
-<?= $this->errhint('pubdate') ?>
-  </dd>
-
-  <dt><label for="publication">publication</label></dt>
-  <dd>
-    <input type="text" name="publication" id="publication" value="<?= h($this->publication); ?>" />
-<?= $this->errhint('publication') ?>
-  </dd>
-
-<?php } ?>
 </dl>
 
 <input type="hidden" name="prev_url" value="<?= h($this->url); ?>" />
@@ -331,7 +278,7 @@ Please enter the URL of the article:<br/>
     function _emit_finished() {
 ?>
     <div class="infomessage">
-    <p>Thank you - the article '<em><?= h($this->title) ?></em>' has been added</p>
+    <p>Thank you - the article '<em><?= h($this->article['title']) ?></em>' has been added. See it <a href="<?= article_url($this->article['id']); ?>">here</a></p>
     </div>
 <?php
     }
@@ -345,51 +292,6 @@ It has been flagged for manual approval by the journa<i>listed</i> team.</p>
     }
 
 
-    function _check_details() {
-
-        // date is required
-        if( $this->pubdate == '' ) {
-            $this->errs['pubdate'] = "Please enter the date the article was published";
-        } else {
-            if( is_null( $this->pubdate_dt ) ) {
-                $this->errs['pubdate'] = "Please enter a valid date";
-            }
-        }
-
-        // title is required
-        if( $this->title == '' ) {
-            $this->errs['title'] = "Please enter the title of the article";
-        }
-
-        return( $this->errs ? FALSE:TRUE );
-    }
-
-
-    // add the article to the other_articles table
-    function _add_other_article()
-    {
-        $sql = <<<EOT
-INSERT INTO journo_other_articles ( journo_id, url, title, pubdate, publication, status )
-VALUES ( ?,?,?,?,?,? )
-EOT;
-        $art = array(
-            'journo_id'=>$this->journo['id'],
-            'url'=>$this->url,
-            'title'=>$this->title,
-            'publication'=>$this->publication,
-            'status'=>canEditJourno( $this->journo['id'] ) ? 'a':'u',
-            'pubdate_iso' => $this->pubdate_dt->format(DateTime::ISO8601) );
-        db_do( $sql,
-            $art['journo_id'],
-            $art['url'],
-            $art['title'],
-            $art['pubdate_iso'],
-            $art['publication'],
-            $art['status'] );
-        $art['id'] = db_getOne( "SELECT lastval()" );
-        db_commit();
-        eventlog_Add( 'submit-otherarticle', $this->journo['id'], $art );
-    }
 
 
     function _queue_missing( $reason )
@@ -401,33 +303,6 @@ EOT;
             $reason
         );
         db_commit();
-    }
-
-    function _guess_details()
-    {
-        // try and guess some basic details by scraping the page:
-        $cmd = OPTION_JL_FSROOT . "/bin/generic-scrape \"{$this->url}\"";
-        $cmd = escapeshellcmd( $cmd ) . ' 2>&1';
-        $out = `$cmd`;
-        $guessed = json_decode( $out, TRUE );
-        $g = $guessed[0];
-        if( !is_null( $guessed ) && $g['status'] == 'ok' ) {
-            // fill in any empty fields with out guesses
-            $this->title = $g['title'];
-            $this->pubdate = $g['pubdate'];
-            $dt = parse_date( $this->pubdate );
-            if( $dt ) {
-                $this->pubdate_dt = $dt;
-            }
-            $this->publication = $g['publication'];
-
-            if( $g['title'] || $g['pubdate'] || $g['publication'] )
-                $this->guessed_flag = TRUE;
-
-            // TODO: should verify journo name appears on page...
-            // (can't do much with that information at this stage,
-            // except maybe flag it up as requiring admin attention...)
-        }
     }
 }
 
