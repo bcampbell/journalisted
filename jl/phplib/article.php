@@ -224,6 +224,10 @@ function article_gen_bloglink( $l )
     return $s;
 }
 
-
+// return id of article, or null if not in database
+function article_find($url)
+{
+    return db_getOne("SELECT article_id FROM article_url WHERE url=?", $url);
+}
 
 ?>

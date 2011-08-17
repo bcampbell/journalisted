@@ -130,8 +130,9 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     """
 
     parser = OptionParser(usage=usage)
-    parser.add_option( "-t", "--test", action="store_true", dest="test", help="test with a dry run - don't commit to the database" )
-    parser.add_option( "-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB" )
+    parser.add_option("-t", "--test", action="store_true", dest="test", help="test with a dry run - don't commit to the database")
+    parser.add_option("-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB")
+    parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
  
     (opts, args) = parser.parse_args()
 
@@ -150,22 +151,25 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
         for url in args:
             found.append(context_from_url(url))
 
-    scrape_articles(found, extract, max_errors, opts)
+    scrape_articles(found, extract, opts)
 
 
 
 
-def scrape_articles( found, extract, max_errors, opts):
+def scrape_articles( found, extract, opts):
     """Scrape list of articles, return error counts.
 
     found -- list of article contexts to scrape
     extract -- extract function
-    max_errors -- tolerated number of errors before bailing
-    opts -- test, force_rescrape etc...
+    opts:
+        max_errors -- tolerated number of errors before bailing
+        test
+        force_rescrape
+        etc...
     """
 
     extralogging = False
-
+    max_errors = getattr(opts,'max_errors',0)
 
     # remove dupes (eg often articles appear in more than one RSS feed)
     found = unique_articles(found)
@@ -310,7 +314,7 @@ def scrape_articles( found, extract, max_errors, opts):
             ukmedia.DBUG2( '-'*60 + "\n" )
 
             abortcount = abortcount + 1
-            if abortcount >= max_errors:
+            if abortcount > max_errors:
                 print >>sys.stderr, "Too many errors - ABORTING"
                 raise
             #else just continue with next article
