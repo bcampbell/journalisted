@@ -153,17 +153,17 @@ class ArticleSubmitter
             // nope - try and scrape it
             list($ret,$txt) = scrape_ScrapeURL($this->url);
             if($ret != 0) {
-                $this->_queue_missing( 'failed to scrape' );
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 $this->state = 'scrape_failed';
+                $this->_register_error();
                 return;
             }
  
             $arts = scrape_ParseOutput($txt);
             if(sizeof($arts)<1) {
-                $this->_queue_missing( 'failed to scrape' );
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 $this->state = 'scrape_failed';
+                $this->_register_error();
                 return;
             }
             $art_id = $arts[0];
@@ -196,9 +196,9 @@ EOT;
             $this->state = 'done';
             return;
         } else {
-            $this->_queue_missing( "scraped, but didn't get expected journo" );
-            $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
+//            $this->errs['error_message'] = "Journa<i>listed</i> had trouble reading the byline";
             $this->state = 'journo_mismatch';
+            $this->_register_error();
             return;
         }
     }
@@ -278,30 +278,42 @@ Please enter the URL of the article:<br/>
     function _emit_finished() {
 ?>
     <div class="infomessage">
-    <p>Thank you - the article '<em><?= h($this->article['title']) ?></em>' has been added. See it <a href="<?= article_url($this->article['id']); ?>">here</a></p>
+    <p>Thank you - the article '<a href="<?= article_url($this->article['id']); ?>"><?= h($this->article['title']) ?></a>' has been added to your page.
+</p>
     </div>
 <?php
     }
 
     function _emit_failed() {
 ?>
+<?php if(array_key_exists('error_message',$this->errs)) { ?>
 <p class="errormessage"> <?= $this->errs['error_message'] ?></p> </p>
+<?php } ?>
 <p>Sorry, the article couldn't be added immediately.<br/>
-It has been flagged for manual approval by the journa<i>listed</i> team.</p>
+It has been queued for manual addition by the journa<i>listed</i> team.</p>
 <?php
     }
 
 
 
 
-    function _queue_missing( $reason )
+    function _register_error()
     {
+        $reason = $this->state;
+        assert($reason=='scrape_failed' || $reason=='journo_mismatch');
+
+        $extra = '';    // could be extra context, in json fmt
+        $art_id = is_null($this->article) ? null : $this->article['id'];
+        $journo_id = is_null($this->journo) ? null : $this->journo['id'];
+
         // uh-oh. queue it up for admin attention
-        db_do( "INSERT INTO missing_articles (journo_id,url,reason) VALUES (?,?,?)",
-            $this->journo['id'],
+        db_do("DELETE FROM article_error WHERE url=?",$this->url);
+        db_do("INSERT INTO article_error (url,reason_code,extra_data,article_id,expected_journo) VALUES (?,?,?,?,?)",
             $this->url,
-            $reason
-        );
+            $reason,
+            $extra,
+            $art_id,
+            $journo_id );
         db_commit();
     }
 }
@@ -373,8 +385,8 @@ if( $item->is_finished() ) {
         <li>It was not bylined</li>
         <li>The byline was mis-spelt in the original publication</li>
         <li>The byline was contained within the text of the article so our system could not find it</li>
-        <li>It was published before we started</li>
-        <li>It was published in a 'registration required' area of the news outlet's website</li>
+        <li>It was published before journa<i>listed</i> started</li>
+        <li>It was published in a 'registration required' area of the news outlet's website (behind a paywall)</li>
       </ul>
     </div>
   </div>
