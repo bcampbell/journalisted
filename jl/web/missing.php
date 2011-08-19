@@ -297,6 +297,8 @@ It has been queued for manual addition by the journa<i>listed</i> team.</p>
 
 
 
+    // log the fact that there was a problem with the article,
+    // so a site admin person can check it out.
     function _register_error()
     {
         $reason = $this->state;
@@ -306,12 +308,15 @@ It has been queued for manual addition by the journa<i>listed</i> team.</p>
         $art_id = is_null($this->article) ? null : $this->article['id'];
         $journo_id = is_null($this->journo) ? null : $this->journo['id'];
 
+        $person = person_if_signed_on();
+        $person_id = is_null($person) ? null : $person->id();
+
         // uh-oh. queue it up for admin attention
         db_do("DELETE FROM article_error WHERE url=?",$this->url);
-        db_do("INSERT INTO article_error (url,reason_code,extra_data,article_id,expected_journo) VALUES (?,?,?,?,?)",
+        db_do("INSERT INTO article_error (url,reason_code,submitted_by,article_id,expected_journo) VALUES (?,?,?,?,?)",
             $this->url,
             $reason,
-            $extra,
+            $person_id,
             $art_id,
             $journo_id );
         db_commit();
