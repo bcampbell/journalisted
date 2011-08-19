@@ -123,6 +123,8 @@ class ArticleDB:
 
 
         # add the known urls for the article
+        if updating:
+            cursor.execute( "DELETE FROM article_url WHERE article_id=%s", (article_id,))
         for url in set(art['urls']):
             cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))
 
