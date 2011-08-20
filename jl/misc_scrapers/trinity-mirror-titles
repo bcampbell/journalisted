@@ -9,6 +9,27 @@ import urllib2
 import re
 
 
+blacklist = [
+    'northeastweddingfair.co.uk',
+    'www.whatsonne.co.uk',  # covered by chroniclelive.co.uk
+    'gmgrd.co.uk',
+    'gmggm.co.uk',
+    'gotravelholidays.com',
+    'go-travelholidays.co.uk',
+    'jobsnw.co.uk',
+    'love2love.co.uk',
+    'menfinancialservices.co.uk',
+    'menmortgageservices.com',
+    'menmortgageservices.co.uk',
+    'menmortgageservices.com',
+    'abmedia.co.uk',
+    'thejobsmine.co.uk',
+    'travelnewspaper.co.uk',
+    'urban-life.co.uk',
+    'thehomesmine.co.uk',
+    'citylife.co.uk',
+    ]
+
 def scrape_index(top_url):
     html = urllib2.urlopen(top_url).read()
     doc = lxml.html.fromstring(html)
@@ -20,9 +41,17 @@ def scrape_index(top_url):
         txt = a.text_content().strip()
         (title,url) = re.compile(r'\s*-\s+').split(txt)
 
-        assert ',' not in title
-        assert ',' not in url
-        print 'http://%s,%s' %(url,title)
+        crap = False
+        for b in blacklist:
+            if b in url:
+                crap = True
+                continue
+
+        if not crap:
+            assert ',' not in title
+            assert ',' not in url
+            print 'http://%s,%s' %(url,title)
+
 
 
 def main():

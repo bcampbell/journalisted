@@ -47,12 +47,15 @@ def extract(html,context):
 
 
 def main():
+    max_errors = 100
+
     parser = OptionParser(usage="%prog: [options] urls")
     parser.add_option('-v', '--verbose', action='store_true')
     parser.add_option('-d', '--debug', action='store_true')
     parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
     parser.add_option('-f', '--force_rescrape', action='store_true')
     parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
+    parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
     (options, args) = parser.parse_args()
 
     log_level = logging.ERROR
@@ -62,19 +65,18 @@ def main():
         log_level = logging.INFO
 
     logging.basicConfig(level=log_level, format='%(message)s')
-    max_errors = 100
 
     if options.source_feeds:
         feeds = json.loads(open(options.source_feeds, "rt").read())
         arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None, maxerrors=20 )
-        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+        ScraperUtils.scrape_articles(arts, extract, options)
 
 
     else:
         # individual urls
         arts = [context_from_url(url) for url in args]
 
-        ScraperUtils.scrape_articles(arts, extract, max_errors, options)
+        ScraperUtils.scrape_articles(arts, extract, options)
 
 if __name__ == '__main__':
     main()
