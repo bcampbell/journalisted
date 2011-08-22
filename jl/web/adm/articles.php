@@ -16,9 +16,9 @@ require_once '../../phplib/utility.php';
 
 require_once '../phplib/drongo-forms/forms.php';
 
-$_time_choices = array('all'=>'All', '1hr'=>'Last 1 hr', '24hrs'=>'Last 24 hrs', '7days'=>'Last 7 days', '30days'=>'Last 30 days');
+$_time_choices = array('all'=>'All', '1hr'=>'Last 1 hr', '24hrs'=>'Last 24 hrs', '48hrs'=>'Last 48 hrs', '7days'=>'Last 7 days', '30days'=>'Last 30 days');
 // map to postgres intervals
-$_time_intervals = array( 'all'=>null, '1hr'=>'1 hour', '24hrs'=>'24 hours', '7days'=>'7 days', '30days'=>'30 days');
+$_time_intervals = array( 'all'=>null, '1hr'=>'1 hour', '24hrs'=>'24 hours', '48hrs'=>'48 hours', '7days'=>'7 days', '30days'=>'30 days');
 
 
 
