@@ -56,6 +56,7 @@ try {
                     a.srcorg, o.shortname, o.prettyname, o.home_url
                 FROM ((article a INNER JOIN article_content c ON c.article_id=a.id) INNER JOIN organisation o ON o.id=a.srcorg)
                 WHERE a.lastscraped>?
+                    AND a.srcorg IN (SELECT pub_id FROM (pub_set_map m INNER JOIN pub_set s ON s.id=m.pub_set_id) WHERE name='national_uk')
                 ORDER BY a.lastscraped
                 LIMIT ?;
 EOT;
@@ -70,6 +71,7 @@ EOT;
                     a.srcorg, o.shortname, o.prettyname, o.home_url
                 FROM ((article a INNER JOIN article_content c ON c.article_id=a.id) INNER JOIN organisation o ON o.id=a.srcorg)
                 WHERE a.lastscraped<?
+                    AND a.srcorg IN (SELECT pub_id FROM (pub_set_map m INNER JOIN pub_set s ON s.id=m.pub_set_id) WHERE name='national_uk')
                 ORDER BY a.lastscraped DESC
                 LIMIT ?;
 EOT;
