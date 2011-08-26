@@ -3,7 +3,7 @@
 
 import urllib2
 import logging
-from datetime import datetime
+from datetime import datetime,timedelta
 from optparse import OptionParser
 
 try:
@@ -54,8 +54,9 @@ def main():
     parser.add_option('-d', '--debug', action='store_true')
     parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
     parser.add_option('-f', '--force_rescrape', action='store_true')
-    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
+    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of rss feeds, file in json format")
     parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
+    parser.add_option("-a", "--max_age", type="int", default=None, help="discard any articles older than x hours old (only if feeds -s is used)")
     (options, args) = parser.parse_args()
 
     log_level = logging.ERROR
@@ -68,7 +69,18 @@ def main():
 
     if options.source_feeds:
         feeds = json.loads(open(options.source_feeds, "rt").read())
+
         arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None, maxerrors=20 )
+
+        if options.max_age is not None:
+            cutoff = datetime.now() - timedelta(hours=options.max_age)
+
+            logging.info("discarding anything before %s" % (cutoff))
+            logging.info("before cutoff: %d" %(len(arts),))
+            arts = [a for a in arts if a['pubdate']>cutoff]
+            logging.info("after cutoff: %d" %(len(arts),))
+
+
         ScraperUtils.scrape_articles(arts, extract, options)
 
 
