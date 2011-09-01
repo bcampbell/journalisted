@@ -35,20 +35,11 @@ class ArtErrFilterForm extends Form
 
 function view()
 {
-/*
-    $sql = "SELECT e.*, j.ref, a.title, a.permalink
-        FROM ((article_error e LEFT JOIN article a ON a.id=e.article_id)
-            LEFT JOIN journo j ON j.id=e.expected_journo)
-        ORDER BY e.submitted DESC";
-
-    $rows = db_getAll($sql);
-    $errors = array();
-
-    foreach($rows as $err) {
-        $errors[] = new ArticleErrorWidget($err);
+    $widgets = array();
+    foreach(ArticleError::fetch_all() as $err) {
+        $widgets[] = new ArticleErrorWidget($err);
     }
- */
-    $v = array('errors'=>ArticleErrorWidget::fetch_all());
+    $v = array('widgets'=>&$widgets);
     template($v);
 }
 
@@ -69,8 +60,8 @@ function template($vars)
 <p>Submitted articles needing admin attention</p>
 
 <?php
-    foreach($errors as $err) {
-        $err->emit_full();
+    foreach($widgets as $w) {
+        $w->emit_full();
     }
 ?>
 

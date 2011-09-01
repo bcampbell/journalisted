@@ -8,6 +8,96 @@ require_once '../../phplib/utility.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/article.php';
 
+
+// class for modeling article_error entries
+class ArticleError
+{
+    function __construct($row)
+    {
+        $this->from_db_row($row);
+    }
+
+    function from_db_row($row) {
+        set_fields($this, $row, array('id','url','reason_code','submitted'));
+        if(!is_null($row['expected_journo'])) {
+            $this->expected_journo = array_to_object($row, array('expected_journo'=>'id', 'expected_ref'=>'ref'));
+        } else {
+            $this->expected_journo = null;
+        }
+        if(!is_null($row['submitted_by'])) {
+            $this->submitted_by = array_to_object($row, array('submitted_by'=>'id', 'submitted_by_name'=>'name', 'submitted_by_email'=>'email'));
+        } else {
+            $this->submitted_by = NULL;
+        }
+        if(!is_null($row['article_id'])) {
+            $this->article = array_to_object($row, array('article_id'=>'id', 'article_title'=>'title', 'article_byline'=>'byline'));
+        } else {
+            $this->article = NULL;
+        }
+    }
+
+    static function fetch_single($id) {
+        $sql = <<<EOT
+SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
+                j.ref as expected_ref,
+                a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
+                p.name as submitted_by_name,
+                p.email as submitted_by_email
+            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
+                LEFT JOIN journo j ON j.id=e.expected_journo)
+                LEFT JOIN person p ON p.id=e.submitted_by)
+            WHERE e.id=?
+            ORDER BY e.submitted DESC
+EOT;
+        return new ArticleError(db_getRow($sql,$id));
+    }
+
+
+    // fetch all article_errors, returning an array of widgets
+    static function fetch_all() {
+        $sql = <<<EOT
+SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
+                j.ref as expected_ref,
+                a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
+                p.name as submitted_by_name,
+                p.email as submitted_by_email
+            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
+                LEFT JOIN journo j ON j.id=e.expected_journo)
+                LEFT JOIN person p ON p.id=e.submitted_by)
+            ORDER BY e.submitted DESC
+EOT;
+        $rows = db_getAll($sql);
+        $art_errs = array();
+
+        foreach($rows as $row) {
+            $art_errs[] = new ArticleError($row);
+        }
+        return $art_errs;
+    }
+
+
+    function attribute_journo() {
+        assert(!is_null($this->article));
+        assert(!is_null($this->expected_journo));
+
+        db_do("DELETE FROM journo_attr WHERE journo_id=? AND article_id=?",
+            $this->expected_journo->id, $this->article->id);
+        db_do("INSERT INTO journo_attr (journo_id,article_id) VALUES (?,?)",
+            $this->expected_journo->id, $this->article->id);
+    }
+
+    function zap() {
+        db_do("DELETE FROM article_error WHERE id=?", $this->id);
+        $this->id = null;
+    }
+
+
+
+};
+
+
+
+// class to view and twiddle article_error entries
 class ArticleErrorWidget
 {
     const PREFIX = 'article_error';
@@ -44,12 +134,15 @@ $(document).ready(function(){
 
     // process a request (either ajax or not)
     public static function dispatch() {
+
+        // TODO: check adm permissions!!!
+
         $id = get_http_var('id');
         $action = get_http_var('action');
 
-        $row = ArticleErrorWidget::fetch_single($id);
+        $err = ArticleError::fetch_single($id);
 
-        $w = new ArticleErrorWidget( $row );
+        $w = new ArticleErrorWidget($err);
         // perform whatever action has been requested
         $w->perform($action);
 
@@ -69,12 +162,13 @@ $(document).ready(function(){
     function __construct($art_err)
     {
         $this->art_err = $art_err;
-        $this->id = $art_err['id'];
-        $this->state = "initial";
+
+        $this->scraper_ret = NULL;
+        $this->scraper_output = '';
     }
 
     function action_url( $action ) {
-        return "/adm/widget?widget=" . self::PREFIX . "&action={$action}&id={$this->id}";
+        return "/adm/widget?widget=" . self::PREFIX . "&action={$action}&id={$this->art_err->id}";
     }
 
 
@@ -84,109 +178,128 @@ $(document).ready(function(){
 
 
     function perform( $action ) {
-
         if($action=='delete') {
-            $this->state='deleted';
         }
-        return;
-
-        if( $action == 'scrape' ) {
-            // INVOKE THE SCRAPER...
-            $out = scrape_ScrapeURL( $this->url );
-            if($out===NULL) {
-               $this->scraper_output = "<strong>UHOH... ERROR</strong>";
-            } else {
-               $this->scraper_output = admMarkupPlainText( $out );
-            }
-        } elseif( $action == 'delete' ) {
-            $this->state = 'delete_requested';
-        } elseif( $action == 'confirm_delete' ) {
-            //ZAP!
-            db_do( "DELETE FROM missing_articles WHERE id=?", $this->id );
+        if($action=='add_journo') {
+            $this->art_err->attribute_journo();
+            // article error can be considered cleared now
+            $this->art_err->zap();
             db_commit();
-            $this->state = 'deleted';
-        } else if( $action == 'edit' ) {
-            $this->state = 'editing';
+        }
+        if( $action == 'scrape' ) {
+            list($ret, $out) = scrape_ScrapeURL($this->art_err->url);
+            $this->scraper_ret = $ret;
+            $this->scraper_output = $out;
+
+            if($ret == 0) {
+                $arts = scrape_ParseOutput($out);
+                if(sizeof($arts)<1) {
+                    // uhoh... none scraped...
+                } else {
+                    // got one - check to make sure it's got the right journo
+                    $art_id = $arts[0];
+                    $got_expected = false;
+                    if(!is_null($this->art_err->expected_journo)) {
+                        foreach(db_getAll("SELECT journo_id FROM journo_attr WHERE article_id=?",$art_id) as $row) {
+                            if($row['journo_id'] == $this->art_err->expected_journo->id) {
+                                $got_expected=true;
+                                break;
+                            }
+                        }
+                    } else {
+                        $got_expected = true;   // not expecting any particular journo
+                    }
+
+                    if($got_expected) {
+                        // article error can be considered fixed now. yay!
+                        $this->art_err->zap();
+                        db_commit();
+                    }
+                }
+            }
+
+            $this->scraper_output = admMarkupPlainText( $out );
         }
     }
+
+    function allowed_actions() {
+        $actions = array();
+        if(!is_null($this->art_err->id)) {
+            if($this->art_err->reason_code=='journo_mismatch') {
+                $actions[] = 'add_journo';
+            }
+            if($this->art_err->reason_code=='scrape_failed') {
+                $actions[] = 'scrape';
+            }
+        }
+        return $actions;
+    }
+
+
 
     // output the widget, including it's outer container (which will contain
     // any future stuff returned via ajax
     function emit_full()
     {
 ?>
-<div class="widget-container" id="missingarticle-<?php echo $this->art_err['id'];?>">
+<div class="widget-container" id="articleerror-<?= $this->art_err->id;?>">
 <?php $this->emit_core(); ?>
 </div>
 <?php
     }
 
 
-    function emit_core() {
-        extract($this->art_err);
 
+
+    function emit_core() {
+        $ae = &$this->art_err;
+
+        $actions = array();
+        if($ae->expected_journo && $ae->article) {
+            $actions[] = 'add_journo';
+        }
 ?>
-<?php if($this->state == 'deleted') { ?>
+
+<?php if(is_null($ae->id)) { ?>
 <del>
 <?php } ?>
-<a href="<?= $url ?>"><?= $url ?></a><br/>
-<?= $reason_code ?><br/>
-<?= $submitted ?><br/>
-<?php if( !is_null($expected_journo)) { ?>
-expected journo: <a href="/adm/<?= $expected_ref ?>"><?= $expected_ref ?></a><br/>
+<small>submitted <?= pretty_date(strtotime($ae->submitted)); ?>)</small><br/>
+<a href="<?= $ae->url ?>"><?= $ae->url ?></a>
+<?php if(!is_null($ae->submitted_by)) { ?>
+(submitted by <a href="/adm/useraccounts?person_id=<?= $ae->submitted_by->id ?>"><?= $ae->submitted_by->email ?></a> (<?= $ae->submitted_by->name; ?>) )
 <?php } ?>
-<?php if(!is_null($submitted_by)) { ?>
-submitted by: <a href="/adm/useraccounts?person_id=<?= $submitted_by ?>"><?= $submitted_by_email ?></a><br/>
+<br/>
+problem: <?= $ae->reason_code ?><br/>
+
+<?php if(!is_null($ae->expected_journo)) { ?>
+expected journo: <a href="/adm/<?= $ae->expected_journo->ref ?>"><?= $ae->expected_journo->ref ?></a><br/>
 <?php } ?>
-<?php if(!is_null($article_id)) { ?>
-article in the database: <a href="<?= article_adm_url($article_id) ?>"><?= $article_title ?></a><br/>
-raw byline: <?= $article_byline ?><br/>
+
+
+<?php if(!is_null($ae->article)) { ?>
+article in the database: <a href="<?= article_adm_url($ae->article->id) ?>"><?= $ae->article->title ?></a> (raw byline: <?= $ae->article->byline ?>)<br/>
 <?php } ?>
-<?php if($this->state == 'deleted') { ?>
+<?php if(is_null($ae->id)) { ?>
 </del>
-<?php } else { ?>
-<?= $this->action_link('delete'); ?>
 <?php } ?>
+
+<?php if(!is_null($this->scraper_ret)) { ?>
+<div>
+<?php if($this->scraper_ret!=0) { ?>
+SCRAPER FAILED (code <?= $this->scraper_ret; ?>)
+<?php } ?>
+raw scraper output:
+<pre><code>
+<?= admMarkupPlainText($this->scraper_output); ?>
+</code></pre></div>
+<?php } ?>
+
+<?php foreach($this->allowed_actions() as $action) { ?>
+<?= $this->action_link($action) ?>
+<?php } ?>
+
 <?php
 
     }
-
-    static function fetch_single($id) {
-        $sql = <<<EOT
-SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
-                j.ref as expected_ref,
-                a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
-                p.name as submitted_by_name,
-                p.email as submitted_by_email
-            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
-                LEFT JOIN journo j ON j.id=e.expected_journo)
-                LEFT JOIN person p ON p.id=e.submitted_by)
-            WHERE e.id=?
-            ORDER BY e.submitted DESC
-EOT;
-        return db_getRow($sql,$id);
-    }
-
-
-    // fetch all article_errors, returning an array of widgets
-    static function fetch_all() {
-        $sql = "SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
-                j.ref as expected_ref,
-                a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
-                p.name as submitted_by_name,
-                p.email as submitted_by_email
-            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
-                LEFT JOIN journo j ON j.id=e.expected_journo)
-                LEFT JOIN person p ON p.id=e.submitted_by)
-            ORDER BY e.submitted DESC";
-
-        $rows = db_getAll($sql);
-        $errors = array();
-
-        foreach($rows as $err) {
-            $errors[] = new ArticleErrorWidget($err);
-        }
-        return $errors;
-    }
-}
+};
 ?>
