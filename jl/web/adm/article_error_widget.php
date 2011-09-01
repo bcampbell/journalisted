@@ -86,6 +86,17 @@ EOT;
             $this->expected_journo->id, $this->article->id);
     }
 
+    function save() {
+        db_do("UPDATE article_error SET url=?, reason_code=?, submitted=?, submitted_by=?, article_id=?, expected_journo=? WHERE id=?",
+            $this->url,
+            $this->reason_code,
+            $this->submitted,
+            is_null($this->submitted_by) ? null : $this->submitted_by->id,
+            is_null($this->article) ? null : $this->article->id,
+            is_null($this->expected_journo) ? null : $this->expected_journo->id,
+            $this->id );
+    }
+
     function zap() {
         db_do("DELETE FROM article_error WHERE id=?", $this->id);
         $this->id = null;
@@ -178,7 +189,10 @@ $(document).ready(function(){
 
 
     function perform( $action ) {
-        if($action=='delete') {
+        if($action=='reject') {
+            $this->art_err->reason_code = 'rejected';
+            $this->art_err->save();
+            db_commit();
         }
         if($action=='add_journo') {
             $this->art_err->attribute_journo();
@@ -225,11 +239,15 @@ $(document).ready(function(){
     function allowed_actions() {
         $actions = array();
         if(!is_null($this->art_err->id)) {
-            if($this->art_err->reason_code=='journo_mismatch') {
+            $reason = $this->art_err->reason_code;
+            if($reason=='journo_mismatch') {
                 $actions[] = 'add_journo';
             }
-            if($this->art_err->reason_code=='scrape_failed') {
+            if($reason =='scrape_failed') {
                 $actions[] = 'scrape';
+            }
+            if($reason !='rejected') {
+                $actions[] = "reject";
             }
         }
         return $actions;
