@@ -448,4 +448,27 @@ function array_cherrypick( &$srcarray, &$keys )
     return $out;
 }
 
+
+
+// set fields on an object, from an array
+function set_fields(&$ob,$src_array, $fields)
+{
+    foreach($fields as $k=>$f) {
+        if(is_int($k)) {
+            $ob->$f = $src_array[$f];
+        } else {
+            $ob->$f = $src_array[$k];
+        }
+    }
+}
+
+// convert an array to an object
+// TODO: allow $fields to be null
+function array_to_object($src_array, $fields) {
+    $ob = new stdClass();
+    set_fields($ob, $src_array, $fields);
+    return $ob;
+}
+
+
 ?>

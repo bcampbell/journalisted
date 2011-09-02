@@ -13,6 +13,7 @@ require_once '../phplib/adm.php';
 require_once 'missingarticle_widget.php';
 require_once 'otherarticle_widget.php';
 require_once 'weblink_widget.php';
+require_once 'article_error_widget.php';
 
 if( !admCheckAccess() )
     exit;   // should return error code?
@@ -30,6 +31,9 @@ switch( $widget )
         break;
     case WeblinkWidget::PREFIX:
         WeblinkWidget::dispatch();
+        break;
+    case ArticleErrorWidget::PREFIX:
+        ArticleErrorWidget::dispatch();
         break;
 }
 
