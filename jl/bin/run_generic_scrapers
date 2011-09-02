@@ -1,0 +1,15 @@
+#!/bin/bash
+
+FEEDS_DIR=../feeds
+
+ionice -c3 -p $$
+renice -n 10 -p $$
+
+cd ../scraper
+
+# feed files, in random order
+feedfiles=`find $FEEDS_DIR -name "*.feeds" | shuf`
+
+# use xargs to run multiple processes
+echo $feedfiles | xargs -n1 -P2 ./genericscrape -a 24 -s
+

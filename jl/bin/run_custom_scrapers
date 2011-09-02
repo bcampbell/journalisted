@@ -1,0 +1,17 @@
+#!/bin/bash
+JL=/srv/vhost/journalisted.com/journalisted/jl
+NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py notw.py sun.py telegraph.py times.py scotsman.py skynews.py'
+
+ionice -c3 -p $$
+renice -n 10 -p $$
+
+cd $JL/scraper
+for p in $NATIONAL_UK
+do
+    ./$p
+done
+
+echo "***** DONE!"
+
+
+
