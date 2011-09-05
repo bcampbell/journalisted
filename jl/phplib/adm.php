@@ -68,25 +68,25 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <body>
 <h1>Journalisted admin</h1>
 <a href="/">Home</a>
-<a href="articles">Articles</a>
+<a href="/adm/articles">Articles</a>
  (<small>
- <a href="scrape">Scrape</a> |
- <a href="missingarticles">MissingArticles</a> |
- <a href="otherarticles">OtherArticles</a>
+ <a href="/adm/scrape">Scrape</a> |
+ <a href="/adm/missingarticles">MissingArticles</a> |
+ <a href="/adm/otherarticles">OtherArticles</a>
  </small>) |
-<a href="journo">Journos</a>
+<a href="/adm/journo">Journos</a>
  (<small>
- <a href="journo-bios">Bios</a> |
- <a href="journo-email">Email</a> |
- <a href="journo-split">Split</a> |
- <a href="journo-merge">Merge</a> |
- <a href="journo-create">Create</a>
+ <a href="/adm/journo-bios">Bios</a> |
+ <a href="/adm/journo-email">Email</a> |
+ <a href="/adm/journo-split">Split</a> |
+ <a href="/adm/journo-merge">Merge</a> |
+ <a href="/adm/journo-create">Create</a>
  </small>) |
-<a href="canned">Canned Queries</a> |
-<a href="news">News</a> |
-<a href="useraccounts">User Accounts</a>
+<a href="/adm/canned">Canned Queries</a> |
+<a href="/adm/news">News</a> |
+<a href="/adm/useraccounts">User Accounts</a>
  (<small>
- <a href="claims">Claims</a>
+ <a href="/adm/claims">Claims</a>
  </small>) |
 <a href="/adm/publication">Publications</a>
 <hr>
