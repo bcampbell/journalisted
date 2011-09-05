@@ -118,6 +118,12 @@ class ArticleErrorWidget
     // should still work if javascript is disabled (it'll
     // jump to a new page rather than working in-place).
 
+
+    static $action_defs=array(
+        'add_journo'=>array('label'=>'Add Journo','class'=>'add'),
+        'reject'=>array('label'=>'Reject','class'=>'delete'),
+        'scrape'=>array('label'=>'Scrape','class'=>'spark'));
+
     // output javascript block to put in page <head>
     public static function emit_head_js()
     {
@@ -184,7 +190,8 @@ $(document).ready(function(){
 
 
     function action_link($action) {
-        return sprintf('[<a class="widget" href="%s">%s</a>]', $this->action_url($action),$action);
+        $def = self::$action_defs[$action];
+        return sprintf('<a class="widget button %s" href="%s">%s</a>', $def['class'], $this->action_url($action), $def['label']);
     }
 
 
