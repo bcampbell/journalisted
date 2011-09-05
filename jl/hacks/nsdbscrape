@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+
+
+""" scrape newspaper details from nsdatabase.co.uk """
+
+
+import urllib2
+import urlparse
+import lxml.html
+import sys
+import re
+import csv
+import optparse
+
+_options = None
+
+def scrape( url ):
+    return urllib2.urlopen( url ).read()
+
+
+
+def get_papers():
+    papers = []
+
+    paper_list_url = "http://www.nsdatabase.co.uk/newspaperResults.CFM?NEWSPAPERS__NAME="
+    html = scrape( paper_list_url )
+
+    doc = lxml.html.fromstring( html )
+    doc.make_links_absolute( paper_list_url )
+
+    body = doc.cssselect( 'span#bodytext' )[0]
+    for a in body.cssselect( 'a' ):
+        papers.append( (a.text_content(),a.get('href') ) )
+
+    return papers
+
+
+
+
+def get_paper( db_url ):
+
+    html = scrape( db_url )
+
+    doc = lxml.html.fromstring( html )
+    doc.make_links_absolute( db_url )
+    cells = doc.cssselect( 'td[width="33%"]' )
+    newspaper = cells[0].cssselect( 'p' )[0]
+
+
+    d = {}
+    d['db_url'] = db_url
+
+    # newspaper name
+    title = newspaper.cssselect( 'b' )[0]
+    if title.getparent().tag == 'a':
+        d['website'] = title.getparent().get('href')
+    d['name'] = title.text_content()
+
+    snippet = lxml.html.tostring( newspaper, pretty_print=True )
+
+    # address
+    postcode_re = r'[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][ABD-HJLNP-UW-Z]{2}'
+    addr_pat = re.compile( r'</b>(.*?)' + postcode_re, re.DOTALL )
+    m = addr_pat.search( snippet )
+    address = m.group(0)
+    address = re.sub( r'<(.*?)>','', address )
+    address = "\n".join( [ line.strip() for line in address.splitlines() if line.strip() != '' ] )
+    d['address'] = address
+
+    # misc fields (don't bother with email - it's the one for advertising)
+    fields = [('editor','Newspaper Editor:'),('phone','Tel:'),('fax','Fax:')]
+
+    for (field,cookie) in fields:
+        m = re.search( cookie + r'\s+(.*?)\s*<br>', snippet, flags=re.MULTILINE|re.IGNORECASE )
+        if m is not None:
+            val = re.sub( r'<(.*?)>','',m.group(1) ).strip()
+            if val != '':
+                d[ field ] = val
+
+    # group
+    d['group'] = cells[1].cssselect( 'p b' )[0].text_content()
+    return d
+
+
+def WriteToCSV( f, data ):
+    w = csv.writer(f)
+
+    fields = ['name','website', 'phone','fax','address','editor','group','db_url']
+
+    w.writerow(fields)
+
+    for row in data:
+        row_out = [ row.get(f,'') for f in fields ]
+        w.writerow(row_out)
+
+
+
+
+
+
+if __name__ == '__main__':
+
+    parser = optparse.OptionParser(usage='%%prog [options]\n\n%s' % __doc__.strip() )
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='Show debug/log output')
+    parser.add_option('-o', '--outfile', dest='outfile', metavar='FILE', help='write results to specified file')
+
+    (_options, args) = parser.parse_args(sys.argv)
+ 
+    results = []
+    if _options.verbose:
+        print "fetch list of papers"
+    papers = get_papers()
+
+    if _options.verbose:
+        print "found %d newspapers" % ( len(papers), )
+
+    i = 0
+    for (name,db_url) in papers:
+        try:
+            if _options.verbose:
+                print "%d %s (%s)" % (i,name,db_url)
+            d = get_paper( db_url )
+        except StandardError, e:
+            print >>sys.stderr, "ERROR doing %s (%s): %s" % ( name,db_url,sys.exc_info()[0] )
+            # keep an empty entry in there anyway
+            d = { 'name':name, 'db_url':db_url }
+
+        results.append(d)
+        i=i+1
+
+
+#    for f in d:
+#        val = ", ".join( d[f].splitlines() )
+#        print "%s: %s" % (f, val )
+
+    if _options.outfile:
+        outfile = open( _options.outfile, 'wb' )
+    else:
+        outfile = sys.stdout
+
+    WriteToCSV( outfile, results )
+
