@@ -5,6 +5,9 @@ import urllib2
 import httplib # for HTTPExeption
 import urlparse
 import logging
+import re
+import csv
+import sys
 from datetime import datetime
 from optparse import OptionParser
 import lxml.html
@@ -63,7 +66,7 @@ def crawl(root_url, max_depth=2):
             title = unicode(alt.get('title', ''))
             href = unicode(alt.get('href',''))
 
-            if title.lower().endswith('comments feed'):
+            if re.compile(r'\bcomments\b',re.I).search(title):
                 logging.info("skip comments feed %s" % (href,))
                 continue
 
@@ -122,9 +125,10 @@ Writes resultant list to stdout.
     if options.json:
         print json.dumps(feeds)
     else:
+        w = csv.writer(sys.stdout)
         for f in feeds:
             g = [foo.encode('utf-8') for foo in f]
-            print '%s "%s" (%s)' % (g[0],g[1],g[2])
+            w.writerow(g)
 
 
 if __name__ == '__main__':
