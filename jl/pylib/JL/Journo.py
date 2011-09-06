@@ -324,54 +324,31 @@ def FindJourno( conn, rawname, hint_context = None ):
     if journo_id:
         return journo_id
 
-    journos = FindJournoMultiple( conn, rawname )
+    candidates = FindJournoMultiple( conn, rawname )
 
-    if not journos:
+    if len(candidates) == 0:
         return None
 
+    assert hint_context is not None
 
-    if len(journos) == 0:
-        # no matching journo found
-        return None
-
-    if len(journos) == 1:
-        # a single match
-        return journos[0]
-
-    # uh-oh - we found multiple journos with that name, so
-    # now we need to use hint_context to figure out which one
-    # it refers to...
-
-    #print "Found Multiple Journos: ",journos;
-
-
-    # try using the organisations they've written for to pick one.
-    if hint_context == None:
-        raise MultipleJournosException, "Multiple journos found called '%s'" % (rawname)
-
-    ukmedia.DBUG2("Resolving ambiguous journo '%s'" % (rawname,))
-    # which journos have articles in this srcorg?
+    # any candidates written for this publication before?
+    c = conn.cursor()
     if 'srcorg' in hint_context:
         srcorgid = hint_context['srcorg']
     else:
         srcorgid = Misc.GetOrgID(hint_context['srcorgname'])
+    sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in candidates]) + ") AND a.srcorg=%s"
+    c.execute(sql, (srcorgid,))
+    matching = [row['journo_id'] for row in c]
 
-    c = conn.cursor()
-    sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in journos]) + ") AND a.srcorg=%s"
+    if len(matching) == 0:
+        return None
+    if len(matching) == 1:
+        return matching[0]
 
-    c.execute( sql, (srcorgid,) )
-    matching = c.fetchall()
+    # TODO: maybe pick journo with most recent publication?
+    raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,len(matching),srcorgid)
 
-    # want to make sure that only one of our possible journos has written for this org
-    cnt = len(matching)
-    if cnt == 0:
-        raise NoOrgJournoException, "%d journos found called '%s', but none with articles in srcorg %d" % (len(journos),rawname,srcorgid)
-    if cnt != 1:
-        raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,cnt,srcorgid)
-
-    journo_id = int( matching[0]['journo_id'] )
-    c.close()
-    return journo_id
 
 
 
