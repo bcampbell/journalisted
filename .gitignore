@@ -4,4 +4,5 @@ jl/conf/general
 jl/conf/recaptcha.ini
 jl/conf/timesplus.ini
 jl/conf/ft.conf
+jl/scraper/.jlcache
 
