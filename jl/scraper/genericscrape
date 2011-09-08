@@ -5,6 +5,7 @@ import urllib2
 import logging
 from datetime import datetime,timedelta
 from optparse import OptionParser
+import csv
 
 try:
     import simplejson as json
@@ -54,7 +55,8 @@ def main():
     parser.add_option('-d', '--debug', action='store_true')
     parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
     parser.add_option('-f', '--force_rescrape', action='store_true')
-    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of rss feeds, file in json format")
+    parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of rss feeds, file in csv format")
+    parser.add_option('-j', '--source_feeds_json', action='store_true', help="rss feeds, in json format, not csv")
     parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
     parser.add_option("-a", "--max_age", type="int", default=None, help="discard any articles older than x hours old (only if feeds -s is used)")
     (options, args) = parser.parse_args()
@@ -68,9 +70,16 @@ def main():
     logging.basicConfig(level=log_level, format='%(message)s')
 
     if options.source_feeds:
-        feeds = json.loads(open(options.source_feeds, "rt").read())
+        feedsfile = open(options.source_feeds,"rt")
+        if options.source_feeds_json:
+            feeds = json.loads(feedsfile.read())
+            feeds = [(f[1],f[0]) for f in feeds]
+        else:
+            # csv format
+            reader = csv.reader(feedsfile)
+            feeds = [(row[1],row[0]) for row in reader]
 
-        arts = ScraperUtils.FindArticlesFromRSS([(f[1],f[0]) for f in feeds], None, None, maxerrors=20 )
+        arts = ScraperUtils.FindArticlesFromRSS(feeds, None, None, maxerrors=20 )
 
         if options.max_age is not None:
             cutoff = datetime.now() - timedelta(hours=options.max_age)
