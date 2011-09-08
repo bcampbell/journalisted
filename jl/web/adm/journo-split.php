@@ -9,22 +9,143 @@ require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/adm.php';
 
-admPageHeader();
+require_once '../phplib/drongo-forms/forms.php';
+
+
+// validator to ensure a journo is in the DB
+class JournoValidator {
+    public $msg = 'Please enter a valid journo ref';
+    public $code = 'journo';
+    function execute($value) {
+        $journo_id = db_getOne("SELECT id FROM journo WHERE ref=?",$value);
+        if(is_null($journo_id)) {
+            $params = array();
+            throw new ValidationError(vsprintf($this->msg,$params), $this->code, $params );
+        }
+    }
+}
+
+class PickJournoForm extends Form
+{
+
+    function __construct() {
+        parent::__construct($_GET,array(),array());
+        $this->fields['from_ref'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>TRUE,
+            'label'=>'Journo to split',
+            'help_text'=>'eg fred-bloggs',
+            'validators'=>array(array(new JournoValidator(),"execute")))
+        );
+    }
+}
+
+
+
+class SplitJournoForm extends Form
+{
+
+    function __construct($from_ref) {
+
+        // get all publications this journo has written for, with article counts
+        $pub_choices = array();
+        $sql = <<<EOT
+SELECT o.id, o.shortname, count(*)
+    FROM (((organisation o
+        INNER JOIN article a on o.id=a.srcorg)
+        INNER JOIN journo_attr attr ON attr.article_id=a.id)
+        INNER JOIN journo j ON j.id=attr.journo_id)
+        WHERE j.ref=?
+        GROUP BY o.id,o.shortname
+        ORDER BY count DESC
+EOT;
+        foreach(db_getAll($sql, $from_ref) as $row) {
+            $pub_choices[$row['id']] = sprintf("%s (%d articles)", $row['shortname'], $row['count']);
+        }
+
+        parent::__construct($_GET,array(),array());
+        $this->fields['from_ref'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>TRUE,
+            'label'=>'Journo to split',
+            'help_text'=>'eg fred-bloggs',
+            'validators'=>array(array(new JournoValidator(),"execute")))
+        );
+        $this->fields['split_pubs'] = new MultipleChoiceField(array('choices'=>$pub_choices,'widget'=>'CheckboxSelectMultiple'));
+        $this->fields['to_ref'] = new CharField(array(
+            'max_length'=>200,
+            'required'=>FALSE,
+            'label'=>'Destination journo',
+            'help_text'=>'eg fred-bloggs or leave blank to create a new journo',)
+        );
+    }
+}
+
+
+function view()
+{
+    $action = get_http_var('action');
+    switch($action) {
+        case 'preview':
+            break;
+        case 'confirm':
+            break;
+        default:
+            $f = new PickJournoForm();
+            if($f->is_valid()) {
+                $from_ref = $f->cleaned_data['from_ref'];
+                $f = new SplitJournoForm($from_ref);
+                $f->is_valid();
+                admPageHeader();
+?>
+<form action="" method="get">
+<table>
+<?= $f->as_table(); ?>
+</table>
+<input type="submit" />
+</form>
+<?php
+                admPageFooter();
+            } else {
+                admPageHeader();
+?>
+<form action="" method="get">
+<table>
+<?= $f->as_table(); ?>
+</table>
+<input type="submit" />
+</form>
+<?php
+                admPageFooter();
+            }
+            break;
+    }
+
+    
+
+//    $vars = array();
+//    template($vars);
+}
+
+
+function template($vars)
+{
+    extract($vars);
+
+    admPageHeader();
 ?>
 <h2>Split Journo</h2>
 <?php
 
-
-$params = FormParamsFromHTTPVars();
-if( $params['action'] == 'preview' )
-	EmitPreview( $params );
-elseif( $params['action'] == 'confirm' )
-	SplitJourno( $params );
-else
-	EmitForm( $params );
+    if( $params['action'] == 'preview' )
+    	EmitPreview( $params );
+    elseif( $params['action'] == 'confirm' )
+    	SplitJourno( $params );
+    else
+	    EmitForm( $params );
 
 admPageFooter();
-
+}
 
 
 
@@ -336,4 +457,5 @@ EOD;
     print( "</ul>\n</div>\n" );
 }
 
+view();
 

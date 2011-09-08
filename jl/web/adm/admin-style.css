@@ -11,6 +11,10 @@ p {margin: 1em 0;}
 a img {border: none;}
 sup, sub {line-height: 0;}
 
+td, th {
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+}
 
 
 form { padding: 0.2em; background-color: #eec; }
@@ -98,6 +102,44 @@ pre code {
     white-space: -o-pre-wrap;
 
     } 
+
+/* drongo-forms */
+
+.helptext {
+    font-size: smaller;
+    color: #999;
+}
+
+/*
+.errornote {
+    font-size: 12px !important;
+    display: block;
+    padding: 4px 5px 4px 25px;
+    margin: 0 0 3px 0;
+    border: 1px solid red;
+    color: red;
+    background: #ffc url(../img/admin/icon_error.gif) 5px .3em no-repeat;
+}
+*/
+
+ul.errorlist {
+    display: block;
+    border: 1px solid red;
+    color: white;
+    background: red;
+}
+
+
+.errors {
+    background: #ffc;
+}
+
+.errors input, .errors select {
+    border: 1px solid red;
+}
+
+
+
 
 
 /* css buttons from: http://www.red-team-design.com/just-another-awesome-css3-buttons */
