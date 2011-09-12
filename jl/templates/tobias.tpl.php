@@ -75,6 +75,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No63_22_08_11_1977428a.swf',
     'T64_TG_AWAY.jpg',
     'Tg_No65_05_09_11_1988200a.swf',
+    'Tg_No66_12_09_11_1995174a.swf',
 );
 
 
