@@ -8,6 +8,7 @@ require_once '../phplib/misc.php';
 require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/adm.php';
+require_once '../phplib/wizard.php';
 
 require_once '../phplib/drongo-forms/forms.php';
 
@@ -25,29 +26,37 @@ class JournoValidator {
     }
 }
 
+
 class PickJournoForm extends Form
 {
 
-    function __construct() {
-        parent::__construct($_GET,array(),array());
+    function __construct($data,$files,$opts) {
+        parent::__construct($data,$files,$opts);
+        $this->error_css_class = 'errors';
         $this->fields['from_ref'] = new CharField(array(
+            'widget'=> new TextInput(array('class'=>'journo-lookup')),
             'max_length'=>200,
             'required'=>TRUE,
             'label'=>'Journo to split',
             'help_text'=>'eg fred-bloggs',
-            'validators'=>array(array(new JournoValidator(),"execute")))
-        );
+            'validators'=>array(array(new JournoValidator(),"execute")),
+        ));
     }
 }
+
+
 
 
 
 class SplitJournoForm extends Form
 {
 
-    function __construct($from_ref) {
+    function __construct($data,$files,$opts) {
 
         // get all publications this journo has written for, with article counts
+        assert(array_key_exists('from_ref',$opts));
+        $from_ref = $opts['from_ref'];
+
         $pub_choices = array();
         $sql = <<<EOT
 SELECT o.id, o.shortname, count(*)
@@ -63,399 +72,325 @@ EOT;
             $pub_choices[$row['id']] = sprintf("%s (%d articles)", $row['shortname'], $row['count']);
         }
 
-        parent::__construct($_GET,array(),array());
+        $extra_opts = array(
+            'initial'=>array('from_ref'=>$from_ref),
+        );
+        $opts = array_merge($opts,$extra_opts);
+        parent::__construct($data,array(),$opts);
+        $this->error_css_class = 'errors';
         $this->fields['from_ref'] = new CharField(array(
             'max_length'=>200,
             'required'=>TRUE,
             'label'=>'Journo to split',
             'help_text'=>'eg fred-bloggs',
+            'readonly'=>TRUE,
             'validators'=>array(array(new JournoValidator(),"execute")))
         );
-        $this->fields['split_pubs'] = new MultipleChoiceField(array('choices'=>$pub_choices,'widget'=>'CheckboxSelectMultiple'));
+        $this->fields['from_ref']->widget->attrs['readonly'] = TRUE;
+
+        $this->fields['split_pubs'] = new MultipleChoiceField(array(
+            'label'=>'Publications to split off',
+            'help_text'=>'Articles from the ticked publications will be assigned over to the new journo',
+            'choices'=>$pub_choices,
+            'widget'=>'CheckboxSelectMultiple'));
         $this->fields['to_ref'] = new CharField(array(
+            'widget'=> new TextInput(array('class'=>'journo-lookup')),
             'max_length'=>200,
             'required'=>FALSE,
             'label'=>'Destination journo',
-            'help_text'=>'eg fred-bloggs or leave blank to create a new journo',)
-        );
+            'help_text'=>'eg fred-bloggs or leave blank to create a new journo',
+            'validators'=>array(array(new JournoValidator(),"execute")),
+        ));
     }
 }
 
+// dummy empty form, just to provide a confirmation page.
+class ConfirmSplitForm extends Form
+{
+}
+
+
+class SplitJournoWizard extends Wizard
+{
+    function __construct() {
+        parent::__construct(array('PickJournoForm','SplitJournoForm','ConfirmSplitForm'));
+    }
+
+    function get_form_opts($step) {
+        $opts = array();
+        if($step == 1) {
+            $step0_data = $this->get_cleaned_data_for_step(0);
+            $opts['from_ref'] = $step0_data['from_ref'];
+        }
+        return $opts;
+    }
+}
 
 function view()
 {
-    $action = get_http_var('action');
-    switch($action) {
-        case 'preview':
-            break;
-        case 'confirm':
-            break;
-        default:
-            $f = new PickJournoForm();
-            if($f->is_valid()) {
-                $from_ref = $f->cleaned_data['from_ref'];
-                $f = new SplitJournoForm($from_ref);
-                $f->is_valid();
-                admPageHeader();
-?>
-<form action="" method="get">
-<table>
-<?= $f->as_table(); ?>
-</table>
-<input type="submit" />
-</form>
-<?php
-                admPageFooter();
-            } else {
-                admPageHeader();
-?>
-<form action="" method="get">
-<table>
-<?= $f->as_table(); ?>
-</table>
-<input type="submit" />
-</form>
-<?php
-                admPageFooter();
+    $wiz = new SplitJournoWizard();
+
+    if($wiz->is_complete()) {
+        // perform the split...
+        $params = $wiz->get_cleaned_data();
+
+        $split_pubs = $params['split_pubs'];
+        $from_ref= $params['from_ref'];
+        $to_ref= $params['to_ref'];
+
+        if(!$to_ref) {
+            // make sure source journo has a numeric postfix, and create a new dest journo
+            $baseref = RefBase($from_ref);
+            $num = RefNum($from_ref);
+            if(is_null($num)) {
+                $new_from_ref = NextFreeRef($baseref, 1);
+                $num = RefNum($new_from_ref);
             }
-            break;
+            $to_ref = NextFreeRef($baseref, $num+1);
+        } else {
+            // source journo retains their existing ref
+            $new_from_ref = $from_ref;
+        }
+
+        $actions = do_split($from_ref, $new_from_ref, $split_pubs, $to_ref);
+        template_completed(array('wiz'=>$wiz,'actions'=>$actions));
+
+    } else {
+        $art_summary = null;
+        if($wiz->step == 2) {
+            // preview/confirmation
+            $params = $wiz->get_cleaned_data();
+            $art_summary = preview_articles($params);
+        }
+        template_step(array('wiz'=>$wiz,'art_summary'=>$art_summary));
     }
+}
 
-    
+// figure out summary of which articles are moving over to new journo and
+// which are staying, by publication.
+function preview_articles($params)
+{
+$sql = <<<EOT
+    SELECT a.srcorg,pub.shortname, COUNT(*) as num_articles
+        FROM article a
+            INNER JOIN journo_attr attr ON a.id=attr.article_id
+            INNER JOIN organisation pub ON pub.id=a.srcorg
+            INNER JOIN journo j on j.id=attr.journo_id
+        WHERE j.ref=?
+        GROUP BY a.srcorg,pub.shortname
+EOT;
+    $r = db_getAll($sql, $params['from_ref']);
 
-//    $vars = array();
-//    template($vars);
+    $articles = array();
+
+    foreach($r as $row) {
+        $moving = in_array(intval($row['srcorg']), $params['split_pubs']);
+        $articles[] = array('publication'=>$row['shortname'], 'num_articles'=>$row['num_articles'], 'moving'=>$moving);
+    }
+    return $articles;
 }
 
 
-function template($vars)
+function extra_head()
+{
+?>
+<script type="text/JavaScript">
+$(document).ready(function() {
+    $(".journo-lookup").autocomplete("ajax-ref-lookup.php");
+    });
+</script>
+<?php
+}
+
+
+
+function template_step($vars)
 {
     extract($vars);
+    $params = $wiz->get_cleaned_data();
 
-    admPageHeader();
+    switch($wiz->step) {
+    case 1: $button='preview...'; break;
+    case 2: $button='PERFORM SPLIT'; break;
+    default:
+    case 0: $button='next...'; break;
+    }
+    admPageHeader("Split Journo", "extra_head");
 ?>
-<h2>Split Journo</h2>
-<?php
-
-    if( $params['action'] == 'preview' )
-    	EmitPreview( $params );
-    elseif( $params['action'] == 'confirm' )
-    	SplitJourno( $params );
-    else
-	    EmitForm( $params );
-
-admPageFooter();
-}
-
-
-
-function FormParamsFromHTTPVars()
-{
-	$params = array();
-
-	$params['from_ref'] = get_http_var( 'from_ref', '' );
-	$params['new_from_ref'] = get_http_var( 'new_from_ref', '' );
-	$params['split_orgids'] = get_http_var( 'split_orgids', array() );
-	$params['to_ref'] = get_http_var( 'to_ref', '' );
-	$params['action'] = get_http_var( 'action', '' );
-	return $params;
-}
-
-
-function aget( $ar, $key, $defaultval=null )
-{
-	if( array_key_exists( $key, $ar ) )
-		return $ar[$key];
-	else
-		return $defaultval;
-}
-
-
-
-function EmitForm( $params )
-{
-/*
-	print"<pre>\n";
-	print_r( $params );
-	print"</pre>\n";
-*/
+<h2>Split journo</h2>
+<p>
+This lets you move articles from one journo to another.<br/>
+<em>Any other information (email addresses, user accounts, links, education, experience etc) will _not_ be reassigned.</em>
+</p>
+<?php if($wiz->step==2) {
+    // the preview step! show a summary.
+    $from_ref = $params['from_ref'];
 ?>
-<form>
-Which journo do you want to split up?<br />
-<small>(use journo ref, eg 'fred-smith')</small><br />
-<input type="text" name="from_ref" value="<?=$params['from_ref'];?>" /><br />
-<br />
-Articles from which outlets should be split out to the new journo?<br />
-<?php
+Here's a preview:
+<h3>Splitting <?= admJournoLink($from_ref) ?></h3>
+<table border="1">
+<thead><tr><th>publication</th><th>num_articles</th><th>moving?</th></tr></thead>
+<tbody>
+<?php foreach($art_summary as $a) { ?>
+<tr><td><?= $a['publication'] ?></td><td><?= $a['num_articles'] ?></td><td><?= $a['moving'] ? "YES":"no"; ?></td></tr>
+<?php } ?>
+</tbody>
+</table>
+<?php } ?>
 
-	$orgs = get_org_names();
-	foreach( $orgs as $orgid=>$orgname )
-	{
-		if( in_array( $orgid, $params['split_orgids'] ) )
-			$sel = 'checked';
-		else
-			$sel = '';
-?>
-<input type="checkbox" name="split_orgids[]" <?=$sel;?> value="<?=$orgid;?>" /> <?=$orgname;?><br />
-<?php
-
-	}
-
-?>
-<br />
-Move to existing journo? (leave blank to create a new journo):<br />
-<small>(eg 'fred-smythe')</small><br />
-<input type="text" name="to_ref" value="<?=$params['to_ref'];?>" /><br />
-<input type="hidden" name="action" value="preview" />
-<input type="submit" value="Preview" /><br />
+<form action="" method="POST">
+<?= $wiz->management(); ?>
+<table>
+<?= $wiz->form->as_table(); ?>
+</table>
+<input type="submit" value="<?= $button ?>" />
 </form>
 <?php
 
+    admPageFooter();
 }
+
+
+function template_completed($vars)
+{
+    extract($vars);
+    admPageHeader("Split Journo", "extra_head");
+?>
+    <h2>Split completed</h2>
+    <div class="action_summary">
+    <ul>
+<?php foreach($actions as $action) { ?>
+        <li><?= $action ?></li>
+<?php } ?>
+    </ul>
+<?php
+    admPageFooter();
+}
+
+
+
 
 
 /* return a ref, stripped of it's number postfix (if any) */
 function RefBase( $ref )
 {
-	$m = array();
-	if( preg_match( '/^(.*?)(-\d+)?$/', $ref, &$m ) > 0 )
-	{
-		return $m[1];
-	}
-	return null;
+    $m = array();
+    if( preg_match( '/^(.*?)(-\d+)?$/', $ref, &$m ) > 0 ) {
+        return $m[1];
+    }
+    return null;
 }
 
 /* return the numeric postfix of a ref, or null if none */
 function RefNum( $ref )
 {
-	$m = array();
-	if( preg_match( '/^(.*)-(\d+)$/', $ref, &$m ) > 0 )
-	{
-		return (int)$m[2];
-	}
-	return null;
+    $m = array();
+    if( preg_match( '/^(.*)-(\d+)$/', $ref, &$m ) > 0 ) {
+        return (int)$m[2];
+    }
+    return null;
 }
 
 /* search for an unused ref based on $baseref */
 function NextFreeRef( $baseref, $startnum )
 {
-	$n = $startnum;
-	while(1)
-	{
-		$ref = sprintf("%s-%d", $baseref,$n );
-		if( db_getRow( "SELECT id FROM journo WHERE ref=?",$ref ) )
-			++$n;			/* it's used */
-		else
-			return $ref;	/* it's free! */
-	}
-	/* never gets here... */
+    $n = $startnum;
+    while(1)
+    {
+        $ref = sprintf("%s-%d", $baseref,$n );
+        if( db_getRow( "SELECT id FROM journo WHERE ref=?",$ref ) )
+            ++$n;           /* it's used */
+        else
+            return $ref;    /* it's free! */
+    }
+    /* never gets here... */
 }
 
-function EmitPreview( $params )
-{
-	$orgs = get_org_names();
-	$journo=null;
-	if( $params['from_ref'] )
-		$journo = db_getRow( "SELECT id,prettyname FROM journo WHERE ref=?", $params['from_ref'] );
-	if( !$journo )
-	{
-		printf( "<p>Can't find journo '%s'</p>\n", $params['from_ref'] );
-		return;
-	}
-
-	if( $params['to_ref'] )
-	{
-		/* if a to_ref was set, make sure it exists! */
-		if( !db_getRow( "SELECT id FROM journo WHERE ref=?", $params['to_ref'] ) )
-		{
-			printf( "<p>Can't find destination journo '%s'</p>\n", $params['to_ref'] );
-			return;
-		}
-	}
-	else
-	{
-		/* no to_ref, so we need to:
-		 *
-		 * a) add a number postfix (if it doesn't already
-		 *    have one) to rename from_ref.
-		 */
-		$baseref = RefBase( $params['from_ref'] );
-		$num = RefNum( $params['from_ref'] );
-		if( $num === null )
-		{
-			/* add number postfix */
-			$params['new_from_ref'] = NextFreeRef( $baseref, 1 );
-			$num = RefNum( $params['new_from_ref'] ) + 1;
-		}
-
-		/*
-		 * b) calculate an appropriate new ref for the (new)
-		 *    dest journo.
-		 */
-		$params['to_ref'] = NextFreeRef( $baseref, $num );
-	}
-
-	printf("<h2>%s</h2>\n", $journo['prettyname'] );
-	$r = db_query( "SELECT a.srcorg as orgid, COUNT(*) as numarticles ".
-		"FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id) ".
-		"WHERE attr.journo_id=? ".
-		"GROUP BY a.srcorg",
-		$journo['id'] );
-	print( "<table border=1>\n" );
-	print( "<tr><th>Outlet</th><th>Num articles</th><th>split out to new journo?</th></tr>\n" );
-	while( $row = db_fetch_array( $r ) )
-	{
-		$orgid = $row['orgid'];
-		if( in_array( $orgid, $params['split_orgids'] ) )
-			$yesno = "YES";
-		else
-			$yesno = 'no';
-		printf("<tr><td>%s</td><td>%d</td><td>%s</td></tr>\n", $orgs[$orgid], $row['numarticles'], $yesno );
-	}
-	print( "</table>\n" );
 
 
-	print( "<ul>\n" );
-	if( $params['new_from_ref'] )
-	{
-		printf( "<li>This will rename '%s' to '%s'</li>\n",
-			$params['from_ref'], $params['new_from_ref'] );
-	}
-	if( !db_getRow( "SELECT id FROM journo WHERE ref=?", $params['to_ref'] ) )
-	{
-		printf( "<li>This will create new journo: '%s'</li>\n",
-			$params['to_ref'] );
-	}
-
-	print( "</ul>\n" );
-
-?>
-<form>
-<input type="hidden" name="from_ref" value="<?=$params['from_ref'];?>" />
-<input type="hidden" name="new_from_ref" value="<?=$params['new_from_ref'];?>" />
-<input type="hidden" name="to_ref" value="<?=$params['to_ref'];?>" />
-<?php
-	foreach( $params['split_orgids'] as $idx=>$val )
-	{
-?>
-<input type="hidden" name="split_orgids[<?=$idx;?>]" value="<?=$val;?>" />
-<?php
-	}
-?>
-<input type="hidden" name="action" value="confirm" />
-<input type="submit" value="Do it!" /><br />
-</form>
-<?php
-
-}
 
 /*
  * adds an 'id' field to $j
  */
 function journoCreate( &$j )
 {
-	db_do( "INSERT INTO journo (ref,prettyname,firstname,lastname,firstname_metaphone,lastname_metaphone,status,created) VALUES (?,?,?,?,?,?,?,NOW())",
-		$j['ref'],
-		$j['prettyname'],
-		$j['firstname'],
-		$j['lastname'],
-		metaphone($j['firstname'],4),
+    db_do( "INSERT INTO journo (ref,prettyname,firstname,lastname,firstname_metaphone,lastname_metaphone,status,created) VALUES (?,?,?,?,?,?,?,NOW())",
+        $j['ref'],
+        $j['prettyname'],
+        $j['firstname'],
+        $j['lastname'],
+        metaphone($j['firstname'],4),
         metaphone($j['lastname'],4),
-		$j['status'] );
-	$j['id'] = db_getOne( "SELECT currval( 'journo_id_seq' )" );
+        $j['status'] );
+    $j['id'] = db_getOne( "SELECT currval( 'journo_id_seq' )" );
 
 // deprecated
-	// TODO: should handle multiple aliases
-//	$alias = $j['alias'];
+    // TODO: should handle multiple aliases
+//  $alias = $j['alias'];
 
-//	db_do( "INSERT INTO journo_alias (journo_id,alias) VALUES (?,?)",
-//		$j['id'], $alias );
+//  db_do( "INSERT INTO journo_alias (journo_id,alias) VALUES (?,?)",
+//      $j['id'], $alias );
 }
 
 
-function SplitJourno( $params )
+
+
+// perform the split!
+function do_split($from_ref, $new_from_ref, $split_pubs, $to_ref)
 {
+    $actions = array();
 
-	if( !$params['to_ref'] )
-	{
-		print "<p>ABORTED: no destination journo specified</p>\n";
-		return;
-	}
-
-    print( "<div class=\"action_summary\">\nDone!\n<ul>\n" );
-
-	/* do we want to change the ref of the from journo? */
-	if( $params['new_from_ref'] )
-	{
-		db_do( "UPDATE journo SET ref=? WHERE ref=?",
-			$params['new_from_ref'],
-			$params['from_ref'] );
-		$params['from_ref'] = $params['new_from_ref'];
-	}
-
-
-	$fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $params['from_ref'] );
-
-	$toj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $params['to_ref'] );
-	if( !$toj )
-	{
-		// to_ref doesn't exist - Create New Journo!
-
-		// just take a copy of 'from' journo
-		$toj = $fromj;
-		unset( $toj['id'] );
-		$toj['ref'] = $params['to_ref'];
-
-		// copy alias too (should be array really)
-//		$alias = db_getOne( "SELECT alias FROM journo_alias WHERE journo_id=?", $fromj['id'] );
-//		$toj['alias'] = $alias;
-
-		// create the new journo
-		journoCreate( $toj );
-
-		printf("<li>Created new journo, '%s' (id=%d)</li>\n", $toj['ref'], $toj['id'] );
-	}
-
-	// move articles
-	$orglist = implode( ',', $params['split_orgids'] );
-
-    if( $orglist )
-    {
-    	$sql = <<<EOD
-UPDATE journo_attr SET journo_id=?
-	WHERE journo_id=? AND article_id IN
-		(
-		SELECT a.id
-			FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
-			WHERE journo_id=? AND a.srcorg IN ({$orglist})
-		)
-EOD;
-
-    	db_do( $sql, $toj['id'], $fromj['id'], $fromj['id'] );
-
-    	// update jobtitles (could create dupes, but hey)
-    	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=? AND org_id in ({$orglist})", $toj['id'], $fromj['id'] );
-
-    	// TODO: other data to move??? links? email?
+    if($new_from_ref != $from_ref) {
+        // rename the source journo
+        db_do( "UPDATE journo SET ref=? WHERE ref=?", $new_from_ref, $from_ref);
+        $actions[] = sprintf("Renamed journo %s -> %s", $from_ref, admJournoLink($new_from_ref) );
+        $from_ref = $new_from_ref;
     }
 
-	db_commit();
+    $fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $from_ref );
+    $toj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname,status FROM journo WHERE ref=?", $to_ref );
+    if(!$toj) {
+        // need to create new journo (just take a copy of 'from' journo)
+        $toj = $fromj;
+        unset( $toj['id'] );
+        $toj['ref'] = $to_ref;
+        journoCreate( $toj );
+        // TODO: copy journo_alias entries too...
+        $actions[] = sprintf("Created new journo: %s", admJournoLink($to_ref));
+    }
 
-	// Clear the htmlcache for the to and from journos
-	cache_clear( 'j'.$fromj['id'] );
-	cache_clear( 'j'.$toj['id'] );
+
+    // move articles
+    $orglist = implode( ',', $split_pubs );
+    if( $orglist )
+    {
+        $sql = <<<EOD
+UPDATE journo_attr SET journo_id=?
+    WHERE journo_id=? AND article_id IN
+        (
+        SELECT a.id
+            FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
+            WHERE journo_id=? AND a.srcorg IN ({$orglist})
+        )
+EOD;
+
+        $rows_affected = db_do( $sql, $toj['id'], $fromj['id'], $fromj['id'] );
+        $actions[] = sprintf( "reassigned %d articles from %s to %s", $rows_affected, $from_ref, $to_ref);
+    }
+
+    // leave all other data attached to from_ journo (links, email etc)
 
 
-	print( "<li>Journo split!<br />\n" );
+    // Clear the htmlcache for the to and from journos
+	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$fromj['id']);
+	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$toj['id']);
 
-	printf( "from: <a href=\"/%s\">%s (id %d)</a>\n", $fromj['ref'],$fromj['ref'], $fromj['id'] );
-    printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $fromj['id'] );
+    db_commit();
 
-	printf( "to: <a href=\"/%s\">%s (id %d)</a>\n", $toj['ref'],$toj['ref'], $toj['id'] );
-    printf( "[<a href=\"/adm/journo?journo_id=%d\">admin</a>]<br />\n", $toj['id'] );
-    print( "</li>" );
-    print( "</ul>\n</div>\n" );
+    return $actions;
 }
+
+
 
 view();
 
