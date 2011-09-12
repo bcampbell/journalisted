@@ -59,6 +59,12 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
 
+<script type="text/JavaScript">
+$(document).ready(function() {
+    $(".journo-lookup").autocomplete("ajax-ref-lookup.php");
+    });
+</script>
+
 <?php
     if( !is_null( $extra_head_fn ) ) {
     	call_user_func( $extra_head_fn );

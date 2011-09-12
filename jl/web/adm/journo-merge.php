@@ -8,84 +8,150 @@ require_once '../phplib/misc.php';
 require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/adm.php';
+require_once '../phplib/validators.php';
+require_once '../phplib/wizard.php';
 
-admPageHeader();
-?>
-<h2>Merge Journo</h2>
-<?php
+require_once '../phplib/drongo-forms/forms.php';
 
 
-$params = FormParamsFromHTTPVars();
-if( !$params['action'] )
-	EmitForm( $params );
-else
+
+class MergeJournoForm extends Form
 {
-	$errs = ValidateForm( $params );
-	if( $errs )
-	{
-		EmitForm( $params, $errs );
-	}
-	else
-	{
-		if( $params['action'] == 'commit' )
-			MergeJourno( $params );
-		else
-			EmitPreview( $params );
-	}
+
+    function __construct($data,$files,$opts) {
+        parent::__construct($data,$files,$opts);
+        $this->error_css_class = 'errors';
+        $this->fields['from_ref'] = new CharField(array(
+            'widget'=> new TextInput(array('class'=>'journo-lookup')),
+            'max_length'=>200,
+            'required'=>TRUE,
+            'label'=>'Source journo (from)',
+            'help_text'=>'The journo that will be merged (and deleted) eg freddy-bloggs-75',
+            'validators'=>array(array(new JournoValidator(),"execute")),
+        ));
+
+        $this->fields['into_ref'] = new CharField(array(
+            'widget'=> new TextInput(array('class'=>'journo-lookup')),
+            'max_length'=>200,
+            'required'=>TRUE,
+            'label'=>'Destination journo (into)',
+            'help_text'=>'The journo that will receive the merged data, eg fred-bloggs',
+            'validators'=>array(array(new JournoValidator(),"execute")),
+        ));
+    }
+
+    function clean()
+    {
+        $d = $this->cleaned_data;
+        if(isset($d['from_ref']) && isset($d['into_ref'])) {
+            if($this->cleaned_data['from_ref'] == $this->cleaned_data['into_ref']) {
+                throw new ValidationError("source and destination journos must be different");
+            }
+        }
+        return parent::clean();
+    }
+
+}
+// TODO: extra validation required:
+#	if( $params['from_ref'] == $params['into_ref'] )
+#		$errs[] = "FROM and INTO journos can't be the same";
+
+
+
+
+// dummy empty form, just to provide a confirmation page.
+class ConfirmForm extends Form
+{
 }
 
-admPageFooter();
 
-
-
-
-
-function FormParamsFromHTTPVars()
+class MergeJournoWizard extends Wizard
 {
-	$params = array();
-
-	$params['from_ref'] = get_http_var( 'from_ref', '' );
-	$params['into_ref'] = get_http_var( 'into_ref', '' );
-	$params['to_ref'] = get_http_var( 'to_ref', '' );
-	$params['action'] = get_http_var( 'action', '' );
-	return $params;
+    function __construct() {
+        parent::__construct(array('MergeJournoForm', 'ConfirmForm'));
+    }
 }
 
 
 
-function EmitForm( $params, $errs=array() )
+function view()
 {
-/*
-	print"<pre>\n";
-	print_r( $params );
-	print"</pre>\n";
-*/
-	if( $errs )
-	{
-		print( "<strong>ERRORS:</strong>\n<ul>\n" );
-		foreach( $errs as $e )
-		{
-			printf( "<li>%s</li>\n", $e );
-		}
-		print( "</ul>\n" );
-	}
+    $wiz = new MergeJournoWizard();
+
+    if($wiz->is_complete()) {
+        $params = $wiz->get_cleaned_data();
+        
+        $actions = merge_journos($params['from_ref'], $params['into_ref']);
+        template_completed(array('wiz'=>$wiz,'actions'=>$actions));
+    } else {
+        if($wiz->step == 1) {
+            // preview
+        } else {
+        }
+
+    }
+
+    $vars = array('wiz'=>$wiz);
+    template($vars);
+}
+
+
+
+function template($vars)
+{
+    extract($vars);
+    admPageHeader("Merge Journos");
+
+    $button = "preview";
 
 ?>
-<form method="POST">
-Which journo do you want to merge? (and delete!)<br />
-<small>(use journo ref, eg 'fred-smiff')</small><br />
-<input type="text" name="from_ref" value="<?=$params['from_ref'];?>" /><br />
-<br />
-Which journo do you want to merge into?<br />
-<small>(eg 'fred-smith')</small><br />
-<input type="text" name="into_ref" value="<?=$params['into_ref'];?>" /><br />
+<h2>Merge Journos</h2>
 
-<input type="hidden" name="action" value="preview" />
-<input type="submit" value="preview" /><br />
+<?php if($wiz->step==1) {
+    $params = $wiz->get_cleaned_data();
+    $button = "MERGE";
+?>
+<p>OK, so you want to merge:</p>
+<?php JournoOverview( $params['from_ref'] ); ?>
+<p>into:</p>
+<?php JournoOverview( $params['into_ref'] ); ?>
+<p>is that right?</p>
+
+<?php } ?>
+
+<form action="" method="POST">
+<?= $wiz->management(); ?>
+<table>
+<?= $wiz->form->as_table(); ?>
+</table>
+<input type="submit" value="<?= $button ?>" />
 </form>
 <?php
 
+    admPageFooter();
 }
+
+
+
+function template_completed($vars)
+{
+    extract($vars);
+    admPageHeader("Merge Journos");
+?>
+    <h2>Journo merged</h2>
+    <div class="action_summary">
+    <ul>
+<?php foreach($actions as $action) { ?>
+        <li><?= $action ?></li>
+<?php } ?>
+    </ul>
+<?php
+    admPageFooter();
+}
+
+
+
+
 
 
 function EmitPreview( $params )
@@ -109,28 +175,10 @@ function EmitPreview( $params )
 
 
 
-function ValidateForm( $params )
+function merge_journos($from_ref, $into_ref)
 {
-	$errs = array();
-	$fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['from_ref'] );
-	if( !$fromj )
-		$errs[] = sprintf( "Can't find FROM journo ('%s')", $params['from_ref'] );
-
-	$intoj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['into_ref'] );
-	if( !$intoj )
-		$errs[] = sprintf( "Can't find INTO journo ('%s')", $params['into_ref'] );
-
-	if( $params['from_ref'] == $params['into_ref'] )
-		$errs[] = "FROM and INTO journos can't be the same";
-
-	return $errs;
-}
-
-
-function MergeJourno( $params )
-{
-	$fromj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['from_ref'] );
-	$intoj = db_getRow( "SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $params['into_ref'] );
+	$fromj = db_getRow("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $from_ref);
+	$intoj = db_getRow("SELECT id,ref,prettyname,lastname,firstname FROM journo WHERE ref=?", $into_ref);
 
 	$from_id = $fromj['id'];
 	$into_id = $intoj['id'];
@@ -150,20 +198,15 @@ function MergeJourno( $params )
     // try to force similar-article recalculation
     db_do( "UPDATE journo SET last_similar=NULL WHERE id=?", $into_id );
 
+	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$into_id);
+	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$from_id);
 	db_commit();
-
-	cache_clear( 'j'.$into_id );
-	cache_clear( 'j'.$from_id );
 
     // TODO: LOG THIS ACTION!
 
-    print( "<div class=\"action_summary\">\nDone!\n<ul>\n" );
-	printf("<li>Merged '%s' ('%s') into '%s' ('<a href=\"%s\">%s</a>')</li>\n",
-		$fromj['prettyname'], $fromj['ref'],
-		$intoj['prettyname'], '/' . $intoj['ref'], $intoj['ref'] );
-	printf("<li>Deleted '%s' ('%s')</li>\n", $fromj['prettyname'], $fromj['ref'] );
-    print( "</ul></div>\n" );
-
+    $actions[] = sprintf("Merge '%s' into '%s'", $from_ref, admJournoLink($into_ref));
+    $actions[] = sprintf("Delete '%s'", $from_ref);
+    return $actions;
 }
 
 
@@ -179,7 +222,7 @@ function JournoOverview( $ref )
 		$journo['id'] );
 	printf( "'%s' (id=%s ref='%s')\n", $journo['prettyname'], $journo['id'], $journo['ref'] );
 	print( "<table border=1>\n" );
-	print( "<tr><th>Outlet</th><th>Num articles</th></tr>\n" );
+	print( "<tr><th>publication</th><th>num articles</th></tr>\n" );
 	$orgs = get_org_names();
 	while( $row = db_fetch_array( $r ) )
 	{
@@ -188,4 +231,7 @@ function JournoOverview( $ref )
 	}
 	print( "</table>\n" );
 }
+
+
+view();
 

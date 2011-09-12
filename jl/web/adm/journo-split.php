@@ -9,22 +9,10 @@ require_once '../phplib/cache.php';
 require_once '../../phplib/db.php';
 require_once '../phplib/adm.php';
 require_once '../phplib/wizard.php';
+require_once '../phplib/validators.php';
 
 require_once '../phplib/drongo-forms/forms.php';
 
-
-// validator to ensure a journo is in the DB
-class JournoValidator {
-    public $msg = 'Please enter a valid journo ref';
-    public $code = 'journo';
-    function execute($value) {
-        $journo_id = db_getOne("SELECT id FROM journo WHERE ref=?",$value);
-        if(is_null($journo_id)) {
-            $params = array();
-            throw new ValidationError(vsprintf($this->msg,$params), $this->code, $params );
-        }
-    }
-}
 
 
 class PickJournoForm extends Form
@@ -191,17 +179,6 @@ EOT;
 }
 
 
-function extra_head()
-{
-?>
-<script type="text/JavaScript">
-$(document).ready(function() {
-    $(".journo-lookup").autocomplete("ajax-ref-lookup.php");
-    });
-</script>
-<?php
-}
-
 
 
 function template_step($vars)
@@ -215,7 +192,7 @@ function template_step($vars)
     default:
     case 0: $button='next...'; break;
     }
-    admPageHeader("Split Journo", "extra_head");
+    admPageHeader("Split Journo");
 ?>
 <h2>Split journo</h2>
 <p>
@@ -254,7 +231,7 @@ Here's a preview:
 function template_completed($vars)
 {
     extract($vars);
-    admPageHeader("Split Journo", "extra_head");
+    admPageHeader("Split Journo");
 ?>
     <h2>Split completed</h2>
     <div class="action_summary">
