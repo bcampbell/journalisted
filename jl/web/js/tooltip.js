@@ -15,7 +15,7 @@
       var tip = $('<div class="tooltip"></div>').css( {
           position: 'absolute',
           top: pos.top - 10,
-          left: pos.left + 10,
+          left: pos.left + 50,
           display: 'none' }).appendTo( "body" );
 
       var hover1 = false;

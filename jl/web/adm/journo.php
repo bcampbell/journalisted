@@ -242,11 +242,11 @@ EOT;
 	$q = db_query( $sql, $params );
 
 	while( $r = db_fetch_array($q) ) {
-		$link = sprintf( "?journo_id=%s", $r['id'] );
+		$link = sprintf( "/adm/%s", $r['ref'] );
 		printf( " <tr>\n" );
 		printf( "  <td>%s</td>\n", $r['id'] );
 		printf( "  <td>%s</td>\n", $r['status'] );
-		printf( "  <td><a href=\"%s\">%s</a></td>\n", $link, $r['prettyname'] );
+		printf( "  <td><a class=\"journo-info\" href=\"%s\">%s</a></td>\n", $link, $r['prettyname'] );
 		printf( "  <td>%s</td>\n", $r['ref'] );
         if( $r['person_email'] ) {
             ?><td><?= $r['person_email'] ?> <small>(<a href="/adm/useraccounts?person_id=<?= $r['person_id']?>">useraccount</a>)</small></td><?php
