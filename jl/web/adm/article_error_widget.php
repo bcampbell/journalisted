@@ -31,9 +31,18 @@ class ArticleError
         }
         if(!is_null($row['article_id'])) {
             $this->article = array_to_object($row, array('article_id'=>'id', 'article_title'=>'title', 'article_byline'=>'byline'));
+            //
+            $this->article->authors = array();
+            $author_refs = preg_split("/[{},]/",$row['attributed'],-1,PREG_SPLIT_NO_EMPTY);
+            foreach($author_refs as $ref) {
+                $author = new stdClass();
+                $author->ref = $ref;
+                $this->article->authors[] = $author;
+            }
         } else {
             $this->article = NULL;
         }
+
     }
 
     static function fetch_single($id) {
@@ -42,7 +51,8 @@ SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.
                 j.ref as expected_ref,
                 a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
                 p.name as submitted_by_name,
-                p.email as submitted_by_email
+                p.email as submitted_by_email,
+                array(SELECT ref FROM journo WHERE id IN (SELECT journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
             FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
                 LEFT JOIN journo j ON j.id=e.expected_journo)
                 LEFT JOIN person p ON p.id=e.submitted_by)
@@ -60,7 +70,8 @@ SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.
                 j.ref as expected_ref,
                 a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
                 p.name as submitted_by_name,
-                p.email as submitted_by_email
+                p.email as submitted_by_email,
+                array(SELECT ref FROM journo j2 WHERE j2.id IN (SELECT attr.journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
             FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
                 LEFT JOIN journo j ON j.id=e.expected_journo)
                 LEFT JOIN person p ON p.id=e.submitted_by)
@@ -72,6 +83,7 @@ EOT;
         foreach($rows as $row) {
             $art_errs[] = new ArticleError($row);
         }
+
         return $art_errs;
     }
 
@@ -288,25 +300,37 @@ $(document).ready(function(){
 <?php if(is_null($ae->id)) { ?>
 <del>
 <?php } ?>
-<small>submitted <?= pretty_date(strtotime($ae->submitted)); ?>)</small><br/>
-<a href="<?= $ae->url ?>"><?= $ae->url ?></a>
+<small>submitted <?= pretty_date(strtotime($ae->submitted)); ?> 
 <?php if(!is_null($ae->submitted_by)) { ?>
-(submitted by <a href="/adm/useraccounts?person_id=<?= $ae->submitted_by->id ?>"><?= $ae->submitted_by->email ?></a> (<?= $ae->submitted_by->name; ?>) )
+by <a href="/adm/useraccounts?person_id=<?= $ae->submitted_by->id ?>"><?= $ae->submitted_by->email ?></a> (<?= $ae->submitted_by->name; ?>)
 <?php } ?>
+</small>
 <br/>
+
+<a href="<?= $ae->url ?>"><?= $ae->url ?></a><br/>
 problem: <?= $ae->reason_code ?><br/>
+
+
+<?php if(!is_null($ae->article)) { ?>
+article in the database: <a href="<?= article_adm_url($ae->article->id) ?>"><?= $ae->article->title ?></a><br/>
+<?php if(sizeof($ae->article->authors)>0) { ?>
+&nbsp;&nbsp;attributed to:
+<?php     foreach($ae->article->authors as $author) { ?>
+<?= admJournoLink($author->ref) ?>&nbsp;
+<?php         } ?>
+<?php     } ?>
+<br/>
+&nbsp;&nbsp;raw byline: <?= $ae->article->byline ?><br/>
+<?php } ?>
+<?php if(is_null($ae->id)) { ?>
+</del>
+<?php } ?>
+
 
 <?php if(!is_null($ae->expected_journo)) { ?>
 expected journo: <a class="journo-info" href="/adm/<?= $ae->expected_journo->ref ?>"><?= $ae->expected_journo->ref ?></a><br/>
 <?php } ?>
 
-
-<?php if(!is_null($ae->article)) { ?>
-article in the database: <a href="<?= article_adm_url($ae->article->id) ?>"><?= $ae->article->title ?></a> (raw byline: <?= $ae->article->byline ?>)<br/>
-<?php } ?>
-<?php if(is_null($ae->id)) { ?>
-</del>
-<?php } ?>
 
 <?php if(!is_null($this->scraper_ret)) { ?>
 <div>

@@ -31,6 +31,7 @@ EOT;
 
 
     $journo['arts'] = journo_collectArticles($journo,5);
+    $journo['num_arts'] = db_getOne("SELECT COUNT(*) FROM journo_attr WHERE journo_id=?",$journo['id']);
     $journo['linked_users'] = $users;
 
     template($journo);
@@ -52,7 +53,7 @@ function template($vars)
 ?>
 <h4><?= admJournoLink($ref,$prettyname); ?></h4>
 <?php if($oneliner) { ?><em><?= $oneliner ?></em><br/><?php } ?>
-status: <?= $pretty_status ?><br/>
+<?= $pretty_status ?>, <?= $num_arts ?> articles<br/>
 <?php foreach($linked_users as $user) { ?>
 Linked to <a href="/adm/useraccounts?person_id=<?= $user['id'] ?>"><?= $user['email'] ?></a>: '<?= $user['permission'] ?>'<br/>
 <?php } ?>

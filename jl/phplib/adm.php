@@ -187,7 +187,7 @@ function admMarkupPlainText( $txt )
 // return a link to a journo page, with a little [admin] link beside it
 function admJournoLink( $ref, $prettyname=null )
 {
-    return sprintf( "<a href=\"/%s\">%s</a> <small>(<a href=\"/adm/%s\">admin</a>)</small>",
+    return sprintf( "<a class=\"journo-info\" href=\"/%s\">%s</a> <small>(<a href=\"/adm/%s\">admin</a>)</small>",
         $ref,
         $prettyname?$prettyname:$ref,
         $ref );
