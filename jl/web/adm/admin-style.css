@@ -224,3 +224,17 @@ ul.errorlist {
 .button.spark:before { content: "\2737"; }
 .button.play:before { content: "\25B6"; }
 
+/* popup tooltip */
+.tooltip {
+  -moz-box-shadow: 5px 5px 5px #888888;
+  -webkit-box-shadow: 5px 5px 5px #888888;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+
+  padding: 4px;
+  border: 1px solid #444444;
+  background-color: #ffff88;
+}
+
+

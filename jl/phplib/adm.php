@@ -58,10 +58,25 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 
 <script type="text/javascript" src="/js/jquery.autocomplete.js"></script>
 <script type="text/javascript" src="/js/jquery.form.js"></script>
+<script type="text/javascript" src="/js/tooltip.js"></script>
 
 <script type="text/JavaScript">
+
+
 $(document).ready(function() {
     $(".journo-lookup").autocomplete("ajax-ref-lookup.php");
+    $(".journo-info").toptip({
+        'fetch': function(trigger,tip) {
+            var txt = trigger.attr('href') || trigger.html();
+            var m = txt.match(/[a-zA-Z]+[-][-a-zA-Z0-9]+/g)
+            if(m && m[0]) {
+                ref = m[0];
+                tip.html('<img src="/img/indicator.gif" />Loading...');
+                tip.load('/adm/ajax-journo-info?j=' + ref);
+            }
+        }
+        });
+
     });
 </script>
 

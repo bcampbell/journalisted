@@ -297,7 +297,7 @@ $(document).ready(function(){
 problem: <?= $ae->reason_code ?><br/>
 
 <?php if(!is_null($ae->expected_journo)) { ?>
-expected journo: <a href="/adm/<?= $ae->expected_journo->ref ?>"><?= $ae->expected_journo->ref ?></a><br/>
+expected journo: <a class="journo-info" href="/adm/<?= $ae->expected_journo->ref ?>"><?= $ae->expected_journo->ref ?></a><br/>
 <?php } ?>
 
 
