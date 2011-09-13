@@ -220,16 +220,18 @@ function JournoOverview( $ref )
 		"WHERE attr.journo_id=? ".
 		"GROUP BY a.srcorg",
 		$journo['id'] );
-	printf( "'%s' (id=%s ref='%s')\n", $journo['prettyname'], $journo['id'], $journo['ref'] );
-	print( "<table border=1>\n" );
-	print( "<tr><th>publication</th><th>num articles</th></tr>\n" );
 	$orgs = get_org_names();
-	while( $row = db_fetch_array( $r ) )
-	{
-		$orgid = $row['orgid'];
-		printf("<tr><td>%s</td><td>%d</td></tr>\n", $orgs[$orgid], $row['numarticles'] );
-	}
-	print( "</table>\n" );
+?>
+
+<?= admJournoLink($journo['ref']) ?>
+<table border=1>
+<tr><th>publication</th><th>num articles</th></tr>
+<?php while( $row = db_fetch_array( $r ) ) { $orgid = $row['orgid']; ?>
+<tr><td><?= $orgs[$orgid] ?></td><td><?= $row['numarticles'] ?></td></tr>
+<?php } ?>
+</table>
+<?php
+
 }
 
 
