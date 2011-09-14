@@ -183,7 +183,7 @@ function merge_journos($from_ref, $into_ref)
 	$from_id = $fromj['id'];
 	$into_id = $intoj['id'];
 
-	db_do( "UPDATE journo_attr SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_attr SET journo_id=? WHERE journo_id=? AND article_id NOT IN (SELECT article_id FROM journo_attr WHERE journo_id=?)", $into_id, $from_id, $into_id );
 // alias deprecated
 //	db_do( "UPDATE journo_alias SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_jobtitle SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
