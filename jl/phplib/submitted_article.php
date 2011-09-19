@@ -89,7 +89,7 @@ EOT;
         }
 
         // got article
-        $this->set_article($art[0]);
+        $this->set_article($arts[0]);
 
         // see if expected journo is attributed to article
         if($this->article) {
