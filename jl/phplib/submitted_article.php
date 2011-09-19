@@ -56,7 +56,7 @@ class SubmittedArticle
             return;
         }
 
-        $art = db_getRow("SELECT id,title,permalink,pubdate,srcorg FROM article WHERE id=?",$art_id);
+        $art = db_getRow("SELECT id,title,byline,permalink,pubdate,srcorg FROM article WHERE id=?",$art_id);
         $this->article = array_to_object($art, array('id', 'title', 'byline'));
         $this->article->authors = array();
 
