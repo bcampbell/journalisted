@@ -83,6 +83,7 @@ function view()
         
         $actions = merge_journos($params['from_ref'], $params['into_ref']);
         template_completed(array('wiz'=>$wiz,'actions'=>$actions));
+        return;
     } else {
         if($wiz->step == 1) {
             // preview
