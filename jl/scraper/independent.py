@@ -134,7 +134,7 @@ def CalcSrcID( url ):
     return None
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     """Extract article from html"""
 
     url = context['srcurl']

@@ -96,7 +96,7 @@ blog_rssfeeds = [
 
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     url = context['srcurl']
     
     if re.search( r'/(blogs|fashion)[.]mirror[.]co[.]uk/', url ):

@@ -26,7 +26,7 @@ from JL import ukmedia, ScraperUtils
 
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     art = context
     # for some reason BeautifulSoup gets the encoding as ISO-8859-1...
     # but we know it's utf-8

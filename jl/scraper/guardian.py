@@ -718,7 +718,7 @@ def WhichFormat( url ):
     return 'UNKNOWN'
 
 
-def Extract( html, context ):
+def Extract( html, context, **kw):
     fmt = WhichFormat( context['srcurl'] )
     if fmt == 'storyserver':
         return Extract_storyserver( html, context )

@@ -25,7 +25,7 @@ from JL import ukmedia, ScraperUtils
 
 
 
-def old_Extract( html, context ):
+def old_Extract(html, context, **kw):
     url = context['srcurl']
 
     if re.search( 'Copyright Press Association Ltd \\d{4}, All Rights Reserved', html ):
@@ -197,7 +197,7 @@ def old_blog_Extract( html, context ):
     return art
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     art = context
     soup = BeautifulSoup.BeautifulSoup( html )
 

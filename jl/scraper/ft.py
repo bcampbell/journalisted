@@ -101,7 +101,7 @@ def Login():
 #       print index, '  :  ', cookie
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     o = urlparse.urlparse( context['srcurl'] )
     if o[1] == 'blogs.ft.com':
         return Extract_blog( html, context ) 

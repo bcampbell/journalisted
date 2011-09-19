@@ -230,7 +230,17 @@ def scrape_articles( found, extract, opts):
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
             resp = urllib2.urlopen( context['srcurl'] )
+
+            # is the server sending an charset encoding?
+            kwargs = {}
+            content_type = resp.info().getheader('Content-Type','')
+            m = re.compile(r';\s*charset\s*=\s*([^;]*)', re.I).search(content_type)
+            if m:
+                kwargs['encoding'] = m.group(1)
+
+            # grab the content
             html = resp.read()
+
             # add any URLs we were redirected via...
             for code,url in resp.redirects:
                 known_urls.add(url)
@@ -269,7 +279,7 @@ def scrape_articles( found, extract, opts):
             # some extra, last minute context :-)
             context[ 'lastscraped' ] = datetime.now()
 
-            art = extract( html, context )
+            art = extract(html, context, **kwargs)
 
             if art:
                 if opts.test:

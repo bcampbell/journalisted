@@ -73,7 +73,7 @@ def FindRSSFeeds():
 
 
 
-def Extract( html, context ):
+def Extract( html, context, **kw ):
     """ Extract dailymail article """
 
     art = context

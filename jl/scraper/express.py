@@ -66,7 +66,7 @@ def CalcSrcID( url ):
 
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     """ handle express articles, including blogs """
     art = context
 

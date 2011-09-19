@@ -356,7 +356,7 @@ rssfeeds.append(
 
 #
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     # blog url format: (handled by blogs.py)
     # http://blogs.telegraph.co.uk/politics/threelinewhip/feb/speakerfurorenotclasswarfare.htm
 

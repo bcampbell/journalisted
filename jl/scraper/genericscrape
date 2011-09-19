@@ -29,10 +29,14 @@ def context_from_url(url):
     context['lastseen'] = datetime.now()
     return context
 
-def extract(html,context):
+def extract(html,context,**kwargs):
     art = context
 
-    headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
+    kw = {}
+    if 'encoding' in kwargs:
+        kw['encoding'] = kwargs['encoding']
+
+    headline,byline,pubdate = metareadability.extract(html,context['srcurl'], **kw)
     if headline is not None:
         art['title'] = headline
     if pubdate is not None:

@@ -61,7 +61,7 @@ def CalcSrcID( url ):
     return None
 
 
-def Extract( html, context ):
+def Extract( html, context, **kw ):
     if '/low/' in context['srcurl']:
         return Extract_low( html, context )
     if 'bbc.co.uk/blogs' in context['srcurl']:

@@ -52,7 +52,8 @@ class ScraperPicker:
         """ return name of scraper to handle given url, or None """
         o = urlparse.urlparse(candidate_url)
         for domain,scraper in self.lookup.iteritems():
-            if o[1].lower().endswith(domain):
+            pat = re.compile(r'\b' + domain.replace('.','[.]') + '$', re.I)
+            if pat.search(o[1]):
                 return scraper
         return None
 
@@ -64,10 +65,14 @@ def context_from_url(url):
     context['lastseen'] = datetime.now()
     return context
 
-def extract(html,context):
+def extract(html, context, **kwargs):
     art = context
 
-    headline,byline,pubdate = metareadability.extract(html,context['srcurl'])
+    kw = {}
+    if 'encoding' in kwargs:
+        kw['encoding'] = kwargs['encoding']
+
+    headline,byline,pubdate = metareadability.extract(html, context['srcurl'], **kw)
     if headline is not None:
         art['title'] = headline
     if pubdate is not None:

@@ -313,7 +313,7 @@ def CalcSrcID( url ):
     return None
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     o = urlparse.urlparse( context['srcurl'] )
     if o[1].endswith( 'typepad.com' ):
         return Extract_typepad( html, context )

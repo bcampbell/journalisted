@@ -219,7 +219,7 @@ def FindArticles_SUNLITE():
 
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     art = context
     # sun _claims_ to be iso-8859-1, but they're talking crap.
     soup = BeautifulSoup( html, fromEncoding='windows-1252' )

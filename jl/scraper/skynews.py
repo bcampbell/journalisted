@@ -45,7 +45,7 @@ def CalcSrcID( url ):
 
 
 
-def Extract( html, context ):
+def Extract(html, context, **kw):
     o = urlparse.urlparse(context['srcurl'])
     if o[1] == 'blogs.news.sky.com':
         return Extract_blog( html, context )
