@@ -14,7 +14,7 @@ require_once '../phplib/tabulator.php';
 require_once '../phplib/paginator.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
-require_once 'article_error_widget.php';
+require_once 'submitted_article_widget.php';
 
 require_once '../phplib/drongo-forms/forms.php';
 
@@ -36,8 +36,8 @@ class ArtErrFilterForm extends Form
 function view()
 {
     $widgets = array();
-    foreach(ArticleError::fetch_all() as $err) {
-        $widgets[] = new ArticleErrorWidget($err);
+    foreach(SubmittedArticle::fetch_all() as $err) {
+        $widgets[] = new SubmittedArticleWidget($err);
     }
     $v = array('widgets'=>&$widgets);
     template($v);
@@ -45,7 +45,7 @@ function view()
 
 function extra_head()
 {
-    ArticleErrorWidget::emit_head_js();
+    SubmittedArticleWidget::emit_head_js();
 }
 
 
@@ -53,10 +53,10 @@ function template($vars)
 {
     extract($vars);
 
-    admPageHeader("Article Errors", "extra_head");
+    admPageHeader("Submitted Articles", "extra_head");
 
 ?>
-<h2>Article errors</h2>
+<h2>Submitted Articles</h2>
 <p>Submitted articles needing admin attention</p>
 
 <?php

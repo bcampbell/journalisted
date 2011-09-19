@@ -41,6 +41,7 @@ import re
 from datetime import datetime
 import sys
 import urlparse
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
@@ -69,6 +70,9 @@ def FindRSSFeeds():
     soup = BeautifulSoup(html)
 
     feeds = []
+
+    # blogs don't seem to be on the feeds page
+    feeds.append(('blogs.independent.co.uk', 'http://blogs.independent.co.uk/feed/'))
 
     # ".body" div is better container, but beautiful soup doesn't seem to parse it as expected
 #    bodydiv = soup.find( 'div', {'class':'body'} )
@@ -142,7 +146,9 @@ def Extract(html, context, **kw):
 
     o = urlparse.urlparse( url )
     # we don't handle blogs here (see blogs.py instead).
-    if o[1] in ( 'indyblogs.typepad.com', 'blogs.independent.co.uk' ):
+    if o[1] in ( 'blogs.independent.co.uk' ):
+        return Extract_blog( html, context )
+    if o[1] in ( 'indyblogs.typepad.com' ):
         return Extract_typepad( html, context )
     else:
         return Extract_eScenic( html, context )
@@ -265,6 +271,8 @@ def Extract_eScenic( html, context ):
     return art
 
 
+
+# OLD - not sure if needed any more...
 def Extract_typepad( html, context ):
     """Extract fn for indy blogs (on typepad.com)"""
     art = context
@@ -329,6 +337,39 @@ def Extract_typepad( html, context ):
 
     return art
 
+
+def Extract_blog( html, context ):
+    art = context
+    doc = lxml.html.fromstring(html)
+
+    h1 = doc.cssselect('#blogArticle h1')[0]
+    art['title'] = ukmedia.FromHTMLOneLine(unicode(h1.text_content()))
+
+    foos = doc.cssselect('#blogArticle .author ul')[0].cssselect('li')
+    byline = None
+    pubdate = None
+    for foo in foos:
+        if foo.cssselect('a[rel="tag"]'):
+            continue
+        txt = ukmedia.FromHTMLOneLine(unicode(foo.text_content()))
+        if re.compile(r'^\s*by\s+', re.I).search(txt):
+            byline = txt
+        else:
+            try:
+                pubdate = ukmedia.ParseDateTime(txt)
+            except:
+                pass
+    art['pubdate'] = pubdate
+    art['byline'] = byline
+
+
+    content_div = doc.cssselect('#blogArticleContent')[0]
+    for cruft in content_div.cssselect('iframe'):
+        cruft.drop_tree()
+
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(content_div)))
+
+    return art
 
 
 

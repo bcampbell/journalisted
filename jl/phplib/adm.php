@@ -91,7 +91,7 @@ $(document).ready(function() {
 <a href="/">Home</a>
 <a href="/adm/articles">Articles</a>
  (<small>
- <a href="/adm/article_errors">Submitted Articles</a>
+ <a href="/adm/submitted_articles">Submitted Articles</a>
  <a href="/adm/scrape">Scrape</a> |
  </small>) |
 <a href="/adm/journo">Journos</a>
