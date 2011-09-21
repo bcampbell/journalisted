@@ -1,0 +1,20 @@
+#!/bin/bash
+ionice -c3 -p $$
+
+# strip comments and blanks from url list
+urls=`cat ../conf/localpapers.txt | sed -e 's/[ \t]*#.*//' -e '/^[ \t]*$/d'`
+
+
+for url in $urls
+do
+    domain=`echo $url | sed 's|http://||'`
+    feedsfile=feeds/$domain.feeds
+#    if [ ! -f $feedsfile ]
+#    then
+    echo "GENERATING $feedsfile"
+    ./findfeeds "$url" >$feedsfile
+#    else
+#        echo "already got $feedsfile"
+#    fi
+done
+

@@ -11,18 +11,6 @@ import sys
 from datetime import datetime
 from optparse import OptionParser
 import lxml.html
-try:
-    import simplejson as json
-except ImportError:
-    import json
-
-
-import site
-site.addsitedir("../pylib")
-from JL import ScraperUtils
-from JL import ukmedia
-
-
 
 
 def crawl(root_url, max_depth=2):
@@ -49,12 +37,12 @@ def crawl(root_url, max_depth=2):
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(page_url)
 
-        except (Exception,), e:
+        except Exception as e:
             err_cnt += 1
             if err_cnt >= max_errs:
                 logging.critical('error count exceeded - BAILING')
                 raise
-            logging.error('%s: %s\n' % (page_url,str(e)))
+            logging.error('ERROR on %s: %s\n' % (page_url,str(e)))
             continue
 
 
@@ -72,8 +60,8 @@ def crawl(root_url, max_depth=2):
 
             if type in feed_types:
                 if href not in feeds:
-                    logging.info("found %s - %s (%s)" %(href,title,type))
-                    feeds[href] = (href,title,type)
+                    logging.info("found %s %s" %(title,href))
+                    feeds[href] = (title,href)
 
         # now look for other links to follow from this page
         for a in doc.cssselect('a'):
@@ -103,10 +91,10 @@ def main():
 Writes resultant list to stdout.
         """
     parser = OptionParser(usage="%prog: [options] url", description=desc)
-    parser.add_option('-j', '--json', help="output feeds as json", action='store_true')
     parser.add_option('-v', '--verbose', action='store_true')
     parser.add_option('-d', '--debug', action='store_true')
     parser.add_option('-m', '--max_depth', type="int", default=1, dest="max_depth")
+    parser.add_option('-o', '--outfile', help="output filename (default stdout)")
     (options, args) = parser.parse_args()
 
     log_level = logging.WARNING
@@ -122,14 +110,15 @@ Writes resultant list to stdout.
         parser.error("Only one url at a time, please")
 
     feeds = crawl(args[0],int(options.max_depth))
-    if options.json:
-        print json.dumps(feeds)
-    else:
-        w = csv.writer(sys.stdout)
-        for f in feeds:
-            g = [foo.encode('utf-8') for foo in f]
-            w.writerow(g)
 
+    out = sys.stdout
+    if options.outfile:
+        out = open(options.outfile,'wt')
+
+    w = csv.writer(out)
+    for f in feeds:
+        g = [foo.encode('utf-8') for foo in f]
+        w.writerow(g)
 
 if __name__ == '__main__':
     main()
