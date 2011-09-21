@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+#
+# Given a list of urls, output either the orginal url, or the result of a
+# permanent http redirect (301)
+#
+
+
+
+import urllib2
+import logging
+from optparse import OptionParser
+import re
+import csv
+import sys
+import socket
+import site
+from pprint import pprint
+
+site.addsitedir("../pylib")
+from JL.urllib2helpers import CollectingRedirectHandler
+
+
+
+def main():
+    parser = OptionParser(usage="%prog: [options]")
+    parser.add_option('-v', '--verbose', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
+    (options, args) = parser.parse_args()
+
+    log_level = logging.ERROR
+    if options.debug:
+        log_level = logging.DEBUG
+    elif options.verbose:
+        log_level = logging.INFO
+
+    logging.basicConfig(level=log_level, format='%(message)s')
+
+    opener = urllib2.build_opener(CollectingRedirectHandler())
+    urllib2.install_opener(opener)
+    socket.setdefaulttimeout(5)
+
+    infile = sys.stdin
+    if len(args)>0:
+        infile = open(args[0],'rt')
+
+    opener = urllib2.build_opener( CollectingRedirectHandler() )
+    for url in infile:
+        url = url.strip()
+        if not url:
+            continue
+        try:
+            resp = urllib2.urlopen(url)
+            for r in resp.redirects:
+                if r[0]==301:
+                    logging.debug("301 %s => %s" % (url,r[1]))
+                    url = r[1]
+            print url
+        except urllib2.HTTPError as e:
+            logging.error("HTTPError %s %s" % (e.code,url))
+        except urllib2.URLError as e:
+            logging.error("URLError %s %s" % (e.message,url))
+        except Exception as e:
+            logging.error("Exception %s %s" % (e.message,url))
+
+if __name__ == '__main__':
+    main()
+
