@@ -1,20 +1,26 @@
 #!/bin/bash
+
+set -e
 ionice -c3 -p $$
+renice -n 10 -p $$
 
 # strip comments and blanks from url list
 urls=`cat ../conf/localpapers.txt | sed -e 's/[ \t]*#.*//' -e '/^[ \t]*$/d'`
 
-
+# build up <outfile> <url> pairs for files we don't yet have:
+parms=''
 for url in $urls
 do
     domain=`echo $url | sed 's|http://||'`
-    feedsfile=feeds/$domain.feeds
-#    if [ ! -f $feedsfile ]
-#    then
-    echo "GENERATING $feedsfile"
-    ./findfeeds "$url" >$feedsfile
-#    else
-#        echo "already got $feedsfile"
-#    fi
+    feedsfile=../newfeeds/$domain.feeds
+    if [ ! -f $feedsfile ]
+    then
+        parms="$parms $feedsfile $url"
+    fi
 done
+
+
+
+# now run a bunch of feedfinders!
+echo $parms | xargs -n2 -P32 ./findfeeds -cv -o
 
