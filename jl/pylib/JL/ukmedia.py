@@ -423,7 +423,7 @@ def ExtractAuthorFromParagraph(para):
                         conn = DB.Connect()
                     for possibleAuthor in authorFromDescriptionMatches:
 #                       print "possibleAuthor: ",possibleAuthor
-                        if Journo.FindJourno(conn,possibleAuthor):
+                        if Journo.FindJournoMultiple(conn,possibleAuthor):
                             author = possibleAuthor
                             break
                     if author:
