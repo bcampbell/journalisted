@@ -83,6 +83,8 @@ def main():
             reader = csv.reader(feedsfile)
             feeds = [f for f in reader]
 
+        print "using feeds from ", options.source_feeds
+
         arts = ScraperUtils.FindArticlesFromRSS(feeds, None, None, maxerrors=20 )
 
         if options.max_age is not None:
@@ -90,7 +92,7 @@ def main():
 
             logging.info("discarding anything before %s" % (cutoff))
             logging.info("before cutoff: %d" %(len(arts),))
-            arts = [a for a in arts if a['pubdate']>cutoff]
+            arts = [a for a in arts if a.get('pubdate', datetime.now()) > cutoff]
             logging.info("after cutoff: %d" %(len(arts),))
 
 
