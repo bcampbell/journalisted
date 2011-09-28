@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FEEDS_DIR=../feeds
+FEEDS_DIR=../newfeeds
 
 ionice -c3 -p $$
 renice -n 10 -p $$
@@ -11,5 +11,5 @@ cd ../scraper
 feedfiles=`find $FEEDS_DIR -name "*.feeds" | shuf`
 
 # use xargs to run multiple processes
-echo $feedfiles | xargs -n1 -P2 ./genericscrape -a 24 -j -s
+echo $feedfiles | xargs -n1 -P2 ./genericscrape -a 24 -s
 

@@ -11,13 +11,34 @@ import sys
 from datetime import datetime
 from optparse import OptionParser
 import lxml.html
+import socket
+
+import site
+site.addsitedir("../pylib")
+from JL.urllib2helpers import CacheHandler
+
+feed_types = ('application/rss+xml','application/atom+xml',
+    'text/xml',
+    'application/rssxml',
+    'application/xhtml+xml'
+)
+
+def is_good_feed(title,url):
+    if re.compile(r'\bcomments\b',re.I).search(title):
+        return False
+
+#    if 'tags' in title.lower() and '/tags/' in url:
+#        return False
+    return True
+
 
 
 def crawl(root_url, max_depth=2):
-    """ crawl a site for rss feeds """
+    """ crawl a site looking for rss feeds """
 
     err_cnt = 0
-    max_errs = 10
+    http_err_cnt = 0
+    max_errs = 200   # (for non-http errors)
 
     o = urlparse.urlparse(root_url)
     root_host = o[1]
@@ -25,37 +46,64 @@ def crawl(root_url, max_depth=2):
     feeds = {}
     visited = set()
     queued = set()
-    queued.add( (root_url,0) )
+    queued.add( (root_url,u'',0) )
+
 
     while queued:
-        (page_url,depth) = queued.pop()
+        (page_url,page_name,depth) = queued.pop()
         visited.add(page_url)
         try:
             logging.debug("fetch %s (depth %d)" % (page_url,depth))
             resp = urllib2.urlopen(page_url)
             html = resp.read()
+            content_type = resp.info().get('content-type','')  # eg "text/html; charset=utf-8"
+            content_type = content_type.lower()
+
+
+            if 'html' not in content_type.lower():
+                # it's not html.
+                # have we actually stumbled upon a feed?
+                is_feed = False
+                for t in feed_types:
+                    if t in content_type:
+                        is_feed=True
+                if is_feed:
+                    if is_good_feed(page_name,page_url):
+                        if page_url not in feeds:
+                            logging.info("found %s %s" %(page_name,page_url))
+                            feeds[page_url] = (page_name, page_url)
+                    else:
+                        logging.info("reject feed %s %s" % (page_name,page_url))
+                else:
+                    logging.debug("skip non-html page %s ('%s')" % (page_url,content_type))
+                continue
+
+            
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(page_url)
 
+        except urllib2.HTTPError as e:
+            # let http errors through
+            http_err_cnt += 1
+            logging.debug("HTTPError %s %s" % (e.code,page_url))
+            continue
         except Exception as e:
             err_cnt += 1
             if err_cnt >= max_errs:
                 logging.critical('error count exceeded - BAILING')
                 raise
-            logging.error('ERROR on %s: %s\n' % (page_url,str(e)))
+            logging.error('ERROR on %s: %s' % (page_url,str(e)))
             continue
 
 
-        # any rss feeds on this page?
-        feed_types = ('application/rss+xml','application/atom+xml','text/xml', 'application/rssxml' )   # rssxml found on arstechnica (bug?)
-
+        # any rss feeds n <head> section on this page?
         for alt in doc.cssselect('head link[rel="alternate"]'):
             type = unicode(alt.get('type',''))
             title = unicode(alt.get('title', ''))
             href = unicode(alt.get('href',''))
 
-            if re.compile(r'\bcomments\b',re.I).search(title):
-                logging.info("skip comments feed %s" % (href,))
+            if not is_good_feed(title,href):
+                logging.info("reject feed %s %s" % (title,href))
                 continue
 
             if type in feed_types:
@@ -69,18 +117,19 @@ def crawl(root_url, max_depth=2):
             if url is None:
                 continue
 
-            # kill query and fragment parts
+            # strip fragment
             o = urlparse.urlparse(url)
-            url = urlparse.urlunparse((o[0], o[1], o[2], o[3], '', ''))
+            url = urlparse.urlunparse((o[0], o[1], o[2], o[3], o[4], ''))
 
             if url not in visited and depth<max_depth:
                 # try and stay on same site (subdomains ok)...
                 if o[1].endswith(root_host):
                     #logging.debug("queue %s (depth %d)" %(url,depth+1))
-                    queued.add((url,depth+1))
+                    #logging.warning("queue %s %s %s (depth %d)" %(root_host,o[1],url,depth+1))
+                    queued.add((url, unicode(a.text_content()).strip(), depth+1))
 
         #print("scan %s (%d articles)\n" % (page_url,art_cnt))
-    logging.info("scanned %d pages, found %d feeds" %(len(visited),len(feeds)))
+    logging.info("visited %d pages, %d http errors, %d other errors. found %d feeds" %(len(visited), http_err_cnt, err_cnt, len(feeds)))
 
     return feeds.values()
 
@@ -93,8 +142,9 @@ Writes resultant list to stdout.
     parser = OptionParser(usage="%prog: [options] url", description=desc)
     parser.add_option('-v', '--verbose', action='store_true')
     parser.add_option('-d', '--debug', action='store_true')
-    parser.add_option('-m', '--max_depth', type="int", default=1, dest="max_depth")
-    parser.add_option('-o', '--outfile', help="output filename (default stdout)")
+    parser.add_option('-m', '--max_depth', type="int", default=2, dest="max_depth")
+    parser.add_option('-o', '--outfile', help="output filename (default is to generate a filename from the url)")
+    parser.add_option('-c', '--cache', action='store_true', help="cache downloaded files in .cache dir")
     (options, args) = parser.parse_args()
 
     log_level = logging.WARNING
@@ -109,11 +159,30 @@ Writes resultant list to stdout.
     if len(args)>1:
         parser.error("Only one url at a time, please")
 
-    feeds = crawl(args[0],int(options.max_depth))
+    if options.cache:
+        logging.info("Using .cache")
+        opener = urllib2.build_opener(CacheHandler('.cache'))
+    else:
+        opener = urllib2.build_opener()
+    urllib2.install_opener(opener)
+    socket.setdefaulttimeout(5)
 
-    out = sys.stdout
+    start_url = args[0]
+
+    feeds = crawl(start_url,int(options.max_depth))
+
     if options.outfile:
-        out = open(options.outfile,'wt')
+        if options.outfile == '-':
+            out = sys.stdout
+        else:
+            out = open(options.outfile,'wt')
+    else:
+        # generate a default filename
+        outfilename = re.sub('^[a-z]*://', '', start_url.lower().strip())
+        outfilename = re.sub('[^-._\w\s]+','_', outfilename)
+        outfilename = re.sub('[-\s]+','-', outfilename)
+        outfilename += ".feeds"
+        out = open(outfilename,'wt')
 
     w = csv.writer(out)
     for f in feeds:
