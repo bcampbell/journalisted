@@ -81,6 +81,7 @@ def main():
         else:
             # csv format
             reader = csv.reader(feedsfile)
+            feeds = [f for f in reader]
 
         arts = ScraperUtils.FindArticlesFromRSS(feeds, None, None, maxerrors=20 )
 
