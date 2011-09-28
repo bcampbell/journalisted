@@ -101,7 +101,6 @@ http://www.crawleyobserver.co.uk
 http://www.crewechronicle.co.uk
 http://www.crosbyherald.co.uk
 http://www.croydonguardian.co.uk
-http://www.cumberlandnews.co.uk
 http://www.dailypost.co.uk
 http://www.dailypostcymraeg.co.uk
 http://www.denbighshirefreepress.co.uk
@@ -122,7 +121,6 @@ http://www.eastlondonadvertiser.co.uk
 http://www.eastlothiancourier.com
 http://www.eastlothiannews.co.uk
 http://www.eastwoodadvertiser.co.uk
-http://www.eladvertiser.co.uk
 http://www.ellesmereportfirst.co.uk
 http://www.ellesmereportpioneer.co.uk
 http://www.elmbridgeguardian.co.uk
@@ -178,7 +176,6 @@ http://www.henleystandard.co.uk
 http://www.herefordshirejournals.com
 http://www.herefordtimes.com
 http://www.hertfordshiremercury.co.uk
-http://www.hexhamcourant.co.uk
 http://www.highland-news.co.uk
 http://www.hinckleytimes.net
 http://www.horncastlenews.co.uk
@@ -247,7 +244,6 @@ http://www.northwalespioneer.co.uk
 http://www.northwalesweeklynews.co.uk
 http://www.northyorkshirenews.com
 http://www.norwichadvertiser24.co.uk
-http://www.nwemail.co.uk
 http://www.oldham-chronicle.co.uk
 http://www.orcadian.co.uk
 http://www.osadvertiser.co.uk
@@ -265,7 +261,6 @@ http://www.richmondandtwickenhamtimes.co.uk
 http://www.romfordrecorder.co.uk
 http://www.romseyadvertiser.co.uk
 http://www.ross-shirejournal.co.uk
-http://www.ross-today.co.uk
 http://www.rugbyadvertiser.co.uk
 http://www.runcornandwidnesweeklynews.co.uk
 http://www.rutherglenreformer.co.uk
@@ -374,7 +369,6 @@ http://www.westsussextoday.co.uk
 http://www.wharf.co.uk
 http://www.whfp.com
 http://www.whitchurchherald.co.uk
-http://www.whitehavennews.co.uk
 http://www.whtimes.co.uk
 http://www.wigantoday.net
 http://www.wiltsglosstandard.co.uk
@@ -410,3 +404,13 @@ http://www.yourleekpaper.co.uk
 # covered by specific scraper
 #http://www.scotsman.com
 #http://scotlandonsunday.scotsman.com
+
+
+# still need a little work on scraper
+# http://www.ross-today.co.uk
+# http://www.nwemail.co.uk
+# http://www.eladvertiser.co.uk
+# http://www.cumberlandnews.co.uk
+# http://www.whitehavennews.co.uk
+# http://www.hexhamcourant.co.uk
+
