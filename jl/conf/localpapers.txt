@@ -31,10 +31,8 @@ http://edinburghnews.scotsman.com
 #http://icwolverhampton.icnetwork.co.uk
 
 http://menmedia.co.uk
-http://scotlandonsunday.scotsman.com
 http://thejc.com
 http://whitchurchherald.co.uk
-http://woking.co.uk
 http://www.abergavenny-chronicle-today.co.uk
 http://www.acadvertiser.co.uk
 http://www.andoveradvertiser.co.uk
@@ -48,7 +46,8 @@ http://www.banburyguardian.co.uk
 http://www.banffshire-journal.co.uk
 http://www.barking-today.co.uk
 http://www.barnsley-chronicle.co.uk
-http://www.barnsleyindependent.com
+# published via issuu.com
+# http://www.barnsleyindependent.com
 http://www.barryanddistrictnews.co.uk
 http://www.barry-today.co.uk
 http://www.basingstokegazette.co.uk
@@ -56,14 +55,13 @@ http://www.bdpost.co.uk
 http://www.bedfordshire-news.co.uk
 http://www.belfasttelegraph.co.uk
 http://www.belpernews.co.uk
-http://www.berkshireonline.co.uk
-http://www.berrowsjournal.co.uk
+# gone
+#http://www.berkshireonline.co.uk
 http://www.berwick-advertiser.co.uk
 http://www.beverleyguardian.co.uk
 http://www.biggleswadetoday.co.uk
 http://www.birminghammail.net
 http://www.birminghampost.net
-http://www.blackcountrybugle.co.uk
 http://www.blackpoolgazette.co.uk
 http://www.blairgowrieadvertiser.co.uk
 http://www.bootletimes.co.uk
@@ -76,7 +74,6 @@ http://www.bridgnorthjournal.com
 http://www.bridgwatermercury.co.uk
 http://www.bridlingtonfreepress.co.uk
 http://www.brighouseecho.co.uk
-http://www.bromsgrovestandard.co.uk
 http://www.buckinghamshireadvertiser.co.uk
 http://www.buckinghamtoday.co.uk
 http://www.bucksfreepress.co.uk
@@ -96,20 +93,15 @@ http://www.chesterfirst.co.uk
 http://www.chichester.co.uk
 http://www.chorleycitizen.co.uk
 http://www.chroniclelive.co.uk
-http://www.chronicleseries.com
 http://www.cityam.com
-http://www.classifiedgold.co.uk
-http://www.cleethorpeschronicle.co.uk
 http://www.clitheroeadvertiser.co.uk
 http://www.clydebankpost.co.uk
-http://www.coventryobserver.co.uk
 http://www.coventrytelegraph.net
 http://www.crawleyobserver.co.uk
 http://www.crewechronicle.co.uk
 http://www.crosbyherald.co.uk
 http://www.croydonguardian.co.uk
 http://www.cumberlandnews.co.uk
-http://www.cwherald.com
 http://www.dailypost.co.uk
 http://www.dailypostcymraeg.co.uk
 http://www.denbighshirefreepress.co.uk
@@ -281,7 +273,6 @@ http://www.rutland-times.co.uk
 http://www.ryeandbattleobserver.co.uk
 http://www.salisburyjournal.co.uk
 http://www.scenefirst.co.uk
-http://www.scotsman.com
 http://www.selbytimes.co.uk
 http://www.shetlandtimes.co.uk
 http://www.shieldsgazette.com
@@ -391,7 +382,6 @@ http://www.wiltshiretimes.co.uk
 http://www.wirralglobe.co.uk
 http://www.wirralnews.co.uk
 http://www.wishawpress.co.uk
-http://www.woking.co.uk
 http://www.worcesternews.co.uk
 http://www.worksopguardian.co.uk
 http://www.wpeters.co.uk
@@ -402,3 +392,21 @@ http://www.yeovilexpress.co.uk
 http://www.yorkshireeveningpost.co.uk
 http://www.yorkshirepost.co.uk
 http://www.yourleekpaper.co.uk
+
+
+# No RSS:
+#http://www.blackcountrybugle.co.uk
+#http://www.bromsgrovestandard.co.uk
+#http://www.chronicleseries.com
+#http://www.coventryobserver.co.uk
+
+#gone
+#http://www.woking.co.uk
+
+# not online? (ie corporate site only, no content)
+#http://www.cleethorpeschronicle.co.uk
+#http://www.cwherald.com
+
+# covered by specific scraper
+#http://www.scotsman.com
+#http://scotlandonsunday.scotsman.com
