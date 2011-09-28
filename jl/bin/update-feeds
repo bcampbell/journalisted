@@ -22,5 +22,5 @@ done
 
 
 # now run a bunch of feedfinders!
-echo $parms | xargs -n2 -P32 ./findfeeds -cv -o
+echo $parms | xargs -n2 -P4 ./findfeeds -cv -o
 
