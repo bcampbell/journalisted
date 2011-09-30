@@ -167,6 +167,7 @@ SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.
             FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
                 LEFT JOIN journo j ON j.id=e.expected_journo)
                 LEFT JOIN person p ON p.id=e.submitted_by)
+            WHERE reason_code NOT IN ('rejected','resolved')
             ORDER BY e.submitted DESC
 EOT;
         $rows = db_getAll($sql);
