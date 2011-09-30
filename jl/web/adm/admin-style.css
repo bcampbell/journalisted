@@ -122,22 +122,30 @@ pre code {
 }
 */
 
+
 ul.errorlist {
     display: block;
-    border: 1px solid red;
-    color: white;
-    background: red;
+/*    border: 1px solid red; */
+    background: #faa;
+    padding: 0;
+    margin: 0;
+    list-style: none;
 }
 
+ul.errorlist li {
+    padding: 0.2em;
+    margin: 0;
+    color: #c00;
+    font-weight:bold;
+}
 
 .errors {
-    background: #ffc;
+    background: #faa;
 }
 
 .errors input, .errors select {
     border: 1px solid red;
 }
-
 
 
 /* css buttons from: http://www.red-team-design.com/just-another-awesome-css3-buttons */
