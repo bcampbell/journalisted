@@ -15,6 +15,26 @@ require_once '../phplib/drongo-forms/forms.php';
 
 xdebug_enable();
 
+// validator to ensure a list of journos are all valid
+class CommaSeparatedJournoValidator {
+    public $msg = 'Invalid journos (%1$s)';
+    public $code = 'invalid_journos';
+    function execute($value) {
+
+        $authors = explode(',',$value);
+        $bad = array();
+        foreach($authors as $ref) {
+            $journo_id = db_getOne("SELECT id FROM journo WHERE ref=?",trim($ref));
+            if(is_null($journo_id)) {
+                $bad[] = $ref;
+            }
+        }
+        if($bad) {
+           $params = array(join(',',$bad));
+           throw new ValidationError(vsprintf($this->msg,$params), $this->code, $params );
+        }
+    }
+}
 
 
 // form for editing/adding articles
@@ -38,6 +58,11 @@ class ArticleForm extends Form
         $this->fields['title'] = new CharField(array('max_length'=>200,));
         $this->fields['permalink'] = new URLField(array( 'max_length'=>400, ));
         $this->fields['srcorg'] = new ChoiceField(array('choices'=>$publication_choices, 'required'=>FALSE));
+        $this->fields['authors'] = new CharField(array(
+            'max_length'=>400,
+            'required'=>FALSE,
+            'validators'=>array(array(new CommaSeparatedJournoValidator(),"execute")),
+        ));
         $this->fields['byline'] = new CharField(array(
             'required'=>FALSE,
             'max_length'=>200,
@@ -89,7 +114,7 @@ class ArticleModelForm extends ArticleForm
 
 
 
-        // all set - upsert time!
+        // all set - time to upsert!
 
         $params = array();
         foreach($fields as $f) {
@@ -114,12 +139,22 @@ class ArticleModelForm extends ArticleForm
             db_do("INSERT INTO article_url (url,article_id) VALUES (?,?)", $data['permalink'],$data['id']);
         }
 
+        // set attributed journos
+        db_do("DELETE FROM journo_attr WHERE article_id=?",$data['id']);
+        $authors = explode(',',$data['authors']);
+        $params = array();
+        $params[] = $data['id'];
+        $placeholders = array();
+        foreach($authors as $a) {
+            $params[] = trim($a);
+            $placeholders[] = '?';
+        }
+        print_r($params);
+        db_do("INSERT INTO journo_attr (journo_id,article_id) SELECT id,? FROM journo WHERE ref IN (" . join(',',$placeholders) . ")", $params);
 
         # TODO:
         #  log the action
         #  resolve any relevant submitted articles
-        #  journo attribution
-
 
         return $data;
     }
@@ -150,13 +185,20 @@ class ArticleModelForm extends ArticleForm
 
 
     static function from_db($art_id) {
-        $row = db_getRow("SELECT * FROM article WHERE id=?", $art_id);
+        $art = db_getRow("SELECT * FROM article WHERE id=?", $art_id);
         $date_fields = array('pubdate','lastscraped','firstseen','lastseen');
         foreach($date_fields as $f) {
-            $row[$f] = new DrongoDateTime($row[$f]);
+            $art[$f] = new DrongoDateTime($art[$f]);
         }
 
-        return new ArticleModelForm($row);
+        // 
+        $foo = db_getAll("SELECT j.ref FROM (journo_attr attr INNER JOIN journo j ON j.id=attr.journo_id) WHERE attr.article_id=?", $art_id);
+        $authors = array();
+        foreach($foo as $row) {
+            $authors[] = $row['ref'];
+        }
+        $art['authors'] = join(',',$authors);
+        return new ArticleModelForm($art);
     }
 }
 
@@ -170,14 +212,14 @@ function view()
         if($f->is_valid()) {
             $art = $f->save();
             db_commit();
-            $url = sprintf("http://%s/adm/editarticle?id36=%d",$_SERVER[HTTP_HOST],article_id_to_id36($art['id']));
+            $url = sprintf("http://%s/adm/editarticle?id36=%s",$_SERVER['HTTP_HOST'],article_id_to_id36($art['id']));
             header("HTTP/1.1 303 See Other");
             header("Location: {$url}");
             return;
         }
     } else {
         // handle either base-10 or base-36 article ids
-        $article_id = get_http_var('id36');
+        $art_id = get_http_var('id36');
         if( $art_id ) {
             $art_id = article_id36_to_id($art_id);
         } else {
@@ -208,7 +250,7 @@ function template($vars)
 <h2>Edit Article</h2>
 go to <a href="<?= article_url($art_id); ?>">public page</a>, <a href="<?= article_adm_url($art_id); ?>">admin page</a>
 <?php }?>
-<form action="article2" method="POST">
+<form action="/adm/editarticle" method="POST">
 <table>
 <?= $form->as_table(); ?>
 </table>

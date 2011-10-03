@@ -16,4 +16,7 @@ class JournoValidator {
     }
 }
 
+
+
+
 ?>
