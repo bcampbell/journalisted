@@ -194,6 +194,7 @@ EOT;
     // fetch all article_errors, returning an array of widgets
     public static function fetch_all() {
         $sql = self::$fetch_sql . <<<EOT
+            WHERE reason_code NOT IN ('rejected','resolved')
             ORDER BY e.submitted DESC
 EOT;
         $rows = db_getAll($sql);
@@ -213,6 +214,8 @@ EOT;
         assert(!is_null($this->article));
         assert(!is_null($this->expected_journo));
 
+        // TODO: should update the authors member!
+    
         db_do("DELETE FROM journo_attr WHERE journo_id=? AND article_id=?",
             $this->expected_journo->id, $this->article->id);
         db_do("INSERT INTO journo_attr (journo_id,article_id) VALUES (?,?)",
