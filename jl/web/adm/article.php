@@ -106,7 +106,7 @@ EOT;
 
 ?>
 <table border="1">
-<tr><th>title</th><td><h2><?php echo $art['title']; ?></h2>[<a href="/adm/editarticle?id36=<?= article_id_to_id36($art['id']); ?>">edit article</a>]</td></tr>
+<tr><th>title</th><td><h2><?php echo $art['title']; ?></h2><a class="button edit" href="/adm/editarticle?id36=<?= article_id_to_id36($art['id']); ?>">edit article</a></td></tr>
 <tr><th>status</th><td><?php echo $art['status']; ?></td></tr>
 <tr><th>id</th><td><?php echo $art['id']; ?> [<a href="<?= article_url( $art['id'] ); ?>">go to article page</a>]
 <tr><th>srcorg</th><td><?php echo $orgname;?> (id <?php echo $art['srcorg'];?>)</td></tr>

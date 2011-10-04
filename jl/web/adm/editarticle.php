@@ -8,12 +8,12 @@ require_once '../phplib/adm.php';
 require_once '../phplib/article.php';
 require_once '../phplib/tabulator.php';
 require_once '../phplib/paginator.php';
+require_once '../phplib/submitted_article.php';
 require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 require_once '../phplib/drongo-forms/forms.php';
 
-xdebug_enable();
 
 // validator to ensure a list of journos are all valid
 class CommaSeparatedJournoValidator {
@@ -55,22 +55,24 @@ class ArticleForm extends Form
         $this->error_css_class = 'errors';
         $this->fields['id'] = new IntegerField(array('widget'=>new HiddenInput(), 'required'=>FALSE));
         $this->fields['status'] = new ChoiceField(array('choices'=>$status_choices,));
-        $this->fields['title'] = new CharField(array('max_length'=>200,));
         $this->fields['permalink'] = new URLField(array( 'max_length'=>400, ));
-        $this->fields['srcorg'] = new ChoiceField(array('choices'=>$publication_choices, 'required'=>FALSE));
+        $this->fields['title'] = new CharField(array('max_length'=>200,));
+        $this->fields['pubdate'] = new DateField(array('help_text'=>"YYYY-MM-DD, 'today', 'yesterday'"));
         $this->fields['authors'] = new CharField(array(
             'max_length'=>400,
             'required'=>FALSE,
             'validators'=>array(array(new CommaSeparatedJournoValidator(),"execute")),
+            'help_text'=>'eg "fred-bloggs,bob-smith"',
         ));
+        $this->fields['srcorg'] = new ChoiceField(array('label'=>'Publication','choices'=>$publication_choices, 'required'=>FALSE));
         $this->fields['byline'] = new CharField(array(
             'required'=>FALSE,
             'max_length'=>200,
-            'label'=>'Raw Byline'));
+            'label'=>'Raw Byline',
+            'help_text'=>"byline doesn't affect attributed authors, so you can leave this blank"));
         $this->fields['description'] = new CharField(array(
             'widget'=>new Textarea(array('cols'=>'80')),
             'required'=>FALSE));
-        $this->fields['pubdate'] = new DateField(array());
 //        $this->fields['firstseen'] = new DateField(array('required'=>FALSE));
 //        $this->fields['lastseen'] = new DateField(array('required'=>FALSE));
 //        $this->fields['srcurl'] = new URLField(array('required'=>FALSE, 'max_length'=>400, ));
@@ -132,7 +134,7 @@ class ArticleModelForm extends ArticleForm
             db_do("INSERT INTO article_url (url,article_id) VALUES (?,?)", $data['permalink'],$data['id']);
         } else {
             //create new
-            $sql = "INSERT INTO article (id," . join(',',$fields) . ") VALUES (DEFAULT," . join(',',$placeholders) . ") RETURNING id";
+            $sql = "INSERT INTO article (id," . join(',',$fields) . ",firstseen,lastseen) VALUES (DEFAULT," . join(',',$placeholders) . ",NOW(),NOW()) RETURNING id";
             $data['id'] = db_getOne($sql, $values);
     
             // set up article_url
@@ -149,12 +151,19 @@ class ArticleModelForm extends ArticleForm
             $params[] = trim($a);
             $placeholders[] = '?';
         }
-        print_r($params);
         db_do("INSERT INTO journo_attr (journo_id,article_id) SELECT id,? FROM journo WHERE ref IN (" . join(',',$placeholders) . ")", $params);
+
+
+        // check for any submitted articles for this url that could now be resolved
+        $submitted = SubmittedArticle::fetch_by_url($data['permalink']);
+
+        foreach($submitted as $s) {
+            $s->update_status();
+            $s->save();
+        }
 
         # TODO:
         #  log the action
-        #  resolve any relevant submitted articles
 
         return $data;
     }
@@ -203,6 +212,9 @@ class ArticleModelForm extends ArticleForm
 }
 
 
+
+
+
 // pull together everything we need to display the page, then invoke the template
 function view()
 {
@@ -212,7 +224,9 @@ function view()
         if($f->is_valid()) {
             $art = $f->save();
             db_commit();
-            $url = sprintf("http://%s/adm/editarticle?id36=%s",$_SERVER['HTTP_HOST'],article_id_to_id36($art['id']));
+
+            // redirect to prevent multiple POSTs
+            $url = sprintf("http://%s/adm/article/%s",$_SERVER['HTTP_HOST'],article_id_to_id36($art['id']));
             header("HTTP/1.1 303 See Other");
             header("Location: {$url}");
             return;
@@ -228,7 +242,13 @@ function view()
         if($art_id) {
             $f = ArticleModelForm::from_db($art_id);
         } else {
-            $f = new ArticleModelForm();
+            $initial = array();
+            if(isset($_GET['url']))
+                $initial['permalink'] = $_GET['url'];
+            if(isset($_GET['journo']))
+                $initial['authors'] = $_GET['journo'];
+
+            $f = new ArticleModelForm(null,null,array('initial'=>$initial));
             $art_id=null;
         }
     }

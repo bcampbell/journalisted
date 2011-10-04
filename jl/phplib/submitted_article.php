@@ -2,6 +2,7 @@
 
 require_once '../conf/general';
 require_once '../phplib/misc.php';
+require_once '../phplib/article.php';
 require_once '../../phplib/db.php';
 
 // TODO: rename article_error table (and 'reason_code' and 'submitted' fields)
@@ -23,14 +24,14 @@ class SubmittedArticle
     {
     }
 
-
+/*
     public static function create($url,$expected_journo, $submitted_by) {
         $instance = new self();
         $instance->url = $url;
         $instance->expected_journo = $expected_journo;
-        $instance->refresh();
         return $instance;
     }
+*/
 /*
     public function refresh() {
         assert(!is_null($this->url));
@@ -49,7 +50,7 @@ class SubmittedArticle
     }
 */
 
-
+    // fill out the article
     protected function set_article($art_id) {
         if(is_null($art_id)) {
             $this->article = null;
@@ -71,39 +72,54 @@ EOT;
     }
 
 
-    // returns scraper output text
+    // updates the status and returns scraper output text
     public function scrape() {
         list($ret,$txt) = scrape_ScrapeURL($this->url);
         $art_id = null;
-        if($ret != 0) {
-            // scraped failed
-            $this->status = 'scrape_failed';
-            return $txt;
+        if($ret == 0) {
+            // scraped ran
+
+            $arts = scrape_ParseOutput($txt);
+            if(sizeof($arts)>0) {
+                // scraped at least one article
+                $this->set_article($arts[0]);
+            }
         }
 
-        $arts = scrape_ParseOutput($txt);
-        if(sizeof($arts)<1) {
-            // scraped, but yielded no article
-            $this->status = 'scrape_failed';
-            return $txt;
+        $this->update_status();
+        return $txt;
+    }
+
+
+    // 
+    public function update_status() {
+
+        if($this->status=='rejected') {
+            return;
         }
 
-        // got article
-        $this->set_article($arts[0]);
+        if(!$this->article) {
+            // check to see if article now exists...
+            $art_id = article_find($this->url);
+            if(!is_null($art_id)) {
+                $this->set_article($art_id);
+            }
+        }
 
-        // see if expected journo is attributed to article
-        if($this->article) {
+
+        if(!$this->article) {
+            $this->status = 'scrape_failed';
+        } else {
+            $this->status = 'journo_mismatch';
             foreach($this->article->authors as $attributed) {
                 if($attributed->ref == $this->expected_journo->ref) {
-                    // YAY
                     $this->status='resolved';
-                    return $txt;
+                    break;
                 }
             }
         }
-        $this->status = 'journo_mismatch';
-        return $txt;
     }
+
 
     protected function from_db_row($row) {
         set_fields($this, $row, array('id'=>'id','url'=>'url','reason_code'=>'status','submitted'=>'when_submitted'));
@@ -134,18 +150,20 @@ EOT;
     }
 
 
-
-    public static function fetch_single($id) {
-        $sql = <<<EOT
+    private static $fetch_sql = <<<EOT
 SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
                 j.ref as expected_ref,
                 a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
                 p.name as submitted_by_name,
                 p.email as submitted_by_email,
-                array(SELECT ref FROM journo WHERE id IN (SELECT journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
+                array(SELECT ref FROM journo j2 WHERE j2.id IN (SELECT journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
             FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
                 LEFT JOIN journo j ON j.id=e.expected_journo)
                 LEFT JOIN person p ON p.id=e.submitted_by)
+EOT;
+
+    public static function fetch_single($id) {
+        $sql = self::$fetch_sql . <<<EOT
             WHERE e.id=?
             ORDER BY e.submitted DESC
 EOT;
@@ -155,18 +173,27 @@ EOT;
     }
 
 
+    // return array of submittedarticle objects matching $url
+    public static function fetch_by_url($url) {
+        $sql = self::$fetch_sql . <<<EOT
+            WHERE e.url=?
+            ORDER BY e.submitted DESC
+EOT;
+        $rows = db_getAll($sql,$url);
+        $art_errs = array();
+
+        foreach($rows as $row) {
+            $sub = new SubmittedArticle();
+            $sub->from_db_row($row);
+            $art_errs[] = $sub;
+        }
+
+        return $art_errs;
+    }
+
     // fetch all article_errors, returning an array of widgets
     public static function fetch_all() {
-        $sql = <<<EOT
-SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
-                j.ref as expected_ref,
-                a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
-                p.name as submitted_by_name,
-                p.email as submitted_by_email,
-                array(SELECT ref FROM journo j2 WHERE j2.id IN (SELECT attr.journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
-            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
-                LEFT JOIN journo j ON j.id=e.expected_journo)
-                LEFT JOIN person p ON p.id=e.submitted_by)
+        $sql = self::$fetch_sql . <<<EOT
             ORDER BY e.submitted DESC
 EOT;
         $rows = db_getAll($sql);
