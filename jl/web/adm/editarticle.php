@@ -153,6 +153,9 @@ class ArticleModelForm extends ArticleForm
         }
         db_do("INSERT INTO journo_attr (journo_id,article_id) SELECT id,? FROM journo WHERE ref IN (" . join(',',$placeholders) . ")", $params);
 
+        // queue for xapian indexing
+        db_do("DELETE FROM article_needs_indexing WHERE article_id=?",$data['id']);
+        db_do("INSERT INTO article_needs_indexing (article_id) VALUES (?)",$data['id']);
 
         // check for any submitted articles for this url that could now be resolved
         $submitted = SubmittedArticle::fetch_by_url($data['permalink']);
