@@ -752,7 +752,7 @@ def Extract_newformat( html, context ):
     # article-attributes
     # contains byline, date, publication...
     attrsdiv = contentdiv.find( 'ul', {'class':re.compile("""\\barticle-attributes\\b""")} )
-    blogbylinediv = soup.find( 'div', {'class':'blog-byline'} )
+    blogbylinediv = soup.find( 'div', {'class':re.compile(r"\bblog-byline\b")} )
 
     if attrsdiv:
         # byline
@@ -773,15 +773,19 @@ def Extract_newformat( html, context ):
         else:
             art['srcorgname'] = u'guardian'
 
-        # date (sometimes is actually in the "publication" bit)
-        dateli = attrsdiv.find( 'li', { 'class':'date' } )
-        if dateli:
-            pubdate = dateli.find.renderContents(None).strip()
-            art['pubdate'] = ukmedia.ParseDateTime( pubdate )
+        # pub date (looks like they're moving to html5...)
+        time_node = attrsdiv.find('time')
+        if time_node:
+            art['pubdate'] = ukmedia.ParseDateTime(time_node['datetime'])
         else:
-            foo = publicationli.renderContents(None)
-            # TODO: should use a regex to extract just the date part of the string!
-            art['pubdate'] = ukmedia.ParseDateTime( foo )
+            dateli = attrsdiv.find( 'li', { 'class':'date' } )
+            if dateli:
+                pubdate = dateli.find.renderContents(None).strip()
+                art['pubdate'] = ukmedia.ParseDateTime( pubdate )
+            else:
+                foo = publicationli.renderContents(None)
+                # TODO: should use a regex to extract just the date part of the string!
+                art['pubdate'] = ukmedia.ParseDateTime( foo )
 
     
         # now strip out all non-text bits of content div
