@@ -23,72 +23,6 @@ class NoOrgJournoException(FindJournoException):
 
 DEBUG_NO_COMMITS = False
 
-# table to convert various latin accented chars into rough ascii
-# equivalents (used to create journo URLs without latin chars)
-xlate_delatinise = {
-    u'\N{LATIN CAPITAL LETTER A WITH ACUTE}': u'A',
-    u'\N{LATIN CAPITAL LETTER A WITH CIRCUMFLEX}': u'A',
-    u'\N{LATIN CAPITAL LETTER A WITH DIAERESIS}': u'A',
-    u'\N{LATIN CAPITAL LETTER A WITH GRAVE}': u'A',
-    u'\N{LATIN CAPITAL LETTER A WITH RING ABOVE}': u'A',
-    u'\N{LATIN CAPITAL LETTER A WITH TILDE}': u'A',
-    u'\N{LATIN CAPITAL LETTER AE}': u'Ae',
-    u'\N{LATIN CAPITAL LETTER C WITH CEDILLA}': u'C',
-    u'\N{LATIN CAPITAL LETTER E WITH ACUTE}': u'E',
-    u'\N{LATIN CAPITAL LETTER E WITH CIRCUMFLEX}': u'E',
-    u'\N{LATIN CAPITAL LETTER E WITH DIAERESIS}': u'E',
-    u'\N{LATIN CAPITAL LETTER E WITH GRAVE}': u'E',
-    u'\N{LATIN CAPITAL LETTER ETH}': u'Th',
-    u'\N{LATIN CAPITAL LETTER I WITH ACUTE}': u'I',
-    u'\N{LATIN CAPITAL LETTER I WITH CIRCUMFLEX}': u'I',
-    u'\N{LATIN CAPITAL LETTER I WITH DIAERESIS}': u'I',
-    u'\N{LATIN CAPITAL LETTER I WITH GRAVE}': u'I',
-    u'\N{LATIN CAPITAL LETTER N WITH TILDE}': u'N',
-    u'\N{LATIN CAPITAL LETTER O WITH ACUTE}': u'O',
-    u'\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}': u'O',
-    u'\N{LATIN CAPITAL LETTER O WITH DIAERESIS}': u'O',
-    u'\N{LATIN CAPITAL LETTER O WITH GRAVE}': u'O',
-    u'\N{LATIN CAPITAL LETTER O WITH STROKE}': u'O',
-    u'\N{LATIN CAPITAL LETTER O WITH TILDE}': u'O',
-    u'\N{LATIN CAPITAL LETTER THORN}': u'th',
-    u'\N{LATIN CAPITAL LETTER U WITH ACUTE}': u'U',
-    u'\N{LATIN CAPITAL LETTER U WITH CIRCUMFLEX}': u'U',
-    u'\N{LATIN CAPITAL LETTER U WITH DIAERESIS}': u'U',
-    u'\N{LATIN CAPITAL LETTER U WITH GRAVE}': u'U',
-    u'\N{LATIN CAPITAL LETTER Y WITH ACUTE}': u'Y',
-    u'\N{LATIN SMALL LETTER A WITH ACUTE}': u'a',
-    u'\N{LATIN SMALL LETTER A WITH CIRCUMFLEX}': u'a',
-    u'\N{LATIN SMALL LETTER A WITH DIAERESIS}': u'a',
-    u'\N{LATIN SMALL LETTER A WITH GRAVE}': u'a',
-    u'\N{LATIN SMALL LETTER A WITH RING ABOVE}': u'a',
-    u'\N{LATIN SMALL LETTER A WITH TILDE}': u'a',
-    u'\N{LATIN SMALL LETTER AE}': u'ae',
-    u'\N{LATIN SMALL LETTER C WITH CEDILLA}': u'c',
-    u'\N{LATIN SMALL LETTER E WITH ACUTE}': u'e',
-    u'\N{LATIN SMALL LETTER E WITH CIRCUMFLEX}': u'e',
-    u'\N{LATIN SMALL LETTER E WITH DIAERESIS}': u'e',
-    u'\N{LATIN SMALL LETTER E WITH GRAVE}': u'e',
-    u'\N{LATIN SMALL LETTER ETH}': u'th',
-    u'\N{LATIN SMALL LETTER I WITH ACUTE}': u'i',
-    u'\N{LATIN SMALL LETTER I WITH CIRCUMFLEX}': u'i',
-    u'\N{LATIN SMALL LETTER I WITH DIAERESIS}': u'i',
-    u'\N{LATIN SMALL LETTER I WITH GRAVE}': u'i',
-    u'\N{LATIN SMALL LETTER N WITH TILDE}': u'n',
-    u'\N{LATIN SMALL LETTER O WITH ACUTE}': u'o',
-    u'\N{LATIN SMALL LETTER O WITH CIRCUMFLEX}': u'o',
-    u'\N{LATIN SMALL LETTER O WITH DIAERESIS}': u'o',
-    u'\N{LATIN SMALL LETTER O WITH GRAVE}': u'o',
-    u'\N{LATIN SMALL LETTER O WITH STROKE}': u'o',
-    u'\N{LATIN SMALL LETTER O WITH TILDE}': u'o',
-    u'\N{LATIN SMALL LETTER SHARP S}': u'ss',
-    u'\N{LATIN SMALL LETTER THORN}': u'th',
-    u'\N{LATIN SMALL LETTER U WITH ACUTE}': u'u',
-    u'\N{LATIN SMALL LETTER U WITH CIRCUMFLEX}': u'u',
-    u'\N{LATIN SMALL LETTER U WITH DIAERESIS}': u'u',
-    u'\N{LATIN SMALL LETTER U WITH GRAVE}': u'u',
-    u'\N{LATIN SMALL LETTER Y WITH ACUTE}': u'y',
-    u'\N{LATIN SMALL LETTER Y WITH DIAERESIS}': u'y',
-}
 
 
 places_cached = None
@@ -148,24 +82,13 @@ def BaseRef( prettyname ):
     """
 
     # convert to unicode (actually it is already, but we need to let python know that)
-    if not isinstance(prettyname, unicode):
-        prettyname = unicode(prettyname, 'utf-8')
+    assert isinstance(prettyname, unicode)
 
     # get rid of accents:
     ref = unicodedata.normalize('NFKD',prettyname).encode('ascii','ignore')
     
     # get rid of non-alphas:
     ref = re.sub(u'[^a-zA-Z ]',u'',ref)
-
-#   ref = u''
-#   # translate european accented chars into ascii equivalents and
-#   # remove anything else that we don't want in our url.
-#   for ch in prettyname:
-#       if xlate_delatinise.has_key( ch ):
-#           ch = xlate_delatinise[ch]
-#       elif ch.lower() not in u'abcdefghijklmnopqrstuvwxyz ':
-#           ch = u''    # drop all other non-numeric-or-space chars
-#       ref += ch
 
     ref = ref.lower()
     ref = ref.strip()
@@ -308,35 +231,49 @@ def FindJournoMultiple( conn, rawname ):
     return found
 
 
-def FindJourno( conn, rawname, hint_context = None ):
+
+
+# TODO: use rel=author urls etc in journo to aid resolution
+def FindJourno( conn, rawname, hint_art=None, expected_ref=None ):
     """Find a journo in the database, returns journo id or None if rawname can't be resolved
 
-    If the name matches multiple journalists, the hint_context data is used.
-    hint_context contains additional information known, usually the entire article
+    If the name matches multiple journalists, the hint_art data is used.
+    hint_art contains additional information known, usually the entire article
     that the name came from.
-    If supplied, hint_context must have at least a 'srcorgname' item containing
+    If supplied, hint_art must have at least a 'srcorgname' item containing
     the shortname of an organisation the journo is known to have written for.
     """
 
+
     # handle any evil special cases for individual journos
     # (eg when two journos of the same name write for the same organisation)
-    journo_id = EvilPerJournoSpecialCasesLookup( conn, rawname, hint_context )
+    journo_id = EvilPerJournoSpecialCasesLookup( conn, rawname, hint_art )
     if journo_id:
         return journo_id
 
+    # look up candidates by name
     candidates = FindJournoMultiple( conn, rawname )
 
     if len(candidates) == 0:
         return None
 
-    assert hint_context is not None
+    c = conn.cursor()
+    if expected_ref is not None:
+        # we're expecting a certain journo. if found, bypass other checks
+        c.execute("SELECT id FROM journo WHERE ref=%s", (expected_ref,))
+        row = c.fetchone()
+        if row is not None:
+            expected_id = row['id']
+            if expected_id in candidates:
+                return expected_id      # yay!
+
+    assert hint_art is not None
 
     # any candidates written for this publication before?
-    c = conn.cursor()
-    if 'srcorg' in hint_context:
-        srcorgid = hint_context['srcorg']
+    if 'srcorg' in hint_art:
+        srcorgid = hint_art['srcorg']
     else:
-        srcorgid = Misc.GetOrgID(hint_context['srcorgname'])
+        srcorgid = Misc.GetOrgID(hint_art['srcorgname'])
     sql = "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE attr.journo_id IN (" + ','.join([str(j) for j in candidates]) + ") AND a.srcorg=%s"
     c.execute(sql, (srcorgid,))
     matching = [row['journo_id'] for row in c]
@@ -430,8 +367,7 @@ def GetPrettyNameFromRawName(conn, rawName ):
     newPrettyname = re.sub("E28099".decode("hex"), '\'', newPrettyname) #U+02BC
 
     # treat as unicode:
-    if not isinstance( newPrettyname, unicode ):
-        newPrettyname = unicode(newPrettyname, 'utf-8')
+    assert isinstance( newPrettyname, unicode )
     # - O'Connor should be done by this:
     
     newPrettyname = newPrettyname.title()
@@ -477,7 +413,10 @@ def GetPrettyNameFromRawName(conn, rawName ):
     return newPrettyname
 
 
-def CreateNewJourno( conn, rawname ):
+def create(rawname ):
+
+    conn = DB.conn()
+
 #gtb    alias = DefaultAlias( rawname )
     prettyname = GetPrettyNameFromRawName( conn, rawname )
 #   (firstname,lastname) = prettyname.split(None,1) 
@@ -524,32 +463,25 @@ def CreateNewJourno( conn, rawname ):
 #           journo_id,
 #           alias.encode('utf-8') )
     q.close()
-    return journo_id
+
+    journo = {
+        'id':journo_id,
+        'ref':ref,
+        'prettyname':prettyname,
+        'firstname':firstname,
+        'lastname': lastname,
+        'firstname_metaphone': firstname_metaphone,
+        'lastname_metaphone': lastname_metaphone,
+    }
+
+    return journo
 
 
-def AttributeArticle( conn, journo_id, article_id ):
-    """ add a link to say that a journo wrote an article """
 
-    #print "Attribute article %d to journo %d" %(article_id,journo_id)
-
-    q = conn.cursor()
-    q.execute( "SELECT article_id FROM journo_attr WHERE journo_id=%s AND article_id=%s", (journo_id, article_id))
-    if not q.fetchone():
-        q.execute( "INSERT INTO journo_attr (journo_id,article_id) VALUES(%s,%s)", (journo_id, article_id) )
-
-        # activate journalist if need be
-        UpdateJournoStatus( conn, journo_id )
-
-        # also clear the html cache for that journos page
-        cachename = 'j%s' % (journo_id)
-        q.execute( "DELETE FROM htmlcache WHERE name=%s", (cachename,) )
-    q.close()
-
-
-def UpdateJournoStatus( conn, journo_id ):
+def update_activation(journo_id):
     """ activate the journos status if they've got more than one active article and they've not been hidden """
 
-    q = conn.cursor()
+    q = DB.conn().cursor()
     # count number of articles
     q.execute( "SELECT COUNT(*) FROM journo_attr ja INNER JOIN article a ON (a.id=ja.article_id AND a.status='a') WHERE ja.journo_id=%s", (journo_id,))
     r = q.fetchone()
@@ -562,9 +494,7 @@ def UpdateJournoStatus( conn, journo_id ):
 def SeenJobTitle( conn, journo_id, jobtitle, whenseen, srcorg ):
     """ add a link to assign a jobtitle to a journo """
 
-    if not isinstance( jobtitle, unicode ):
-        raise Exception, "jobtitle not unicode"
-
+    assert isinstance( jobtitle, unicode )
 
     jobtitle = jobtitle.strip()
 
@@ -738,6 +668,16 @@ def load_or_update_bio( conn, journo_id, bio, default_approval=False ):
         # create new bio entry
         c.execute( "INSERT INTO journo_bio (journo_id, bio, kind,srcurl, approved ) VALUES (%s,%s,%s,%s,%s)",( journo_id, bio['bio'].encode('utf-8'), bio['kind'], bio['srcurl'], default_approval))
 
+
+
+def find_or_create(journo, hint_art=None, expected_journo=None):
+    """ returns journo id """
+    j_id = FindJourno(DB.conn(),journo['name'],hint_art,expected_journo)
+    if j_id is None:
+        j = create(journo['name'])
+        ukmedia.DBUG2(" NEW journo: %s\n" % (j['ref'],))
+        j_id = j['id']
+    return j_id
 
 
 

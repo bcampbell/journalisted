@@ -151,7 +151,7 @@ class ArticleSubmitter
         $art_id = article_find($this->url);
         if(is_null($art_id)) {
             // nope - try and scrape it
-            list($ret,$txt) = scrape_ScrapeURL($this->url);
+            list($ret,$txt) = scrape_ScrapeURL($this->url, $this->journo['ref']);
             if($ret != 0) {
                 $this->errs['error_message'] = "Journa<i>listed</i> had problems reading this article";
                 $this->state = 'scrape_failed';

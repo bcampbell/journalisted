@@ -74,7 +74,12 @@ EOT;
 
     // updates the status and returns scraper output text
     public function scrape() {
-        list($ret,$txt) = scrape_ScrapeURL($this->url);
+        $expected_ref = null;
+        if(!is_null($this->expected_journo)) {
+            $expected_ref = $this->expected_journo->ref;
+        }
+
+        list($ret,$txt) = scrape_ScrapeURL($this->url, $expected_ref);
         $art_id = null;
         if($ret == 0) {
             // scraped ran
@@ -221,6 +226,7 @@ EOT;
         db_do("INSERT INTO journo_attr (journo_id,article_id) VALUES (?,?)",
             $this->expected_journo->id, $this->article->id);
 
+        // TODO: should 1) clear htmlcache for this journo 2) activate them if required
         $this->status = "resolved";
     }
 
