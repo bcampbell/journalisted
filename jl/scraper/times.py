@@ -351,9 +351,9 @@ def Extract_ece_thetimes( html, context ):
     tab1_div = soup.find( 'div', {'id':'tab-1'} )
 
 
-    byline_timestamp_div = tab1_div.find( 'div', {'class':'byline-timestamp' } )
+    #byline_timestamp_div = tab1_div.find( 'div', {'class':'byline-timestamp' } )
     authors = []
-    for strong in byline_timestamp_div.findAll( 'strong', {'class':'f-author' } ):
+    for strong in soup.findAll( 'strong', {'class':'f-author' } ):
         authors.append( ukmedia.FromHTMLOneLine(strong.renderContents(None)) )
  
     art['byline'] = u', '.join( authors )
