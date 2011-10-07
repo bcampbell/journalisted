@@ -1,0 +1,10 @@
+BEGIN;
+ALTER TABLE article ALTER COLUMN lastscraped DROP NOT NULL;
+ALTER TABLE article ALTER COLUMN srcurl SET DEFAULT '';
+ALTER TABLE article ALTER COLUMN srcid SET DEFAULT '';
+
+ALTER TABLE article DROP CONSTRAINT article_srcid_key;
+
+
+COMMIT;
+

@@ -101,6 +101,9 @@ def do_batch(scraper,arts,options):
     args = [ cmd ]
     if options.test:
         args.append('-t')
+    if options.expected_journo:
+        args.append('-j')
+        args.append(options.expected_journo)
 
     args.append('-m')
     args.append(str(max_errors))
@@ -121,6 +124,7 @@ def main():
     parser.add_option('-t', '--test', action='store_true', help="test only - don't commit to db")
     parser.add_option('-f', '--force_rescrape', action='store_true')
     parser.add_option('-s', '--source_feeds', dest="source_feeds", help="list of feeds, in json format")
+    parser.add_option('-j', '--expected_journo', dest="expected_journo", help="journo ref to help resolve ambiguous cases (eg 'fred-bloggs-1')")
     (options, args) = parser.parse_args()
 
     log_level = logging.ERROR

@@ -25,9 +25,11 @@ class SubmittedArticleWidget
 
 
     static $action_defs=array(
-        'add_journo'=>array('label'=>'Add Journo','class'=>'add'),
-        'reject'=>array('label'=>'Reject','class'=>'delete'),
-        'scrape'=>array('label'=>'Scrape','class'=>'spark'));
+        'add_journo'=>array('label'=>'Add Journo','class'=>'widget add'),
+        'reject'=>array('label'=>'Reject','class'=>'widget delete'),
+        'scrape'=>array('label'=>'Scrape','class'=>'widget spark'),
+        'add_manual'=>array('label'=>'Add article by hand','class'=>'add'),
+    );
 
     // output javascript block to put in page <head>
     public static function emit_head_js()
@@ -88,13 +90,21 @@ $(document).ready(function(){
     }
 
     function action_url( $action ) {
-        return "/adm/widget?widget=" . self::PREFIX . "&action={$action}&id={$this->submitted->id}";
+        if($action=='add_manual') {
+            $url ="/adm/editarticle?url={$this->submitted->url}";
+            if(!is_null($this->submitted->expected_journo)) {
+                $url .= "&journo={$this->submitted->expected_journo->ref}";
+            }
+        } else {
+            $url = "/adm/widget?widget=" . self::PREFIX . "&action={$action}&id={$this->submitted->id}";
+        }
+        return $url;
     }
 
 
     function action_link($action) {
         $def = self::$action_defs[$action];
-        return sprintf('<a class="widget button %s" href="%s">%s</a>', $def['class'], $this->action_url($action), $def['label']);
+        return sprintf('<a class="button %s" href="%s">%s</a>', $def['class'], $this->action_url($action), $def['label']);
     }
 
 
@@ -127,6 +137,7 @@ $(document).ready(function(){
             }
             if($reason =='scrape_failed' || $reason=='') {
                 $actions[] = 'scrape';
+                $actions[] = 'add_manual';
             }
             if($reason !='rejected' && $reason != 'resolved' ) {
                 $actions[] = "reject";

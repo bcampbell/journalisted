@@ -7,46 +7,19 @@ require_once '../conf/general';
 $JLBIN = OPTION_JL_FSROOT . '/bin';
 
 
-// try and obtain a srcid from an article url (srcid is a unique id derived
-// from url which we use to decide if we've already got an article in the db
-// or not).
-// returns srcid, or NULL if none could be worked out.
-//
-//
-// TODO: KILL KILL KILL!!!!! TODO
-//
-//
-function scrape_CalcSrcID( $url )
-{
-    global $JLBIN;
-
-	$cmd = $JLBIN . "/scrape-tool";
-    $cmd .= ' -s';
-	$cmd .= ' -u ' . escapeshellarg( $url );
-
-	ob_start();
-    $ret = -1;
-    passthru($cmd, $ret );
-	$out = ob_get_contents();
-	ob_end_clean();
-
-    if($ret == 0 )
-        return trim($out);  // got one!
-    else
-        return NULL;
-}
-
 
 // returns array(return code, text output)
-function scrape_ScrapeURL( $url )
+function scrape_ScrapeURL( $url, $expected_ref=null )
 {
     global $JLBIN;
 
 	putenv("JL_DEBUG=2");
 
-	$cmd = $JLBIN . "/articlescraper ";
+	$cmd = $JLBIN . "/articlescraper";
+    if(!is_null($expected_ref))
+        $cmd .= ' -j ' . $expected_ref;
 	$cmd .= ' ' . escapeshellarg( $url );
-	$cmd = $cmd . ' 2>&1';
+	$cmd .= ' 2>&1';
 
 	ob_start();
     $ret = -1;

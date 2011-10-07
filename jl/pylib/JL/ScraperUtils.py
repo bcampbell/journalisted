@@ -19,6 +19,11 @@ import urllib2
 import ukmedia
 import DB
 import ArticleDB
+import Byline
+import Publication
+import Journo
+import Misc
+
 import feedparser
 
 from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
@@ -133,6 +138,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option("-t", "--test", action="store_true", dest="test", help="test with a dry run - don't commit to the database")
     parser.add_option("-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB")
     parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
+    parser.add_option('-j', '--expected_journo', dest="expected_journo", help="journo ref to help resolve ambiguous cases (eg 'fred-bloggs-1')")
  
     (opts, args) = parser.parse_args()
 
@@ -155,7 +161,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
 
 
 
-
+# TODO: convert opts to kwargs
 def scrape_articles( found, extract, opts):
     """Scrape list of articles, return error counts.
 
@@ -282,6 +288,24 @@ def scrape_articles( found, extract, opts):
             art = extract(html, context, **kwargs)
 
             if art:
+                # set the srcorg id for the article
+                if 'srcorgname' in art and art['srcorgname'] is not None:
+                    srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
+                else:
+                    # no publication specified - look up using domain name
+                    o = urlparse.urlparse(art['permalink'])
+                    domain = o[1].lower()
+                    srcorg = Publication.find_or_create(domain)
+                art['srcorg'] = srcorg
+
+
+                # resolve bylined authors to journo ids
+                authors = Byline.CrackByline(art['byline'])
+                attributed = []
+                for author in authors:
+                    attributed.append(Journo.find_or_create(author, art, opts.expected_journo))
+                art['journos'] = attributed
+
                 if opts.test:
                     ukmedia.PrettyDump( art )
 
@@ -294,6 +318,8 @@ def scrape_articles( found, extract, opts):
                     #
                     article_id = store.upsert( art )
                     newcount += 1
+
+
 
                 if opts.test:
                     DB.conn().rollback()

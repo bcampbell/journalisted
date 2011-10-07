@@ -74,6 +74,7 @@ class ArticleDB:
         firstseen = lastseen    # it's a new entry
         srcurl = art['srcurl']
         permalink = art['permalink']
+        srcorg = art['srcorg']
 
         # phasing out srcid...
         if 'srcid' in art:
@@ -94,15 +95,6 @@ class ArticleDB:
         cursor = DB.conn().cursor()
 
 
-        if 'srcorgname' in art and art['srcorgname'] is not None:
-            srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
-        else:
-            # no publication specified - look up using domain name
-            o = urlparse.urlparse(art['permalink'])
-            domain = o[1].lower()
-            srcorg = Publication.find_or_create(domain)
-
-        art['srcorg'] = srcorg
 
         updating = False
         if 'id' in art:
@@ -175,9 +167,18 @@ class ArticleDB:
         # add tags
         Tags.generate(article_id, art['content'])
 
-        # parse byline to assign/create journos
-        journos = process_byline(article_id, art)
+        # attribute journos
+        assert 'journos' in art
+        cursor.execute("DELETE FROM journo_attr WHERE article_id=%s", (article_id,))
+        for journo_id in art['journos']:
+            cursor.execute("INSERT INTO journo_attr (journo_id,article_id) VALUES (%s,%s)", (journo_id,article_id))
 
+            # make sure journo activates if they meet the criteria
+            Journo.update_activation(journo_id)
+
+            # also clear the html cache for that journos page
+            cachename = 'j%s' % (journo_id)
+            cursor.execute( "DELETE FROM htmlcache WHERE name=%s", (cachename,) )
 
 
         op = 'update' if updating else 'new'
@@ -192,7 +193,7 @@ class ArticleDB:
             article_id,
             art['srcurl'],
             art['byline'],
-            ','.join( [ '[j%s]'%(j) for j in journos ] )
+            ','.join( [ '[j%s]'%(j) for j in art['journos'] ] )
             ))
         return article_id
 
@@ -228,7 +229,7 @@ def CheckArticle(art):
     assert art['srcurl'] in art['urls']
 
     # check for missing/null fields
-    for f in ('title','content','description','permalink','srcurl','lastscraped','pubdate' ):
+    for f in ('title','content','description','permalink','srcurl','lastscraped','pubdate','srcorg','journos' ):
         assert f in art, "missing '%s' field!" % (f,)
         assert art[f] is not None, "null '%s' field!" % (f,)
 
@@ -257,6 +258,7 @@ def CheckArticle(art):
     # fix link URLs, then check for relative links
     for f in ('content', 'bio'):
         if f in art:
+            # TODO: fix links elsewhere!
             art[f] = FixLinkURLs(art[f])
             for link in re.findall(r'''href\s*=\s*['"](.*?)['"]''', art[f]):
                 link = link.strip()
@@ -284,47 +286,4 @@ def FixLinkURLs(html):
     return re.sub(r'''href\s*=\s*(?:['"](.*?)['"]|(\S*?)(?=\>))''', fixup, html)
 
 
-def process_byline(article_id, art):
-    """ Parse byline and assign to journos (creates journos along the way) """
-    byline = art['byline']
-    details = Byline.CrackByline( byline )
-    if details is None:
-        return []
-
-#    srcorgid = Misc.GetOrgID(art['srcorgname'])
-
-    attributed = []
-
-
-    c = DB.conn().cursor()
-    # in case we're rescraping...
-    c.execute("DELETE FROM journo_attr WHERE article_id=%s", (article_id,))
-
-    # reminder: a byline can contain multiple journos
-    for d in details:
-        journo_id = store_journo(d['name'], art )
-
-        # credit journo with writing this article
-        Journo.AttributeArticle( DB.conn(), journo_id, article_id )
-
-        attributed.append( journo_id )
-
-#        if d.has_key('title'):
-#            Journo.SeenJobTitle( DB.conn(), journo_id, d['title'], datetime.now(), srcorgid )
-
-    return attributed
-
-
-def store_journo(name, hints):
-    ''' Finds or creates a journo, returning their id.
-
-    hints - extra data for looking up journo. Must include at least 'srcorgname'.
-    Can be a whole article, if available.
-    '''
-
-    journo_id = Journo.FindJourno( DB.conn(), name, hints )
-    if not journo_id:
-        journo_id = Journo.CreateNewJourno( DB.conn(), name )
-        ukmedia.DBUG2( " NEW journo [j%s '%s']\n" % (journo_id, name) )
-    return journo_id
 

@@ -140,7 +140,7 @@ def CrackByline( byline ):
 
     # some special-case ignores.
     if byline.lower() in ( u'obituaries' ):
-        return None
+        return []
 
     # gtb:
     # Discard text after "is" to deal with e.g.
@@ -234,7 +234,7 @@ def CrackByline( byline ):
             return ret
 
     # no matches
-    return None
+    return []
 
 
 
