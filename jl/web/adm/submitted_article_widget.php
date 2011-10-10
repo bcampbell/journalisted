@@ -91,7 +91,7 @@ $(document).ready(function(){
 
     function action_url( $action ) {
         if($action=='add_manual') {
-            $url ="/adm/editarticle?url={$this->submitted->url}";
+            $url ="/adm/editarticle?url=" . urlencode($this->submitted->url);
             if(!is_null($this->submitted->expected_journo)) {
                 $url .= "&journo={$this->submitted->expected_journo->ref}";
             }
