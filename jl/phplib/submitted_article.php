@@ -196,13 +196,29 @@ EOT;
         return $art_errs;
     }
 
-    // fetch all article_errors, returning an array of widgets
-    public static function fetch_all() {
+    public static function count($filter=null) {
+        $n=db_getOne("SELECT COUNT(*) FROM article_error WHERE reason_code NOT IN ('rejected','resolved')");
+        return $n;
+    }
+
+    // fetch article_errors, returning an array of widgets
+    public static function fetch($filter=null,$offset=null,$limit=null) {
         $sql = self::$fetch_sql . <<<EOT
             WHERE reason_code NOT IN ('rejected','resolved')
             ORDER BY e.submitted DESC
 EOT;
-        $rows = db_getAll($sql);
+
+        $params = array();
+        if(!is_null($offset)) {
+            $sql .= " OFFSET ?\n";
+            $params[] = $offset;
+        }
+        if(!is_null($limit)) {
+            $sql .= " LIMIT ?\n";
+            $params[] = $limit;
+        }
+
+        $rows = db_getAll($sql,$params);
         $art_errs = array();
 
         foreach($rows as $row) {
