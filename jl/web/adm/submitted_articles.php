@@ -69,7 +69,7 @@ function template($vars)
 <h2>Submitted Articles</h2>
 <p>Submitted articles needing admin attention</p>
 
-<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> submmited articles</p>
+<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> submitted articles</p>
 <?php
     foreach($widgets as $w) {
         $w->emit_full();
