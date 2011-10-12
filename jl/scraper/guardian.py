@@ -734,6 +734,17 @@ def Extract( html, context, **kw):
 def Extract_newformat( html, context ):
     """ Extract function for guardians new CMS system (developed in-house) """
 
+    # HACK: feedarticles have bad canonical urls. sigh...
+    bad_url = 'http://www.guardian.co.uk/uk/feedarticle'
+    if bad_url in context['urls']:
+        context['urls'].remove(bad_url)
+    good_url = context['urls'].pop()    # any url will do
+    context['urls'].add(good_url)
+    if context['permalink'] == bad_url:
+        context['permalink'] = good_url
+    if context['srcurl'] == bad_url:
+        context['srcurl'] = good_url
+
     art = context
     soup = BeautifulSoup( html )
 
@@ -767,9 +778,12 @@ def Extract_newformat( html, context ):
         # guardian or observer?
         # (guardian is the catchall - we use it for web-only content too)
         publicationli = attrsdiv.find( 'li', { 'class':'publication' } )
-        publication = publicationli.a.string
-        if u'The Observer' in publication:
-            art['srcorgname'] = u'observer'
+        if publicationli.a is not None:
+            publication = publicationli.a.string
+            if u'The Observer' in publication:
+                art['srcorgname'] = u'observer'
+            else:
+                art['srcorgname'] = u'guardian'
         else:
             art['srcorgname'] = u'guardian'
 
@@ -1113,7 +1127,7 @@ def CalcSrcID( url ):
         if m:
             return 'guardian_' + m.group(1)
 
-    return None
+    return url
 
 
 def ScrubFunc( context, entry ):
