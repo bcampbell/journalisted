@@ -80,7 +80,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No68_26_09_11_2009510a.swf',
     'Tg_No69_03_10_11_2016028a.swf',
     'tobyvid_2022617a.swf',
-//    'Tobias_travels_Gnome.jpg',
+    'Tobias_travels_Gnome.jpg',
 );
 
 
