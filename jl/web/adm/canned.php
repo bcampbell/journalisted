@@ -40,6 +40,7 @@ $canned = array(
     new UserCreatedJournoProfiles(),
     new RecentlyEditedJournos(),
     new WeeklyStats(),
+    new PublicationBreakdown(),
 );
 
 
@@ -1037,6 +1038,35 @@ EOT;
 
     }
 
+}
+
+
+class PublicationBreakdown extends CannedQuery {
+    function __construct() {
+        $this->name = "PublicationBreakdown";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "How many articles were published over the given interval, broken down per publication";
+
+        $this->param_spec = array(
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function perform($params) {
+        $sql = <<<EOT
+SELECT o.shortname, COUNT(*)
+    FROM (article a INNER JOIN organisation o ON o.id=a.srcorg)
+    WHERE a.status='a' AND a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours')
+    GROUP BY o.shortname
+    ORDER BY COUNT DESC
+EOT;
+
+        $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
+        collectColumns( $rows );
+        Tabulate( $rows );
+    }
 }
 
 
