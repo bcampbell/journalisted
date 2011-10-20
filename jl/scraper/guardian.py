@@ -1238,5 +1238,5 @@ def FindArticles():
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50 )
 
