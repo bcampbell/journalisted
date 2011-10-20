@@ -1230,7 +1230,7 @@ def FindArticles():
     """ get current active articles via RSS feeds """
 
     feeds = FindBlogFeeds() + rssfeeds
-    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=10 )
+    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=50 )
 
 
 

@@ -60,3 +60,4 @@ Log changes made due to website changes here!
 2011-10-07 times: byline fix for columnists
 2011-10-12 guardian: fix for feedarticles (with bad rel-canonical. sigh)
 2011-10-19 telegraph: minor markup fix
+2011-10-20 guardian: up the bad-rss-feed threshold
