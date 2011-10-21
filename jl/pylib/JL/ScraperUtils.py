@@ -94,6 +94,8 @@ def extract_canonical_url(html, base_url):
     # (missing opening <head> tag)
 
     m = re.compile(r'<head[^>]*>(.*?)</head\s*>',re.DOTALL|re.IGNORECASE).search(html)
+    if not m:
+        return None     # some sites have _really_ bad html ;-)
     head_html = m.group(1)
 
     for pat in canonical_url_pats:
