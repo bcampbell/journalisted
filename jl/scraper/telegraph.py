@@ -412,6 +412,8 @@ def Extract_HTML_Article( html, context ):
     # 'story' div contains byline and main article text
     storydiv = soup.find( 'div', {'class': 'story' } )
     bylinediv = storydiv.find( 'div', {'class':'byline'} )
+    if bylinediv is None:
+        bylinediv = storydiv.find( 'div', {'class':'bylineComments'} )
     # contains both byline and pubdate
     bylinespan = bylinediv.find(['span','p'], {'class':'bylineBody'} )
     if bylinespan is not None:
@@ -442,7 +444,7 @@ def Extract_HTML_Article( html, context ):
         art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
 
 
-    # comments
+    # comments (think it's now been outsources to disqus)
     art['commentlinks'] = []
     comments_a = bylinediv.find('a',{'href':'#comments'})
     if comments_a:

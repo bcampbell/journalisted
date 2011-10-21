@@ -360,11 +360,13 @@ def getCloseMatches(conn, ref, journoRefs):
 
 
 
+
+
 def GetPrettyNameFromRawName(conn, rawName ):
     newPrettyname = rawName
 
-    # get rid of apostrophes: (or weird character in database masquerading as such):
-    newPrettyname = re.sub("E28099".decode("hex"), '\'', newPrettyname) #U+02BC
+    # normalize unicode apostrophes to ascii apostrophe
+    newPrettyname = re.sub(u'[\u02BC\u2019]',"'", newPrettyname)
 
     # treat as unicode:
     assert isinstance( newPrettyname, unicode )

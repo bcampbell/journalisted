@@ -35,11 +35,21 @@ class ArtErrFilterForm extends Form
 
 function view()
 {
+    $per_page = 100;
+    $page = arr_get('p',$_GET,0);
+    $offset = $page * $per_page;
+    $limit = $per_page;
+
     $widgets = array();
-    foreach(SubmittedArticle::fetch_all() as $err) {
+
+    $total = SubmittedArticle::count();
+
+    foreach(SubmittedArticle::fetch(null,$offset,$limit) as $err) {
         $widgets[] = new SubmittedArticleWidget($err);
     }
-    $v = array('widgets'=>&$widgets);
+
+    $paginator = new Paginator($total,$per_page,'p');
+    $v = array('widgets'=>&$widgets,'paginator'=>$paginator);
     template($v);
 }
 
@@ -59,11 +69,13 @@ function template($vars)
 <h2>Submitted Articles</h2>
 <p>Submitted articles needing admin attention</p>
 
+<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> submitted articles</p>
 <?php
     foreach($widgets as $w) {
         $w->emit_full();
     }
 ?>
+<p class="paginator"><?= $paginator->render() ?> <?= $paginator->total ?> submitted articles</p>
 
 <?php
     admPageFooter();

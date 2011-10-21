@@ -91,7 +91,7 @@ $(document).ready(function(){
 
     function action_url( $action ) {
         if($action=='add_manual') {
-            $url ="/adm/editarticle?url={$this->submitted->url}";
+            $url ="/adm/editarticle?url=" . urlencode($this->submitted->url);
             if(!is_null($this->submitted->expected_journo)) {
                 $url .= "&journo={$this->submitted->expected_journo->ref}";
             }
@@ -192,7 +192,8 @@ problem: <?= $ae->status ?><br/>
 
 
 <?php if(!is_null($ae->article)) { ?>
-article in the database: <a href="<?= article_adm_url($ae->article->id) ?>"><?= $ae->article->title ?></a><br/>
+article in the database: <a href="<?= article_adm_url($ae->article->id) ?>"><?= $ae->article->title ?></a>
+<a class="button edit" href="/adm/editarticle?id36=<?= article_id_to_id36($ae->article->id) ?>">edit</a><br/>
 <?php if(sizeof($ae->article->authors)>0) { ?>
 &nbsp;&nbsp;attributed to:
 <?php     foreach($ae->article->authors as $author) { ?>
