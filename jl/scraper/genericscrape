@@ -82,6 +82,7 @@ def main():
             # csv format
             reader = csv.reader(feedsfile)
             feeds = [f for f in reader]
+        feeds = [(unicode(f[0],'utf-8'),unicode(f[1],'utf-8')) for f in feeds]
 
         print "using feeds from ", options.source_feeds
 
