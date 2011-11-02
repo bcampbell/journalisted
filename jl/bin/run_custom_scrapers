@@ -5,10 +5,11 @@ NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py mirr
 ionice -c3 -p $$
 renice -n 10 -p $$
 
+cd $JL/scraper
+
 # special case for the indy - use generic scraper
 ./genericscrape -s www.independent.co.uk.feeds
 
-cd $JL/scraper
 for p in $NATIONAL_UK
 do
     ./$p
