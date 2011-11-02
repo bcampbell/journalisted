@@ -178,6 +178,7 @@ def scrape_articles( found, extract, opts):
 
     extralogging = False
     max_errors = getattr(opts,'max_errors',0)
+    expected_journo = getattr(opts,'expected_journo',None)
 
     # remove dupes (eg often articles appear in more than one RSS feed)
     found = unique_articles(found)
@@ -305,7 +306,7 @@ def scrape_articles( found, extract, opts):
                 authors = Byline.CrackByline(art['byline'])
                 attributed = []
                 for author in authors:
-                    attributed.append(Journo.find_or_create(author, art, opts.expected_journo))
+                    attributed.append(Journo.find_or_create(author, art, expected_journo))
                 art['journos'] = attributed
 
                 if opts.test:
