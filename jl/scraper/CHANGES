@@ -61,3 +61,5 @@ Log changes made due to website changes here!
 2011-10-12 guardian: fix for feedarticles (with bad rel-canonical. sigh)
 2011-10-19 telegraph: minor markup fix
 2011-10-20 guardian: up the bad-rss-feed threshold
+2011-11-02 guardian: use daily-edition rss feeds to improve coverage
+2011-11-02 independent: new website - switching to generic scraper

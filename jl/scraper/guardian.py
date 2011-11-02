@@ -47,7 +47,7 @@ rssfeeds = [
     ("News / Politics", "http://feeds.guardian.co.uk/theguardian/politics/rss"),
     ("News / World news", "http://feeds.guardian.co.uk/theguardian/world/rss"),
     ("News / World news", "http://www.guardian.co.uk/world/africa/roundup/rss"),
-    ("News / Main section", "http://www.guardian.co.uk/theguardian/2009/feb/04/mainsection/rss"),
+    #("News / Main section", "http://www.guardian.co.uk/theguardian/2009/feb/04/mainsection/rss"),
     ("Environment / Waste", "http://www.guardian.co.uk/environment/waste/rss"),
     ("Environment / Conservation", "http://www.guardian.co.uk/environment/conservation/rss"),
     ("News / Technology", "http://feeds.guardian.co.uk/theguardian/technology/rss"),
@@ -1229,7 +1229,26 @@ def ContextFromURL( url ):
 def FindArticles():
     """ get current active articles via RSS feeds """
 
-    feeds = FindBlogFeeds() + rssfeeds
+    feeds = []
+
+    # there are feeds for all guardian and observer articles, 
+    # but probably don't include comment is free, blogs and maybe
+    # some other web-only stuff...
+
+    # add the last week, just for completeness
+    n=0
+    while n<7:
+        day = date.today() - timedelta(days=n)
+        n=n+1
+        timeslug = day.strftime('%Y/%b/%d').lower()
+        feed_url = "http://www.guardian.co.uk/theguardian/" + timeslug + "/all/rss"
+        feeds.append(("Guardian - all on " + timeslug, feed_url))
+
+    # and the observer all-articles feed
+    feeds.append(("Observer - all", "http://www.guardian.co.uk/theobserver/all/rss"))
+
+    feeds = feeds + FindBlogFeeds()
+    feeds = feeds + rssfeeds
     return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=50 )
 
 
