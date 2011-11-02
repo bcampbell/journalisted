@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-SET statement_timeout = 0;
+--SET client_encoding = 'SQL_ASCII';
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = off;
 SET check_function_bodies = false;
@@ -23,14 +23,14 @@ SET search_path = public, pg_catalog;
 --
 
 CREATE FUNCTION article_setjournomodified_onupdate() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
 BEGIN
     -- whenever article is modified, set the modified flag on any attributed jounos
     UPDATE journo SET modified=true WHERE id IN (SELECT journo_id FROM journo_attr WHERE article_id=NEW.id);
     return NULL;
 END;
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -38,7 +38,6 @@ $$;
 --
 
 CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -51,7 +50,8 @@ CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
 
         RETURN new;
     END
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -59,7 +59,6 @@ $$;
 --
 
 CREATE FUNCTION article_update_total_comments() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -76,7 +75,8 @@ CREATE FUNCTION article_update_total_comments() RETURNS trigger
 
         RETURN new;
     END
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -84,13 +84,13 @@ $$;
 --
 
 CREATE FUNCTION journo_setmodified_ondelete() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -98,13 +98,13 @@ $$;
 --
 
 CREATE FUNCTION journo_setmodified_oninsert() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     return NULL;
 END;
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -112,14 +112,14 @@ $$;
 --
 
 CREATE FUNCTION journo_setmodified_onupdate() RETURNS trigger
-    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 --
@@ -127,12 +127,12 @@ $$;
 --
 
 CREATE FUNCTION ms_current_timestamp() RETURNS timestamp without time zone
-    LANGUAGE plpgsql
     AS $$
     begin
         return current_timestamp;
     end;
-$$;
+$$
+    LANGUAGE plpgsql;
 
 
 SET default_tablespace = '';
@@ -155,7 +155,6 @@ CREATE TABLE alert (
 --
 
 CREATE SEQUENCE alert_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -182,9 +181,9 @@ CREATE TABLE article (
     firstseen timestamp without time zone NOT NULL,
     lastseen timestamp without time zone NOT NULL,
     permalink text NOT NULL,
-    srcurl text NOT NULL,
+    srcurl text DEFAULT ''::text NOT NULL,
     srcorg integer NOT NULL,
-    srcid text NOT NULL,
+    srcid text DEFAULT ''::text NOT NULL,
     lastscraped timestamp without time zone,
     wordcount integer,
     status character(1) DEFAULT 'a'::bpchar,
@@ -219,7 +218,6 @@ CREATE TABLE article_bloglink (
 --
 
 CREATE SEQUENCE article_bloglink_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -263,7 +261,6 @@ CREATE TABLE article_content (
 --
 
 CREATE SEQUENCE article_content_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -288,11 +285,43 @@ CREATE TABLE article_dupe (
 
 
 --
+-- Name: article_error; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE article_error (
+    id integer NOT NULL,
+    url text NOT NULL,
+    reason_code text NOT NULL,
+    submitted timestamp without time zone DEFAULT now() NOT NULL,
+    submitted_by integer,
+    article_id integer,
+    expected_journo integer
+);
+
+
+--
+-- Name: article_error_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE article_error_id_seq
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+--
+-- Name: article_error_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE article_error_id_seq OWNED BY article_error.id;
+
+
+--
 -- Name: article_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE article_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -317,7 +346,6 @@ CREATE TABLE article_image (
 --
 
 CREATE SEQUENCE article_image_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -379,7 +407,6 @@ CREATE TABLE article_url (
 --
 
 CREATE SEQUENCE article_url_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -452,7 +479,6 @@ CREATE TABLE custompaper_criteria_text (
 --
 
 CREATE SEQUENCE custompaper_criteria_text_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -471,7 +497,6 @@ ALTER SEQUENCE custompaper_criteria_text_id_seq OWNED BY custompaper_criteria_te
 --
 
 CREATE SEQUENCE custompaper_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -520,7 +545,6 @@ CREATE TABLE event_log (
 --
 
 CREATE SEQUENCE event_log_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -532,16 +556,6 @@ CREATE SEQUENCE event_log_id_seq
 --
 
 ALTER SEQUENCE event_log_id_seq OWNED BY event_log.id;
-
-
---
--- Name: fook; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE fook (
-    url text,
-    article_id text
-);
 
 
 --
@@ -573,7 +587,6 @@ CREATE TABLE image (
 --
 
 CREATE SEQUENCE image_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -627,7 +640,6 @@ CREATE TABLE journo_address (
 --
 
 CREATE SEQUENCE journo_address_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -658,7 +670,6 @@ CREATE TABLE journo_admired (
 --
 
 CREATE SEQUENCE journo_admired_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -724,7 +735,6 @@ CREATE TABLE journo_awards (
 --
 
 CREATE SEQUENCE journo_awards_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -757,7 +767,6 @@ CREATE TABLE journo_bio (
 --
 
 CREATE SEQUENCE journo_bio_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -789,7 +798,6 @@ CREATE TABLE journo_books (
 --
 
 CREATE SEQUENCE journo_books_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -825,7 +833,6 @@ CREATE TABLE journo_education (
 --
 
 CREATE SEQUENCE journo_education_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -858,7 +865,6 @@ CREATE TABLE journo_email (
 --
 
 CREATE SEQUENCE journo_email_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -895,7 +901,6 @@ CREATE TABLE journo_employment (
 --
 
 CREATE SEQUENCE journo_employment_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -914,7 +919,6 @@ ALTER SEQUENCE journo_employment_id_seq OWNED BY journo_employment.id;
 --
 
 CREATE SEQUENCE journo_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -940,7 +944,6 @@ CREATE TABLE journo_jobtitle (
 --
 
 CREATE SEQUENCE journo_jobtitle_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -974,7 +977,6 @@ CREATE TABLE journo_other_articles (
 --
 
 CREATE SEQUENCE journo_other_articles_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1004,7 +1006,6 @@ CREATE TABLE journo_phone (
 --
 
 CREATE SEQUENCE journo_phone_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1035,7 +1036,6 @@ CREATE TABLE journo_photo (
 --
 
 CREATE SEQUENCE journo_photo_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1080,7 +1080,6 @@ CREATE TABLE journo_weblink (
 --
 
 CREATE SEQUENCE journo_weblink_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1105,7 +1104,6 @@ CREATE TABLE link (
 --
 
 CREATE SEQUENCE link_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1137,7 +1135,6 @@ CREATE TABLE missing_articles (
 --
 
 CREATE SEQUENCE missing_articles_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1174,7 +1171,6 @@ CREATE TABLE news (
 --
 
 CREATE SEQUENCE news_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1210,7 +1206,6 @@ CREATE TABLE organisation (
 --
 
 CREATE SEQUENCE organisation_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1236,7 +1231,6 @@ CREATE TABLE person (
 --
 
 CREATE SEQUENCE person_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1268,7 +1262,6 @@ CREATE TABLE person_permission (
 --
 
 CREATE SEQUENCE person_permission_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1307,7 +1300,6 @@ CREATE TABLE pub_adr (
 --
 
 CREATE SEQUENCE pub_adr_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1337,7 +1329,6 @@ CREATE TABLE pub_alias (
 --
 
 CREATE SEQUENCE pub_alias_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1367,7 +1358,6 @@ CREATE TABLE pub_domain (
 --
 
 CREATE SEQUENCE pub_domain_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1397,7 +1387,6 @@ CREATE TABLE pub_email_format (
 --
 
 CREATE SEQUENCE pub_email_format_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1427,7 +1416,6 @@ CREATE TABLE pub_phone (
 --
 
 CREATE SEQUENCE pub_phone_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1456,7 +1444,6 @@ CREATE TABLE pub_set (
 --
 
 CREATE SEQUENCE pub_set_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1486,7 +1473,6 @@ CREATE TABLE pub_set_map (
 --
 
 CREATE SEQUENCE pub_set_map_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1516,7 +1502,6 @@ CREATE TABLE recently_viewed (
 --
 
 CREATE SEQUENCE recently_viewed_id_seq
-    START WITH 1
     INCREMENT BY 1
     NO MAXVALUE
     NO MINVALUE
@@ -1576,16 +1561,6 @@ CREATE TABLE tag_synonym (
 
 
 --
--- Name: tmp_article_urls; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE tmp_article_urls (
-    url text NOT NULL,
-    article_id integer
-);
-
-
---
 -- Name: token; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1616,6 +1591,13 @@ ALTER TABLE article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_blogli
 --
 
 ALTER TABLE article_content ALTER COLUMN id SET DEFAULT nextval('article_content_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE article_error ALTER COLUMN id SET DEFAULT nextval('article_error_id_seq'::regclass);
 
 
 --
@@ -1883,6 +1865,14 @@ ALTER TABLE ONLY article_dupe
 
 
 --
+-- Name: article_error_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY article_error
+    ADD CONSTRAINT article_error_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: article_image_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1912,14 +1902,6 @@ ALTER TABLE ONLY article
 
 ALTER TABLE ONLY article_similar
     ADD CONSTRAINT article_similar_pkey PRIMARY KEY (article_id, other_id);
-
-
---
--- Name: article_srcid_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY article
-    ADD CONSTRAINT article_srcid_key UNIQUE (srcid);
 
 
 --
@@ -2303,6 +2285,34 @@ CREATE INDEX article_content_scraped_idx ON article_content USING btree (scraped
 
 
 --
+-- Name: article_error_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_error_article_id_idx ON article_error USING btree (article_id);
+
+
+--
+-- Name: article_error_expected_journo_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_error_expected_journo_idx ON article_error USING btree (expected_journo);
+
+
+--
+-- Name: article_error_submitted_by_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_error_submitted_by_idx ON article_error USING btree (submitted_by);
+
+
+--
+-- Name: article_error_url_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_error_url_idx ON article_error USING btree (url);
+
+
+--
 -- Name: article_id_status_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -2377,6 +2387,20 @@ CREATE INDEX article_tag_tag_idx ON article_tag USING btree (tag);
 --
 
 CREATE INDEX article_title_idx ON article USING btree (title);
+
+
+--
+-- Name: article_url_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_url_article_id_idx ON article_url USING btree (article_id);
+
+
+--
+-- Name: article_url_url_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_url_url_idx ON article_url USING btree (url);
 
 
 --
@@ -2489,20 +2513,6 @@ CREATE INDEX pub_domain_domain_idx ON pub_domain USING btree (domain);
 --
 
 CREATE INDEX requeststash_whensaved_idx ON requeststash USING btree (whensaved);
-
-
---
--- Name: tmp_article_urls_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX tmp_article_urls_article_id_idx ON tmp_article_urls USING btree (article_id);
-
-
---
--- Name: tmp_article_urls_url_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX tmp_article_urls_url_idx ON tmp_article_urls USING btree (url);
 
 
 --
@@ -3037,6 +3047,30 @@ ALTER TABLE ONLY article_dupe
 
 ALTER TABLE ONLY article_dupe
     ADD CONSTRAINT article_dupe_dupeof_id_fkey FOREIGN KEY (dupeof_id) REFERENCES article(id) ON DELETE CASCADE;
+
+
+--
+-- Name: article_error_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_error
+    ADD CONSTRAINT article_error_article_id_fkey FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE SET NULL;
+
+
+--
+-- Name: article_error_expected_journo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_error
+    ADD CONSTRAINT article_error_expected_journo_fkey FOREIGN KEY (expected_journo) REFERENCES journo(id) ON DELETE SET NULL;
+
+
+--
+-- Name: article_error_submitted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY article_error
+    ADD CONSTRAINT article_error_submitted_by_fkey FOREIGN KEY (submitted_by) REFERENCES person(id) ON DELETE SET NULL;
 
 
 --
