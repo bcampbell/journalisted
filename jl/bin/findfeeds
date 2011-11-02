@@ -135,6 +135,33 @@ def crawl(root_url, max_depth=2):
 
 
 
+def scan_page(page_url):
+    """ fetch and scan an html page for links to rss feeds """
+    logging.debug("fetch %s" % (page_url,))
+    feeds = {}
+
+    resp = urllib2.urlopen(page_url)
+    html = resp.read()
+
+    doc = lxml.html.fromstring(html)
+    doc.make_links_absolute(page_url)
+
+    # TODO: add some more patterns for suspected rss feeds (anything containing rss or feed or xml?)
+    # TODO: fetch suspected rss link to make sure it is
+    pat = re.compile(r'(/rss/?$)|(rss[.]xml$)',re.I)
+    for a in doc.cssselect('a'):
+        url = unicode(a.get('href'))
+        name = unicode(a.text_content()).strip()
+        name = u' '.join(name.split())
+
+        if pat.search(url):
+            logging.debug("likely: %s",url)
+            feeds[url] = (name,url)
+    logging.info("found %d feeds on %s" % (len(feeds),page_url))
+    return feeds.values()
+
+
+
 def main():
     desc = """Tool to crawl website(s) looking for rss feeds.
 Writes resultant list to stdout.
@@ -145,6 +172,7 @@ Writes resultant list to stdout.
     parser.add_option('-m', '--max_depth', type="int", default=2, dest="max_depth")
     parser.add_option('-o', '--outfile', help="output filename (default is to generate a filename from the url)")
     parser.add_option('-c', '--cache', action='store_true', help="cache downloaded files in .cache dir")
+    parser.add_option('-s', '--sitemap', action='store_true', help="url is a sitemap to scan for likely RSS links. Disables crawling")
     (options, args) = parser.parse_args()
 
     log_level = logging.WARNING
@@ -169,7 +197,10 @@ Writes resultant list to stdout.
 
     start_url = args[0]
 
-    feeds = crawl(start_url,int(options.max_depth))
+    if options.sitemap:
+        feeds = scan_page(start_url)
+    else:
+        feeds = crawl(start_url,int(options.max_depth))
 
     if options.outfile:
         if options.outfile == '-':
