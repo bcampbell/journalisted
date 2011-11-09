@@ -877,7 +877,7 @@ def ContextFromURL( url ):
     return context
 
 def FindArticles():
-    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=15 )
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'telegraph', ScrubFunc, maxerrors=100 )
     found = found + FindArticlesFromArchive()
     return found
 
