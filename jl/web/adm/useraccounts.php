@@ -33,6 +33,9 @@ if( $action=='view' ) {
 } elseif( $action == 'removeperm' ) {
     // remove a permission
     do_removeperm();
+} elseif( $action == 'removealert' ) {
+    // remove an alert
+    do_removealert();
 } elseif( $action == 'changeemail' ) {
     // form for change email address
     do_changeemail();
@@ -181,7 +184,7 @@ status:
 
     // show alerts
     $sql = <<<EOT
-SELECT j.ref,j.prettyname,j.oneliner FROM ((alert a INNER JOIN person p ON a.person_id=p.id) INNER JOIN journo j ON a.journo_id=j.id) WHERE p.id=?;
+SELECT a.id,j.ref,j.prettyname,j.oneliner FROM ((alert a INNER JOIN person p ON a.person_id=p.id) INNER JOIN journo j ON a.journo_id=j.id) WHERE p.id=?;
 EOT;
     $alerts = db_getAll( $sql, $person_id );
 
@@ -190,9 +193,9 @@ EOT;
 <?echo sizeof( $alerts ) ?> alerts set up:
 <ul>
 <?php foreach( $alerts as $a ) { ?>
-<li><?php echo admJournoLink($a['ref'], $a['prettyname'] ); ?> (<?php echo $a['oneliner']; ?>)</li>
-<?php } ?>
-</ul>
+<li><?php echo admJournoLink($a['ref'], $a['prettyname'] ); ?> (<?php echo $a['oneliner']; ?>) <a class="button delete" href="/adm/useraccounts?person_id=<?= $person_id;?>&action=removealert&alert_id=<?= $a['id']; ?>">remove</a></a>
+</li>
+<?php } ?></ul>
 
 <h4>Permissions</h4>
 <?php
@@ -305,6 +308,29 @@ function do_removeperm()
 ?>
 <div class="action_summary">
 Revoked '<?php echo $p['permission']; ?>' permission on <?php echo $p['journo_ref']; ?>.
+</div>
+<?php
+
+    emit_details( $person_id );
+}
+
+
+function do_removealert()
+{
+    $person_id = get_http_var('person_id');
+    $alert_id = get_http_var('alert_id');
+
+    $ref = db_getOne( "SELECT j.ref FROM (journo j INNER JOIN alert a ON a.journo_id=j.id) WHERE a.id=? and a.person_id=?",
+        $alert_id, $person_id );
+    if(!$ref)
+        return;
+
+    db_do( "DELETE FROM alert WHERE id=? AND person_id=?", $alert_id, $person_id );
+    db_commit();
+
+?>
+<div class="action_summary">
+Removed alert on <?= $ref ?>.
 </div>
 <?php
 
