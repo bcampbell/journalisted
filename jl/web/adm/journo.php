@@ -340,6 +340,7 @@ no<small> [<a href="/adm/journo?journo_id=<?= $journo_id ?>&action=set_fake">cha
 	EmitEmailAddresses( $journo_id );
 	EmitWebLinks( $journo_id );
 	EmitBios( $journo_id );
+    EmitAlerts($journo_id);
 	EmitArticles( $journo_id );
 	EmitOtherArticles( $journo_id );
 }
@@ -560,6 +561,24 @@ function emitObjectTable( $rows, $fields, $editlink )
 </tbody>
 </table>
 
+<?php
+}
+
+function EmitAlerts( $journo_id )
+{
+    $alertees = db_getAll("SELECT p.id, p.email, p.name FROM (alert a INNER JOIN person p ON p.id=a.person_id) WHERE a.journo_id=?", $journo_id);
+
+?>
+    <h3>People with alerts set on this journo</h3>
+<?php if($alertees) { ?>
+    <ul>
+    <?php foreach($alertees as $p) { ?>
+    <li><a href="/adm/useraccounts?person_id=<?= $p['id'] ?>"><?= $p['email'] ?></a></li>
+    <?php } ?>
+    </ul>
+<?php } else { ?>
+    -- no alerts --
+<?php } ?>
 <?php
 }
 
