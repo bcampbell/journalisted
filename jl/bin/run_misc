@@ -2,10 +2,10 @@
 JL=/srv/vhost/journalisted.com/journalisted/jl
 
 cd $JL/bin
-echo "***** START journo-page-builder"
-time nice ./journo-page-builder
 echo "***** START indexer"
 time nice ./indexer -n 10000
+echo "***** START journo-page-builder"
+time nice ./journo-page-builder
 echo "***** START similar-article"
 time nice ./similar-article -n 500
 echo "***** START similar-journo"
