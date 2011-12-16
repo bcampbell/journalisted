@@ -38,8 +38,8 @@ bylinecrackers = [
 
     { 'fmt': '(nl)', 'pat': '(?:by |from |)(.+?)[,]? (?:in|at|reports from) (.+)$' },
 
-    { 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?), (.+)$' },
-    { 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?)\s*-\s+(.+)$' },
+#   { 'fmt': '(nt)', 'pat': '(?:by |from |)(.+?), (.+)$' },
+    { 'fmt': '(nt)', 'pat': r'(?:by |from |)(.+?)\s*[-,]\s+(.+)$' },
     { 'fmt': '(nte)', 'pat': """(?:by |from |)(\S+ \S+) (.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
     { 'fmt': '(ne)', 'pat': """(?:by |from |)(.+) ([A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4})""" },
     { 'fmt': '(n)(na)', 'pat': '(?:by |from |)(.+?) and (.+?), (.+)$' },
@@ -109,26 +109,23 @@ agencypats = [
     re.compile( r"\bheraldscotland\b", re.IGNORECASE|re.UNICODE ),
     ]
 
-jobtitlepats = [
-    re.compile( """associate editor""", re.IGNORECASE|re.UNICODE ),
-
-    re.compile( """editor$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """reporter$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """correspondent$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """corespondent$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """director$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """writer$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """commentator$""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """nutritionist""", re.IGNORECASE|re.UNICODE ),
-
-    re.compile( """presenter""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """online journalist""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """journalist""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """cameraman""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """deputy head""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """head""", re.IGNORECASE|re.UNICODE ),
-    re.compile( """columnist""", re.IGNORECASE|re.UNICODE ),
-    ]
+jobtitlepats = [ re.compile(pat,re.IGNORECASE|re.UNICODE) for pat in (
+    r"\bassociate editor\b",
+    r"\beditor$",
+    r"\breporter$",
+    r"\bcorrespondent$",
+    r"\bcorespondent$",
+    r"\bdirector$",
+    r"\bwriter$",
+    r"\bcommentator$",
+    r"\bnutritionist\b",
+    r"\bpresenter\b",
+    r"\bonline journalist\b",
+    r"\bjournalist\b",
+    r"\bcameraman\b",
+    r"\bdeputy head\b",
+    r"\bhead\b",
+    r"\bcolumnist\b" )]
 
 emailpat = re.compile( """\\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\\b""", re.UNICODE )
 
@@ -169,7 +166,7 @@ def CrackByline( byline ):
         if not m:
             continue
 
-#       print "match! %s" %(cracker['fmt'])
+        #print "match! %s" %(cracker['fmt'])
 
         ret = []
         fmt = cracker['fmt']
@@ -194,7 +191,7 @@ def CrackByline( byline ):
                 nm = m.group(idx).strip()
                 if not CouldBeName( nm ):
                     skip = True
-#                   print "(fmt %s) reject name %s" % (fmt,nm)
+                    #print "(fmt %s) reject name %s" % (fmt,nm)
                     break
                 person['name'] = nm
 
@@ -204,7 +201,7 @@ def CrackByline( byline ):
             if f=='t':
                 title = m.group(idx).strip()
                 if not IsJobTitle( title ):
-#                   print "(fmt %s) reject title %s" % (fmt,title)
+                    #print "(fmt %s) reject title %s" % (fmt,title)
                     skip = True
                     break
                 person['title'] = title
