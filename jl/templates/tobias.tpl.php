@@ -88,6 +88,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No76_28_11_11_2068856a.swf',
     'Tg_No76_05_12_11_1_2075232a.swf',
     'Tg_No77_12_12_11_2081898a.swf',
+    'Tg_No67_19_09_11_2088730a.swf',    // odd filename...
 );
 
 
