@@ -8,20 +8,78 @@ alert                 - My Journa-list alerts
 article               - the articles (the core of everything)
 article_dupe          - info about duplicate articles (might drop this)
 article_tag           - tags (aka terms, subjects) extracted from articles
-htmlcache             - used to speed up some pages by caching bits of html
+article_commentlink
+article_bloglink
+article_content
+article_url           - known urls for an article
+article_image
+article_needs_indexing
+article_tag
+article_similar
+article_error
+
 journo                - the journalists
 journo_alias          - names for journalists (to handle mispelllings etc) 
 journo_attr           - links articles to journalists (attribution)
 journo_average_cache  - cache for journo stats
 journo_jobtitle       - job titles found for journos
 journo_weblink        - links to journo websites (wikipedia etc)
+journo_books
+journo_email
+journo_education
+journo_other_articles
+journo_employment
+journo_phone
+journo_jobtitle
+journo_photo
+journo_bio
+journo_attr
+journo_awards
+journo_similar
+journo_alias
+journo_admired
+journo_address
+journo_weblink
+
 organisation          - the organisations in the system (newspapers, bbc etc)
+pub_adr
+pub_alias
+pub_domain
+pub_email_format
+pub_phone
+pub_set_map
+pub_set
+
+htmlcache             - used to speed up some pages by caching bits of html
 person                - user accounts (for my journa-list)
+person_receives_newsletter
 requeststash          -
 secret                -
 tag_blacklist         - tags to ignore during term extraction
 tag_synonym           - to tie multiple tags together
 token                 -
+
+
+
+custompaper
+custompaper_criteria_text
+custompaper_criteria_journo
+
+event_log
+error_articlescrape
+image
+htmlcache
+news
+person_permission
+missing_articles
+link
+requeststash
+secret
+token
+recently_viewed
+
+
+
 
 The article table is the core of the whole system. All the scraped articles
 are stored there, and most other data in the system is derived from them.
@@ -71,11 +129,6 @@ But the idea is that this'll be updated so that we get an idea of how long
 the article was active on the source site...
 
 
-content (text)
- The actual article text (utf-8). Uses a very cut-down set of HTML, with
-very basic formatting (<p>, <br>, <strong>, headings etc). The scrapers
-should remove most style fluff and just leave the text and it's basic
-structure.
 
 permalink (text, not null)
  URL to original article. Might be different to the one scraped (eg
@@ -92,6 +145,7 @@ srcorg (integer, not null)
 into the "organisation" table).
 
 srcid (text, not null)
+ (DEPRECATED - now have multiple article_url entries instead)
  A unique ID which identifies the article within database.
  (uniqueness not yet enforced in the database, but might be in future)
  Often sites can have multiple urls which refer to the same article.
@@ -129,6 +183,34 @@ last_comment_check (timestamp)
  Last time at which the article was checked for comments on it's home site
  (many papers allow readers to post comments).
  This allows us to rescrape the comment counts to keep them up to date.
+
+
+article_url table
+-----------------
+
+article_id (integer)
+url (text)
+
+Articles very often have multiple urls. This table collects all the ones
+we know about. These might come via HTTP redirects, rel-canonical links
+in the html etc etc...
+
+
+
+
+article_content table
+---------------------
+
+article_id (integer)
+
+content (text)
+ The actual article text (utf-8). Uses a very cut-down set of HTML, with
+very basic formatting (<p>, <br>, <strong>, headings etc). The scrapers
+should remove most style fluff and just leave the text and it's basic
+structure.
+
+scraped (timestamp)
+ When the content was scraped
 
 
 journo table
