@@ -938,3 +938,26 @@ function journo_checkActivation( $journo_id )
     return FALSE;
 }
 
+
+function journo_buildOneliner($journo)
+{
+    $emps = db_getAll("SELECT kind,employer FROM journo_employment WHERE current=true AND journo_id=? ORDER BY year_from DESC", $journo['id']);
+
+    $employers = array();
+    foreach($emps as $emp) {
+        $name = $emp['kind']=='f' ? 'Freelance' : $emp['employer'];
+        if(array_search(strtolower($name), array_map('strtolower', $employers)) === FALSE) {
+            $employers[] = $name;
+        }
+        if(sizeof($employers)>=3) {
+            break;
+        }
+    }
+
+    if($employers) {
+        return implode(', ',$employers);
+    }
+
+    return '';
+}
+
