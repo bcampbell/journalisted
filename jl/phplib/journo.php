@@ -343,16 +343,9 @@ function journo_calcStats( $journo )
     $row = db_getRow( $sql, $journo_id );
     $stats['toptag_month'] = $row ? $row['tag'] : null;
 
-    // most frequent tag  of all time
-    $sql = "SELECT t.tag, sum(t.freq) as mentions ".
-        "FROM ((article_tag t INNER JOIN journo_attr attr ON attr.article_id=t.article_id) ".
-            "INNER JOIN article a ON a.id=t.article_id) ".
-        "WHERE t.kind<>'c' AND attr.journo_id = ? AND a.status='a' ".
-        "GROUP BY t.tag ".
-        "ORDER BY mentions DESC ".
-        "LIMIT 1";
-    $row = db_getRow( $sql, $journo_id );
-    $stats['toptag_alltime'] = $row ? $row['tag'] : null;
+    // TODO: remove toptag_alltime and replace with top tag from the last 100 articles
+    // (which we get anyway via working out the tag cloud)
+    $stats['toptag_alltime'] = null;
 
     $stats['monthly_stats'] = journo_calcMonthlyStats( $journo );
 
@@ -408,21 +401,38 @@ EOT;
 
 function journo_calculateSlowData( &$journo ) {
 
+    /* SELECT t.tag, sum(t.freq) as mentions FROM article_tag t WHERE article_id IN (SELECT attr.article_id FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id) WHERE attr.journo_id=? ORDER BY a.pubdate DESC LIMIT 50) GROUP BY t.tag ORDER BY mentions DESC LIMIT 10; */
+
+
     $slowdata = journo_calcStats( $journo );
 
-    /* TAGS */
+    /* TOP TAGS (for the most recent N articles */
+    $num_arts = 50;
     $maxtags = 10;
-    # TODO: should only include active articles (ie where article.status='a')
-    $sql = "SELECT t.tag AS tag, SUM(t.freq) AS freq ".
-        "FROM ( journo_attr a INNER JOIN article_tag t ON a.article_id=t.article_id ) ".
-        "WHERE a.journo_id=? AND t.kind<>'c' ".
-        "GROUP BY t.tag ".
-        "ORDER BY freq DESC " .
-        "LIMIT ?";
-    $foo = db_getAll( $sql, $journo['id'], $maxtags );
+    $sql = <<<EOT
+SELECT tag, SUM(freq) as mentions
+    FROM article_tag
+    WHERE kind<>'c' AND
+        article_id IN (
+          SELECT attr.article_id
+            FROM (article a INNER JOIN journo_attr attr ON a.id=attr.article_id)
+            WHERE attr.journo_id=? AND a.status='a'
+            ORDER BY a.pubdate DESC LIMIT ?
+          )
+        GROUP BY tag
+        ORDER BY mentions DESC
+        LIMIT ?
+EOT;
+    $foo = db_getAll( $sql, $journo['id'], $num_arts, $maxtags );
+
+    if($foo) {
+        // most frequent tag (TODO: get rid of misleading "alltime" naming)
+        $slowdata['toptag_alltime'] = $foo[0]['tag'];
+    }
+
     $tags = array();
     foreach( $foo as $f ) {
-        $tags[$f['tag']] = $f['freq'];
+        $tags[$f['tag']] = $f['mentions'];
     }
     ksort( $tags );
     $slowdata['tags'] = $tags;
