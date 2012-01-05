@@ -948,3 +948,50 @@ function journo_checkActivation( $journo_id )
     return FALSE;
 }
 
+
+function journo_buildOneliner($employers,$articles)
+{
+    $names = array();
+
+    foreach($employers as $emp) {
+        if(!$emp['current'])
+            continue;
+        $name = $emp['kind']=='f' ? 'Freelance' : $emp['employer'];
+        if(array_search(strtolower($name), array_map('strtolower', $names)) === FALSE) {
+            $names[] = $name;
+        }
+    }
+
+    // clip to 3 employers, max
+    $names = array_slice($names,0,3);
+
+    if(!$names && sizeof($articles) >= 2) {
+        // nothing from employment data - guess using article history instead
+
+        $counts = array();
+        foreach($articles as $art) {
+            $pubname = $art['srcorgname'];
+            if(isset($counts[$pubname])) {
+                $counts[$pubname] += 1.0;
+            } else {
+                $counts[$pubname] = 1.0;
+            }
+        }
+        arsort($counts);
+
+        $total = (float)sizeof($articles);
+
+        $names = array();
+        foreach($counts as $pubname=>$cnt) {
+            if(($cnt/$total) > 0.2) {
+                $names[] = $pubname;
+            }
+        }
+
+        // clip to two publications, max
+        $names = array_slice($names,0,2);
+    }
+
+    return implode(', ',$names);
+}
+
