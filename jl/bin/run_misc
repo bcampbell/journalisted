@@ -10,8 +10,6 @@ echo "***** START similar-article"
 time nice ./similar-article -n 500
 echo "***** START similar-journo"
 time nice ./similar-journo -n 100
-echo "***** START journo-oneliner-tool"
-time nice ./journo-oneliner-tool
 echo "***** START comment-updater"
 time nice ./comment-updater -n 500
 #cd $JL/misc_scrapers

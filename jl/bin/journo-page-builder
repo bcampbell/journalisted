@@ -116,6 +116,15 @@ function Process( &$journo )
     $data = journo_collectData( $journo );
     $json = json_encode($data);
 
+    $new_oneliner = journo_buildOneliner($data['employers'], $data['articles']);
+    if($new_oneliner != $data['oneliner']) {
+        $old_oneliner = $data['oneliner'];
+        $data['oneliner'] = $new_oneliner;
+        db_do("UPDATE journo SET oneliner=? WHERE id=?", $new_oneliner, $journo['id']);
+        if( $settings['verbose'] )
+            printf("%s: update oneliner '%s'=>'%s'\n", $journo['ref'], $old_oneliner, $new_oneliner);
+    }
+
     // save it in the cache and clear the modified flag
     $cacheid = 'json_' . $journo['id'];
     db_do( "DELETE FROM htmlcache WHERE name=?", $cacheid );
@@ -124,7 +133,7 @@ function Process( &$journo )
 	db_commit();
 
     if( $settings['verbose'] )
-        print "done " . $journo['ref'] . "\n";
+        printf("%s: done\n", $journo['ref']);
 }
 
 ?>
