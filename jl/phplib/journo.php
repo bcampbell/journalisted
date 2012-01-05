@@ -979,17 +979,21 @@ function journo_buildOneliner($employers,$articles)
         }
         arsort($counts);
 
-        $total = (float)sizeof($articles);
+        // give up if too many publications (TODO: only use recent articles)
+        if(sizeof($counts)<5) {
 
-        $names = array();
-        foreach($counts as $pubname=>$cnt) {
-            if(($cnt/$total) > 0.2) {
-                $names[] = $pubname;
+            $total = (float)sizeof($articles);
+
+            $names = array();
+            foreach($counts as $pubname=>$cnt) {
+                if(($cnt/$total) > 0.33) {
+                    $names[] = $pubname;
+                }
             }
-        }
 
-        // clip to two publications, max
-        $names = array_slice($names,0,2);
+            // clip to two publications, max
+            $names = array_slice($names,0,2);
+        }
     }
 
     return implode(', ',$names);

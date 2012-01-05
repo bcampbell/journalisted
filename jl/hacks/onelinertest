@@ -29,6 +29,11 @@ if($argv[1] == '-c') {
 function check($ref, $verbose) {
     $journo  = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
 
+    if(!$journo) {
+        printf("%s: NOT FOUND\n", $ref);
+        return;
+    }
+
     $data = $journo;
     $data['employers'] = journo_collectEmployment( $journo['id'] );
     $data['articles'] = journo_collectArticles( $journo );
