@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+
+require_once "../conf/general";
+require_once '../../phplib/db.php';
+//require_once '../../phplib/utility.php';
+//require_once "../phplib/misc.php";
+require_once "../phplib/journo.php";
+
+
+if( sizeof($argv) < 2 ) {
+    print("ref missing\n");
+    return 1;
+}
+
+if($argv[1] == '-c') {
+    // bulk check! only show mismatches
+    print "Bulk check of all active journos...\n";
+    $rows = db_getAll("SELECT ref FROM journo WHERE status='a'");
+    foreach($rows as $row) {
+        check($row['ref'],FALSE);
+    }
+} else {
+    for($i=1; $i<sizeof($argv); ++$i) {
+        check($argv[$i],TRUE);
+    }
+}
+    
+function check($ref, $verbose) {
+    $journo  = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
+
+    $data = $journo;
+    $data['employers'] = journo_collectEmployment( $journo['id'] );
+    $data['articles'] = journo_collectArticles( $journo );
+
+    $oneliner = journo_buildOneliner($data['employers'], $data['articles']);
+
+    if($oneliner == $journo['oneliner']) {
+        if($verbose) {
+            printf("%s: '%s'\n", $ref, $oneliner);
+        }
+    } else {
+            printf("%s: MISMATCH expected '%s', in db: '%s')\n", $ref, $oneliner, $journo['oneliner']);
+    }
+}
+?>
