@@ -908,7 +908,7 @@ EOT;
 <?php } ?>
 </tbody>
 </table>
-
+<?php /* NO MORE other articles please :-)
 <form method="post">
 <input type="hidden" name="journo_id" value="<?php echo $journo_id; ?>" />
 url: <input type="text" name="url" size="40" />
@@ -917,6 +917,7 @@ pubdate (yyyy-mm-dd): <input type="text" name="pubdate" />
 publication: <input type="text" name="publication" /><br/>
 <button type="submit" name="action" value="add_otherarticle">Add Other Article</button>
 </form>
+*/?>
 
 <?php
 
