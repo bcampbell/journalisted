@@ -112,10 +112,10 @@ def Extract( html, context, **kw ):
         cruftstart = maindiv.find( 'div', {'class': re.compile(r'\bprint-or-mail-links\b')} )
     if not cruftstart:
         cruftstart = maindiv.find( text=re.compile("google_ad_section_end[(]name=s2[)]") )
-
-    for cruft in cruftstart.findAllNext():
-        cruft.extract()
-    cruftstart.extract()
+    if cruftstart:
+        for cruft in cruftstart.findAllNext():
+            cruft.extract()
+        cruftstart.extract()
 
     desctxt = u''
     titletxt = u''
@@ -126,44 +126,47 @@ def Extract( html, context, **kw ):
     titletxt = ukmedia.FromHTMLOneLine( h1.renderContents(None) );
 
     # extract byline and date - first few paras after headline
-    txt = u''
-    for p in h1.findNextSiblings( 'p', limit=4 ):
-        foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
-        if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
-            txt = u' '.join( (txt, foo) )
-            p.extract()
+    author_links = maindiv.findAll('a', {'class':re.compile(r'\bauthor\b')})
+    timestamp_span = maindiv.find('span', {'class':re.compile(r'\barticle-timestamp\b')})
 
-    foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" )
-    m = foo.search( txt )
-    bylinetxt = m.group(1)
-    if bylinetxt is None:
-        bylinetxt = u''
-    pubdatetxt = m.group(2)
 
-    if 0:
-        femaildiv = maindiv.find( 'div', {'class':'feMailHeaderWide'} )
-        if femaildiv:
-            h = femaildiv.find( re.compile( 'h[12]' ) )
-            titletxt = h.renderContents(None)
-            titletxt =  ukmedia.FromHTML( titletxt )
-        # there may or may not also be an h2...
-#        desctxt = femaildiv.h2.renderContents(None)
-#        desctxt =  ukmedia.FromHTML( desctxt )
-            femaildiv.extract()
-        else:
+    if timestamp_span:
+        # TODO: more than one timestamp (published and updated) but we'll take the first
+        pubdatetxt = ukmedia.FromHTMLOneLine( timestamp_span.renderContents(None))
+        timestamp_span.parent.extract()
 
-            for e in maindiv.findAll( 'h1' ):
-                titletxt = titletxt + ukmedia.FromHTML( e.renderContents(None) )
-                e.extract()
+    if pubdatetxt==u'':
+        # fallback for old articles - check first few paras for date (can be in byline para)
+        for p in h1.findNextSiblings( 'p', limit=4 ):
+            foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
+            if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
+                pubdatetxt = foo
+                break
 
-            if titletxt == u'':
-                # sometimes there are no 'h1' elements and the headlines are done with <font>
-                e  = maindiv.find( 'font' )
-                if e and e.has_key('size'):
-                    titletxt = e.renderContents(None)
-                    titletxt = ukmedia.FromHTML( titletxt )
-                    e.extract()
+    if author_links:
+        authors = []
+        for a in author_links:
+            authors.append(ukmedia.FromHTMLOneLine( a.renderContents(None)));
+        bylinetxt = ' and '.join(authors)
 
+        author_links[0].parent.extract()
+
+
+
+    if 0:   #bylinetxt == u'':
+        txt = u''
+        for p in h1.findNextSiblings( 'p', limit=4 ):
+            foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
+            if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
+                txt = u' '.join( (txt, foo) )
+                p.extract()
+
+        foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" )
+        m = foo.search( txt )
+        bylinetxt = m.group(1)
+        if bylinetxt is None:
+            bylinetxt = u''
+        pubdatetxt = m.group(2)
 
 
 
