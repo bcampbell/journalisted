@@ -33,21 +33,21 @@ from JL import ukmedia, ScraperUtils
 
 
 
-def FetchRSSFeeds( masterpage='http://www.ft.com/servicestools/newstracking/rss' ):
-    feeds = {}
+def FetchRSSFeeds( masterpage='http://www.ft.com/intl/rss' ):
+    feeds = []
 
-    feedpat = re.compile( "http://.*" )
     f = urllib2.urlopen( masterpage )
     html = f.read()
     f.close()
 
     soup = BeautifulSoup( html )
 
-    c = soup.find( 'div', id='content' )
+    c = soup.find( 'div', {'class': re.compile(r'\beditorialSection\b')})
+    feedpat = re.compile( "http://.*/rss/.*" )
     for a in c.findAll('a', href=feedpat):
         url = a['href'] #urlparse.urljoin( masterpage, a['href'] )
         o = urlparse.urlparse(url)
-        if o[1] not in ('www.ft.com','blogs.ft.com' ):
+        if o[1] not in ('www.ft.com','blogs.ft.com','feeds2.feedburner.com' ):
             continue
 
         #a.img.extract()
@@ -57,8 +57,7 @@ def FetchRSSFeeds( masterpage='http://www.ft.com/servicestools/newstracking/rss'
 #        if o[1] == 'blogs.ft.com':
 #            url = url.replace( '/rss.xml', '/feed/' )
 
-        feeds[ name ] = url
-
+        feeds.append((name,url))
     return feeds
 
 
@@ -123,7 +122,8 @@ def Extract_article_new_cms( html, context ):
     if len(foo)>0:
         byline_txt = unicode(foo[0].text_content()).strip()
     title_txt = unicode(storyheader.cssselect('h1')[0].text_content()).strip()
-    pubdate_txt = storyheader.cssselect('.lastUpdated')[0].text_content()
+    #pubdate_txt = storyheader.cssselect('.lastUpdated')[0].text_content()
+    pubdate_txt = storyheader.cssselect('.time')[0].text_content()
 
     bod = doc.cssselect('.fullstoryBody')[0]
     for foo in ('.storyTools','#ft-story-tools-bottom','.screen-copy','.story-package'):

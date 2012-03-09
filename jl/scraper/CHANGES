@@ -65,3 +65,5 @@ Log changes made due to website changes here!
 2011-11-02 independent: new website - switching to generic scraper
 2011-11-09 telegraph: up the bad-rss-feed threshold
 2012-03-09 dailymail: byline/timestamp changes
+2012-03-09 express: increase tolerance to 404s when finding articles
+2012-03-09 ft: new location for rss feeds

@@ -16,6 +16,7 @@ import re
 from datetime import datetime
 import sys
 import urlparse
+import urllib2
 
 import site
 site.addsitedir("../pylib")
@@ -250,10 +251,20 @@ def FindArticlesFromNavPages():
 
     article_urls = {}
 
+    err_404_cnt = 0
     while queued:
         page_url = queued.pop()
         visited.add( page_url )
-        html = ukmedia.FetchURL( page_url )
+        try:
+            html = ukmedia.FetchURL( page_url )
+        except urllib2.HTTPError, e:
+            # allow a few 404s
+            if e.code == 404:
+                ukmedia.DBUG2("ERR fetching %s (404)\n" %(page_url,))
+                err_404_cnt += 1
+                if err_404_cnt < 5:
+                    continue
+            raise
         soup = BeautifulSoup( html )
         # first, look for any sections (or subsections) we might want to scrape
         nav = soup.find('div',{'id':'nav'} )
