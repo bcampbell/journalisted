@@ -137,11 +137,25 @@ def Extract( html, context, **kw ):
 
     if pubdatetxt==u'':
         # fallback for old articles - check first few paras for date (can be in byline para)
+        txt = u''
         for p in h1.findNextSiblings( 'p', limit=4 ):
             foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
             if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
-                pubdatetxt = foo
-                break
+                txt = txt + " " + foo
+
+        pat = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" )
+        m = pat.search( txt )
+        if m is not None:
+            pubdatetxt = m.group(2)
+
+    if pubdatetxt==u'':
+        # last ditch: use the meta tags:
+        m_pub = soup.find( 'meta', {'property': "article:published_time" } )
+        m_mod = soup.find( 'meta', {'property': "article:modified_time" } )
+        if m_pub:
+            pubdatetxt = m_pub.get('content',u'')
+        if pubdatetxt==u'' and m_mod is not None:
+            pubdatetxt = m_mod.get('content',u'')
 
     if author_links:
         authors = []
@@ -150,23 +164,6 @@ def Extract( html, context, **kw ):
         bylinetxt = ' and '.join(authors)
 
         author_links[0].parent.extract()
-
-
-
-    if 0:   #bylinetxt == u'':
-        txt = u''
-        for p in h1.findNextSiblings( 'p', limit=4 ):
-            foo = ukmedia.FromHTMLOneLine( p.renderContents(None) );
-            if re.search( r"^(By)|(Created)|(Last updated at)\s+",foo ):
-                txt = u' '.join( (txt, foo) )
-                p.extract()
-
-        foo = re.compile( r"(By\s+.*)?\s*(?:(?:Created\s+)|(?:Last updated at\s+))(.*$)" )
-        m = foo.search( txt )
-        bylinetxt = m.group(1)
-        if bylinetxt is None:
-            bylinetxt = u''
-        pubdatetxt = m.group(2)
 
 
 
