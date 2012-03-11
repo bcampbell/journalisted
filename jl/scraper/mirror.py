@@ -23,279 +23,51 @@ from JL import ukmedia, ScraperUtils
 
 
 
-def FindRSSFeeds():
-    """ fetch a list of RSS feeds for the mirror.
-
-    returns a list of (name, url) tuples, one for each feed
-    """
-
-    # miriam blacklisted for now, as her column is redirected to blogs (and picked up by our blog rss list)
-    url_blacklist = ( '/fun-games/', '/pictures/', '/video/', '/miriam/', '/celebs/topics/',
-        '/news/topics/', '/tv-entertainment/topics/' )
-
-    ukmedia.DBUG2( "Fetching list of rss feeds\n" );
-
-    sitemap_url = 'http://www.mirror.co.uk/sitemap/'
-    html = ukmedia.FetchURL( sitemap_url )
-    soup = BeautifulSoup(html)
-
-    feeds = []
-    for a in soup.findAll( 'a', {'class':'sitemap-rss' } ):
-        url = a['href']
-#        a2 = a.findNextSibling( 'a' )
-#        if a2:
-#            title = a2.renderContents( None )
-#        else:
-        m = re.search( r'mirror.co.uk/(.*)/rss[.]xml', url )
-        title = m.group(1)
-
-        skip = False
-        for banned in url_blacklist:
-            if banned in url:
-#                ukmedia.DBUG2( " ignore feed '%s' [%s]\n" % (title,url) )
-                skip = True
-
-        if not skip:
-            feeds.append( (title,url) )
-
-    ukmedia.DBUG2( "found %d feeds\n" % ( len(feeds) ) );
-    return feeds
-
-
-# feedburner blogs, see "http://www.mirror.co.uk/opinion/blogs/"
-blog_rssfeeds = [
-    ("blog: 3pm", "http://feeds.feedburner.com/mirror-3pm"),
-    ("blog: Amber & friends", "http://feeds.feedburner.com/mirrorfashion"),
-    ("blog: Big Brother'", "http://feeds.feedburner.com/big-brother/" ),
-    ("blog: Christopher Hitchens", 'http://feeds2.feedburner.com/christopher-hitchens-blog'),
-    ("blog: Cricket", "http://feeds.feedburner.com/mirror/cricket"),
-    ("blog: Dear Miriam", "http://feeds.feedburner.com/dear-miriam"),
-    ("blog: Football Spy", "http://feeds.feedburner.com/FootballSpy" ),
-    ("blog: Kevin Maguire & Friends","http://feeds.feedburner.com/KevinMaguire" ),
-    # tv blog handled by main site
-#    ("blog: Kevin O'Sullivan", '' ),
-    ("Mirror Investigates","http://feeds.feedburner.com/mirror/investigations" ),
-    # science one is also borked...
-#    ("Science, Health and the Environment", "http://feeds.feedburner.com/investigations" ),
-    # jim shelly handled by main site
-    #("Shelleyvision", "" ),
-    ("Showbiz with Zoe", "http://feeds.feedburner.com/showbiz-with-zoe" ),
-    # Sue Carroll handled by main site
-#    ("Sue Carroll", "" ),
-    ("The Sex Doctor", "http://feeds.feedburner.com/sex-doctor/" ),
-]
-
-
-
-
-
-
-
-
-
-
-
 
 def Extract(html, context, **kw):
     url = context['srcurl']
-    
-    if re.search( r'/(blogs|fashion)[.]mirror[.]co[.]uk/', url ):
-        return Extract_Blog( html, context )
-    else:
+   
+    o = urlparse.urlparse(url)
+    if re.match('(www[.])?mirror[.]co[.]uk',o.hostname):
         return Extract_MainSite( html, context )
-
+    if re.match('(www[.])?mirrorfootball[.]co[.]uk',o.hostname):
+        # TODO: mirrorfootball
+        return None
+    if re.match( r'/(blogs|fashion)[.]mirror[.]co[.]uk', o.hostname ):
+        return Extract_Blog( html, context )
 
 
 def Extract_MainSite( html, context ):
     art = context
 
-    if '/sunday-mirror/' in art['srcurl']:
-        art['srcorgname'] = u'sundaymirror'
-    else:
-        art['srcorgname'] = u'mirror'
+    # we know it's utf-8 (lxml.html seems to get it wrong sometimes)
+    parser = lxml.html.HTMLParser(encoding='utf-8')
+    doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
-    #foo = html.decode('utf-8')
-    doc = lxml.html.document_fromstring( html )
+    article_div = doc.cssselect('.article')[0]
 
-    foo = doc.cssselect( 'link[rel="canonical"]' )
-    if foo is not None:
-        canonical_url = foo[0].get('href')
-        if 'mirrorfootball.co.uk' in canonical_url:
-            ukmedia.DBUG("SKIP mirrorfootball.co.uk page '%s' [%s]\n" % (art['title'],art['srcurl']) )
-            return None
+    header_div = article_div.cssselect('.article-header')[0]
 
+    h1 = header_div.cssselect('h1')[0]
+    art['title'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(h1)))
 
-    foo = doc.cssselect( 'div#three-col' )
-    if len(foo)<1:
-        foo = doc.cssselect( '#body-content')
-    maindiv = foo[0]
+    for li in header_div.cssselect('ul.tools li'):
+        txt = li.text_content()
+        if re.search(r'\d{4}',txt):
+            # it's a date
+            art['pubdate'] = ukmedia.ParseDateTime(txt)
+        elif 'By' in txt:
+            # it's a byline (should use rel=author)
+            art['byline'] = u' '.join(txt.split())
 
-    h1 = maindiv.cssselect('h1')[0]
-    art['title'] = unicode( h1.text_content().strip() )
-    foo = maindiv.cssselect('.byline')
-    if len(foo)<1:
-        foo = maindiv.cssselect('.article-date')
-    if len(foo)>0:
-        bylinetxt = unicode( foo[0].text_content() )
-        bylinepat = re.compile( ur'\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*' )
-        m = bylinepat.match( bylinetxt )
-        art['byline'] = m.group(1)
-        art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
-
-    # sometimes, only sundaymirror.co.uk in byline is only indicator
-    if u'sundaymirror' in art['byline'].lower():
-        art['srcorgname'] = u'sundaymirror'
-
-    foo = maindiv.cssselect('#article-body')
-    if len(foo)<1:
-        foo = maindiv.cssselect('.article-body')
-        assert len(foo)>0
-    bod = foo[0]
-    for g in maindiv.cssselect( 'div.art-o' ):  # galleries
-        g.drop_tree()
-    for cruft in maindiv.cssselect( '.advert, .inline-ad, .article-image, .append-html, .related, .article-tags'  ): # other cruft
-        cruft.drop_tree()
-    art['content'] = ukmedia.SanitiseHTML( unicode( lxml.html.tostring( bod ) ) )
-
+    body_div = article_div.cssselect('.body')[0]
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
     art['description'] = ukmedia.FirstPara( art['content'] )
+    art['srcorgname'] = u'mirror'   # to avoid clash with sundaymirror in pub_domain table (TODO: merge both into "Mirror Online")
 
     return art
 
 
-
-
-def OLD_Extract_MainSite( html, context ):
-    art = context
-    soup = BeautifulSoup( html )
-
-
-    if '/sunday-mirror/' in art['srcurl']:
-        art['srcorgname'] = u'sundaymirror'
-    else:
-        art['srcorgname'] = u'mirror'
-
-    maindiv = soup.find( 'div', { 'id': 'three-col' } )
-    if not maindiv:
-        if "<p>You are viewing:</p>" in html:
-            ukmedia.DBUG2("IGNORE gallery page '%s' [%s]\n" % (art['title'],art['srcurl']) )
-            return None
-        
-
-
-
-    h1 = maindiv.h1
-
-    title = h1.renderContents(None)
-    title = ukmedia.FromHTMLOneLine( title )
-    art['title'] = title
-
-    # eg "By Jeremy Armstrong 24/07/2008"
-    bylinepara = maindiv.find( 'p', {'class': 'article-date' } )
-    bylinetxt = bylinepara.renderContents( None )
-    bylinetxt = ukmedia.FromHTMLOneLine( bylinetxt )
-    bylinepat = re.compile( r'\s*(.*?)\s*(\d{1,2}/\d{1,2}/\d{4})\s*' )
-    m = bylinepat.match( bylinetxt )
-    art['byline'] = m.group(1)
-    art['pubdate'] = ukmedia.ParseDateTime( m.group(2) )
-
-    # sometimes, only sundaymirror.co.uk in byline is only indicator
-    if u'sundaymirror' in art['byline'].lower():
-        art['srcorgname'] = u'sundaymirror'
-
-    # look for images
-    art['images'] = []
-    caption_pat = re.compile( ur"\s*(.*?)\s*[(]\s*(?:pic\s*:|pics\s*:)?\s*(.*)[)]\s*$", re.UNICODE|re.IGNORECASE )
-
-    # pick out gallery images first
-    galimages = []
-    for galdiv in maindiv.findAll( 'div', {'class': 'galleryembed' } ):
-        for picdiv in galdiv.findAll( 'div', {'id': re.compile(r'gallery_\d+_pic_\d+') } ):
-            img = picdiv.img
-            img_url = img['src']
-            caption = img['alt']
-            credit = u''
-            m = caption_pat.match(caption)
-            if m:
-                caption = m.group(1)
-                credit = m.group(2)
-            # use a proper caption if there is one
-            p = picdiv.find('p', {'class':'gallery-caption'})
-            if p:
-                caption = ukmedia.FromHTMLOneLine( p.renderContents(None) )
-
-            galimages.append( {'url':img_url, 'caption':caption, 'credit':credit } )
-        galdiv.extract()
-
-    # now get any non-gallery images
-    for imgdiv in maindiv.findAll( 'div', {'class': re.compile('article-image|art-o')} ):
-        img = imgdiv.img
-        if not img:
-            continue
-        # special exception to avoid star rating on review pages :-)
-        if img['height'] == "15":
-            continue
-        img_url = img['src']
-        p = imgdiv.find( 'p', {'class': 'article-date'} )
-        t = img['alt']
-        if p:
-            t = p.renderContents(None)
-            t = ukmedia.FromHTMLOneLine(t)
-        m = caption_pat.match(t)
-        cap = t
-        cred = u''
-        if m:
-            cap = m.group(1)
-            cred = m.group(2)
-
-        art['images'].append( {'url':img_url, 'caption':cap, 'credit':cred } )
-
-    # add the gallery images last (ordering probably will get lost at some point, but hey)
-    art['images'].extend( galimages )
-
-
-
-    # get the main content.
-    # sometimes there is an <div id="article-body">, but not always
-
-    contentdiv = maindiv.find( 'div', {'id':'article-body'} )
-    if contentdiv:
-        pass
-    else:
-        # use main div as the content...
-        contentdiv = maindiv
-        # ...trying to remove everything except for article text
-        h1.extract()
-        bylinepara.extract()
-
-    # kill adverts, photos etc...
-    for cruft in contentdiv.findAll( 'div' ):
-        cruft.extract()
-    # sometimes a misplaced "link" element!
-    for cruft in contentdiv.findAll( 'link' ):
-        cruft.extract()
-
-    # kill advertising crud appended to article... Gaaaah
-    for cruft in contentdiv.findAll( 'p', {'class':'append-html'} ):
-        cruft.extract()
-
-    content = contentdiv.renderContents(None)
-    art['content'] = content
-    art['description'] = ukmedia.FirstPara( content )
-
-    if art['description'].strip() == u'':
-        # check for obvious reasons we might get empty content
-        t = art['title'].lower()
-#        if re.search( r'\bpix\b', t ):
-#            ukmedia.DBUG2("IGNORE pix page '%s' [%s]\n" % (art['title'],art['srcurl']) )
-#            return None
-        if re.search( r'^video:', t ):
-            ukmedia.DBUG2("IGNORE video page '%s' [%s]\n" % (art['title'],art['srcurl']) )
-            return None
-        if re.search( r'\bdummy story\b', t ) or re.search( r'\bholding story\b', t ):
-            ukmedia.DBUG2("IGNORE dummy story '%s' [%s]\n" % (art['title'],art['srcurl']) )
-            return None
-
-    return art
 
 
 
@@ -363,64 +135,6 @@ srcid_patterns = [
     re.compile( "((blogs|fashion).mirror.co.uk/.*[.]html)" )
     ]
 
-def CalcSrcID( url ):
-    """ Calculate a unique srcid from a url """
-    o = urlparse.urlparse( url )
-
-    # only want pages from mirror.co.uk or sundaymirror.co.uk
-    # domains (includes blogs.mirror.co.uk)
-    if not o[1].endswith( 'mirror.co.uk' ) and not o[1].endswith('sundaymirror.co.uk'):
-        return None
-
-    for pat in srcid_patterns:
-        m = pat.search( url )
-        if m:
-            break
-    if not m:
-        return None
-
-    return 'mirror_' + m.group(1)
-
-
-def ScrubFunc( context, entry ):
-    title = context['title']
-    title = ukmedia.DescapeHTML( title )
-    title = ukmedia.UncapsTitle( title )    # all mirror headlines are caps. sigh.
-    context['title'] = title
-
-    url = context['srcurl']
-    o = urlparse.urlparse( url )
-
-    if o[1] in ( 'feeds.feedburner.com', 'feedproxy.google.com' ):
-        # Luckily, feedburner feeds have a special entry
-        # which contains the original link
-        url = entry.feedburner_origlink
-#        o = urlparse.urlparse( url )
-
-    if o[1] == 'rss.feedsportal.com':
-        # Luckily the guid has proper link (marked as non-permalink)
-        url = entry.guid
-
-    # sanity check - make sure we've got a direct link
-    if url.find( 'mirror.co.uk' ) == -1:
-        raise Exception, "URL not from mirror.co.uk or sundaymirror.co.uk ('%s')" % (url)
-
-    if '/video/' in url:
-        ukmedia.DBUG2( "ignore video '%s' [%s]\n" % (title,url) )
-        return None
-
-    if '/cartoons/' in url:
-        ukmedia.DBUG2( "ignore cartoons '%s' [%s]\n" % (title,url) )
-        return None
-
-
-    context[ 'srcid' ] = CalcSrcID( url )
-    context[ 'srcurl' ] = url
-    context[ 'permalink'] = url
-
-    return context
-
-
 
 
 def ContextFromURL( url ):
@@ -428,31 +142,65 @@ def ContextFromURL( url ):
     context = {}
     context['srcurl'] = url
     context['permalink'] = url
-    context[ 'srcid' ] = CalcSrcID( url )
-    # looks like sundaymirror.co.uk domainname has been deprecated
-    if 'sundaymirror.co.uk' in url or '/sunday-mirror/' in url:
-        context['srcorgname'] = u'sundaymirror'
-    else:
-        context['srcorgname'] = u'mirror'
-
     context['lastseen'] = datetime.now()
     return context
 
 
 
+
+
 def FindArticles():
-    feeds = FindRSSFeeds()          # scrape the list of feeds for the main site
-    feeds = feeds + blog_rssfeeds   # add the blog feeds
-    # feedsportal.com has _lots_ of HTTP Error 503:
-    # "Feed is currently being prepared; try again real soon"
-    # The muppets.
-    # hence the large maxerrors
-    found = ScraperUtils.FindArticlesFromRSS( feeds, u'mirror', ScrubFunc, maxerrors=100 )
-    return found
+
+    home_url = "http://www.mirror.co.uk"
+    html = ukmedia.FetchURL(home_url) 
+    doc = lxml.html.document_fromstring( html )
+    doc.make_links_absolute(home_url)
+
+    sections = set()
+
+    for a in doc.cssselect('nav.nav-main nav a'):
+        url = a.get('href')
+        sections.add(url)
+
+    article_urls = set()
+    for section_url in sections:
+        article_urls.update(ReapArticles(section_url))
+  
+    return [ContextFromURL(url) for url in article_urls]
+
+
+
+
+def ReapArticles(page_url):
+    """ find all article links on a page """
+
+    art_pats = (
+        re.compile('https?://(www.)?mirror.co.uk/.*-[0-9]{4,}$', re.I),
+        re.compile('https?://(www.)?mirrorfootball.co.uk/.*[0-9]{4,}[.]html$', re.I)
+    )
+
+    article_urls = set()
+    html = ukmedia.FetchURL( page_url ) 
+
+    doc = lxml.html.document_fromstring( html )
+    doc.make_links_absolute(page_url)
+
+    for a in doc.cssselect('a'):
+        url = a.get('href')
+        if url is None:
+            continue
+        url = re.sub( '#(.*?)$', '', url)
+
+        for pat in art_pats:
+            if pat.match(url):
+                article_urls.add(url)
+                break
+
+    ukmedia.DBUG2( "scanned %s, found %d articles\n" % ( page_url, len(article_urls) ) );
+    return article_urls
 
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
-
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50 )
 
