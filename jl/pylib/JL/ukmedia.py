@@ -132,11 +132,12 @@ datecrackers = [
     
     # 'Monday, 22 October 2007' (Independent blogs, Sun (page date))
     re.compile( """\w+,\s+(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
-    
+
     # '22 October 2007' (Sky News blogs)
     # '11 Dec 2007' (Sun (article date))
     # '12 February 2008' (scotsman)
-    re.compile( """(?P<day>\d+)\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
+    # '28th February 2012' (sun)
+    re.compile( """(?P<day>\d+)(?:st|nd|rd|th)?\s+(?P<month>\w+)\s+(?P<year>\d{4})""", re.UNICODE ),
     # '03/09/2007' (Sky News blogs, mirror)
     re.compile( """(?P<day>\d{1,2})/(?P<month>\d{1,2})/(?P<year>\d{4})""", re.UNICODE ),
 

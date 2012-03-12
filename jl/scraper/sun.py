@@ -26,6 +26,7 @@ site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup
 from JL import ukmedia,ScraperUtils
 
+from pprint import pprint
 
 # current url format:
 # http://www.thesun.co.uk/sol/homepage/news/2471744/Browns-Nailed-Plotters.html
@@ -158,66 +159,6 @@ def ReapArticles( page_url ):
 
 
 
-# OLD Sun-Lite version - left in for reference
-def FindArticles_SUNLITE():
-    """ Scrapes the Sun-Lite pages to get article list for the week """
-    baseurl = "http://www.thesun.co.uk"
-
-    days = [ 'Monday', 'Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday' ]
-    dow = datetime.now().weekday()
-    days[dow] = 'today'
-
-    ukmedia.DBUG2( "*** sun ***: looking for articles...\n" )
-
-    found = []
-    for day in days:
-        sunlite_url = baseurl + "/sol/homepage/?sunlite=" + day
-        ukmedia.DBUG2( "fetching %s\n" % (sunlite_url) )
-        html = ukmedia.FetchURL( sunlite_url )
-
-        soup = BeautifulSoup(html)
-        col2 = soup.find( 'div', {'id':'column2-index'} )
-
-        cnt = 0
-        for a in col2.findAll( 'a' ):
-            if not a.has_key('href'):
-                continue
-            url = a['href']
-            if not url.startswith( "http://" ):
-                url = baseurl + a['href']
-
-            if( CalcSrcID( url ) == None ):
-                continue
-
-            title = ukmedia.FromHTML( a.renderContents( None ) )
-
-            if '/video/' in url:
-                ukmedia.DBUG2( "SKIP video page '%s' [%s]\n" %(title,url) )
-                continue
-            if '/sportvideos/' in url:
-                ukmedia.DBUG2( "SKIP sportvideos page '%s' [%s]\n" %(title,url) )
-                continue
-            if title.lower() == 'photo casebook' and '/deidre/' in url:
-                ukmedia.DBUG2( "SKIP photo casebook page '%s' [%s]\n" %(title,url) )
-                continue
-            if title.lower() == 'photo casebook' and '/deidre/' in url:
-                ukmedia.DBUG2( "SKIP photo casebook page '%s' [%s]\n" %(title,url) )
-                continue
-            if title.lower() == 'dream team' and '/football/fantasy_games/' in url:
-                ukmedia.DBUG2( "SKIP dreamteam page '%s' [%s]\n" %(title,url) )
-                continue
-
-
-            art = ContextFromURL( url )
-            art['title'] = title
-            found.append( art )
-            cnt = cnt+1
-            #print "'%s' [%s]" % (title,url)
-        ukmedia.DBUG2( " %d articles\n" % (cnt) )
-
-    return found
-
-
 
 def Extract(html, context, **kw):
     art = context
@@ -287,28 +228,34 @@ def Extract(html, context, **kw):
     # get page date (it's in format "Friday, December 14, 2007")
     #pagedatetxt = soup.find( 'p', {'id':"masthead-date"}).string.strip()
 
-    for author in soup.findAll( 'p', { 'class': re.compile( '\\b(author|display-byline)\\b' ) } ):
+    for author in soup.findAll( ['p','div'], { 'class': re.compile( r'\bauthor\b|\bdisplay-byline\b' ) } ):
         txt = author.renderContents( None ).strip()
         if txt == '':
             continue
         if txt.find( 'Email the author' ) != -1:
             continue        # ignore email links
 
-        m = re.match( u'Published:\s+(.*)', txt )
-        if m:
+        m = re.compile( r'^(?:Published:|Last Updated:)\s+(.*)$',re.I).search(txt)
+        if m is not None:
             # it's a date (eg '11 Dec 2007' or 'Today')
             datetxt = m.group(1)
         else:
-            # assume it's the byline
-            if bylinetxt != u'':
-                raise Exception, "Uhoh - multiple bylines..."
-            bylinetxt = txt
-            # replace "<br />" with ", " and zap any other html
-            bylinetxt = re.sub( u'\s*<br\s*\/>\s*', u', ', bylinetxt )
-            bylinetxt = ukmedia.FromHTML( bylinetxt )
+            # "By Bob Smith" or "BOB SMITH"
+            if re.compile('^by\s',re.I).search(txt) or re.compile(r'^[A-Z]{3,}\s+[A-Z]{3,}(\s+[A-Z])?\s*$').match(txt):
+                if bylinetxt != u'':
+                    raise Exception, "Uhoh - multiple bylines..."
+                bylinetxt = ukmedia.FromHTMLOneLine(txt)
+        
 
-    if datetxt == u'' or datetxt == u'Today':
-        d = date.today()
+    if datetxt == u'':
+        foo = soup.find('div',{'class':re.compile(r'\bpublished-date-text\b')})
+        if foo:
+            txt = ukmedia.FromHTMLOneLine(foo.renderContents(None))
+            m = re.compile( r'^(?:Published:|Last Updated:)\s+(.*)$',re.I).search(txt)
+            if m is not None:
+                datetxt = m.group(1)
+
+    if datetxt == u'Today':
         art['pubdate'] = datetime( d.year, d.month, d.day )
     else:
         art['pubdate' ] = ukmedia.ParseDateTime( datetxt )
@@ -323,7 +270,7 @@ def Extract(html, context, **kw):
     art['byline'] = bylinetxt
 
 
-    bodyText = col2.find( 'div', {'id':'bodyText'} )
+    bodyText = soup.find( 'div', {'id':'bodyText'} )
     for cruft in bodyText.findAll( 'p', {'class':re.compile('advertising') } ):
         cruft.extract()
     contenttxt = bodyText.renderContents(None)
