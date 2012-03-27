@@ -81,7 +81,7 @@ def iterq(conn,base_query,conds,params):
 
 
 
-def check_row(row,fields,pk,encoding='utf-8'):
+def check_row(table,row,fields,pk,encoding='utf-8'):
     """ check fields in row are valid encoding """
     errs = 0
 
@@ -93,11 +93,11 @@ def check_row(row,fields,pk,encoding='utf-8'):
                 val = u.encode( encoding )
             except UnicodeDecodeError:
                 errs += 1
-                logging.error("BAD decode: %s (%s=%s)" %(table,f,pk,row[pk]))
+                logging.error("BAD decode: %s.%s (%s=%s)" %(table,f,pk,row[pk]))
                 continue
             except UnicodeEncodeError:
                 errs += 1
-                logging.error("BAD encode: %s (%s=%s)" %(table,f,pk,row[pk]))
+                logging.error("BAD encode: %s.%s (%s=%s)" %(table,f,pk,row[pk]))
                 continue
     return errs
 
@@ -143,7 +143,7 @@ def main():
         params.append(options.todate)
 
     for row in iterq(DB.conn(),base_query,conds,params):
-        check_row(row,fields,'id')
+        check_row('article',row,fields,'id')
 
 
     # article_url table
@@ -155,12 +155,12 @@ def main():
     params = []
     if options.fromdate or options.todate:
         assert options.fromdate and options.todate
-        conds.append("""article_id in (SELECT id FROM article WHERE pubdate>=%s AND pubdate>=%s)""")
+        conds.append("""article_id in (SELECT id FROM article WHERE pubdate>=%s AND pubdate<=%s)""")
         params.append(options.fromdate)
         params.append(options.todate)
 
     for row in iterq(DB.conn(),base_query,conds,params):
-        check_row(row,fields,'id')
+        check_row('article_url',row,fields,'id')
 
 
 
