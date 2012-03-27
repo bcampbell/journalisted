@@ -183,7 +183,10 @@ function jl_send_text_email($to, $from_name, $from_email, $subject, $body)
     $headers  = 'MIME-Version: 1.0' . "\r\n";
     $headers .= 'Content-type: text/plain; charset=iso-8859-1' . "\r\n";
     $headers .= 'From: ' . $from_name. ' <' . $from_email . ">\r\n";
-    return mail($to, $subject, $body, $headers);
+
+    // TODO: implement proper VERP stuff
+    $additional_params = "-f bounce@journalisted.com";
+    return mail($to, $subject, $body, $headers, $additional_params);
 }
 
 
@@ -198,7 +201,9 @@ function jl_send_html_email($to, $from_name, $from_email, $subject, $htmltext )
 
     $body = chunk_split(base64_encode($htmltext));
 
-    return mail($to, $subject, $body, $headers);
+    // TODO: implement proper VERP stuff
+    $additional_params = "-f bounce@journalisted.com";
+    return mail($to, $subject, $body, $headers, $additional_params);
 }
 
 
