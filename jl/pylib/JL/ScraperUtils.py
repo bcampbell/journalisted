@@ -89,6 +89,16 @@ def extract_canonical_url(html, base_url):
     supports rel=canonical and og:url
     """
 
+    # TODO: this should handle badly/un-encoded URLS
+    # (eg http://www.express.co.uk/blogs/post/268/blog/2012/03/18/308764/No-spring-in-the-blackcaps-step)
+    # but to do that we really need to know the character encoding of the
+    # page.
+    # SO, rel-canonical extraction should really be done by the scraper
+    # itself, as part of extract(). Silly to change it now while we've
+    # still got lots of custom scrapers, but once we ditch 'em in favour of
+    # a single generic scraper, that scraper should do rel-canonical
+    # processing...
+
     # TODO: handle malformed <head>
     # eg "http://www.theeastafrican.co.ke/business/Kenya+allows+public+online+access+to+govt+data/-/2560/1197916/-/hh4v0e/-/"
     # (missing opening <head> tag)
@@ -269,6 +279,10 @@ def scrape_articles( found, extract, opts):
                 known_urls.add(tidied_url)
 
             context['urls'] = known_urls
+
+            # check that all urls are OK (eg express.co.uk have a habit of publishing borked ones for blogs)
+            for url in known_urls:
+                url.encode('utf-8') # will raise an exception if dud
 
             # repeat url-based existence check with the urls we now have
             # TODO: if so, add any new urls... maybe rescrape and update article? 
