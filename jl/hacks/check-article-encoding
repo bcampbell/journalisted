@@ -1,0 +1,169 @@
+#!/usr/bin/env python
+#
+# hacky tool to convert DB from one encoding to another.
+#
+
+import sys
+#import string
+#import time
+#import shutil
+#import os
+from optparse import OptionParser
+import logging
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+# TODO: left in for reference
+_CONFIG = {
+    'encoding': 'utf-8',
+    'tables': [
+        {
+          'name': 'article_image',
+          'pk': 'id',
+          'fields': ('url','caption','credit')
+        },
+        {
+          'name': 'article',
+          'pk': 'id',
+          'fields': ('title','byline','description','permalink','srcurl','srcid')
+        },
+        {
+          'name': 'article_content',
+          'pk': 'id',
+          'fields': ('content',)
+        },
+        {
+          'name':'requeststash',
+          'pk':'key',
+          'fields': ('key','method','url','extra','email')
+        }
+    ]
+}
+
+
+
+
+
+
+
+def iterq(conn,base_query,conds,params):
+    """ perform a query in batches to avoid huge mem usage """
+
+    cursor = conn.cursor()
+    offset = 0
+    limit = 5000
+
+    while 1:
+
+        sql = base_query
+        if conds:
+            sql += " WHERE " + ' AND '.join(conds)
+        sql += " OFFSET %s LIMIT %s"
+        foo = params + [offset,limit]
+
+        logging.debug("%s %s",sql, foo)
+
+        logging.debug(" fetch %d-%d" % ( offset, offset+limit-1))
+        cursor.execute( sql, foo)
+        cnt = 0
+        while 1:
+            row = cursor.fetchone()
+            if row is None:
+                break
+            yield row
+            cnt=cnt+1
+
+        if cnt==0:
+            break;
+        offset = offset + cnt
+
+
+
+def check_row(row,fields,pk,encoding='utf-8'):
+    """ check fields in row are valid encoding """
+    errs = 0
+
+    for f in fields:
+        val = row[f]
+        if isinstance(val, str):
+            try:
+                u = val.decode( encoding )
+                val = u.encode( encoding )
+            except UnicodeDecodeError:
+                errs += 1
+                logging.error("BAD decode: %s (%s=%s)" %(table,f,pk,row[pk]))
+                continue
+            except UnicodeEncodeError:
+                errs += 1
+                logging.error("BAD encode: %s (%s=%s)" %(table,f,pk,row[pk]))
+                continue
+    return errs
+
+
+
+
+def main():
+
+    parser = OptionParser()
+    parser.add_option('-v', '--verbose', action='store_true')
+    parser.add_option('-d', '--debug', action='store_true')
+    parser.add_option("-f", "--from",
+        dest="fromdate",
+        metavar="FROM",
+        help="date FROM (yyyy-mm-dd)" );
+    parser.add_option("-t", "--to",
+        dest="todate",
+        metavar="TO",
+        help="date TO (yyyy-mm-dd)" );
+
+    (options, args) = parser.parse_args()
+
+    log_level = logging.WARNING
+    if options.verbose:
+        log_level = logging.INFO
+    if options.debug:
+        log_level = logging.DEBUG
+    logging.basicConfig(level=log_level, format='%(message)s')
+
+
+    # article table
+    logging.info("article")
+    fields = ('id','permalink','srcurl','title','description','byline')
+    base_query = "SELECT %s FROM article" %(','.join(fields))
+
+    conds = []
+    params = []
+    if options.fromdate:
+        conds.append('pubdate>=%s')
+        params.append(options.fromdate)
+    if options.todate:
+        conds.append('pubdate<=%s')
+        params.append(options.todate)
+
+    for row in iterq(DB.conn(),base_query,conds,params):
+        check_row(row,fields,'id')
+
+
+    # article_url table
+    logging.info("article_url")
+    fields = ('id','url')
+    base_query = "SELECT %s FROM article_url" %(','.join(fields))
+
+    conds = []
+    params = []
+    if options.fromdate or options.todate:
+        assert options.fromdate and options.todate
+        conds.append("""article_id in (SELECT id FROM article WHERE pubdate>=%s AND pubdate>=%s)""")
+        params.append(options.fromdate)
+        params.append(options.todate)
+
+    for row in iterq(DB.conn(),base_query,conds,params):
+        check_row(row,fields,'id')
+
+
+
+if __name__ == "__main__":
+    main()
+
