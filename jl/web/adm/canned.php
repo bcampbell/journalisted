@@ -16,10 +16,9 @@ require_once '../phplib/adm.php';
 require_once '../phplib/journo.php';    // for journo_link()
 require_once '../phplib/xap.php';
 
-/* two sets of buttons/action selectors */
-$action = get_http_var( 'action' );
 
-admPageHeader( "Canned Queries" );
+admEnforceAccess();
+
 
 $canned = array(
     new KnownEmailAddresses(),
@@ -46,10 +45,11 @@ $canned = array(
 
 
 
-function ShowMenu()
+function view_menu()
 {
     global $canned;
 
+    admPageHeader( "Canned Queries" );
 ?>
 <h2>Assorted Canned Queries</h2>
 <dl>
@@ -63,32 +63,43 @@ function ShowMenu()
 <?php } ?>
 </dl>
 <?php
-
+    admPageFooter();
 }
 
-if( $action=='scrapers' )
-    EmitScraperReport();
-elseif( $action=='verysimilararticles' )
-    Do_verysimilararticles();
-else
+
+function view()
 {
-    $picked = null;
-    foreach( $canned as $c ) {
-        if( $c->ident == $action ) {
-            $picked = $c;
-            break;
+    global $canned;
+
+    $action = get_http_var( 'action' );
+
+    if( $action=='scrapers' ) {
+        admPageHeader( "Canned Queries" );
+        EmitScraperReport();
+        admPageFooter();
+    } elseif( $action=='verysimilararticles' ) {
+        admPageHeader( "Canned Queries" );
+        Do_verysimilararticles();
+        admPageFooter();
+    }
+    else
+    {
+        $picked = null;
+        foreach( $canned as $c ) {
+            if( $c->ident == $action ) {
+                $picked = $c;
+                break;
+            }
+        }
+
+        if( $picked ) {
+            $picked->view();
+        } else {
+            view_menu();
         }
     }
 
-    if( $picked ) {
-        $picked->go();
-    } else {
-        ShowMenu();
-    }
 }
-
-admPageFooter();
-
 
 /********************************/
 
@@ -209,6 +220,28 @@ function Do_verysimilararticles_format( &$row, $col, $prevrow=null ) {
     return null;
 }
 
+function csv_defaultformat( &$row, $col, $prevrow=null ) {
+    $cell = $row[$col];
+    if( $cell instanceof DateTime ) {
+        return $cell->format( 'Y-m-d' );
+    } else if( is_array( $cell ) ) {
+        if( $col=='journo' ) {
+            return $cell['ref'];
+        }
+
+        if( $col=='article' ) {
+            $a = $cell;
+            return $a['title'];
+        }
+        return "[array]";
+    } else {
+        if( $col=='ref' ) {
+            $ref = $cell;
+            return $ref;
+        }
+        return admMarkupPlainText( $cell );
+    }
+}
 
 function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
     $cell = $row[$col];
@@ -398,7 +431,12 @@ class CannedQuery {
 <?php } ?>
 <br />
 <?php } ?>
-<input type="submit" name="go" value="Go!" />
+<label for="fmt">Output format:</label>
+<select name="fmt" id="fmt">
+ <option value="html" selected>table</option>
+ <option value="csv" >csv file</option>
+</select>
+<input type="submit" value="Go!" />
 
 </form>
 <?
@@ -408,28 +446,88 @@ class CannedQuery {
 
 
 
-    function go() {
-        echo "<h2>{$this->name}</h2>\n";
-        echo "<p>{$this->desc}</p>\n";
-        if( isset($this->longdesc) ) {
-            echo "<p>{$this->longdesc}</p>\n";
+    function view() {
+        $fmt = get_http_var('fmt');
+        $params = $this->get_params();
+
+        $rows = null;
+        if($fmt) {
+            $rows = $this->perform( $params );
+        } else {
+            // if not performing query, show html version
+            $fmt='html';
         }
 
-        $params = array();
-        if( $this->param_spec ) {
-            $params = $this->get_params();
-            $this->emit_params_form( $params );
-            if( !get_http_var( 'go' ) )
-                return;
+        if( $fmt=='html') {
+            $this->template_html($params,$rows);
+        } elseif( $fmt=='csv') {
+            $this->template_csv($params,$rows);
         }
-
-        $this->perform( $params );
     }
 
 
+    function template_html($params,$rows) {
+        admPageHeader( "Canned Queries" );
+
+?>
+<h2><?= $this->name ?></h2>
+<p><?= $this->desc ?></p>
+<?php if( isset($this->longdesc) ) { ?>
+<p><?= $this->longdesc ?></p>
+<?php } ?>
+<?php
+        $this->emit_params_form( $params );
+        if(!is_null($rows)) {
+            Tabulate($rows, $this->columns());
+        }
+        admPageFooter();
+    }
+
+
+    function template_csv($params,$rows) {
+        $filename=$this->ident . ".csv";
+
+        $columns = $this->columns();
+        if( is_null( $columns ) ) {
+            $columns = array_keys( $rows[0] );
+        }
+
+        $fp = fopen('php://output', 'w');
+        if($fp) {
+            header("Content-type: application/csv");
+            header("Content-Disposition: attachment; filename={$filename}");
+            header("Pragma: no-cache");
+            header("Expires: 0");
+
+            fputcsv($fp,$columns);
+            foreach($rows as $row) {
+                $fields = array();
+                foreach($columns as $col) {
+
+                    $field = Tabulate_defaultformat($row, $col);
+                    $fields[] = $field;
+                }
+                fputcsv($fp,$fields);
+            }
+            fclose($fp);
+        }
+    }
+
+
+
+    /* array of column titles (and ordering).
+       null = take from keys of row data arrays */
+    function columns()
+    {
+        return null;
+    }
+
+
+    // perform query, return results as array of rows
     // to be overidden
     function perform( $params = array () )
     {
+        return array();
     }
 
 };
@@ -496,7 +594,8 @@ EOT;
         $rows = db_getAll( $sql, $sqlparams );
         collectColumns( $rows );
 
-        Tabulate( $rows, $column_order );
+        # TODO: $column_order
+        return $rows;
     }
 }
 
@@ -515,7 +614,7 @@ SELECT j.ref,e.email FROM (journo_email e INNER JOIN journo j ON e.journo_id=j.i
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -534,7 +633,7 @@ SELECT * FROM organisation ORDER BY shortname;
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -552,7 +651,7 @@ SELECT count(*) as num_articles FROM article WHERE status='a';
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -570,7 +669,7 @@ SELECT p.email, j.ref FROM ((alert a INNER JOIN person p ON a.person_id=p.id) IN
 EOT;
 
         $rows = db_getAll( $sql );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -600,7 +699,11 @@ EOT;
 
         $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
         collectColumns( $rows );
-        Tabulate( $rows, array( 'journo','wordcount','article') );
+        return $rows;
+    }
+
+    function columns() {
+        return array( 'journo','wordcount','article');
     }
 }
 
@@ -632,7 +735,7 @@ EOT;
 
         $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -697,7 +800,7 @@ q2: [<?= $q2 ?>]
             $n2 = $this->q_count( $q2 );
             $result[ "q2: {$params['q2']}" ] = $n2;
 
-            Tabulate( array( $result ) );
+            return array( $result );
         }
     }
 }
@@ -772,7 +875,7 @@ class WhosWritingAbout extends CannedQuery {
                 uasort($results, 'cmp_article_count');
             }
 
-            Tabulate( $results );
+            return $results;
         }
     }
 }
@@ -813,7 +916,7 @@ SELECT p.name,p.email
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -851,7 +954,7 @@ EOT;
         }
 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -870,7 +973,7 @@ SELECT j.ref, j.prettyname, j.oneliner, p.email, p.name FROM (person p INNER JOI
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -889,7 +992,7 @@ SELECT j.ref, j.prettyname, j.oneliner, l.url, l.description FROM journo j INNER
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -906,7 +1009,7 @@ SELECT ref, prettyname, oneliner FROM journo WHERE fake=true;
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -927,7 +1030,7 @@ SELECT j.ref, j.prettyname, j.oneliner,j.created as journo_created, e.school,e.f
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
 
@@ -956,7 +1059,7 @@ SELECT j.status, j.ref, j.prettyname, j.created
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 
 }
@@ -978,7 +1081,7 @@ SELECT distinct j.id,j.ref,j.prettyname, (SELECT MAX(event_time) FROM event_log 
 EOT;
         $rows = db_getAll( $sql ); 
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 
 }
@@ -1065,9 +1168,12 @@ EOT;
 
         $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
         collectColumns( $rows );
-        Tabulate( $rows );
+        return $rows;
     }
 }
+
+
+view();
 
 
 ?>
