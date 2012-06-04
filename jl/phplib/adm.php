@@ -32,7 +32,8 @@ function admEnforceAccess()
         // no access. stop right now.
 
         // should print error message, but hey. let's just dump back to homepage
-        header( "Location: /" ); 
+        header('HTTP/1.0 403 Forbidden');
+        print("not logged in.");
         exit;
     }
 }
