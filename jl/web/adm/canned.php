@@ -28,6 +28,7 @@ $canned = array(
     new ProlificJournos(),
     new MostIndepthJournos(),
     new TopTags(),
+    new OldQueryFight(),
     new QueryFight(),
     new WhosWritingAbout(),
     new NewsletterSubscribers(),
@@ -713,7 +714,7 @@ class TopTags extends CannedQuery {
     function __construct() {
         $this->name = "TopTags";
         $this->ident = strtolower( $this->name );
-        $this->desc = "The top 100 tags used over the given interval";
+        $this->desc = "The top 200 tags used over the given interval";
 
         $this->param_spec = array(
             array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
@@ -730,7 +731,7 @@ SELECT t.tag, sum(t.freq) as tag_total, count(*) as num_articles
     WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') AND t.kind=' '
     GROUP BY tag
     ORDER BY tag_total DESC
-    LIMIT 100
+    LIMIT 200
 EOT;
 
         $rows = db_getAll( $sql, $params['from_date'], $params['to_date'] );
@@ -741,11 +742,11 @@ EOT;
 
 
 
-class QueryFight extends CannedQuery {
+class OldQueryFight extends CannedQuery {
     function __construct() {
-        $this->name = "QueryFight";
+        $this->name = "OldQueryFight";
         $this->ident = strtolower( $this->name );
-        $this->desc = "Compare fulltext queries side-by-side over time";
+        $this->desc = "Compare fulltext queries side-by-side over time. LEFT IN JUST IN CASE NEW ONE DOESN'T WORK AS EXPECTED!";
 
         $this->param_spec = array(
             array( 'name'=>'q1', 'label'=>'Query one', 'default'=>'' ),
@@ -787,12 +788,6 @@ class QueryFight extends CannedQuery {
                 $q1 .= $range;
                 $q2 .= $range;
             }
-?>
-<pre>
-q1: [<?= $q1 ?>]
-q2: [<?= $q2 ?>]
-</pre>
-<?php
 
             $result = array();
             $n1 = $this->q_count( $q1 );
@@ -802,6 +797,81 @@ q2: [<?= $q2 ?>]
 
             return array( $result );
         }
+    }
+}
+
+
+
+class QueryFight extends CannedQuery {
+    function __construct() {
+        $this->name = "QueryFight";
+        $this->ident = strtolower( $this->name );
+        $this->desc = "Compare fulltext queries side-by-side over time";
+
+        $this->param_spec = array(
+            array( 'name'=>'q1', 'label'=>'Query one', 'default'=>'' ),
+            array( 'name'=>'q2', 'label'=>'Query two', 'default'=>'' ),
+            array( 'name'=>'from_date', 'label'=>'From date (yyyy-mm-dd):', 'default'=>date_create('1 week ago')->format('Y-m-d') ),
+            array( 'name'=>'to_date', 'label'=>'To date (yyyy-mm-dd):', 'default'=>date_create('today')->format('Y-m-d') )
+        );
+    }
+
+
+    function q_count( $q ) {
+        $n = 0;
+        $batchsize = 1000;
+
+        $xap = new XapSearch();
+        $xap->set_query( $q );
+        while(1) {
+            $rows = $xap->run($n,$batchsize,'relevance');
+            $n += sizeof( $rows );
+            if( sizeof( $rows ) < $batchsize )
+                break;
+        }
+
+        return $n;
+    }
+
+
+    function perform($params) {
+        $names =array('q1','q2');
+
+        $results = array();
+        foreach( $names as $nm) {
+            $raw = $params[$nm];
+            $full_query = $raw;
+            if(strpos($raw, ' ') !== FALSE ) {
+                $full_query = '(' . $full_query . ')';
+            }
+            $full_query .= ' pubset:national_uk';
+            if( $params['from_date'] || $params['to_date'] ) {
+                $from = date_create( $params['from_date'])->format('Ymd');
+                $to = date_create( $params['to_date'])->format('Ymd');
+                $range = " $from..$to";
+                $full_query .= $range;
+            }
+
+            $cnt = $this->q_count($full_query);
+            $path = '/search?a=' . urlencode($full_query);
+            $pastable = sprintf("[%s](%s)", $raw, $path);
+            if($cnt==0) {
+                $pastable .= ", no articles";
+            } elseif($cnt==1) {
+                $pastable .= ", ". $cnt . " article";
+            } else {
+                $pastable .= ", ". $cnt . " articles";
+            }
+
+            $results[] = array(
+                'query'=>$full_query,
+                'count'=>$cnt,
+                'link'=>OPTION_BASE_URL . $path,
+                'newsletterable'=>$pastable
+            );
+        }
+
+        return $results;
     }
 }
 
