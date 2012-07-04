@@ -26,8 +26,20 @@ $sim_orderby = strtolower( get_http_var( 'sim_orderby', 'score' ) );
 $sim_showall = strtolower( get_http_var( 'sim_showall', 'no' ) );
 
 $art = article_collect( $article_id, $sim_orderby, $sim_showall );
+
+
+/* TODO: show a more useful 404/410 page for missing/hidden articles! */
+if(is_null($art)) {
+    header('HTTP/1.1 404 Not Found');
+    return;
+}
+if( $art['status'] == 'h' ) {
+    header('HTTP/1.1 410 Gone');
+    return;
+}
 if( $art['status'] != 'a' ) {
-    return; /* TODO: 404? */
+    header('HTTP/1.1 404 Not Found');
+    return;
 }
 
 

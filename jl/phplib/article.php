@@ -56,6 +56,9 @@ function article_adm_url($art_id) {
 // collect up all the data we've got about an article, ready for displaying
 function article_collect( $article_id, $sim_orderby='score', $sim_showall='no' ) {
     $art = db_getRow( 'SELECT * FROM article WHERE id=?', $article_id );
+    if(is_null($art)) {
+        return null;
+    }
     $art['article_id'] = $art['id'];
     $art['id36'] = article_id_to_id36( $art['id'] );
     $art['blog_links'] = db_getAll( "SELECT * FROM article_bloglink WHERE article_id=? ORDER BY linkcreated DESC", $article_id );
