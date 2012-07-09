@@ -110,6 +110,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tg_No98_18_06_12.swf',
     'Tg_No99_26_06_12.swf',
     'Tg_No100_02_07_12.swf',
+    'TG_101_09_07_12.swf',
 );
 
 
