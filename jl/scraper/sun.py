@@ -20,6 +20,7 @@ import sys
 import traceback
 from datetime import date,datetime
 import urlparse
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
@@ -163,7 +164,8 @@ def ReapArticles( page_url ):
 def Extract(html, context, **kw):
     art = context
     # sun _claims_ to be iso-8859-1, but they're talking crap.
-    soup = BeautifulSoup( html, fromEncoding='windows-1252' )
+    page_encoding = 'windows-1252'
+    soup = BeautifulSoup( html, fromEncoding=page_encoding)
 
     # main column is column2 div - we can exclude a lot of nav cruft by starting here.
     col2 = soup.find( 'div', {'id':"column2"} )
@@ -192,19 +194,25 @@ def Extract(html, context, **kw):
             #sigh... sometimes they have "roottag" at the start of the article.
             # What is "roottag"? good question...
             roottag = soup.find( 'roottag' )
-            h1 = roottag.findPrevious( 'h1' )
+            if roottag:
+                h1 = roottag.findPrevious( 'h1' )
 
-    if 'small' in h1['class']:
+    if h1 is not None and 'small' in h1['class']:
         h1 = None
 
-    # sometimes there is no <h1> headline - it can be replaced by a gif
     if h1:
         titletxt = h1.renderContents(None).strip()
     else:
-        # no headline. get it from page title.  
-        foo = soup.title.renderContents( None );
-        m = re.search( r"\s*(.*?)\s*[|].*", foo )
-        titletxt = m.group(1)
+        # sometimes there is no <h1> headline - it can be replaced by a gif
+        # try meta tag
+        m = soup.find('meta[name="og:title"]')
+        if m:
+            titletxt = unicode(m['content'],page_encoding)
+        else:
+            # no headline. get it from page title.  
+            foo = soup.title.renderContents( None );
+            m = re.search( r"\s*(.*?)\s*[|].*", foo )
+            titletxt = m.group(1)
 
     titletxt = ukmedia.FromHTML( titletxt )
     titletxt = u' '.join( titletxt.split() )
@@ -230,6 +238,7 @@ def Extract(html, context, **kw):
 
     for author in soup.findAll( ['p','div'], { 'class': re.compile( r'\bauthor\b|\bdisplay-byline\b' ) } ):
         txt = author.renderContents( None ).strip()
+
         if txt == '':
             continue
         if txt.find( 'Email the author' ) != -1:
@@ -241,11 +250,11 @@ def Extract(html, context, **kw):
             datetxt = m.group(1)
         else:
             # "By Bob Smith" or "BOB SMITH"
-            if re.compile('^by\s',re.I).search(txt) or re.compile(r'^[A-Z]{3,}\s+[A-Z]{3,}(\s+[A-Z])?\s*$').match(txt):
+            if re.compile('^by\s',re.I).search(txt) or re.compile(r'^[A-Z]{3,}\s+[A-Z]{3,}(\s+[A-Z]{3,})?\s*$').match(txt):
                 if bylinetxt != u'':
                     raise Exception, "Uhoh - multiple bylines..."
                 bylinetxt = ukmedia.FromHTMLOneLine(txt)
-        
+
 
     if datetxt == u'':
         foo = soup.find('div',{'class':re.compile(r'\bpublished-date-text\b')})
@@ -258,8 +267,33 @@ def Extract(html, context, **kw):
     if datetxt == u'Today':
         art['pubdate'] = datetime( d.year, d.month, d.day )
     else:
-        art['pubdate' ] = ukmedia.ParseDateTime( datetxt )
+        if datetxt != '':
+            try:
+                art['pubdate' ] = ukmedia.ParseDateTime( datetxt )
+            except Exception:
+                # there is some javascript we can look at if all else fails...
+                m = re.compile(r'publication_date : "(\d{8})"').search(html)
+                if m:
+                    art['pubdate']=datetime.strptime(m.group(1),"%Y%m%d")
+        else:
+            # there is some javascript we can look at if all else fails...
+            m = re.compile(r'publication_date : "(\d{8})"').search(html)
+            if m:
+                art['pubdate']=datetime.strptime(m.group(1),"%Y%m%d")
 
+    if bylinetxt == u'':
+        # columnists have an <img> with alt='...'
+        for author in soup.findAll( ['p','div'], { 'class': re.compile( r'\bauthor\b|\bdisplay-byline\b' ) } ):
+            img = author.find('img')
+            if img and 'alt' in img:
+                bylinetxt = img['alt'].strip()
+
+    if bylinetxt == u'':
+        # look for byline in javascript
+        m = re.compile(r'var byLine = "(.*?)";').search(html)
+        if m:
+            bylinetxt = unicode(m.group(1), page_encoding)
+            bylinetxt = ukmedia.FromHTMLOneLine(bylinetxt)
 
     if bylinetxt == u'':
         # some special cases where no byline is given
@@ -267,7 +301,9 @@ def Extract(html, context, **kw):
             if c['url'] in art['srcurl']:
                 bylinetxt = c['name']
 
-    art['byline'] = bylinetxt
+
+    bylinetxt = bylinetxt.replace('<br/>',' ')
+    art['byline'] = bylinetxt.strip()
 
 
     bodyText = soup.find( 'div', {'id':'bodyText'} )
@@ -278,6 +314,8 @@ def Extract(html, context, **kw):
     art['content'] = contenttxt
     art['description'] = ukmedia.FirstPara( contenttxt )
 
+
+    # pprint( art)
     return art
 
 
