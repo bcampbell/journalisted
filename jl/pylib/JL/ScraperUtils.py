@@ -401,13 +401,24 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
             feedname = f[0]
             feedurl = f[1]
             foundarticles = foundarticles + ReadFeed( feedname, feedurl, srcorgname, mungefunc )
-        except (Exception), e:
+        except urllib2.HTTPError as e:
+            ukmedia.DBUG( "HTTPError fetching feed '%s' (%s): code %s\n" % (feedname,feedurl,e.code))
+            errcnt += 1
+            if errcnt >= maxerrors:
+                print >>sys.stderr, "Too many RSS errors - ABORTING"
+                raise
+        except urllib2.URLError as e:
+            ukmedia.DBUG( "URLError fetching feed '%s' (%s): %s\n" % (feedname,feedurl,e.reason))
+            errcnt += 1
+            if errcnt >= maxerrors:
+                print >>sys.stderr, "Too many RSS errors - ABORTING"
+                raise
+        except Exception as e:
             msg = u"ERROR fetching feed '%s' (%s): %s" % (feedname,feedurl,e.__class__)
             ukmedia.DBUG( msg + "\n" )
 #            print >>sys.stderr, '-'*60
 #            print >>sys.stderr, traceback.format_exc()
 #            print >>sys.stderr, '-'*60
-
             errcnt = errcnt + 1
             if errcnt >= maxerrors:
                 print >>sys.stderr, "Too many RSS errors - ABORTING"
