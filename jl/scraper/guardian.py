@@ -1249,7 +1249,7 @@ def FindArticles():
 
     feeds = feeds + FindBlogFeeds()
     feeds = feeds + rssfeeds
-    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=50 )
+    return ScraperUtils.FindArticlesFromRSS( feeds, u'guardian', ScrubFunc, maxerrors=100 )
 
 
 
