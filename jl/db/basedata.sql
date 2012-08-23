@@ -40,4 +40,5 @@ COPY organisation (id, shortname, prettyname, phone, email_format, home_url, sop
 --
 -- PostgreSQL database dump complete
 --
+SELECT setval('organisation_id_seq', (SELECT MAX(id) FROM organisation)+1);
 
