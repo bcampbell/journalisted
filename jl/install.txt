@@ -18,33 +18,70 @@ php
  - HTML_QuickForm (used by admin pages only)
  - needs to be able to run from commandline, as well as webserver
 
-python2.4
- - psycopg postgresql bindings (we used to use PyPgSQL)
+python
+ - psycopg2 postgresql bindings (we used to use PyPgSQL)
+ - yaml
+ - lots of other stuff no doubt :-)
 
 mySociety phplib and pylib
- - available from their CVS
+ - available from their github commonlib repo
 
 xapian (for the full text index)
  - php5 bindings
  - python bindings
 
 On Ubuntu/Debian, this basically boils down to:
-$ apt-get install apache2 cvs libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python2.4 python-psycopg2 php5-xapian python-xapian xapian-tools
-$ svn checkout http://journa-list.googlecode.com/svn/trunk/ journa-list
-$ cd journa-list
-$ export CVSROOT=":pserver:anonymous@cvs.mysociety.org:/repos"
-$ cvs checkout -d phplib mysociety/phplib
-$ cvs checkout -d pylib mysociety/pylib
+$ apt-get install apache2 libapache2-mod-php5 postgresql php5 php5-cli php5-pgsql python-psycopg2 python-yaml php5-xapian python-xapian xapian-tools
+$ git clone ....
+$ cd journalisted
+$ git clone https://github.com/mysociety/commonlib.git
+$ ln -s commonlib/phplib .
+$ ln -s commonlib/pylib .
 
-Setting up all this is much more fiddly under Windows and Mac, but can
-definitely be done. Windows users can do the CVS parts by e.g. installing
-TortoiseCVS and doing:
 
-> path c:\Program Files\TortoiseCVS\;%PATH%
-> set CVS_RSH=TortoisePlink.exe
-> set CVSROOT=:pserver:anonymous@cvs.mysociety.org:/repos
-> cvs checkout -d phplib mysociety/phplib
-> cvs checkout -d pylib mysociety/pylib
+metareadablity, decruft
+
+TODO
+
+drongo-forms
+
+$ git clone ...
+$ ln -s .../drongo-forms/lib jl/phplib/drongo-forms
+
+
+PHP-XAPIAN BINDINGS ISSUE
+-------------------------
+
+There's a problem with the xapian php bindings, due to some license
+issue with php...
+details here:
+
+http://trac.xapian.org/ticket/191
+
+
+suggested solution:
+--------------------------------------------------
+How to build your own php5-xapian binary package
+
+On Debian or Ubuntu:
+
+sudo apt-get build-dep xapian-bindings
+sudo apt-get install php5-dev php5-cli
+apt-get source xapian-bindings
+cd xapian-bindings-1.2.*
+rm debian/control
+env PHP_VERSIONS=5 debian/rules maint
+debuild -e PHP_VERSIONS=5 -us -uc
+cd ..
+sudo dpkg -i php5-xapian_*.deb
+
+--------------------------------------------------
+
+NOTE: I had to also install debuild:
+$ sudo apt-get install devscripts
+
+
+
 
 
 DB Setup
@@ -158,11 +195,15 @@ Make sure it has these settings set:
 Site Config
 -----------
 
- $ cd journa-list/jl
  $ cp conf/general.example conf/general
  $ cp conf/httpd.conf web/.htaccess
 
 Check settings in conf/general. In particular, check the postgresql port
 number against your postgresql.conf
+
+
+TODO: Setting up an admin user
+
+
 
 
