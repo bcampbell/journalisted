@@ -256,6 +256,7 @@ def FindArticlesFromNavPages():
         page_url = queued.pop()
         visited.add( page_url )
         try:
+            #print "FETCH '%s'" %(page_url,)
             html = ukmedia.FetchURL( page_url )
         except urllib2.HTTPError, e:
             # allow a few 404s
@@ -275,7 +276,7 @@ def FindArticlesFromNavPages():
             section_url = urlparse.urljoin( page_url, a['href'] )
             if section_url not in visited and section_url not in queued:
                 o = urlparse.urlparse( section_url )
-                if o[2] not in [ '/myexpress', '/cartoon', '/horoscopes', '/fun', '/video',' /galleries' ]:
+                if o[2] not in [ '/myexpress', '/cartoon', '/horoscopes', '/fun', '/video',' /galleries','/readeroffers' ]:
                     queued.add( section_url )
 
         # now look for articles
@@ -325,6 +326,6 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
 
 
