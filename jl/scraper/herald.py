@@ -16,247 +16,51 @@ from datetime import datetime
 import sys
 import urlparse
 import urllib2
+import lxml.html
 
 import site
 site.addsitedir("../pylib")
 import BeautifulSoup
 from JL import ukmedia, ScraperUtils
-#from SpiderPig import SpiderPig
 
-
-
-def old_Extract(html, context, **kw):
-    url = context['srcurl']
-
-    if re.search( 'Copyright Press Association Ltd \\d{4}, All Rights Reserved', html ):
-        ukmedia.DBUG2( "IGNORE Press Association item (%s)\n" % (url) )
-        return None
-
-
-    # TODO: skip NEWS COMPILER pages instead?
-    badtitles = ( "The Herald : Features: LETTERS",
-        "Poetry Blog (from The Herald )",
-        "Arts Blog (from The Herald )",
-        "The Herald : Business: MAIN BUSINESS",
-        "The Herald : Motors videos",
-        "The Herald - Scotland's Leading Quality Daily Newspaper",
-        )
-
-    m = re.search( '<title>(.*?)</title>', html )
-    pagetitle = m.group(1)
-    if pagetitle in badtitles:
-        ukmedia.DBUG2( "IGNORE page '%s' (%s)\n" % ( pagetitle, url) )
-        return None
-
-    # blog or article?
-    if html.find( "<div class=\"entry2\">" ) != -1:
-        return old_blog_Extract( html,context )
-    else:
-        return old_news_Extract( html,context )
-    raise Exception, "can't determine type (news or blog) of article (%s)" % (url)
-
-
-def old_news_Extract( html, context ):
-    """extract function for handling main news site articles, OLD cms"""
-    art = context
-    soup = BeautifulSoup.BeautifulSoup( html )
-
-    # TODO: skip NEWS COMPILER pages?
-
-    headlinediv = soup.find( 'div', {'class':'artHeadline'} )
-    bylinediv = soup.find( 'td', {'class':'artByline'} )
-    datediv = soup.find( 'td', {'class':'artDate'} )
-    # PA items seem to use a different format... sigh...
-    itdatespan = soup.find( 'span', {'class':'itdate'} )
-    contentdiv = soup.find( 'div', {'class':'articleText'} )
-
-
-    # images
-    art['images'] = []
-    for img in soup.findAll( src=re.compile( r"http://images[.]newsquest[.]co[.]uk/.*" ) ):
-        im = { 'url': img['src'], 'caption': img['alt'], 'credit': u'' }
-        art['images'].append( im )
-
-    # comments
-    art['commentlinks'] = []
-    comment_pat = re.compile( r"Read Comments\s+[(]\s*(\d+)\s*[)]" )
-    for marker in soup.findAll( text=comment_pat ):
-        a = marker.parent
-        if a.name != 'a':
-            continue
-        comment_url = urlparse.urljoin( art['srcurl'], a['href'] )
-        num_comments = None
-        m = comment_pat.search( marker )
-        if m:
-            num_comments = int( m.group(1) )
-        art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
-        break   # just the one.
-
-    # byline
-    byline = u''
-    if bylinediv:
-        byline = bylinediv.renderContents( None )
-        byline = ukmedia.FromHTML( byline )
-
-    # look for press association notice
-    # <div class="paNews articleText">
-    if byline == u'' and soup.find( 'div', {'class': re.compile('paNews') } ):
-        # it's from the Press Association
-        byline = u'PA'
-
-    # sometimes byline is first line of article text, in bold...
-    if byline == u'':
-        # but not obituaries (they always have a bit of bold at the top)...
-        if not 'obituaries' in art['srcurl']:
-            n=None
-            if len(contentdiv.p.contents) > 0:
-                n = contentdiv.p.contents[0]
-            if isinstance( n, BeautifulSoup.Tag ):
-                # Want bold elements, with no <br>s inside them, but followed directly by a <br>...
-                if n.name == 'b' and not n.find( "br" ):
-                    if isinstance( n.nextSibling, BeautifulSoup.Tag ) and n.nextSibling.name == 'br':
-                        byline = n.renderContents(None)
-                        byline = ukmedia.FromHTML( byline )
-                        byline = u' '.join( byline.split() )
-                        n.extract()
-                        # TODO: sometimes followed by place... (eg "in Paris<br />")
-
-    headline = headlinediv.renderContents( None )
-    headline = ukmedia.FromHTML( headline )
-
-    for cruft in contentdiv.findAll( 'div', {'id':'midpagempu'} ):
-        cruft.extract()
-    content = contentdiv.renderContents(None)
-    desc = ukmedia.FirstPara( content )
-    desc = ukmedia.FromHTML( desc )
-
-    pubdatetxt = u''
-    if datediv:
-        pubdatetxt = datediv.renderContents(None).strip()
-    elif itdatespan:
-        pubdatetxt = itdatespan.renderContents(None).strip()
-        # replace 'today' with current date
-        today = datetime.now().strftime( '%a %d %b %Y' )
-        pubdatetxt = pubdatetxt.replace( 'today', today )
-
-    if pubdatetxt == u'':
-        # if still no date, try the web issue date at top of page...
-        # (which will be todays date, rather than real date... but best we can do)
-        issuedate = soup.find( 'td', {'align':'right', 'class':'issueDate'} )
-        if issuedate:
-            pubdatetxt = issuedate.renderContents(None)
-
-    pubdatetxt = ukmedia.FromHTML( pubdatetxt )
-
-    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
-    art['byline'] = byline
-    art['title'] = headline
-    art['content'] = content
-    art['description'] = desc
-
-    return art
-
-
-def old_blog_Extract( html, context ):
-    """extract function for handling blog entries, OLD cms"""
-
-    if html.find( "No blog entries found." ) != -1: 
-        ukmedia.DBUG2( "IGNORE missing blog entry (%s)\n" % (context[srcurl]) )
-        return None
-
-    art = context
-    soup = BeautifulSoup.BeautifulSoup( html )
-
-    entdiv = soup.find( 'div', {'class':'entry2'} )
-    headbox = entdiv.findPreviousSibling( 'div', {'class':'b_box'} )
-
-    headline = headbox.a.renderContents(None).strip()
-    headline = ukmedia.FromHTML( headline )
-    art['title'] = headline
-
-    byline = u''
-    postedby = headbox.find( text=re.compile('Posted by') )
-    if postedby:
-        byline = postedby.nextSibling.renderContents(None).strip()
-    art['byline'] = byline
-
-    datespan = headbox.find( 'span', {'class':'itdate'} )
-    # replace 'today' with current date
-    today = datetime.now().strftime( '%a %d %b %Y' )
-    datetxt = ukmedia.FromHTML( datespan.renderContents(None) )
-    datetxt = datetxt.replace( 'today', today )
-    art['pubdate'] = ukmedia.ParseDateTime( datetxt )
-
-    content = entdiv.renderContents(None)
-    art['content'] = content
-
-    desc = ukmedia.FirstPara( content )
-    desc = ukmedia.FromHTML( desc )
-    art['description'] = desc
-
-    return art
 
 
 def Extract(html, context, **kw):
+
+    # BIG BIG CAVEAT:
+    # Herald only serves up the first part of article text.
+    # the rest is fetched via javascript. sigh.
+
     art = context
-    soup = BeautifulSoup.BeautifulSoup( html )
+    parser = lxml.html.HTMLParser(encoding='utf-8')
+    doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
-    article_div = soup.find('div',{'class':re.compile(r'\barticle\b')})
-    artbody_div = article_div.find( 'div',{'class':re.compile( r"\barticle-body\b")} )
+    title = doc.cssselect('.sht-body .article-title')[0]
+    art['title'] = unicode( title.text_content() )
 
-    bylinetxt = u''
-    pubdatetxt = u''
-    byline_p = article_div.find( 'p', {'class':'byline'} )
-    if byline_p is not None:
-        bylinetxt = ukmedia.FromHTMLOneLine( byline_p.renderContents( None ) )
-        # sometimes date is in byline (for blogs, I think)
-        # "Michael Settle, 9 Sep 2009 12.33"
-        m = re.compile( '\s*(.*)\s*,\s*(\d+\s+\w+\s+\d{4}\s+\d\d[.]\d\d)' ).match( bylinetxt )
-        if m:
-            # it's a combined byline/date
-            bylinetxt = m.group(1)
-            pubdatetxt = m.group(2)
-    else:
-        # no byline. might be a columnist - try the url for names
-        m = re.compile( r'/comment/([-\w]+?)(?:s-diary)?/' ).search( art['srcurl'] )
-        if m:
-            bylinetxt = unicode( m.group(1).replace( '-', ' ' ) )
-    art['byline'] = bylinetxt
+    try:
+        byline = doc.cssselect('#article-byline')[0]
+        art['byline'] = unicode(byline.text_content())
+    except IndexError:
+        art['byline'] = u''
 
-    # if no pubdate in byline, look for a proper pubdate para
-    if pubdatetxt == u'':
-        pubdate_p = article_div.find( 'p', {'class':'pubdate'} )
-        pubdatetxt = ukmedia.FromHTMLOneLine( pubdate_p.renderContents( None ) )
+    pubdate = doc.cssselect('.sht-body .section-date-author time')[0]
+    art['pubdate'] = ukmedia.ParseDateTime(pubdate.get('content'))
 
-    art['pubdate'] = ukmedia.ParseDateTime( pubdatetxt )
 
-    h1 = article_div.h1
-    art['title'] = ukmedia.FromHTMLOneLine( h1.renderContents( None ) )
-    art['content'] = artbody_div.renderContents( None )
+
+    abstract = doc.cssselect('#article-abstract')[0]
+    content = doc.cssselect('#article-content')[0]
+    for cruft in content.cssselect('.field'):
+        cruft.drop_tree()
+
+    art['content'] = unicode(lxml.html.tostring(abstract)) + unicode(lxml.html.tostring(content))
+    art['content'] = ukmedia.SanitiseHTML(art['content'])
     art['description'] = ukmedia.FirstPara( art['content'] )
-
-    # TODO: comments (not working on herald site at time of writing)
-
-    #images
-    art['images'] = []
-    for pic_div in article_div.findAll( 'div', {'class':'pic-onecol'} ):
-        img = pic_div.img
-        im_url = urlparse.urljoin( art['srcurl'], img['src'] )
-        im_credit = img['title']
-        cap = pic_div.find('div',{'class':"pic-caption"} )
-        im_caption = ukmedia.FromHTMLOneLine( cap.li.renderContents(None) )
-        art['images'].append( { 'url': im_url, 'caption': im_caption, 'credit': im_credit } )
-
-
     return art
 
 
-# OLD-style URLS:
-#  main news site:
-#   "http://www.theherald.co.uk/news/news/display.var.2036423.0.Minister_dismisses_more_tax_power_for_Holyrood.php"
-#  blogs:
-#   "http://www.theherald.co.uk/features/bookblog/index.var.9706.0.at_home_in_a_story.php"
-old_idpat = re.compile( "/((display|index)[.]var[.].*[.]php)" )
+
 
 # NEW URLS (as of sept 2009):
 #  http://www.heraldscotland.com/news/politics/macaskill-denies-brother-s-role-in-libya-oil-interests-1.918391
@@ -268,12 +72,7 @@ def CalcSrcID( url ):
     """ extract unique srcid from url """
     url = TidyURL( url.lower() )
     o = urlparse.urlparse( url )
-    if o[1].endswith( 'theherald.co.uk' ):
-        # OLD url
-        m = old_idpat.search( o[2] )
-        if m:
-            return 'herald_' + m.group(1)
-    elif o[1].endswith( 'heraldscotland.com' ):
+    if o[1].endswith( 'heraldscotland.com' ):
         # NEW url
         new_idpat = re.compile( r"(?:.*?)(\d+)$" )
         m = new_idpat.match( o[2] )
@@ -314,7 +113,7 @@ def ScrubFunc( context, entry ):
 def FindArticles():
     """Gather articles to scrape from the herald website. """
     feeds = FindRSSFeeds()
-    found = ScraperUtils.FindArticlesFromRSS( feeds, u'herald', ScrubFunc, maxerrors=10 )
+    found = ScraperUtils.FindArticlesFromRSS( feeds, u'herald', ScrubFunc, maxerrors=20 )
     return found
 
 
@@ -334,5 +133,6 @@ def FindRSSFeeds():
     return feeds
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract )
+    # loads of 400 errors in testing, for some reason...
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 
