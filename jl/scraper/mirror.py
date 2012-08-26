@@ -6,7 +6,6 @@
 #
 # Scraper for Mirror and Sunday Mirror
 #
-# TODO: scrape list of blog rss feeds instead of using hardcoded table
 
 import re
 from datetime import datetime
@@ -44,7 +43,10 @@ def Extract_MainSite( html, context ):
     parser = lxml.html.HTMLParser(encoding='utf-8')
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
-    article_div = doc.cssselect('.article')[0]
+    article_div = doc.cssselect('.article-page .article')[0]
+    #print lxml.html.tostring(article_div)
+    #return None
+
 
     header_div = article_div.cssselect('.article-header')[0]
 
