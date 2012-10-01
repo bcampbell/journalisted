@@ -102,7 +102,10 @@
 
 
 
-
 <div id="content">
 
-
+<?php /*
+<div class="box promotional">
+<em>Help test our new site, <a href="http://unsourced.org">unsourced.org</a>, and discover the real sources behind the news</em>
+</div>
+*/ ?>
