@@ -116,6 +116,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_No104_20_08_12.swf',
     'TG_No105_260812.swf',
     'Tg_No106_020912.swf',
+    'Tobias_Holiday.mov',
 );
 
 
@@ -206,6 +207,8 @@ $previous_employers = array_unique( $previous_employers );
     <br/>
 <?php if( preg_match( '/[.]jpg$/i', $tg_file ) ) { ?>
 <img src="/tobias/<?=$tg_file; ?>" alt="Tobias Grubbe" />
+<?php } elseif( preg_match( '/[.]mov$/i', $tg_file ) ) { ?>
+<embed width="600" height="400" src="/tobias/<?=$tg_file; ?>" alt="Tobias Grubbe" />
 <?php } else { ?>
 <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0" width="600" height="400">
 <param name="movie" value="<?= $tg_file ?>">
