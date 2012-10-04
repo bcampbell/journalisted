@@ -83,30 +83,32 @@ def CalcSrcID( url ):
     return None
 
 
-def FindArticles():
-    homepage = "http://www.thesun.co.uk"
-    html = ukmedia.FetchURL( homepage )
-    soup = BeautifulSoup( html )
 
-    # go through the naviation menu looking for urls of sections
+
+def FindSections():
+    """ get list of sections from nav popup """
+
+    page_url = "http://www.thesun.co.uk"
+    html = ukmedia.FetchURL(page_url)
+    doc = lxml.html.fromstring(html)
+    doc.make_links_absolute(page_url)
+
     sections = set()
-    nav = soup.find( 'div',{'id':'LeftNavigation'} )
-    for a in nav.findAll( 'a' ):
-        name = ukmedia.FromHTMLOneLine( a.renderContents(None) )
-        url = urlparse.urljoin( homepage, a['href'] )
+    links = doc.cssselect('#nav-extension-container .nav-extension-category a')
+    for l in links:
+        url = l.get('href')
 
-        # filter out undesirables...
-        accepted = True
-        o = urlparse.urlparse( url )
-        if o[1] not in ('www.thesun.co.uk', 'thesun.co.uk' ):
-            accepted = False
-        for blacklisted in ( '/mystic_meg/', '/virals/' ):
-            if blacklisted in o[2]:
-                accepted = False
+        blacklisted_sections = ['www.page3.com','/video/','/fun/competitions/']
+        if [foo for foo in blacklisted_sections if foo in url]:
+            continue
+        sections.add(url)
 
-        if accepted:
-            sections.add( url )
+    return sections
 
+
+
+def FindArticles():
+    sections = FindSections()
     ukmedia.DBUG2( "scanned navigation menu, found %d sections\n" %(len(sections),) )
 
     article_urls = set()
@@ -136,10 +138,12 @@ def ReapArticles( page_url ):
         ukmedia.DBUG( "SKIP '%s' (%d error)\n" %(page_url, e.code) )
         return article_urls
 
-    soup = BeautifulSoup( html )
+    html = ukmedia.FetchURL(page_url)
+    doc = lxml.html.fromstring(html)
+    doc.make_links_absolute(page_url)
 
 
-    for a in soup.findAll( 'a' ):
+    for a in doc.cssselect('a'):
         url = a.get('href')
         if url is None:
             continue
@@ -147,7 +151,7 @@ def ReapArticles( page_url ):
         url = ''.join( url.split() )
         url = re.sub( '#(.*?)$', '', url)
 
-        title = a.string
+        #title = a.text_content()
         srcid = CalcSrcID( url )
         #print url,":",srcid
         if srcid is not None:
@@ -159,164 +163,35 @@ def ReapArticles( page_url ):
 
 
 
-
-
 def Extract(html, context, **kw):
     art = context
-    # sun _claims_ to be iso-8859-1, but they're talking crap.
-    page_encoding = 'windows-1252'
-    soup = BeautifulSoup( html, fromEncoding=page_encoding)
 
-    # main column is column2 div - we can exclude a lot of nav cruft by starting here.
-    col2 = soup.find( 'div', {'id':"column2"} )
+    # we know it's utf-8 (lxml.html seems to get it wrong sometimes)
+    parser = lxml.html.HTMLParser(encoding='utf-8')
+    doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
+    doc.make_links_absolute(art['srcurl'])
 
-    # sigh.... the sun sometimes embed multiple stories on the same page...
-    # For now we'll just discard the sub-story. Unhappy about this, but
-    # it just makes things too complicated.
-    # TODO: something better.
-    col3 = col2.find('div', { 'id':re.compile("column3") } )
-    if col3:
-        col3.extract()
+    main_div = doc.cssselect('#articlebody')[0]
 
+    h1 = main_div.cssselect('h1')[0]
+    art['title'] = u' '.join(unicode(h1.text_content()).split())
 
-    # get headline
-    h1 = col2.h1
-    if not h1:
-        # their html is so messed up that sometimes BeautifulSoup mistakenly
-        # closes the column2 div before the main article. If that is the
-        # case, just use the whole soup instead...
-        col2 = soup
-        # need to skip the h1 banner at top of page
-        artmodule = soup.find( text=re.compile(".*BEGIN: Module - Main Article.*"))
-        if artmodule:
-            h1 = artmodule.findNext('h1')
-        else:
-            #sigh... sometimes they have "roottag" at the start of the article.
-            # What is "roottag"? good question...
-            roottag = soup.find( 'roottag' )
-            if roottag:
-                h1 = roottag.findPrevious( 'h1' )
-
-    if h1 is not None and 'small' in h1['class']:
-        h1 = None
-
-    if h1:
-        titletxt = h1.renderContents(None).strip()
+    bylines = main_div.cssselect('.display-byline')
+    if bylines:
+        art['byline'] = u' '.join(unicode(bylines[0].text_content()).split())
     else:
-        # sometimes there is no <h1> headline - it can be replaced by a gif
-        # try meta tag
-        m = soup.find('meta[name="og:title"]')
-        if m:
-            titletxt = unicode(m['content'],page_encoding)
-        else:
-            # no headline. get it from page title.  
-            foo = soup.title.renderContents( None );
-            m = re.search( r"\s*(.*?)\s*[|].*", foo )
-            titletxt = m.group(1)
+        art['byline'] = u''
 
-    titletxt = ukmedia.FromHTML( titletxt )
-    titletxt = u' '.join( titletxt.split() )
-    art['title'] = titletxt
+    pubdate_txt = doc.cssselect('meta[property="article:published_time"]')[0].get('content')
+    art['pubdate'] = ukmedia.ParseDateTime(pubdate_txt)
 
-    # ignore some known pages
-    ignore_titles = [ "Contact us", "HAVE YOUR SAY" ]
-        #   "Your stars for the month ahead"?
-    if art['title'] in ignore_titles:
-        ukmedia.DBUG2( "IGNORE '%s' (%s)\n" % (art['title'], art['srcurl']) );
-        return None
+    content_div = main_div.cssselect('#bodyText')[0]
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(content_div)))
+    art['description'] = ukmedia.FirstPara( art['content'] )
 
 
-    if html.find("BEGIN ROO vxFlashPlayer embed") != -1:
-        ukmedia.DBUG2( "IGNORE video page '%s' (%s)\n" % (art['title'], art['srcurl']) );
-        return None
-
-    # 'author' class paras for author, email link and date...
-    bylinetxt = u''
-    datetxt = u''
-    # get page date (it's in format "Friday, December 14, 2007")
-    #pagedatetxt = soup.find( 'p', {'id':"masthead-date"}).string.strip()
-
-    for author in soup.findAll( ['p','div'], { 'class': re.compile( r'\bauthor\b|\bdisplay-byline\b' ) } ):
-        txt = author.renderContents( None ).strip()
-
-        if txt == '':
-            continue
-        if txt.find( 'Email the author' ) != -1:
-            continue        # ignore email links
-
-        m = re.compile( r'^(?:Published:|Last Updated:)\s+(.*)$',re.I).search(txt)
-        if m is not None:
-            # it's a date (eg '11 Dec 2007' or 'Today')
-            datetxt = m.group(1)
-        else:
-            # "By Bob Smith" or "BOB SMITH"
-            if re.compile('^by\s',re.I).search(txt) or re.compile(r'^[A-Z]{3,}\s+[A-Z]{3,}(\s+[A-Z]{3,})?\s*$').match(txt):
-                if bylinetxt != u'':
-                    raise Exception, "Uhoh - multiple bylines..."
-                bylinetxt = ukmedia.FromHTMLOneLine(txt)
-
-
-    if datetxt == u'':
-        foo = soup.find('div',{'class':re.compile(r'\bpublished-date-text\b')})
-        if foo:
-            txt = ukmedia.FromHTMLOneLine(foo.renderContents(None))
-            m = re.compile( r'^(?:Published:|Last Updated:)\s+(.*)$',re.I).search(txt)
-            if m is not None:
-                datetxt = m.group(1)
-
-    if datetxt == u'Today':
-        art['pubdate'] = datetime( d.year, d.month, d.day )
-    else:
-        if datetxt != '':
-            try:
-                art['pubdate' ] = ukmedia.ParseDateTime( datetxt )
-            except Exception:
-                # there is some javascript we can look at if all else fails...
-                m = re.compile(r'publication_date : "(\d{8})"').search(html)
-                if m:
-                    art['pubdate']=datetime.strptime(m.group(1),"%Y%m%d")
-        else:
-            # there is some javascript we can look at if all else fails...
-            m = re.compile(r'publication_date : "(\d{8})"').search(html)
-            if m:
-                art['pubdate']=datetime.strptime(m.group(1),"%Y%m%d")
-
-    if bylinetxt == u'':
-        # columnists have an <img> with alt='...'
-        for author in soup.findAll( ['p','div'], { 'class': re.compile( r'\bauthor\b|\bdisplay-byline\b' ) } ):
-            img = author.find('img')
-            if img and 'alt' in img:
-                bylinetxt = img['alt'].strip()
-
-    if bylinetxt == u'':
-        # look for byline in javascript
-        m = re.compile(r'var byLine = "(.*?)";').search(html)
-        if m:
-            bylinetxt = unicode(m.group(1), page_encoding)
-            bylinetxt = ukmedia.FromHTMLOneLine(bylinetxt)
-
-    if bylinetxt == u'':
-        # some special cases where no byline is given
-        for c in columnist_lookups:
-            if c['url'] in art['srcurl']:
-                bylinetxt = c['name']
-
-
-    bylinetxt = bylinetxt.replace('<br/>',' ')
-    art['byline'] = bylinetxt.strip()
-
-
-    bodyText = soup.find( 'div', {'id':'bodyText'} )
-    for cruft in bodyText.findAll( 'p', {'class':re.compile('advertising') } ):
-        cruft.extract()
-    contenttxt = bodyText.renderContents(None)
-    contenttxt = ukmedia.SanitiseHTML( contenttxt );
-    art['content'] = contenttxt
-    art['description'] = ukmedia.FirstPara( contenttxt )
-
-
-    # pprint( art)
     return art
+
 
 
 
@@ -342,5 +217,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=150 )
 
