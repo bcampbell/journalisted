@@ -14,6 +14,7 @@ import string
 import sys
 import urlparse
 import lxml.html
+import urllib2
 
 import site
 site.addsitedir("../pylib")
@@ -165,8 +166,18 @@ def FindArticles():
         sections.add(url)
 
     article_urls = set()
+    err_404_cnt = 0
     for section_url in sections:
-        article_urls.update(ReapArticles(section_url))
+        try:
+            article_urls.update(ReapArticles(section_url))
+        except urllib2.HTTPError, e:
+            # allow a few 404s
+            if e.code == 404:
+                ukmedia.DBUG2("ERR fetching %s (404)\n" %(section_url,))
+                err_404_cnt += 1
+                if err_404_cnt < 5:
+                    continue
+            raise
   
     return [ContextFromURL(url) for url in article_urls]
 
@@ -204,5 +215,5 @@ def ReapArticles(page_url):
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 
