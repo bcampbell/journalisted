@@ -18,6 +18,7 @@ import re
 from datetime import datetime
 import sys
 import urlparse
+import urllib2
 import lxml.html
 
 
@@ -99,8 +100,19 @@ def FindArticles():
     art_url_pat = re.compile('.*/([a-z0-9_]+-){1,}[0-9]+$', re.I)
 
     # scan the sections for articles
+    err_404_cnt = 0
     for section_url in sections:
-        html = ukmedia.FetchURL(section_url)
+        try:
+            html = ukmedia.FetchURL(section_url)
+        except urllib2.HTTPError, e:
+            # allow a few 404s
+            if e.code == 404:
+                ukmedia.DBUG2("ERR fetching %s (404)\n" %(section_url,))
+                err_404_cnt += 1
+                if err_404_cnt < 5:
+                    continue
+            raise
+        
         try:
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(section_url)
@@ -145,5 +157,5 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 

@@ -835,7 +835,8 @@ def ScrubFunc( context, entry ):
 #        context['srcurl'] = urlparse.urlunparse( (o[0],o[1],o[2],'','service=print','') );
 
         context['srcid'] = CalcSrcID( url )
-
+        if context['srcid'] is None:
+            return None
         return context
 
     # xml article?
@@ -907,6 +908,6 @@ def FindArticlesFromArchive():
     return found
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=100 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 
 
