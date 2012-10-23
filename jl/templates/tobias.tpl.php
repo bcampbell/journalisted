@@ -119,6 +119,7 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'TG_No107_100912.swf',
     'Tg_No108_170912.swf',
     'Tobias_Holiday.m4v',
+    'Grubbe_Savile.jpg',
 );
 
 
