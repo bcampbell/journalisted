@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+#
+# input a csv file of article details, update changed fields in the DB
+#
+# The idea is that you can export a set of articles (eg using check-article-dates),
+# manually fix them up, then import the changes back into the db.
+#
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import csv
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+opts = None
+conn = None
+
+
+
+def do_article(cursor,art):
+    field_list = ",".join(art.keys())
+
+    q = "SELECT " + field_list + " FROM article WHERE id=%s"
+    cursor.execute(q,(art['id']))
+    old = cursor.fetchone()
+    assert old is not None
+
+    fields = [f for f in art.keys() if f!="id"]
+    changed = [f for f in fields if str(art[f])!=str(old[f])]
+
+    if len(changed)>0:
+        if opts.verbose:
+
+            descs = ["%s '%s' -> '%s'" %(c,old[c],art[c]) for c in changed]
+            print( "%s changed %d: %s" % (art['id'], len(changed), ', '.join(descs)))
+
+
+        # update the changed fields
+
+        change_list = ",".join(["%s=%%s"%(f,) for f in changed])
+        q = "UPDATE article SET " + change_list + " WHERE id=%s"
+        params = [art[f] for f in changed]
+        params.append(art['id'])
+        cursor.execute(q, params)
+
+
+def main():
+    global opts,conn
+
+    parser = OptionParser(usage="usage: %prog [options] csvfile")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more")
+    parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun", help="execute queries, but don't commit to database")
+
+    (opts, args) = parser.parse_args()
+
+    conn = DB.Connect()
+    if len(args) != 1:
+        parser.error("input csvfile required")
+    infilename = args[0]
+
+    c = conn.cursor()
+    with open(infilename,'r') as raw_infile:
+        reader = csv.DictReader(raw_infile)
+        for art in reader:
+            do_article(c,art)
+
+    if opts.dryrun:
+        c.rollback()
+    else:
+        c.commit()
+
+    c.close()
+
+
+
+
+if __name__ == "__main__":
+    main()
+

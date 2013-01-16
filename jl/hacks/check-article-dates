@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+#
+#
+# tool to dump out articles with dodgy dates
+
+
+import sys
+import string
+from datetime import datetime
+from optparse import OptionParser
+import urlparse
+import csv
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+
+
+def main():
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="output more (by default, only suspect stuff of output)")
+    parser.add_option("-p", "--past", action="store_true", dest="past", help="also check for old dates (by default, only for check future dates)")
+
+    (opts, args) = parser.parse_args()
+
+    conn = DB.Connect()
+
+    c =conn.cursor()
+    if opts.past:
+        where_clause = "pubdate<'1990-01-01' OR pubdate>NOW()+interval '2 days'"
+    else:
+        where_clause = "pubdate>NOW()+interval '2 days'"
+    q = "SELECT id,pubdate,title,permalink FROM article WHERE "+where_clause
+
+
+    out = csv.writer(sys.stdout)
+    c.execute(q)
+
+    fields = ('id','pubdate','permalink','title')
+    out.writerow(fields)
+    for row in c.fetchall():
+        out.writerow( [row[f] for f in fields] )
+
+    badones = c.fetchall()
+
+
+
+if __name__ == "__main__":
+    main()
+
