@@ -121,6 +121,10 @@ $tg_objs = array( 'TG_GU_No1_120410.swf',
     'Tobias_Holiday.m4v',
     'Grubbe_Savile.jpg',
     'TobiasGrubbe_191112.mp4',
+    // if array, first img is linked, clicks through to second image
+    array('Tobias_Christmas_1712.png','/tobias/Tobias_Grubbe_Tower_of_Babble.png'),
+    array('TG119_Plotting_inside.jpg','http://twitter.com/tobiasgrubbe/status/288348235595137026'),
+    array('TG120_Tobias_Grubbe_Advert_140113.jpg','http://twitter.com/tobiasgrubbe/status/290881129999904768'),
 );
 
 
@@ -209,7 +213,9 @@ $previous_employers = array_unique( $previous_employers );
   <div class="head"><h3>Tobias Grubbe's latest adventures</h3></div>
   <div class="body">
     <br/>
-<?php if( preg_match( '/[.]jpg$/i', $tg_file ) ) { ?>
+<?php if( is_array($tg_file)) { ?>
+<a href="<?=$tg_file[1]; ?>"><img src="/tobias/<?=$tg_file[0]; ?>" alt="Tobias Grubbe" /></a>
+<?php } elseif( preg_match( '/[.]jpg$/i', $tg_file ) ) { ?>
 <img src="/tobias/<?=$tg_file; ?>" alt="Tobias Grubbe" />
 <?php } elseif( preg_match( '/[.](mov|m4v|mp4)$/i', $tg_file ) ) { ?>
 <embed width="600" height="400" src="/tobias/<?=$tg_file; ?>" alt="Tobias Grubbe" />
