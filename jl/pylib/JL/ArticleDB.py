@@ -213,7 +213,7 @@ class ArticleDB:
         return article_id
 
     def find_article(self,known_urls):
-        sql = "SELECT article_id FROM article_url WHERE url IN (" + ','.join(['%s' for u in known_urls]) + ")"
+        sql = "SELECT DISTINCT article_id FROM article_url WHERE url IN (" + ','.join(['%s' for u in known_urls]) + ")"
         c = DB.conn().cursor()
         c.execute(sql,list(known_urls))
         return [row['article_id'] for row in c]
