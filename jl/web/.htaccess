@@ -1,15 +1,18 @@
+# Donny added Troll! 18th December 2012
+order allow,deny
+deny from 178.196.188.15
+allow from all
+
+# Donny added fix for queryfight timeout
+php_value max_execution_time 200 
+
 DirectoryIndex index.php
 
 RewriteEngine on
 
+# uncomment these two to take the site offline
 #RewriteCond %{REQUEST_URI} !/down.html$ 
 #RewriteRule $ /down.html [R=307,L]
-
-# badly-kludged rules to take site offline for now
-#RewriteRule ^style.css$ - [L]
-#RewriteRule ^text.css$ - [L]
-#RewriteRule ^images/title_beta.png$ - [L]
-#RewriteRule !down.html$ /down.html [R,L]
 
 # API
 RewriteRule ^api/((?:get|find).*)$ api.php?method=$1 [QSA]

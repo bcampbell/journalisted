@@ -30,6 +30,11 @@ _CONFIG = {
           'fields': ('title','byline','description','permalink','srcurl','srcid')
         },
         {
+          'name': 'article_url',
+          'pk': 'id',
+          'fields': ('url',)
+        },
+        {
           'name': 'article_content',
           'pk': 'id',
           'fields': ('content',)

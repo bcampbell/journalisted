@@ -237,6 +237,7 @@ def scrape_articles( found, extract, opts):
                     # we've got it! So add the missing url(s)...
                     had_count += 1
                     cursor = DB.conn().cursor()
+                    # BUG: if rescraping, this'll add redundant rows to article_url
                     for url in known_urls:
                         ukmedia.DBUG2("add missing url to [a%s]: '%s'\n" %(article_id,url))
                         cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))

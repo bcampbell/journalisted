@@ -539,7 +539,7 @@ class ProlificJournos extends CannedQuery {
     function __construct() {
         $this->name = "ProlificJournos";
         $this->ident = "prolificjournos";
-        $this->desc = "Rank journos according to total words/articles written over time interval (top 100)";
+        $this->desc = "Rank journos according to total words/articles written over time interval (top 500)";
         $orgs = get_org_names();
         $orgs[ 'all' ] = 'All';
 
@@ -584,12 +584,12 @@ class ProlificJournos extends CannedQuery {
         }
 
         $sql = <<<EOT
-SELECT count(a.id) as total_articles, sum(a.wordcount) as total_words, j.id,j.status,j.ref,j.prettyname,j.oneliner
+SELECT count(a.id) as total_articles, sum(a.wordcount) as total_words, j.id,j.status,j.ref as journo_ref,j.prettyname,j.oneliner
     FROM (( article a INNER JOIN journo_attr attr ON attr.article_id=a.id ) INNER JOIN journo j ON j.id=attr.journo_id)
-    WHERE a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') {$extraclause}
+    WHERE j.status='a' AND a.pubdate >= date ? AND a.pubdate < (date ? + interval '24 hours') {$extraclause}
     GROUP BY j.id,j.ref, j.oneliner, j.status,j.prettyname
     ORDER BY {$orderby} DESC
-    LIMIT 100;
+    LIMIT 500;
 EOT;
 
         $rows = db_getAll( $sql, $sqlparams );
