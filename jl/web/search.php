@@ -119,6 +119,11 @@ function search_articles()
     unset( $art );
 
 
+    if( $s['fmt'] == 'csv' ) {
+        search_articles_output_csv($results);
+    }
+
+
     page_header( "Search Articles", array('search_params'=>$s) );
 
 
@@ -169,6 +174,34 @@ function search_articles()
 <?php
 
     page_footer();
+}
+
+
+// cheesy hackery to output an article search as csv
+// TODO: better filename handling
+function search_articles_output_csv($results)
+{
+    $filename="jl_search.csv";
+
+    $fields = array("title","permalink","srcorgname","pretty_pubdate","iso_pubdate");
+
+    $fp = fopen('php://output', 'w');
+    if($fp) {
+        header("Content-type: application/csv");
+        header("Content-Disposition: attachment; filename={$filename}");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        fputcsv($fp,$fields);
+        foreach($results as $art) {
+            $row = array();
+            foreach($fields as $f) {
+                $row[] = $art[$f];
+            }
+            fputcsv($fp,$row);
+        }
+        fclose($fp);
+    }
 }
 
 

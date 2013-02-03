@@ -22,8 +22,11 @@ function search_getParams()
 		return $s;
     
     $s = array();
+    $s['fmt'] = get_http_var('fmt');
+
     $art_q = get_http_var( 'a' );
     $journo_q = get_http_var( 'j' );
+
     if( $art_q ) {
         $s['type'] = 'article';
         $s['q'] = $art_q;
