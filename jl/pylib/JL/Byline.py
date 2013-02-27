@@ -150,6 +150,9 @@ def CrackByline( byline ):
     # replace "posted by" with "by" at start
     byline = re.sub( '^[Pp]osted by ', 'By ', byline )
 
+    # HACK: replace "by:" with "by" at start
+    byline = re.compile( r'^By:\s+', re.I).sub('By ',byline)
+
     # replace '&' with 'and'
     byline = re.sub( '[&]', u'and', byline )
 
