@@ -49,6 +49,8 @@ TIMESPLUS_CONFIG_FILE = '../conf/timesplus.ini'
 def Prep():
     """ perform a login """
 
+    return
+
     config = ConfigParser.ConfigParser()
     config.read( TIMESPLUS_CONFIG_FILE )
     timesplus_username = config.defaults()[ 'username' ]
