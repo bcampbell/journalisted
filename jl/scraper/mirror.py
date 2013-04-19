@@ -63,6 +63,11 @@ def Extract_MainSite( html, context ):
             # it's a byline (should use rel=author)
             art['byline'] = u' '.join(txt.split())
 
+    if not 'pubdate' in art:
+        foo = header_div.cssselect('time[itemprop="datePublished"]')[0]
+        art['pubdate'] = ukmedia.ParseDateTime(foo.get('datetime'))
+
+
     body_div = article_div.cssselect('.body')[0]
     art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
     art['description'] = ukmedia.FirstPara( art['content'] )
