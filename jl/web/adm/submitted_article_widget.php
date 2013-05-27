@@ -25,7 +25,7 @@ class SubmittedArticleWidget
 
 
     static $action_defs=array(
-        'add_journo'=>array('label'=>'Add Journo','class'=>'widget add'),
+        'replace_journo'=>array('label'=>'Replace Journo','class'=>'widget spark'),
         'reject'=>array('label'=>'Reject','class'=>'widget delete'),
         'scrape'=>array('label'=>'Scrape','class'=>'widget spark'),
         'add_manual'=>array('label'=>'Add article by hand','class'=>'add'),
@@ -114,8 +114,8 @@ $(document).ready(function(){
             $this->submitted->save();
             db_commit();
         }
-        if($action=='add_journo') {
-            $this->submitted->attribute_journo();
+        if($action=='replace_journo') {
+            $this->submitted->replace_journo();
             $this->submitted->save();
             db_commit();
         }
@@ -133,7 +133,7 @@ $(document).ready(function(){
         if(!is_null($this->submitted->id)) {
             $reason = $this->submitted->status;
             if($reason=='journo_mismatch') {
-                $actions[] = 'add_journo';
+                $actions[] = 'replace_journo';
             }
             if($reason =='scrape_failed' || $reason=='') {
                 $actions[] = 'scrape';
@@ -167,7 +167,7 @@ $(document).ready(function(){
 
         $actions = array();
         if($ae->expected_journo && $ae->article) {
-            $actions[] = 'add_journo';
+            $actions[] = 'replace_journo';
         }
 
         $struck = false;

@@ -129,7 +129,10 @@ EOT;
     protected function from_db_row($row) {
         set_fields($this, $row, array('id'=>'id','url'=>'url','reason_code'=>'status','submitted'=>'when_submitted'));
         if(!is_null($row['expected_journo'])) {
-            $this->expected_journo = array_to_object($row, array('expected_journo'=>'id', 'expected_ref'=>'ref'));
+            $this->expected_journo = array_to_object($row, array(
+                'expected_journo'=>'id',
+                'expected_ref'=>'ref',
+                'expected_prettyname'=>'prettyname' ));
         } else {
             $this->expected_journo = null;
         }
@@ -158,6 +161,7 @@ EOT;
     private static $fetch_sql = <<<EOT
 SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
                 j.ref as expected_ref,
+                j.prettyname as expected_prettyname,
                 a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
                 p.name as submitted_by_name,
                 p.email as submitted_by_email,
@@ -231,18 +235,30 @@ EOT;
     }
 
 
-    function attribute_journo() {
+    // attribute article to expected journo (zapping any previous
+    // attribution for the article)
+    function replace_journo() {
         assert(!is_null($this->article));
         assert(!is_null($this->expected_journo));
 
-        // TODO: should update the authors member!
-    
-        db_do("DELETE FROM journo_attr WHERE journo_id=? AND article_id=?",
-            $this->expected_journo->id, $this->article->id);
+        db_do("DELETE FROM journo_attr WHERE article_id=?", $this->article->id);
+        
         db_do("INSERT INTO journo_attr (journo_id,article_id) VALUES (?,?)",
             $this->expected_journo->id, $this->article->id);
 
-        // TODO: should 1) clear htmlcache for this journo 2) activate them if required
+        // update article->authors[]
+        $this->article->authors = array($this->expected_journo);
+
+
+        // if the journo's name isn't immediately obvious in the byline, zap the byline too.
+        // (implication is that byline is wrong)
+        if(stripos($this->article->byline, $this->expected_journo->prettyname) === FALSE )
+        {
+            db_do("UPDATE article SET byline='' WHERE id=?", $this->article->id);
+            $this->article->byline = '';
+        }
+
+        // TODO: could also 1) clear htmlcache for this journo 2) activate them if required
         $this->status = "resolved";
     }
 
