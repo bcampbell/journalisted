@@ -25,6 +25,7 @@ class SubmittedArticleWidget
 
 
     static $action_defs=array(
+        'add_journo'=>array('label'=>'Add Journo','class'=>'widget add'),
         'replace_journo'=>array('label'=>'Replace Journo','class'=>'widget spark'),
         'reject'=>array('label'=>'Reject','class'=>'widget delete'),
         'scrape'=>array('label'=>'Scrape','class'=>'widget spark'),
@@ -119,6 +120,11 @@ $(document).ready(function(){
             $this->submitted->save();
             db_commit();
         }
+        if($action=='add_journo') {
+            $this->submitted->add_journo();
+            $this->submitted->save();
+            db_commit();
+        }
         if( $action == 'scrape' ) {
             $out = $this->submitted->scrape();
             $this->scraper_output = admMarkupPlainText( $out );
@@ -133,7 +139,12 @@ $(document).ready(function(){
         if(!is_null($this->submitted->id)) {
             $reason = $this->submitted->status;
             if($reason=='journo_mismatch') {
-                $actions[] = 'replace_journo';
+                if(!is_null($this->submitted->article)) {
+                    $actions[] = 'add_journo';
+                    if( count($this->submitted->article->authors)>0) {
+                        $actions[] = 'replace_journo';
+                    }
+                }
             }
             if($reason =='scrape_failed' || $reason=='') {
                 $actions[] = 'scrape';
@@ -165,10 +176,13 @@ $(document).ready(function(){
     function emit_core() {
         $ae = &$this->submitted;
 
+        /*
         $actions = array();
         if($ae->expected_journo && $ae->article) {
+            $actions[] = 'add_journo';
             $actions[] = 'replace_journo';
         }
+         */
 
         $struck = false;
         if( $ae->status=='resolved' || $ae->status=='rejected' ) {

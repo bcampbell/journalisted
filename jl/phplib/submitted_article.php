@@ -269,17 +269,28 @@ EOT;
     // attribute article to expected journo (zapping any previous
     // attribution for the article)
     function replace_journo() {
+        $this->add_journo(TRUE);
+    }
+
+    // add expected journo to the article
+    function add_journo($replace=FALSE) {
         assert(!is_null($this->article));
         assert(!is_null($this->expected_journo));
 
-        db_do("DELETE FROM journo_attr WHERE article_id=?", $this->article->id);
+        if( $replace===TRUE ) {
+            db_do("DELETE FROM journo_attr WHERE article_id=?", $this->article->id);
+        } else {
+            db_do("DELETE FROM journo_attr WHERE article_id=? AND journo_id=?", $this->article->id, $this->expected_journo->id);
+        }
         
         db_do("INSERT INTO journo_attr (journo_id,article_id) VALUES (?,?)",
             $this->expected_journo->id, $this->article->id);
 
-        // update article->authors[]
-        $this->article->authors = array($this->expected_journo);
-
+        // update article->authors
+        if( $replace===TRUE ) {
+            $this->article->authors = array();
+        }
+        $this->article->authors[] = $this->expected_journo;
 
         // if the journo's name isn't immediately obvious in the byline, zap the byline too.
         // (implication is that byline is wrong)
@@ -292,6 +303,7 @@ EOT;
         // TODO: could also 1) clear htmlcache for this journo 2) activate them if required
         $this->status = "resolved";
     }
+
 
     function save() {
         db_do("UPDATE article_error SET url=?, reason_code=?, submitted=?, submitted_by=?, article_id=?, expected_journo=? WHERE id=?",
