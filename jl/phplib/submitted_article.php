@@ -158,21 +158,29 @@ EOT;
     }
 
 
-    private static $fetch_sql = <<<EOT
-SELECT e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
+    private static $sql_select = <<<EOT
+e.id, e.url, e.reason_code, e.submitted, e.submitted_by, e.article_id, e.expected_journo,
                 j.ref as expected_ref,
                 j.prettyname as expected_prettyname,
                 a.title as article_title, a.permalink as article_permalink, a.byline as article_byline,
                 p.name as submitted_by_name,
                 p.email as submitted_by_email,
                 array(SELECT ref FROM journo j2 WHERE j2.id IN (SELECT journo_id FROM journo_attr attr WHERE attr.article_id=e.article_id)) as attributed
-            FROM (((article_error e LEFT JOIN article a ON a.id=e.article_id)
+EOT;
+
+    private static $sql_from = <<<EOT
+            (((article_error e LEFT JOIN article a ON a.id=e.article_id)
                 LEFT JOIN journo j ON j.id=e.expected_journo)
                 LEFT JOIN person p ON p.id=e.submitted_by)
 EOT;
 
     public static function fetch_single($id) {
-        $sql = self::$fetch_sql . <<<EOT
+
+        $sel_part = self::$sql_select;
+        $from_part = self::$sql_from;
+        $sql = <<<EOT
+        SELECT {$sel_part}
+            FROM {$from_part}
             WHERE e.id=?
             ORDER BY e.submitted DESC
 EOT;
@@ -184,7 +192,11 @@ EOT;
 
     // return array of submittedarticle objects matching $url
     public static function fetch_by_url($url) {
-        $sql = self::$fetch_sql . <<<EOT
+        $sel_part = self::$sql_select;
+        $from_part = self::$sql_from;
+        $sql = <<<EOT
+        SELECT {$sel_part}
+            FROM {$from_part}
             WHERE e.url=?
             ORDER BY e.submitted DESC
 EOT;
@@ -201,18 +213,38 @@ EOT;
     }
 
     public static function count($filter=null) {
-        $n=db_getOne("SELECT COUNT(*) FROM article_error WHERE reason_code NOT IN ('rejected','resolved')");
+        $params = array();
+        $from_part = self::$sql_from;
+        $where_part = "reason_code NOT IN ('rejected','resolved')";
+        if($filter['expected_ref']) {
+            $where_part .= " AND j.ref=?";
+            $params[] = $filter['expected_ref'];
+        }
+        $sql = "SELECT COUNT(*) FROM {$from_part} WHERE {$where_part}";
+        $n=db_getOne($sql,$params);
         return $n;
     }
 
+
     // fetch article_errors, returning an array of widgets
     public static function fetch($filter=null,$offset=null,$limit=null) {
-        $sql = self::$fetch_sql . <<<EOT
-            WHERE reason_code NOT IN ('rejected','resolved')
+
+        $params = array();
+        $sel_part = self::$sql_select;
+        $from_part = self::$sql_from;
+        $where_part = "reason_code NOT IN ('rejected','resolved')";
+        if($filter['expected_ref']) {
+            $where_part .= " AND j.ref=?";
+            $params[] = $filter['expected_ref'];
+        }
+
+        $sql = <<<EOT
+        SELECT {$sel_part}
+            FROM {$from_part}
+            WHERE {$where_part}
             ORDER BY e.submitted DESC
 EOT;
 
-        $params = array();
         if(!is_null($offset)) {
             $sql .= " OFFSET ?\n";
             $params[] = $offset;
@@ -221,7 +253,6 @@ EOT;
             $sql .= " LIMIT ?\n";
             $params[] = $limit;
         }
-
         $rows = db_getAll($sql,$params);
         $art_errs = array();
 
