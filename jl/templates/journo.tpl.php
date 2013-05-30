@@ -138,6 +138,9 @@
                 avg_words
                 search_url  - a /serach url to return that months articles
 
+
+
+ $scoring - TODO!
 */
 
 
@@ -773,11 +776,10 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php foreach( $pingbacks as $l ) { ?>
        <li><a class="extlink" href="<?= $l['url'] ?>"><?= $l['description'] ?></a></li>
 <?php } ?>
-
+    </ul>
 <?php } else { ?>
     <span class="not-known">None known</span>
 <?php } ?>
-    </ul>
 
   </div>
   <div class="foot">
@@ -785,6 +787,17 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 
 
+<div class="box">
+  <div class="head"><h3>Journo score for <?= $prettyname ?></h3></div>
+  <div class="body">
+    <ul>
+       <li><?= $scoring['num_alerts'] ?> alerts</li>
+       <li><?= $scoring['num_admirers'] ?> recommendations</li>
+    </ul>
+  </div>
+  <div class="foot">
+  </div>
+</div>
 
 
 <div class="box">
