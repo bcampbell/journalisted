@@ -100,7 +100,7 @@ $(document).ready(function() {
  <a href="/adm/journo-bios">Bios</a> |
  <a href="/adm/journo-email">Email</a> |
  <a href="/adm/journo-split">Split</a> |
- <a href="/adm/journo-merge">Merge</a> |
+ <a href="/adm/journo_merge">Merge</a> |
  <a href="/adm/journo-create">Create</a>
  </small>) |
 <a href="/adm/canned">Canned Queries</a> |
