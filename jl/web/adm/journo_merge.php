@@ -192,6 +192,15 @@ function merge_journos($from_ref, $into_ref)
 	db_do( "UPDATE journo_email SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_bio SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "UPDATE journo_other_articles SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_admired SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_admired SET admired_id=? WHERE admired_id=?", $into_id, $from_id );
+	db_do( "UPDATE alert SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_books SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_awards SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_education SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_employment SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_phone SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
+	db_do( "UPDATE journo_photo SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
     // (and why not:)
     db_do( "UPDATE missing_articles SET journo_id=? WHERE journo_id=?", $into_id, $from_id );
 	db_do( "DELETE FROM journo WHERE id=?", $from_id );
@@ -202,6 +211,8 @@ function merge_journos($from_ref, $into_ref)
 	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$into_id);
 	db_do( "DELETE FROM htmlcache WHERE name=?", 'j'.$from_id);
 	db_commit();
+
+    // TODO: proper alias handling
 
     // TODO: LOG THIS ACTION!
 
