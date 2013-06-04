@@ -98,7 +98,7 @@ def FindSimilarArticles( art ):
 
     results = []
     for m in matches:
-        score = m.get_weight()
+        score = m.weight
         if score < SCORE_CUTOFF:
             continue
 
