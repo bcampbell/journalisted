@@ -156,6 +156,7 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
 // fields that we've recently added, which might not be in cached versions
 if( !array_key_exists('fake',$data ) ) {
     $data['fake'] = False;
+    $data['scoring'] = array('num_admirers'=>0, 'num_alerts'=>0);
 }
 
 // some stuff we don't cache:
@@ -172,7 +173,7 @@ if( !$data[ 'quick_n_nasty' ] && array_key_exists( 'monthly_stats', $data ) ) {
         // javascript timestamp
         $jsts = (int)($dt->format('U')) * 1000;
 
-        // Dogey assumption that all months have 31 days
+        // Dodgy assumption that all months have 31 days
         // (php5.2 has crappy date fns)
         // xapian range is string-based anyway, so we'll be fine.
         $range = "{$yearmonth}-01..{$yearmonth}-31";
