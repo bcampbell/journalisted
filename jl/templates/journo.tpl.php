@@ -786,7 +786,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 
-
+<?php /*
 <div class="box">
   <div class="head"><h3>Journo score for <?= $prettyname ?></h3></div>
   <div class="body">
@@ -799,6 +799,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 
+*/ ?>
 
 <div class="box">
   <div class="head"><h3>10 topics mentioned most by <?= $prettyname ?></h3></div>
