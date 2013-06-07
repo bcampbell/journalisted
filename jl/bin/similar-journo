@@ -142,7 +142,7 @@ def FindSimilarJournos( journo ):
             if id == journo['id']:
                 continue
 
-            s = m.get_weight()
+            s = m.weight
             if id in jscores:
                 s = s + jscores[id]
             jscores[id] = s
