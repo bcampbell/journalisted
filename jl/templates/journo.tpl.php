@@ -109,6 +109,9 @@
 
  $similar_journos - list of journos who write similar articles
 
+ $admired - journos admired by this one
+ $admired_by - journos who admire this one
+
  $can_edit_page - TRUE if journo is logged in and can edit this page
 
  $recent_changes - list of recent changes to the journo's profile
@@ -894,7 +897,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
   </ul>
 <?php } else { ?>
-  <span class="not-known"><?= $prettyname ?> has not added any journalists</span>
+  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
 <?php } ?>
  </div>
  <div class="foot">
@@ -903,6 +906,24 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
  </div>
 </div>
+
+<div class="box admired-journos">
+ <div class="head"><h3>Journalists who recommend <?= $prettyname ?></h3></div>
+ <div class="body">
+<?php if( $admired_by ) { ?>
+  <ul>
+<?php foreach( $admired_by as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  <span class="not-known">None</span>
+<?php } ?>
+ </div>
+ <div class="foot">
+ </div>
+</div>
+
 
 
 <?php if( !$is_editor ) { ?>

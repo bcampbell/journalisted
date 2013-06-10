@@ -612,6 +612,15 @@ SELECT a.admired_name AS prettyname, j.ref, j.oneliner
 EOT;
     $data['admired'] = db_getAll( $sql, $journo['id'] );
 
+    /* journos who admire this one */
+    $sql = <<<EOT
+SELECT j.prettyname, j.ref, j.oneliner
+    FROM (journo_admired a LEFT JOIN journo j ON j.id=a.journo_id)
+    WHERE a.admired_id=?
+EOT;
+    $data['admired_by'] = db_getAll( $sql, $journo['id'] );
+
+
     $data['articles'] = journo_collectArticles( $journo );
     $data['more_articles'] = true;
 
