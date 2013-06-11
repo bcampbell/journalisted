@@ -5,16 +5,17 @@
 # (http://www.affero.org/oagpl.html)
 #
 #
+# paywall notes:
 #
-# TODO:
+# 10 articles before cutoff.
 #
-# - better sundaytelegraph detection?
+# - in browser, tracked by cookie
+# - but also restricts scraper without cookies, presumably based on IP address
+#   or something. Appears to be a short timeout (<1 hour).
+# - more restrictive outside the UK? unsure, but suspect not.
 #
-# - tidy URLs ( strip jsessionid etc)
-#     http://www.telegraph.co.uk/earth/main.jhtml?view=DETAILS&grid=&xml=/earth/2007/07/19/easeabird119.xml
-#     (strip view param)
-#
-# - handle multi-page articles (currently only pick up first page) (is this a problem with new website format too?)
+# All the other data is available, so when we hit the paywall limit we just
+# stop including the actual article content... not great, but hey.
 #
 
 import re
@@ -469,21 +470,13 @@ def Extract_HTML_Article( html, context ):
         cruft.extract()
     contenttxt = contentdiv.renderContents(None)
 
-    # check to see if paywall is bilking us
+    # paywall might prevent us from grabbing content
     if "loadInvitation();" in contenttxt:
-        raise Exception("Hit paywall - no content") 
+        ukmedia.DBUG2( "PAYWALLED - no content for '%s'\n" % (art['srcurl']) );
+    else:
+        contenttxt = ukmedia.SanitiseHTML( contenttxt )
+        art['content'] = contenttxt
 
-    contenttxt = ukmedia.SanitiseHTML( contenttxt )
-
-
-    art['content'] = contenttxt
-
-
-
-
-    if desctxt == u'':
-        desctxt = ukmedia.FirstPara( art['content'] )
-    art['description'] = desctxt
 
     if not 'srcorgname' in art:
         if in_sunday_edition( art['pubdate'] ):

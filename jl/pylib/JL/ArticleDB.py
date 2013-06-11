@@ -60,7 +60,10 @@ class ArticleDB:
         if 'lastseen' not in art:
             art['lastseen'] = datetime.now()
         if 'description' not in art:
-            art['description'] = ukmedia.FirstPara(art['content'])
+            if 'content' in art:
+                art['description'] = ukmedia.FirstPara(art['content'])
+            else:
+                art['description'] = u""
 
         CheckArticle( art )
 
@@ -165,7 +168,8 @@ class ArticleDB:
                 CommentLink.upsert(article_id, c)
 
         # add tags
-        Tags.generate(article_id, art['content'])
+        if content is not None:
+            Tags.generate(article_id, art['content'])
 
         # attribute journos
         assert 'journos' in art
@@ -229,19 +233,24 @@ def CheckArticle(art):
     assert art['srcurl'] in art['urls']
 
     # check for missing/null fields
-    for f in ('title','content','description','permalink','srcurl','lastscraped','pubdate','srcorg','journos' ):
+    for f in ('title','permalink','srcurl','lastscraped','pubdate','srcorg','journos' ):
         assert f in art, "missing '%s' field!" % (f,)
         assert art[f] is not None, "null '%s' field!" % (f,)
 
     # check for empty strings
-    for f in ('title','content','description', 'permalink', 'srcurl'):
+    for f in ('title', 'permalink', 'srcurl'):
         s = art[f]
         assert s.strip() != u'', "blank '%s' field!" % (f,)
+
+    # if content present, make sure it's not empty
+    if 'content' in art:
+        assert art['content'] != ""
 
 #   print "CheckArticle byline: ["+art['byline']+"]"
     # make sure assorted fields are unicode
     for f in ( 'title', 'byline', 'description', 'content' ):   #, 'permalink', 'srcurl','srcid' ):
-        assert isinstance(art[f], unicode), "'%s' is not unicode" % (f,)
+        if f in art:
+            assert isinstance(art[f], unicode), "'%s' is not unicode" % (f,)
 
     # check title and byline are single-line
     for f in ( 'title','byline' ):
@@ -251,23 +260,16 @@ def CheckArticle(art):
 
     # check for unwanted html tags & entities
     for f in ( 'title','byline','description' ):
-        s = art[f]
-        assert s==ukmedia.DescapeHTML( s ), "%s contains html entities ('%s')" % (f,s.encode('utf-8','replace'))
-        assert not tagpat.search(s), "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace'))
+        if f in art:
+            s = art[f]
+            assert s==ukmedia.DescapeHTML( s ), "%s contains html entities ('%s')" % (f,s.encode('utf-8','replace'))
+            assert not tagpat.search(s), "%s contains html tags ('%s')" % (f,s.encode('latin-1','replace'))
     
     # fix link URLs, then check for relative links
     for f in ('content', 'bio'):
         if f in art:
             # TODO: fix links elsewhere!
             art[f] = FixLinkURLs(art[f])
-            for link in re.findall(r'''href\s*=\s*['"](.*?)['"]''', art[f]):
-                link = link.strip()
-                if link and not re.match(r'https?://|mailto:', link):
-#                   raise Exception("%s contains relative links ('%s')" %
-#                                   (f, 'href="%s"' % link.encode('latin-1','replace')))
-#                    ukmedia.DBUG("%s contains relative links ('%s')\n" %
-#                                    (f, 'href="%s"' % link.encode('latin-1','replace')))
-                    pass
 
 
 def FixLinkURLs(html):
