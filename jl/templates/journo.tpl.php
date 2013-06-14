@@ -775,10 +775,13 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="head"><h3><?= $prettyname ?>...</h3></div>
   <div class="body">
     <ul class="bare-list">
+<?php if( isset($scoring) ) { ?>
     <li>...has a journo score of <span class="big-metric"><?= sprintf("%.1f",$scoring['score']) ?></span></li>
 
     <li>...is the subject of <?= $scoring['num_alerts'] ?> people's email alerts</li>
+<?php } ?>
 
+<?php if( isset($admired_by) ) { ?>
 <?php if(sizeof($admired_by) == 0) { ?>
     <li>...hasn't yet been recommended by anyone</li>
 <?php } else { ?>
@@ -789,6 +792,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
  <?php } ?>
     </ul>
     </li>
+<?php } ?>
 
 <?php } ?>
 
