@@ -1476,3 +1476,15 @@ a.public-profile-location {
   text-align: center;
 }
 
+.big-metric { display: block; padding: 0.5em; font-size: 300%; font-weight: bold; }
+
+.bare-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bare-list ul {
+    margin-left: 1em;
+}
+

@@ -771,6 +771,49 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 <?php } ?>
 
+<div class="box admired-journos">
+  <div class="head"><h3><?= $prettyname ?>...</h3></div>
+  <div class="body">
+    <ul class="bare-list">
+    <li>...has a journo score of <span class="big-metric"><?= sprintf("%.1f",$scoring['score']) ?></span></li>
+
+    <li>...is the subject of <?= $scoring['num_alerts'] ?> people's email alerts</li>
+
+<?php if(sizeof($admired_by) == 0) { ?>
+    <li>...hasn't yet been recommended by anyone</li>
+<?php } else { ?>
+    <li>...is recommended by:
+    <ul>
+ <?php foreach( $admired_by as $a ) { ?>
+      <li><?= journo_link($a) ?></li>
+ <?php } ?>
+    </ul>
+    </li>
+
+<?php } ?>
+
+
+<li>
+<?php if( $admired ) { ?>
+  ...recommends:
+  <ul>
+<?php foreach( $admired as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  ...has not yet recommended any journalists
+<?php } ?>
+<?php if( $can_edit_page ) { ?>
+  <a class="editbutton add edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
+<?php } ?>
+  </li>
+  </ul>
+
+</div>
+</div>
+
+
 <div class="box pingbacks">
   <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
   <div class="body">
@@ -789,20 +832,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 
-<?php /*
-<div class="box">
-  <div class="head"><h3>Journo score for <?= $prettyname ?></h3></div>
-  <div class="body">
-    <ul>
-       <li><?= $scoring['num_alerts'] ?> alerts</li>
-       <li><?= $scoring['num_admirers'] ?> recommendations</li>
-    </ul>
-  </div>
-  <div class="foot">
-  </div>
-</div>
 
-*/ ?>
 
 <div class="box">
   <div class="head"><h3>10 topics mentioned most by <?= $prettyname ?></h3></div>
@@ -885,44 +915,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 
 
-
-
-<div class="box admired-journos">
- <div class="head"><h3>Journalists recommended by <?= $prettyname ?></h3></div>
- <div class="body">
-<?php if( $admired ) { ?>
-  <ul>
-<?php foreach( $admired as $a ) { ?>
-   <li><?=journo_link($a) ?></li>
-<?php } ?>
-  </ul>
-<?php } else { ?>
-  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
-<?php } ?>
- </div>
- <div class="foot">
-<?php if( $can_edit_page ) { ?>
-  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
-<?php } ?>
- </div>
-</div>
-
-<div class="box admired-journos">
- <div class="head"><h3>Journalists who recommend <?= $prettyname ?></h3></div>
- <div class="body">
-<?php if( $admired_by ) { ?>
-  <ul>
-<?php foreach( $admired_by as $a ) { ?>
-   <li><?=journo_link($a) ?></li>
-<?php } ?>
-  </ul>
-<?php } else { ?>
-  <span class="not-known">None</span>
-<?php } ?>
- </div>
- <div class="foot">
- </div>
-</div>
 
 
 
