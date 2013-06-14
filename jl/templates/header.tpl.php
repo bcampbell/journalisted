@@ -34,7 +34,7 @@
 <?php if( $canonical_url ) { ?>
   <link rel="canonical" href="<?= $canonical_url ?>" />
 <?php } ?>
-  <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
+  <script type="text/javascript" src="/js/jquery-1.10.1.min.js"></script>
   <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>
 <?php foreach( $js_files as $f ) { ?>
@@ -46,7 +46,17 @@
 
     $(document).ready( function() {
         $('#header .search select').sSelect();
-        });
+
+    var divs = $('.cross-promo span').hide(),
+    i = 0;
+
+(function cycle() { 
+
+    divs.eq(i).fadeIn(400).delay(1000).fadeOut(400, cycle);
+    i = ++i % divs.length;
+})();
+    console.log(i);
+    });
   </script>
 </head>
 
@@ -56,6 +66,13 @@
     <div class="inner">
       <h1><a href="/"><img src="/img/journalisted_logo.png" alt="Journalisted - read all about them!" /></a></h1>
       <a class="mst-logo" href="http://www.mediastandardstrust.org"><img src="/img/mst_logo.png" alt="Media Standards Trust" /></a>
+      <div class="cross-promo">
+        Check out our other sites:
+        <span>Churnalism.com</span>
+        <span>unsourced.org</span>
+        <span>presscomplaints.org</span>
+        <span>mediastandardstrust.org</span>
+      </div>
       <div class="nav">
 <?php if( $logged_in_user ) { ?>
 <?php if( $can_edit_profile ) { ?>

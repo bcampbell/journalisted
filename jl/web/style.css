@@ -334,7 +334,8 @@ form dl:after {
   margin: 0;
   padding: 0;
   height: 144px;
-  background: #cc0e0e url("/img/header_bg.png") repeat-x left bottom;
+/*  background: #cc0e0e url("/img/header_bg.png") repeat-x left bottom; */
+ background: #cc0e0e;
 }
 
 #header .inner {
@@ -363,6 +364,19 @@ form dl:after {
   top: 8px;
 }
 #header a.mst-logo img { border: none; }
+
+#header .cross-promo {
+    position: absolute;
+    left: 395px;
+    top: 42px;
+    padding: 8px;
+    color: white;
+}
+#header .cross-promo span {
+    font-size: 110%;
+    font-weight: bold; 
+}
+
 
 /* header nav bar */
 
