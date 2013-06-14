@@ -5,16 +5,17 @@
 # (http://www.affero.org/oagpl.html)
 #
 #
+# paywall notes:
 #
-# TODO:
+# 10 articles before cutoff.
 #
-# - better sundaytelegraph detection?
+# - in browser, tracked by cookie
+# - but also restricts scraper without cookies, presumably based on IP address
+#   or something. Appears to be a short timeout (<1 hour).
+# - more restrictive outside the UK? unsure, but suspect not.
 #
-# - tidy URLs ( strip jsessionid etc)
-#     http://www.telegraph.co.uk/earth/main.jhtml?view=DETAILS&grid=&xml=/earth/2007/07/19/easeabird119.xml
-#     (strip view param)
-#
-# - handle multi-page articles (currently only pick up first page) (is this a problem with new website format too?)
+# All the other data is available, so when we hit the paywall limit we just
+# stop including the actual article content... not great, but hey.
 #
 
 import re
@@ -22,6 +23,7 @@ from datetime import datetime, timedelta, date
 import sys
 import os
 import urlparse
+import urllib2
 
 import site
 site.addsitedir("../pylib")
@@ -452,24 +454,29 @@ def Extract_HTML_Article( html, context ):
         comment_url = urlparse.urljoin( art['srcurl'], comments_a['href'] )
         art['commentlinks'].append( {'num_comments':num_comments, 'comment_url':comment_url} )
 
-    # cull out cruft from the story div:
+
+    contentdiv = soup.find('div',{'id':'mainBodyArea'})
+
+    # cull out cruft from the content
     bylinediv.extract()
     for bad_class in ('slideshow', 'related_links_inline', 'embeddedFirstVideo' ):
-        for cruft in storydiv.findAll( 'div', {'class': re.compile(r'\b' + bad_class + r'\b') } ):
+        for cruft in contentdiv.findAll( 'div', {'class': re.compile(r'\b' + bad_class + r'\b') } ):
             cruft.extract()
 
-    for cruft in storydiv.findAll( 'ul', {'class': 'storylist'} ):
+    for cruft in contentdiv.findAll( 'ul', {'class': 'storylist'} ):
         cruft.extract()
     # inskin ad delivery thingy which wraps around brightcove video player
-    for cruft in storydiv.findAll( 'div', {'id':'skin'} ):
+    for cruft in contentdiv.findAll( 'div', {'id':'skin'} ):
         cruft.extract()
-    contenttxt = storydiv.renderContents(None)
-    contenttxt = ukmedia.SanitiseHTML( contenttxt )
-    art['content'] = contenttxt
+    contenttxt = contentdiv.renderContents(None)
 
-    if desctxt == u'':
-        desctxt = ukmedia.FirstPara( art['content'] )
-    art['description'] = desctxt
+    # paywall might prevent us from grabbing content
+    if "loadInvitation();" in contenttxt:
+        ukmedia.DBUG2( "PAYWALLED - no content for '%s'\n" % (art['srcurl']) );
+    else:
+        contenttxt = ukmedia.SanitiseHTML( contenttxt )
+        art['content'] = contenttxt
+
 
     if not 'srcorgname' in art:
         if in_sunday_edition( art['pubdate'] ):
@@ -892,18 +899,24 @@ def FindArticlesFromArchive():
     for d in days:
         archive_url = "http://www.telegraph.co.uk/archive/%d-%d-%d.html" % (d.year,d.month,d.day)
         ukmedia.DBUG2("fetching %s\n" % (archive_url))
-        html = ukmedia.FetchURL(archive_url)
-        soup = BeautifulSoup.BeautifulSoup( html )
-        indexaz = soup.find('div',{'class':re.compile(r'\bindexaz\b')})
-        for a in indexaz.findAll('a'):
-            url = a['href']
-            if url.startswith('#'):
-                continue
-            # discard section links
-            if re.match(r'^http://www.telegraph.co.uk.*/$', url):
-                continue
-            url = urlparse.urljoin(archive_url, url)
-            found.append(ContextFromURL(url))
+        try:
+
+            html = ukmedia.FetchURL(archive_url)
+
+            soup = BeautifulSoup.BeautifulSoup( html )
+            indexaz = soup.find('div',{'class':re.compile(r'\bindexaz\b')})
+            for a in indexaz.findAll('a'):
+                url = a['href']
+                if url.startswith('#'):
+                    continue
+                # discard section links
+                if re.match(r'^http://www.telegraph.co.uk.*/$', url):
+                    continue
+                url = urlparse.urljoin(archive_url, url)
+                found.append(ContextFromURL(url))
+
+        except urllib2.HTTPError as e:
+            ukmedia.DBUG2("HTTP ERROR %d while fetching %s\n" % (e.code,archive_url))
 
     return found
 
