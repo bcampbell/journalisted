@@ -159,7 +159,7 @@ func main() {
 	lastEventID := findLatest(db)
 	for {
 		latest := findLatest(db)
-		fmt.Printf("latest=%s\n", latest)
+		//fmt.Printf("latest=%s\n", latest)
 		if latest != lastEventID {
 			lastEventID = pumpArticles(lastEventID, db, srv)
 		}
