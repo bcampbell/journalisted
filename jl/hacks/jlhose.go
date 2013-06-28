@@ -34,7 +34,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/bmizerany/pq"
+	_ "github.com/lib/pq" 
+	// More up to date version of library
+	// Including talk about LISTEN/NOTIFY
+	// https://github.com/lib/pq/pull/106
 	"github.com/donovanhide/eventsource"
 	"net"
 	"net/http"
@@ -67,10 +70,12 @@ func (art *articleEvent) Id() string {
 	// not too bad in practice - should always be ascending.
 	// But because stuff can be rescrapeduse lastscraped as id?
 	// or date + id concatenation?
+	// Maybe MAX(created,lastscraped) as unixtime with id concatenated?
 	return strconv.Itoa(art.id)
 }
 
 func (art *articleEvent) Event() string {
+	// This probably should be more specific, ie. "add", "update" and maybe even "delete" 
 	return "article"
 }
 
@@ -93,6 +98,7 @@ func findLatest(db *sql.DB) string {
 }
 
 // pumpArticles streams out a batch of articles starting just after lastEventID
+// If you implement the registry interface this function might become a bit simpler, and just process a single article at a time
 func pumpArticles(lastEventID string, db *sql.DB, eventServer *eventsource.Server) string {
 	batchSize := 1000
 
@@ -146,6 +152,7 @@ func main() {
 
 	srv := eventsource.NewServer()
 	defer srv.Close()
+	// Channel should probably be "/article" if you decide to use the event field to dictate the action required by the client
 	http.HandleFunc("/new", srv.Handler("article"))
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
