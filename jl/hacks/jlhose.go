@@ -34,16 +34,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/bmizerany/pq"
+	//_ "github.com/bmizerany/pq"
 	"github.com/donovanhide/eventsource"
+	_ "github.com/lib/pq"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
 )
-
-// how often we poll
-const pollIntervalSecs = 2
 
 // articleEvent encodes article data we want to stream out as events
 type articleEvent struct {
@@ -65,9 +63,9 @@ type articleEvent struct {
 func (art *articleEvent) Id() string {
 	// TODO: currently just using internal article id as event id.
 	// not too bad in practice - should always be ascending.
-	// But because stuff can be rescrapeduse lastscraped as id?
-	// or date + id concatenation?
 	return strconv.Itoa(art.id)
+	// alternative:
+	//	return strconv.Itoa(Lastscraped.Unix()) + "_" + strconv.Itoa(art.id)
 }
 
 func (art *articleEvent) Event() string {
@@ -132,9 +130,42 @@ func pumpArticles(lastEventID string, db *sql.DB, eventServer *eventsource.Serve
 	return lastEventID
 }
 
+func fetchArticles(db *sql.DB, timeBegin time.Time, timeEnd time.Time) ([]*articleEvent, error) {
+	rows, err := db.Query(`
+        SELECT a.id,a.permalink,a.title,a.pubdate,a.lastscraped,c.content
+            FROM article a LEFT JOIN article_content c ON a.id=c.article_id
+            WHERE lastscraped>=$1 AND lastscraped<$2
+            ORDER BY lastscraped ASC
+            LIMIT 10
+        `, timeBegin, timeEnd)
+
+	arts := make([]*articleEvent, 0, 256)
+	for rows.Next() {
+		var art articleEvent
+		err = rows.Scan(&art.id, &art.Permalink, &art.Title, &art.Pubdate, &art.Lastscraped, &art.Content)
+		if err != nil {
+			return nil, err
+		}
+		arts = append(arts, &art)
+	}
+	return arts, nil
+}
+
+/*
+type jlRepo []&articleEvent;
+
+func (repo jlRepo) Get(channel, id string) Event {
+}
+
+func (repo jlRepo) Replay(channel, id string) (ids []string) {
+}
+*/
+
 func main() {
 	var port = flag.Int("port", 9999, "port to run server on")
-	var interval = flag.Int("interval", 60, "how often db should be polled for new articles (in seconds)")
+	var interval = flag.Int("interval", 0, "how often db should be polled for new articles (0=never)")
+	var tstart = flag.String("s", "", "time interval start yyyy-mm-dd")
+	var tend = flag.String("e", "", "time interval end yyyy-mm-dd")
 	var dbstring = flag.String("db", "user=jl dbname=jl host=/var/run/postgresql sslmode=disable", "connection string for database")
 	flag.Parse()
 
@@ -143,6 +174,41 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+
+	if *tstart != "" || *tend != "" {
+		timeStart, err := time.Parse("2006-01-02", *tstart)
+		if err != nil {
+			panic(err)
+		}
+		timeEnd, err := time.Parse("2006-01-02", *tend)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%v -> %v\n", timeStart, timeEnd)
+		arts, err := fetchArticles(db, timeStart, timeEnd)
+		for i, art := range arts {
+			fmt.Printf("%d: %s (%v)\n", i, art.Title, art.Lastscraped)
+		}
+
+		srv := eventsource.NewServer()
+		repo := eventsource.NewSliceRepository()
+		srv.Register("article", repo)
+		for _, art := range arts {
+			repo.Add("articles", art)
+			srv.Publish([]string{"article"}, art)
+		}
+
+		defer srv.Close()
+		http.HandleFunc("/article", srv.Handler("article"))
+		l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+		if err != nil {
+			return
+		}
+		defer l.Close()
+		fmt.Printf("running: %d articles in buffer\n", len(arts))
+		http.Serve(l, nil)
+		return
+	}
 
 	srv := eventsource.NewServer()
 	defer srv.Close()
