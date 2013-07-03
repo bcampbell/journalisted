@@ -84,6 +84,8 @@ func fetchArticles(db *sql.DB, lastEventId string, batchSize int) ([]*articleEve
 
 func main() {
 	var port = flag.Int("port", 9999, "port to run server on")
+	var batchSize = flag.Int("batchsize", 100, "max number of articles to send at once")
+	var interval = flag.Int("interval", 60, "deplay between batches, in seconds")
 	var dbstring = flag.String("db", "user=jl dbname=jl host=/var/run/postgresql sslmode=disable", "connection string for database")
 	flag.Parse()
 
@@ -93,16 +95,17 @@ func main() {
 	}
 	defer db.Close()
 
-	http.HandleFunc("/articles", handler(db))
+	http.HandleFunc("/articles", handler(db, *batchSize, *interval))
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		return
 	}
 	defer l.Close()
+	log.Printf("Listening on port %d", *port)
 	http.Serve(l, nil)
 }
 
-func handler(db *sql.DB) http.HandlerFunc {
+func handler(db *sql.DB, batchSize int, sleepTimeSecs int) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		h := w.Header()
 		h.Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -115,7 +118,7 @@ func handler(db *sql.DB) http.HandlerFunc {
 		*/
 		lastEventId := req.Header.Get("Last-Event-ID")
 
-		log.Printf("Connection with lastEventId='%s'", lastEventId)
+		log.Printf("%s connected (lastEventId='%s')", req.RemoteAddr, lastEventId)
 
 		flusher := w.(http.Flusher)
 		notifier := w.(http.CloseNotifier)
@@ -124,34 +127,32 @@ func handler(db *sql.DB) http.HandlerFunc {
 
 		wakeup := make(chan bool, 1)
 		for {
-			log.Printf("start batch")
-			arts, err := fetchArticles(db, lastEventId, 5)
+			arts, err := fetchArticles(db, lastEventId, batchSize)
 			if err != nil {
 				panic(err)
 			}
+			log.Printf("%s sending batch (%d articles)", req.RemoteAddr, len(arts))
 			for _, art := range arts {
 				err := enc.Encode(art)
 				if err != nil {
 					panic(err)
 				}
-				log.Printf("Sent %s: %s", art.Id(), art.Title)
+				log.Printf("%s send %s: %s", req.RemoteAddr, art.Id(), art.Title)
 				lastEventId = art.Id()
 			}
 			flusher.Flush()
-			log.Printf("end batch")
 
 			// wait for
 			go func() {
-				time.Sleep(time.Duration(5) * time.Second)
+				time.Sleep(time.Duration(sleepTimeSecs) * time.Second)
 				wakeup <- true
 			}()
 
 			select {
 			case <-notifier.CloseNotify():
-				log.Printf("closed")
+				log.Printf("%s disconnected", req.RemoteAddr)
 				return
 			case <-wakeup:
-				log.Printf("bing")
 			}
 		}
 	}
