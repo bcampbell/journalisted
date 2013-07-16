@@ -1,49 +1,25 @@
 package main
 
-// implements an HTTP event stream server which streams out articles
-// as they are added to the Journalisted database.
-
-// TODO:
-// 1) implement mechanism to access historical articles. Should probably
-//    use different url, with parameters to specify a date range.
-//    Don't make clients synthesise their own lastEventIDs! lastEventID is
-//    just a meaningless token, from the stream consumer POV.
-//
-// 2) any lastEventID sent by client will currently be ignored. Should fix
-//    but current eventsource.Repository interface doesn't feel like the
-//    right abstraction for this case, where there's a database with a _large_
-//    number of historical events... (eg worse case, you could have 10 million
-//    articles to catch up on, and I can think of valid uses for that)
-//    Anyway. needs a bit more thought and experimentation.
-//
-// 3) should think about updating articles too... where they are rescraped.
-//    Should this be a separate event? No. Source doesn't necessarially know
-//    that article is already in system (well, it could when slurping
-//    out of the journalisted database say, but less stateful sources won't have
-//    this info, so stream consumers have to cope with articles being resent).
-
-// NOTES:
-// - Consumer of stream should use canonical article URL (Permalink) as main
-//   key to identify articles.
-// - Articles _do_ have alternative URLs, which need to be stored and used for
-//   lookups.
-//
+// $ curl localhost:9999/articles -H "Last-Event-ID: 33895"
 
 import (
 	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/bmizerany/pq"
 	"github.com/donovanhide/eventsource"
+	"github.com/golang/glog"
+	_ "github.com/lib/pq"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-// how often we poll
-const pollIntervalSecs = 2
+var port = flag.Int("port", 9999, "port to run server on")
+var dbstring = flag.String("db", "user=jl dbname=jl host=/var/run/postgresql sslmode=disable", "connection string for database")
+var timeout = flag.Duration("timeout", 10*time.Second, "timeout for a client disconnection")
+var interval = flag.Duration("interval", 5*time.Second, "delay between monitor polls")
 
 // articleEvent encodes article data we want to stream out as events
 type articleEvent struct {
@@ -65,9 +41,9 @@ type articleEvent struct {
 func (art *articleEvent) Id() string {
 	// TODO: currently just using internal article id as event id.
 	// not too bad in practice - should always be ascending.
-	// But because stuff can be rescrapeduse lastscraped as id?
-	// or date + id concatenation?
 	return strconv.Itoa(art.id)
+	// alternative:
+	//	return strconv.Itoa(Lastscraped.Unix()) + "_" + strconv.Itoa(art.id)
 }
 
 func (art *articleEvent) Event() string {
@@ -79,90 +55,126 @@ func (art *articleEvent) Data() string {
 	return string(out)
 }
 
-// findLatest returns the highest EventId currently in the article database
-func findLatest(db *sql.DB) string {
-
-	row := db.QueryRow("SELECT MAX(id) FROM article WHERE status='a'")
-	var id int
-	err := row.Scan(&id)
-	if err != nil {
-		panic(err)
-	}
-
-	return strconv.Itoa(id)
+type articleRepository struct {
+	*sql.DB
 }
 
-// pumpArticles streams out a batch of articles starting just after lastEventID
-func pumpArticles(lastEventID string, db *sql.DB, eventServer *eventsource.Server) string {
-	batchSize := 1000
-
-	id, err := strconv.Atoi(lastEventID)
+func (repo *articleRepository) streamIds(lastEventId string, ids chan string) (id string) {
+	tx, err := repo.Begin()
 	if err != nil {
-		panic(err)
+		glog.Error(err)
+		return
 	}
-
-	// TODO:
-	// - include alternate Urls from article_url table
-	// - include publication name
-	// - join with pub_set to restrict to uk national publications
-	//   AND a.srcorg IN (SELECT pub_id FROM (pub_set_map m INNER JOIN pub_set s ON s.id=m.pub_set_id) WHERE name='national_uk')
-	// - join with journo data?
-	rows, err := db.Query(`
-        SELECT a.id,a.permalink,a.title,a.pubdate,a.lastscraped,c.content
-            FROM article a LEFT JOIN article_content c ON a.id=c.article_id
+	defer tx.Rollback()
+	_, err = tx.Exec(`DECLARE cur NO SCROLL CURSOR FOR
+			SELECT a.id
+            FROM article a 
             WHERE a.id>$1
-            ORDER BY id ASC
-            LIMIT $2
-        `, id, batchSize)
-
+            ORDER BY lastscraped ASC`, lastEventId)
 	if err != nil {
-		panic(err)
+		glog.Error(err)
+		return
+	}
+	for finished := false; !finished; {
+		rows, err := tx.Query(`FETCH FORWARD 100 FROM cur`)
+		if err != nil {
+			glog.Error(err)
+			return
+		}
+		finished = true
+		for rows.Next() {
+			finished = false
+			if err = rows.Scan(&id); err != nil {
+				glog.Error(err)
+				return
+			}
+			select {
+			case <-time.After(*timeout):
+				glog.Warning("Timeout on cursor pump")
+				return
+			case ids <- id:
+			}
+		}
+	}
+	return
+}
+
+func (repo *articleRepository) Get(channel, lastEventId string) eventsource.Event {
+	row := repo.QueryRow(`	SELECT a.id,
+							a.permalink,
+							a.title,
+							a.pubdate,
+							a.lastscraped,
+							c.content
+            				FROM article a 
+            				LEFT JOIN article_content c 
+            				ON a.id=c.article_id
+            				WHERE a.id=$1`, lastEventId)
+	var art articleEvent
+	if err := row.Scan(&art.id, &art.Permalink, &art.Title, &art.Pubdate, &art.Lastscraped, &art.Content); err != nil {
+		glog.Error(err)
+		return nil
+	}
+	glog.V(2).Infof("Got Channel: %s from Last-Event-ID: %s", channel, lastEventId)
+	return &art
+}
+
+func (repo *articleRepository) Replay(channel, lastEventId string) (ids chan string) {
+	ids = make(chan string)
+	glog.Infof("Replaying Channel: %s from Last-Event-Id: %s", channel, lastEventId)
+	go func() {
+		defer close(ids)
+		id := repo.streamIds(lastEventId, ids)
+		glog.Infof("Finished Replaying Channel: %s from Last-Event-ID: %s To: %s", channel, lastEventId, id)
+
+	}()
+	return
+}
+
+func (repo *articleRepository) Monitor(channel string, srv *eventsource.Server) {
+	ids := make(chan string)
+	defer close(ids)
+	var lastEventId string
+	if err := repo.QueryRow("SELECT MAX(id) FROM article").Scan(&lastEventId); err != nil {
+		glog.Fatal(err)
+	}
+	glog.Infof("Monitoring from Id: %s onwards ", lastEventId)
+	go func() {
+		for id := range ids {
+			glog.Infof("Publishing Id: %s", id)
+			srv.Publish([]string{channel}, repo.Get(channel, id))
+		}
+	}()
+	for {
+		glog.V(2).Infoln("Polling...")
+		if id := repo.streamIds(lastEventId, ids); id != "" {
+			lastEventId = id
+		}
+		time.Sleep(*interval)
 	}
 
-	for rows.Next() {
-		var art articleEvent
-		err = rows.Scan(&art.id, &art.Permalink, &art.Title, &art.Pubdate, &art.Lastscraped, &art.Content)
-		if err != nil {
-			panic(err)
-		}
-		eventServer.Publish([]string{"article"}, &art)
-		lastEventID = art.Id()
-		//		fmt.Printf("pub (%v)\n", art)
-	}
-	return lastEventID
 }
 
 func main() {
-	var port = flag.Int("port", 9999, "port to run server on")
-	var interval = flag.Int("interval", 60, "how often db should be polled for new articles (in seconds)")
-	var dbstring = flag.String("db", "user=jl dbname=jl host=/var/run/postgresql sslmode=disable", "connection string for database")
 	flag.Parse()
-
 	db, err := sql.Open("postgres", *dbstring)
 	if err != nil {
-		panic(err)
+		glog.Fatal(err)
 	}
-	defer db.Close()
-
+	if err = db.Ping(); err != nil {
+		glog.Fatal(err)
+	}
+	repo := &articleRepository{db}
 	srv := eventsource.NewServer()
-	defer srv.Close()
-	http.HandleFunc("/new", srv.Handler("article"))
+	srv.Register("articles", repo)
+
+	http.HandleFunc("/articles", srv.Handler("articles"))
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		return
+		glog.Fatal(err)
 	}
 	defer l.Close()
-	go http.Serve(l, nil)
-
-	// We poll the db at regular intervals to see if the highest article id has changed
-	// (TODO: investigate postgresql pubsub stuff to avoid polling)
-	lastEventID := findLatest(db)
-	for {
-		latest := findLatest(db)
-		//fmt.Printf("latest=%s\n", latest)
-		if latest != lastEventID {
-			lastEventID = pumpArticles(lastEventID, db, srv)
-		}
-		time.Sleep(time.Duration(*interval) * time.Second)
-	}
+	glog.Infof("Listening on port %d", *port)
+	go repo.Monitor("articles", srv)
+	http.Serve(l, nil)
 }
