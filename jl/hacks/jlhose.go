@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -27,11 +28,12 @@ type articleEvent struct {
 	id int
 	// Permalink is the canonical URL
 	Permalink string
-	// TODO: VITAL TO INCLUDE ALTERNATE URLS FOR ARTICLE!
 	// Title is the article headline
 	Title       string
-	Lastscraped time.Time
-	Pubdate     time.Time
+	LastScraped time.Time
+	Published   time.Time
+	Urls        []string
+	Journalists []string
 	Content     string
 	// TODO: more fields!
 	//  - journalisted url
@@ -100,21 +102,34 @@ func (repo *articleRepository) streamIds(lastEventId string, ids chan string) (i
 }
 
 func (repo *articleRepository) Get(channel, lastEventId string) eventsource.Event {
+	// Maybe this should be an inner join for articles with no content?
 	row := repo.QueryRow(`	SELECT a.id,
-							a.permalink,
-							a.title,
-							a.pubdate,
-							a.lastscraped,
-							c.content
-            				FROM article a 
-            				LEFT JOIN article_content c 
-            				ON a.id=c.article_id
-            				WHERE a.id=$1`, lastEventId)
+							MAX(a.permalink),
+							MAX(a.title),
+							MAX(a.pubdate),
+							MAX(a.lastscraped),
+							COALESCE(string_agg(u.url,' '),''),
+							COALESCE(string_agg(j.prettyname,','),''),
+							COALESCE(MAX(c.content),'') 
+							FROM article a 
+							LEFT OUTER JOIN article_content c 
+							ON a.id=c.article_id
+							LEFT OUTER JOIN article_url u
+							ON a.id=u.article_id
+							LEFT OUTER JOIN journo_attr attr
+							ON a.id = attr.article_id
+							LEFT OUTER JOIN journo j
+							ON attr.journo_id=j.id
+							WHERE a.id=$1
+							GROUP BY a.id`, lastEventId)
 	var art articleEvent
-	if err := row.Scan(&art.id, &art.Permalink, &art.Title, &art.Pubdate, &art.Lastscraped, &art.Content); err != nil {
+	var urls, journalists string
+	if err := row.Scan(&art.id, &art.Permalink, &art.Title, &art.Published, &art.LastScraped, &urls, &journalists, &art.Content); err != nil {
 		glog.Error(err)
 		return nil
 	}
+	art.Urls = strings.Split(urls, " ")
+	art.Journalists = strings.Split(journalists, ",")
 	glog.V(2).Infof("Got Channel: %s from Last-Event-ID: %s", channel, lastEventId)
 	return &art
 }
