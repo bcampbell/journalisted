@@ -29,10 +29,10 @@ type articleEvent struct {
 	Permalink string
 	// TODO: VITAL TO INCLUDE ALTERNATE URLS FOR ARTICLE!
 	// Title is the article headline
-	Title       string
+	Title       string `json:"title"`
 	Lastscraped time.Time
 	Pubdate     time.Time
-	Content     string
+	Content     string `json:"text"`
 	// TODO: more fields!
 	//  - journalisted url
 	//  - publication info:  pretty name, home url etc..
