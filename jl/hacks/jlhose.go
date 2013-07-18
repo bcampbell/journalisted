@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"github.com/donovanhide/eventsource"
 	"github.com/golang/glog"
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,6 +23,10 @@ var port = flag.Int("port", 9999, "port to run server on")
 var dbstring = flag.String("db", "user=jl dbname=jl host=/var/run/postgresql sslmode=disable", "connection string for database")
 var timeout = flag.Duration("timeout", 10*time.Second, "timeout for a client disconnection")
 var interval = flag.Duration("interval", 5*time.Second, "delay between monitor polls")
+
+type article struct {
+	id, channel string
+}
 
 // articleEvent encodes article data we want to stream out as events
 type articleEvent struct {
@@ -32,6 +38,7 @@ type articleEvent struct {
 	Title       string
 	LastScraped time.Time
 	Published   time.Time
+	Source      string
 	Urls        []string
 	Journalists []string
 	Content     string
@@ -61,24 +68,32 @@ type articleRepository struct {
 	*sql.DB
 }
 
-func (repo *articleRepository) streamIds(lastEventId string, ids chan string) (id string) {
+func (repo *articleRepository) streamArticles(channel, lastEventId string, stream chan *article) (last *article) {
 	tx, err := repo.Begin()
 	if err != nil {
 		glog.Error(err)
 		return
 	}
 	defer tx.Rollback()
-	_, err = tx.Exec(`DECLARE cur NO SCROLL CURSOR FOR
-			SELECT a.id
-            FROM article a 
+	glog.V(2).Infoln("Declaring cursor", lastEventId, channel)
+	_, err = tx.Exec(`DECLARE cur SCROLL CURSOR FOR
+			SELECT a.id,
+			o.shortname
+            FROM article a
+            LEFT OUTER JOIN organisation o
+			ON a.srcorg=o.id
             WHERE a.id>$1
-            ORDER BY lastscraped ASC`, lastEventId)
+            AND ($2='articles' OR o.shortname=$2)
+            ORDER BY lastscraped ASC;`, lastEventId, channel)
+	glog.V(2).Infoln("Declared cursor", lastEventId, channel)
 	if err != nil {
 		glog.Error(err)
 		return
 	}
+	last = new(article)
 	for finished := false; !finished; {
-		rows, err := tx.Query(`FETCH FORWARD 100 FROM cur`)
+		glog.V(2).Infoln("Fetching next 100..")
+		rows, err := tx.Query(`FETCH FORWARD 100 FROM cur;`)
 		if err != nil {
 			glog.Error(err)
 			return
@@ -86,7 +101,8 @@ func (repo *articleRepository) streamIds(lastEventId string, ids chan string) (i
 		finished = true
 		for rows.Next() {
 			finished = false
-			if err = rows.Scan(&id); err != nil {
+			var art article
+			if err = rows.Scan(&art.id, &art.channel); err != nil {
 				glog.Error(err)
 				return
 			}
@@ -94,7 +110,9 @@ func (repo *articleRepository) streamIds(lastEventId string, ids chan string) (i
 			case <-time.After(*timeout):
 				glog.Warning("Timeout on cursor pump")
 				return
-			case ids <- id:
+			case stream <- &art:
+				last.channel = art.channel
+				last.id = art.id
 			}
 		}
 	}
@@ -108,6 +126,7 @@ func (repo *articleRepository) Get(channel, lastEventId string) eventsource.Even
 							MAX(a.title),
 							MAX(a.pubdate),
 							MAX(a.lastscraped),
+							COALESCE(MAX(o.prettyname),''),
 							COALESCE(string_agg(u.url,' '),''),
 							COALESCE(string_agg(j.prettyname,','),''),
 							COALESCE(MAX(c.content),'') 
@@ -120,11 +139,13 @@ func (repo *articleRepository) Get(channel, lastEventId string) eventsource.Even
 							ON a.id = attr.article_id
 							LEFT OUTER JOIN journo j
 							ON attr.journo_id=j.id
+							LEFT OUTER JOIN organisation o
+							ON a.srcorg=o.id
 							WHERE a.id=$1
 							GROUP BY a.id`, lastEventId)
 	var art articleEvent
 	var urls, journalists string
-	if err := row.Scan(&art.id, &art.Permalink, &art.Title, &art.Published, &art.LastScraped, &urls, &journalists, &art.Content); err != nil {
+	if err := row.Scan(&art.id, &art.Permalink, &art.Title, &art.Published, &art.LastScraped, &art.Source, &urls, &journalists, &art.Content); err != nil {
 		glog.Error(err)
 		return nil
 	}
@@ -135,35 +156,41 @@ func (repo *articleRepository) Get(channel, lastEventId string) eventsource.Even
 }
 
 func (repo *articleRepository) Replay(channel, lastEventId string) (ids chan string) {
+	stream := make(chan *article)
 	ids = make(chan string)
 	glog.Infof("Replaying Channel: %s from Last-Event-Id: %s", channel, lastEventId)
 	go func() {
-		defer close(ids)
-		id := repo.streamIds(lastEventId, ids)
-		glog.Infof("Finished Replaying Channel: %s from Last-Event-ID: %s To: %s", channel, lastEventId, id)
-
+		for art := range stream {
+			ids <- art.id
+		}
+		close(ids)
+	}()
+	go func() {
+		defer close(stream)
+		last := repo.streamArticles(channel, lastEventId, stream)
+		glog.Infof("Finished Replaying Channel: %s from Last-Event-ID: %s To: %s", channel, lastEventId, last.id)
 	}()
 	return
 }
 
-func (repo *articleRepository) Monitor(channel string, srv *eventsource.Server) {
-	ids := make(chan string)
-	defer close(ids)
+func (repo *articleRepository) Monitor(srv *eventsource.Server) {
+	stream := make(chan *article)
+	defer close(stream)
 	var lastEventId string
 	if err := repo.QueryRow("SELECT MAX(id) FROM article").Scan(&lastEventId); err != nil {
 		glog.Fatal(err)
 	}
 	glog.Infof("Monitoring from Id: %s onwards ", lastEventId)
 	go func() {
-		for id := range ids {
-			glog.Infof("Publishing Id: %s", id)
-			srv.Publish([]string{channel}, repo.Get(channel, id))
+		for art := range stream {
+			glog.Infof("Publishing Id: %s Channel: %s", art.id, art.channel)
+			srv.Publish([]string{"articles", art.channel}, repo.Get(art.channel, art.id))
 		}
 	}()
 	for {
 		glog.V(2).Infoln("Polling...")
-		if id := repo.streamIds(lastEventId, ids); id != "" {
-			lastEventId = id
+		if last := repo.streamArticles("articles", lastEventId, stream); last.id != "" {
+			lastEventId = last.id
 		}
 		time.Sleep(*interval)
 	}
@@ -182,14 +209,27 @@ func main() {
 	repo := &articleRepository{db}
 	srv := eventsource.NewServer()
 	srv.Register("articles", repo)
-
-	http.HandleFunc("/articles", srv.Handler("articles"))
+	channels := make(map[string]struct{})
+	var lock sync.Mutex
+	router := mux.NewRouter().StrictSlash(false)
+	router.HandleFunc("/", srv.Handler("articles"))
+	router.HandleFunc("/{channel}/", func(resp http.ResponseWriter, req *http.Request) {
+		channel := mux.Vars(req)["channel"]
+		lock.Lock()
+		if _, ok := channels[channel]; !ok {
+			channels[channel] = struct{}{}
+			srv.Register(channel, repo)
+		}
+		lock.Unlock()
+		srv.Handler(mux.Vars(req)["channel"])(resp, req)
+	})
+	http.Handle("/", router)
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		glog.Fatal(err)
 	}
 	defer l.Close()
 	glog.Infof("Listening on port %d", *port)
-	go repo.Monitor("articles", srv)
+	go repo.Monitor(srv)
 	http.Serve(l, nil)
 }
