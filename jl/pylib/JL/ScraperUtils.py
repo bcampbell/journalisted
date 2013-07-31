@@ -226,26 +226,6 @@ def scrape_articles( found, extract, opts):
                     continue;   # skip it - we've already got it
                 else:
                     assert(len(got) == 1)
-                    article_id = got[0]
-
-            # TODO: Kill this some time!
-            # if we've got a srcid, see if the article is already
-            # there (but under another url)
-            if context.get('srcid',None) is not None:
-                article_id = store.ArticleExists(context['srcid'])
-                if article_id is not None:
-                    # we've got it! So add the missing url(s)...
-                    had_count += 1
-                    cursor = DB.conn().cursor()
-                    # BUG: if rescraping, this'll add redundant rows to article_url
-                    for url in known_urls:
-                        ukmedia.DBUG2("add missing url to [a%s]: '%s'\n" %(article_id,url))
-                        cursor.execute( "INSERT INTO article_url (url,article_id) VALUES (%s,%s)", (url,article_id))
-                    if opts.test:
-                        DB.conn().rollback()
-                    else:
-                        DB.conn().commit()
-                    continue
 
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
@@ -487,8 +467,6 @@ def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
             # mungefunc can suppress by returning None.
             if not context:
                 continue
-            if not context.get( 'srcid', None ):
-                ukmedia.DBUG2( "WARNING: missing/null srcid! ('%s')\n" % (context['srcurl']) )
 
         foundarticles.append( context )
 

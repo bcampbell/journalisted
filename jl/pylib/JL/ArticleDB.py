@@ -24,7 +24,7 @@ class ArticleDB:
     description - summary of article (raw text, no HTML)
     byline - full byline text (optional, raw text, no HTML)
     srcorgname - which organisation published the article
-    srcid - unique identifier within organisation (eg url)
+    srcid - unique identifier within organisation (eg url) TODO: REMOVE!
     firstseen -
     lastseen -
     text, title, content, description, byline should all be unicode
@@ -80,10 +80,7 @@ class ArticleDB:
         srcorg = art['srcorg']
 
         # phasing out srcid...
-        if 'srcid' in art:
-            srcid = art['srcid']
-        else:
-            srcid = art['permalink']
+        srcid = art['permalink']
 
         wordcount = None
         content = None
@@ -202,19 +199,6 @@ class ArticleDB:
         return article_id
 
 
-    # TODO Kill this
-    def ArticleExists( self, srcid ):
-        """returns article id, if article is already in the DB"""
-        article_id = None
-        cursor = DB.conn().cursor()
-        q = 'SELECT id FROM article WHERE srcid=%s'
-        cursor.execute( q, ( srcid, ) )
-        r = cursor.fetchone()
-        if r:
-            article_id = r[0]
-        cursor.close()
-
-        return article_id
 
     def find_article(self,known_urls):
         sql = "SELECT DISTINCT article_id FROM article_url WHERE url IN (" + ','.join(['%s' for u in known_urls]) + ")"
