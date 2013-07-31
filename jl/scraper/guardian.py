@@ -6,22 +6,6 @@
 #
 # Scraper for the guardian and observer, including commentisfree and blogs
 #
-# NOTE: guardian unlimited has updated their site. They were using
-# vignette storyserver, but have now written their own I think.
-#
-# Main RSS page doesn't seem be be updated with feeds from new sections
-# (maybe it'll be rejigged once the transition is complete)
-# For the new-style sections, there is usually one feed for the main
-# section frontpage, and then an extra feed for each subsection.
-# ../hacks/guardian-scrape-rsslist.py crawls the site looking for the
-# RSS feeds.
-#
-# TODO:
-# - extract journo names from descriptions if possible...
-# - sort out guardian/observer from within Extract fn
-# - For new-format articles, could use class attr in body element to
-#   ignore polls and other cruft. <body class="article"> is probably
-#   the only one we should accept...
 
 import re
 from datetime import date,datetime,timedelta
@@ -698,42 +682,9 @@ urlpat_storyserver = re.compile( u".*/\w*,\w*,\w*,\w*\.html", re.UNICODE )
 #urlpat_newformat = re.compile(  u".*/.*?(?![.]html)", re.UNICODE )
 
 
-def WhichFormat( url ):
-    """ figure out which format the article is going to be in """
-    if urlpat_storyserver.match( url ):
-        return 'storyserver'
-
-    o = urlparse.urlparse( url )
-
-    if o[1] == 'blogs.guardian.co.uk':
-        if '/sport/' in url:
-            return 'sportblog'
-        else:
-            return 'blog'
-
-    if not o[2].endswith( '.html' ):
-        return 'newformat'
 
 
-    return 'UNKNOWN'
-
-
-def Extract( html, context, **kw):
-    fmt = WhichFormat( context['srcurl'] )
-    if fmt == 'storyserver':
-        return Extract_storyserver( html, context )
-    if fmt == 'newformat':
-        return Extract_newformat( html, context )
-    if fmt == 'blog':
-        return Extract_blog( html, context )
-    if fmt == 'sportblog':
-        return Extract_sportblog( html, context )
-
-
-
-def Extract_newformat( html, context ):
-    """ Extract function for guardians new CMS system (developed in-house) """
-
+def Extract( html, context, **kw ):
     # HACK: feedarticles have bad canonical urls. sigh...
     bad_url = 'http://www.guardian.co.uk/uk/feedarticle'
     if bad_url in context['urls']:
@@ -916,179 +867,6 @@ def Extract_newformat( html, context ):
 
 
 
-def Extract_storyserver(html, context):
-    '''
-    A scraper for oldstyle main guardian/observer articles (Vignette storyserver, I think)
-    '''
-
-    soup = BeautifulSoup( html )
-
-    div = soup.find('div', {'id': 'GuardianArticle'})
-    descline = div.h1.findNext('font', {'size': '3'}) or u''
-    if descline:
-        marker = descline
-        descline = descline.renderContents(None)
-    else:
-        marker = div.h1
-    dateline = marker.findNext('font').b.renderContents(None)
-
-    body = div.find('div', {'id': 'GuardianArticleBody'}).renderContents(None)
-    try:
-        bits = re.split(r'<p>\s*<b>\s*&(?:#183|middot);\s*</b>', body)  # end of article marker
-        body, bios = bits[0], bits[1:]
-        for bio in list(bios):
-            if 'will be appearing' in bio:
-                bios.remove(bio)
-        if bios:
-            bio = u'<p>' + u'\n\n<p>'.join([bio.lstrip() for bio in bios])  # put the <p> back
-        else:
-            bio = u''
-    except ValueError:
-        bio = u''
-    # They've taken to inserting section breaks in a really unpleasant way, as in
-    # http://lifeandhealth.guardian.co.uk/family/story/0,,2265583,00.html
-    body = re.compile(r'<p>\s*<script.*?<a name="article_continue"></a>\s*</div>\s*',
-                      flags=re.UNICODE | re.DOTALL).sub(' ', body)
-    if not descline:
-        descline = ukmedia.FirstPara(body)
-    
-    byline = None
-    pos = dateline.find('<br />')
-    if pos > -1:
-        # Check that format appears to be "AUTHOR<br />DATE ..."
-        days = 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-        for day in days:
-            if dateline[pos+len('<br />'):].startswith(day):
-                byline = dateline[:pos]
-    if not byline:
-        byline = ukmedia.ExtractAuthorFromParagraph(descline)
-
-    # is it observer or guardian?
-    srcorgname = u'guardian'
-    if 'The Observer' in dateline:
-        srcorgname = u'observer'
-
- 
-    # But the javascript-generated sidebar may provide a more accurate byline,
-    # and provides the all-important "blog" URL, where "blog"="articles by this author"
-    # in this rather odd field.
-    cifblog_url, cifblog_feed = None, None
-    for script_tag in soup.findAll('script'):
-        src = dict(script_tag.attrs).get('src', '')
-        if re.match(r'http://.*?/\d+_twocolumnleftcolumninsideleftcolumn.js$', src):
-            js = urllib2.urlopen(src).read()
-            if not isinstance(js, unicode):
-                js = unicode(js, 'utf-8')
-            
-            m = re.search(ur'articleslistitemshowalllink.setAttribute\("href", "(.*?)"\);', js, re.UNICODE)
-            if m:
-                cifblog_url = m.group(1)
-
-            m = re.search(ur'webfeedfirstlink.setAttribute\("href", "(.*?)"\);', js, re.UNICODE)
-            if m:
-                cifblog_feed = m.group(1)
-
-            m = re.search(ur'document\.createTextNode\("All (.*?) articles"\)', js, re.UNICODE)
-            if m:
-                byline = m.group(1)
-            
-            # And while we're at it, we might as well get a unique author id:
-            m = re.search(ur'profilelinka\.setAttribute\("href", "(.*?)"\)', js, re.UNICODE)
-            if m:
-                context['author_id'] = m.group(1)
-
-    art = context
-    art['guardian-format'] = 'commentisfree.py (2)' ####### OVERRIDE ########
-    art['title'] = ukmedia.FromHTML(div.h1.renderContents(None))
-    art['description'] = ukmedia.FromHTML(descline)
-    art['byline'] = byline.strip()
-    art['pubdate'] = ukmedia.ParseDateTime(dateline.replace('<br />', '\n'))
-    art['content'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(body))
-    art['bio'] = ukmedia.SanitiseHTML(ukmedia.DescapeHTML(bio))
-    art['srcorgname'] = srcorgname
-    if cifblog_url:
-        art['cifblog-url'] = cifblog_url
-    if cifblog_feed:
-        art['cifblog-feed'] = cifblog_feed  #RSS/Atom equivalent of cifblog-url
-    return art
-
-
-def Extract_blog( html, context ):
-    """ Extract function for blog.guardian.co.uk format """
-
-    art = context
-    soup = BeautifulSoup( html )
-    maindiv = soup.find( 'div', {'class':"blogs-article"} )
-
-    d = soup.find( 'div', {'class':"blogs-article-author"} )
-    bylinetxt = ukmedia.FromHTMLOneLine( d.h2.renderContents(None) )
-
-    headerdiv = maindiv.find( 'div', {'class':"blogs-article-header"} )
-    h1 = headerdiv.h1
-    titletxt = ukmedia.FromHTMLOneLine( h1.renderContents( None ) )
-    datediv = headerdiv.find( 'div', {'class':"blogs-article-date"} )
-
-    desctxt = u''
-    descdiv = headerdiv.find( 'div', {'class':"blogs-article-excerpt"} )
-    if descdiv:
-        desctxt = ukmedia.FromHTMLOneLine( descdiv.renderContents( None ) )
-
-    pubdate = ukmedia.ParseDateTime( datediv.renderContents(None) )
-
-    contentdiv = maindiv.find( 'div', {'class':"blogs-article-content"} )
-
-    contenttxt = ukmedia.SanitiseHTML( contentdiv.renderContents( None ) )
-
-#    print titletxt
-#   print bylinetxt
-#  print pubdate
-
-    art['title'] = titletxt
-    art['byline'] = bylinetxt
-    art['pubdate'] = pubdate
-    art['content'] = contenttxt
-    if desctxt == u'':
-        desctxt = ukmedia.FirstPara( contenttxt )
-    art['description'] = desctxt
-
-    return art
-
-
-
-def Extract_sportblog( html, context ):
-    art = context
-    soup = BeautifulSoup( html )
-
-
-    desctxt = u''
-    headdiv = soup.find( 'div', {'id': "twocolumnleftcolumninsiderightcolumntop"} )
-    titletxt = ukmedia.FromHTMLOneLine( headdiv.h1.renderContents(None) )
-
-    standfirst = headdiv.find( 'p', {'class':"standfirst"} )
-    if standfirst:
-        desctxt = ukmedia.FromHTMLOneLine( standfirst.renderContents( None ) )
-
-    bylinediv = soup.find( 'div', {'id':'twocolumnleftcolumninsideleftcolumn'} )
-    bylinetxt = ukmedia.FromHTMLOneLine( bylinediv.h2.renderContents(None) )
-
-
-    contentdiv = soup.find( 'div', {'id':"twocolumnleftcolumninsiderightcolumn"} )
-    pubdatediv = contentdiv.find('div', {'id':"twocolumnleftcolumntopbaselinetext"} )
-    pubdate = ukmedia.ParseDateTime( pubdatediv.renderContents( None ) )
-    pubdatediv.extract()
-
-    contenttxt = contentdiv.renderContents( None )
-
-    art['title'] = titletxt
-    art['byline'] = bylinetxt
-    art['pubdate'] = pubdate
-    art['content'] = contenttxt
-    if desctxt == u'':
-        desctxt = ukmedia.FirstPara( contenttxt )
-    art['description'] = desctxt
-
-    return art
-
 
 
 def TidyURL( url ):
@@ -1098,37 +876,27 @@ def TidyURL( url ):
     return url
 
 
-# patterns to extract srcids
-srcid_pats = [
-    # old (storyserver) format
-    # "http://education.guardian.co.uk/schools/story/0,,2261002,00.html"
-    re.compile( r'.*[/]([0-9,-]+)[.]html$' ),
-
-    # new format
-    # "http://www.guardian.co.uk/world/2008/feb/29/afghanistan.terrorism"
-    re.compile( r'\bguardian[.]co[.]uk/(.*?\d{4}/.*?/\d+/.*(?![.]html))$' ),
-
-    # blogs
-    # http://blogs.guardian.co.uk/games/archives/2008/07/28/has_the_iphone_made_mobile_gaming_good.html
-    re.compile( 'blogs[.]guardian[.]co[.]uk/(.*[.]html)' ),
-]
 
 def CalcSrcID( url ):
     """ Extract a unique srcid from the URL """
 
-    url = TidyURL( url )
-
     o = urlparse.urlparse( url )
-    if not o[1].endswith( 'guardian.co.uk' ):
-        return None
 
-    for pat in srcid_pats:
-        m = pat.search( url )
-        if m:
-            return 'guardian_' + m.group(1)
+    valid = False
+    for domain in ('guardian.co.uk','theguardian.com'):
+        if o[1].endswith(domain):
+            valid = True
+            break
+    if not valid:
+        return None
 
     return url
 
+def IsGuardianArticle(url):
+    if CalcSrcID(url) is None:
+        return False
+    else:
+        return True
 
 def ScrubFunc( context, entry ):
     """ fn to massage info from RSS feed """
@@ -1142,33 +910,16 @@ def ScrubFunc( context, entry ):
 
     url = TidyURL( url )
     context['permalink'] = url;
-    src_id = CalcSrcID( url )
-    if src_id is None:
-#        ukmedia.DBUG2( "IGNORE no srcid for '%s' (%s)\n" % (context['title'], url) );
+    if not IsGuardianArticle( url ):
+        ukmedia.DBUG2( "IGNORE non-guardian article '%s' (%s)\n" % (context['title'], url) );
         return None
 
-    context['srcid'] = src_id
-
-    if WhichFormat( url ) == 'newformat' and not url.startswith('file:'):
-        # force whole article on single page
-        context['srcurl'] = url + '?page=all'
-    else:
-        context['srcurl'] = url;
 
     # some items don't have pubdate
     # (they're probably special-case duds (eg flash pages), but try and
     # parse them anyway)
     if not context.has_key( 'pubdate' ):
         context['pubdate'] = datetime.now()
-
-    # just take all articles on a sunday as being in the observer
-    # (article itself should be able to tell us, but we'd like to know
-    # _before_ we download the article, so we can see if it's already in the
-    # DB)
-    if context['pubdate'].strftime( '%a' ).lower() == 'sun':
-        context['srcorgname'] = u'observer'
-    else:
-        context['srcorgname'] = u'guardian'
 
     # ---------------------
     # Some pages to ignore:
@@ -1187,14 +938,6 @@ def ScrubFunc( context, entry ):
     return context
 
 
-# this fn is called after the article is added to the db.
-# it looks for dupes, and keeps only the one with the highest
-# srcid (which is probably the latest revsion in the guardian db)
-#
-# TODO: this could be made a lot more elegant by adding it to the
-# transaction where the article is actually added to the db (in
-# ArticleDB).
-#
 
 
 
@@ -1204,13 +947,8 @@ def ContextFromURL( url ):
 
     context = {}
     context['permalink'] = url
-    context['srcid'] = CalcSrcID( url )
 
-    # not a 100% reliable test...
-    if url.find( "observer.guardian.co.uk" ) == -1:
-        context['srcorgname'] = u'guardian'
-    else:
-        context['srcorgname'] = u'observer'
+    context['srcorgname'] = u'guardian'
 
     if WhichFormat( url ) == 'newformat' and not url.startswith('file:'):
         # force whole article on single page
