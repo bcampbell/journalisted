@@ -284,7 +284,7 @@ def FindJourno( conn, rawname, hint_art=None, expected_ref=None ):
         return matching[0]
 
     # TODO: maybe pick journo with most recent publication?
-    raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(journos),rawname,len(matching),srcorgid)
+    raise MultipleJournosException, "%d journos found called '%s', and %d have articles in srcorg %d" % (len(matching),rawname,len(matching),srcorgid)
 
 
 
