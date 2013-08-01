@@ -1490,7 +1490,34 @@ a.public-profile-location {
   text-align: center;
 }
 
-.big-metric { display: block; padding: 0.5em; font-size: 300%; font-weight: bold; }
+.stat-metric { font-size: 150%; font-weight: bold; padding-right: 1em; }
+
+.stat-top {
+  position: relative;
+  top: -4px;
+  display: inline-block;
+  font-size: 10px;
+  padding: 4px;
+/*  white-space: nowrap; */
+  background-color: yellow;
+  font-weight: bold;
+  line-height: 10px;
+  text-align: center;
+  border: 1px solid red;
+  border-radius: 5px;
+  transform: rotate(30deg);
+}
+
+.separated-list li{
+  padding: 7px 0px 8px 0px;
+/*  height: 16px; */
+  border-top: 1px solid #cccccc;
+}
+
+.separated-list li:first-child {
+  border-top: none;
+}
+
 
 .bare-list {
     list-style: none;

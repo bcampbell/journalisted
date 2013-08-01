@@ -147,6 +147,14 @@
 */
 
 
+// hack to cope with possibly-missing fields
+if(!isset($scoring)) {
+    $scoring = array();
+}
+if( isset($admired_by) ) {
+    $admired_by = array();
+}
+
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
 
@@ -772,34 +780,25 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
 
 <div class="box admired-journos">
-  <div class="head"><h3><?= $prettyname ?>...</h3></div>
+  <div class="head"><h3>Stats for <?= $prettyname ?></h3></div>
   <div class="body">
-    <ul class="bare-list">
-<?php if( isset($scoring) ) { ?>
-    <li>...has a journo score of <span class="big-metric"><?= sprintf("%.1f",$scoring['score']) ?></span></li>
 
-    <li>...is the subject of <?= $scoring['num_alerts'] ?> people's email alerts</li>
-<?php } ?>
+<ul class="bare-list separated-list">
+    <li><span class="stat-metric"><?= $scoring['num_views_week'] ?></span> Profile views this week</li>
+    <li><span class="stat-metric "><?= $scoring['num_alerts'] ?></span> Followers (<a href="/alert">email alerts</a>) <span class="stat-top">Top 10%</span></li>
+    <li><span class="stat-metric"><?= sizeof($admired_by); ?></span>Recommendations (by other journalists)</li>
+    <li><span class="stat-metric">x</span>Twitter followers</li>
+    <li><span class="stat-metric">y</span>Linkedin connections</li>
+</ul>
 
-<?php if( isset($admired_by) ) { ?>
-<?php if(sizeof($admired_by) == 0) { ?>
-    <li>...hasn't yet been recommended by anyone</li>
-<?php } else { ?>
-    <li>...is recommended by:
-    <ul>
- <?php foreach( $admired_by as $a ) { ?>
-      <li><?= journo_link($a) ?></li>
- <?php } ?>
-    </ul>
-    </li>
-<?php } ?>
-
-<?php } ?>
+</div>
+</div>
 
 
-<li>
+<div class="box admired-journos">
+  <div class="head"><h3><?= $prettyname ?> recommends</h3></div>
+  <div class="body">
 <?php if( $admired ) { ?>
-  ...recommends:
   <ul>
 <?php foreach( $admired as $a ) { ?>
    <li><?=journo_link($a) ?></li>
@@ -811,8 +810,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php if( $can_edit_page ) { ?>
   <a class="editbutton add edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
 <?php } ?>
-  </li>
-  </ul>
 
 </div>
 </div>
