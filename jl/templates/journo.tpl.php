@@ -147,13 +147,6 @@
 */
 
 
-// hack to cope with possibly-missing fields
-if(!isset($scoring)) {
-    $scoring = array();
-}
-if( isset($admired_by) ) {
-    $admired_by = array();
-}
 
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 

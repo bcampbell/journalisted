@@ -158,7 +158,16 @@ if( !array_key_exists('fake',$data ) ) {
     $data['fake'] = False;
 }
 if(!array_key_exists('scoring',$data)) {
-    $data['scoring'] = array('num_admirers'=>0, 'num_alerts'=>0);
+    $data['scoring'] = array();
+}
+if(!array_key_exists('num_views_week',$data['scoring'])) {
+    $data['scoring']['num_views_week'] = 0;
+}
+if(!array_key_exists('num_alerts',$data['scoring'])) {
+    $data['scoring']['num_alerts'] = 0;
+}
+if(!array_key_exists('num_admirers',$data['scoring'])) {
+    $data['scoring']['num_admirers'] = 0;
 }
 if(!array_key_exists('admired_by',$data)) {
     $data['admired_by'] = array();
