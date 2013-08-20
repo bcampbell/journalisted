@@ -4,7 +4,7 @@ deny from 178.196.188.15
 allow from all
 
 # Donny added fix for queryfight timeout
-php_value max_execution_time 200 
+#php_value max_execution_time 200 
 
 DirectoryIndex index.php
 
