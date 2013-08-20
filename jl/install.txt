@@ -55,30 +55,12 @@ PHP-XAPIAN BINDINGS ISSUE
 There's a problem with the xapian php bindings, due to some license
 issue with php...
 details here:
+ http://trac.xapian.org/ticket/191
 
-http://trac.xapian.org/ticket/191
+Instructions on building a php5-xapian package manually for debian
+and ubuntu are maintained here:
+ http://trac.xapian.org/wiki/FAQ/PHP%20Bindings%20Package
 
-
-suggested solution:
---------------------------------------------------
-How to build your own php5-xapian binary package
-
-On Debian or Ubuntu:
-
-sudo apt-get build-dep xapian-bindings
-sudo apt-get install php5-dev php5-cli
-apt-get source xapian-bindings
-cd xapian-bindings-1.2.*
-rm debian/control
-env PHP_VERSIONS=5 debian/rules maint
-debuild -e PHP_VERSIONS=5 -us -uc
-cd ..
-sudo dpkg -i php5-xapian_*.deb
-
---------------------------------------------------
-
-NOTE: I had to also install debuild:
-$ sudo apt-get install devscripts
 
 
 
