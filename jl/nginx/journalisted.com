@@ -1,12 +1,25 @@
-server {
-	listen 80 default_server;
-	listen [::]:80 default_server ipv6only=on;
+# vim: set filetype=nginx:
+#
+# Nginx config file for journalisted.com
 
-	root {INSTALLPATH}/journalisted/jl/web/;
+# redirect non-canonical domains
+server {
+	listen 80;
+#	listen [::]:80 ipv6only=on;
+    server_name www.journalisted.com (www[.])?journalisted.net (www[.])?journalisted.co.uk (www[.])?journalisted.org (www[.])?journa-list.com (www[.])?journa-list.co.uk (www[.])?journa-list.org (www[.])?journa-list.org.uk (www[.])?journa-list.net;
+    return 301 $scheme://journalisted.com$request_uri;
+}
+
+
+server {
+	listen 80; 
+	listen [::]:80 ipv6only=on;
 	server_name journalisted.com;
 
-	access_log {INSTALLPATH}/logs/access.log;
-	error_log {INSTALLPATH}/logs/error.log;
+	root BLAHBLAHBLAH/journalisted/jl/web/;
+
+	access_log BLAHBLAHBLAH/logs/access.log;
+	error_log BLAHBLAHBLAH/logs/error.log;
 
 	location ~* \.(png|gif|jpg|jpeg|css|js|swf|ico|txt|xml|bmp|pdf|doc|docx|ppt|pptx|zip)$ {
 		access_log off;
