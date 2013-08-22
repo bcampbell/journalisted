@@ -169,10 +169,13 @@ Make sure it has these settings set:
 
   ; A deprecated feature that we use (pass-by-reference in function calls).
   allow_call_time_pass_reference = On
+TODO: think it might work now without this option
 
   ; We don't currently support running in PHP's Safe Mode sandbox.
   safe_mode = Off
 
+  ; to run under php 5.4 we need to set a default timezone for DateTime objects
+  date.timezone = UTC
 
 Site Config
 -----------
