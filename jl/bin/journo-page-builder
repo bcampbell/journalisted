@@ -3,7 +3,6 @@
 
 // builds journo pages for any journos who need it (ie have had the modified flag set).
 
-require_once 'Console/Getopt.php';
 chdir(dirname($_SERVER['SCRIPT_FILENAME']));
 require_once "../conf/general";
 require_once '../../phplib/db.php';
@@ -32,21 +31,18 @@ Usage: journo-page-builder [options]
 
 $short_opts = "hvj:n:qc:";
 
-// initialize object
-$cg = new Console_Getopt();
-$args = $cg->readPHPArgv();
-$ret = $cg->getopt($args, $short_opts);
-
-if (PEAR::isError($ret)) {
-    die ("Error in command line: " . $ret->getMessage() . "\n");
+$opts = getopt($short_opts);
+if($opts===FALSE) {
+    usage();
+    die("Bad options\n");
 }
+
 
 $settings = array( 'verbose' => false, 'journo' => null, 'maxnum' => 3000, 'quick'=>false, 'min_art_count'=>null );
 
 // now parse the options array
-$opts = $ret[0];
-foreach ($opts as $o) {
-    switch ($o[0]) {
+foreach ($opts as $flag=>$val) {
+    switch ($flag) {
         case 'v':
             $settings['verbose'] = true;
             break;
@@ -54,16 +50,16 @@ foreach ($opts as $o) {
             Usage();
             exit;
         case 'j':
-            $settings['journo'] = $o[1];
+            $settings['journo'] = $val;
             break;
         case 'n':
-            $settings['maxnum'] = $o[1];
+            $settings['maxnum'] = $val;
             break;
         case 'q':
             $settings['quick'] = true;
             break;
         case 'c':
-            $settings['min_art_count'] = intval( $o[1] );
+            $settings['min_art_count'] = intval( $val );
             break;
     }
 }
