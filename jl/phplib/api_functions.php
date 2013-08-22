@@ -1,4 +1,4 @@
-<?
+<?php
 /* helper functions for API, derived from theyworkforyou.com */
 
 require_once '../conf/general';
