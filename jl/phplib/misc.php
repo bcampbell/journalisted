@@ -296,7 +296,7 @@ If you already have a Journa<i>listed</i> account, log in here
 </form>
 
 
-<?
+<?php
 
 }
 
@@ -474,6 +474,5 @@ function array_to_object($src_array, $fields) {
     set_fields($ob, $src_array, $fields);
     return $ob;
 }
-
 
 ?>
