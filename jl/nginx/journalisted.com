@@ -63,7 +63,10 @@ server {
 		rewrite ^/data/article/([a-zA-Z0-9]+)$ article?id36=$1&fmt=rdfxml;
 
 
-		# TODO: API
+		# API
+		rewrite ^/api/((?:get|find).*)$ /api?method=$1;
+		rewrite ^/api/docs/?$ /api;
+		rewrite ^/api/docs/(.+)$ /api?docs=1&method=$1;
 
 		# admin pages
 		rewrite ^/adm/([a-zA-Z0-9]+-[-a-zA-Z0-9]+)$ /adm/journo?ref=$1;
