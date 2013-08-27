@@ -6,45 +6,35 @@ schema.sql is a dump of the database schema, which may or may not be up to
 date :-)
 basedata.sql is a dump of just the organisation table, which the scrapers
 need.
-
-All these notes assume your database is called 'jl' and there is a database
-user also called 'jl'.
-To create jl user:
-  $ sudo -u postgres createuser --no-superuser --no-createrole --createdb jl
+TODO: schema.sql and basedata.sql need refreshing.
 
 
+RESTORING DB
+-----------
 
-Text is utf-8 encoded and stored in an ascii DB. So the DB _thinks_ it's
-got ascii text, but the backend and website know that that text is really
-in utf-8). At some point we'll tidy it up so the database knows it's storing
-utf-8.
+There is an annoying issue with plpgsql language support during restore:
 
-following commands assume you're running as postgres user, eg:
-  $ sudo -u postgres bash
+$ pg_restore -U jl -d jl DUMPFILE
+pg_restore: [archiver (db)] Error while PROCESSING TOC:
+pg_restore: [archiver (db)] Error from TOC entry 516; 2612 11574 PROCEDURAL LANGUAGE plpgsql postgres
+pg_restore: [archiver (db)] could not execute query: ERROR:  must be owner of language plpgsql
+    Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;
 
-To kill old db:
-  $  dropdb jl
+Some discussion here:
 
-Create database:
-  $ createdb -U jl -E utf8 jl
+http://comments.gmane.org/gmane.comp.db.postgresql.general/156681
 
-OR to load initial schema+data:
-  $ psql -U jl jl -f schema.sql
-  $ psql -U jl jl -f basedata.sql
+Looks like it's OK to ignore - plpgsql is already installed in the database,
+but the jl user doesn't have the permissions to create/replace it.
+OK (I guess) for manual restores, but for anything automated you'd want to
+get rid of it - it'd affect the pg_restore return code.
 
-Load a database dump:
-  $ bzcat [backupfile] | psql -U jl jl
-or if you have a password set on the jl user:
-  $ bzcat [backupfile] > /tmp/blah  &&  psql -U jl jl -f /tmp/blah  &&  rm /tmp/blah
+Possible fixes:
 
-
-Postgres 8.3 notes
-------------------
-
-- can no longer create DBs which have encoding other than what the cluster uses.
-- can turn this off by settings locale to POSIX (or C):
-sudo pg_createcluster --locale POSIX 8.3 main
-- alternative is to use "-E sql_ascii" encoding when creating the database with
-  createdb (as specified above)
+1) remove plpgsql from template1 so the new database is created without it.
+2) could manually remove plpgsql from the db (as the postgres user) before
+   the restore?
+2) filtering out the offending command from the dumpfile via the -l and -L
+   flags on pg_restore
 
 

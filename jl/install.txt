@@ -62,97 +62,18 @@ and ubuntu are maintained here:
  http://trac.xapian.org/wiki/FAQ/PHP%20Bindings%20Package
 
 
-
-
-
-
 DB Setup
 --------
 
-Note that the --no-superuser and --no-createrole flags are only available 
-in Postgres 8.2 and higher, omit them for older version.
-
-$ sudo createuser -U postgres --no-superuser --createdb --no-createrole mst
-$ sudo psql -U postgres -c "alter user mst with password 'mstPass'"
-$ sudo pg_ctl reload -D /etc/postgresql/8.2/main/
-(Windows: pg_ctl reload -D "C:\Program Files\PostgreSQL\8.2\data\")
-
-Test:
-$ psql -U mst -l
-with password "mstPass".
-
-Further info:
-    http://wiki.rubyonrails.org/rails/pages/PostgreSQL
-    http://webpy.org/install_macosx
-    
-    
-DB Setup in Ubuntu 6.06  + Postgres 8.1
----------------------------------------
-The above didn't work for me, here's what did after apt-get had performed
-the initial install (also see https://help.ubuntu.com/community/PostgreSQL)
-
-$ sudo -u postgres psql template1
-ALTER USER postgres WITH ENCRYPTED PASSWORD ' <***password***> ';
- \q
-
-$ sudo -u postgres createuser -D -A -P mst
-$ sudo -u postgres createdb -E latin-1 -O mst mst
-
-groupadd msg
-useradd -m -g mst -s /bin/bash mst
- 
-
-sudo -u postgres psql -c "CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql HANDLER plpgsql_call_handler VALIDATOR plpgsql_validator;"
-sudo -u mst psql mst -f schema.sql
-sudo -u mst psql mst -f basedata.sql
-
-the last commands produces some errors:
-
-psql:basedata.sql:6: ERROR:  parameter "standard_conforming_strings" cannot be changed
-psql:basedata.sql:25: ERROR:  relation "organisation" already exists
-psql:basedata.sql:61: ERROR:  multiple primary keys for table "organisation" are not allowed
+We're using postgres 9.2.
+See db/INSTALL for details.
 
 
-Apache
-------
+Nginx
+-----
 
-Set up HOSTS file to map journalisted.dev to localhost.
-(add the line "127.0.0.1 journalisted.dev" to
-\WINDOWS\system32\drivers\etc\hosts on Windows, /etc/hosts on Unix.)
-
-Add new file, /etc/apache2/sites-available/www.journalisted.dev:
-
-  <VirtualHost *>
-    ServerName www.journalisted.dev
-    ServerAlias journalisted.dev *.journalisted.dev
-    DocumentRoot /home/ben/proj/journa-list/jl/web
-  </VirtualHost>
-
-Additional settings you may need/want to add before </VirtualHost>:
-
-    # Allow using index.php
-    DirectoryIndex index.html index.php
-    
-    # Seems to be needed to allow using mod_rewrite
-    <Directory />
-        Options All
-        AllowOverride All
-    </Directory>
-    
-    # Where to store the logs
-    ErrorLog logs/journalisted-error_log
-    CustomLog logs/journalisted-access_log common
-
-Enable the site with:
-
-  $ sudo a2ensite www.journa-listed.dev
-
-
-Make sure mod_rewrite is enabled:
-  $ sudo a2enmod rewrite
-
-Tell apache to reread the configuration:
-  $ sudo /etc/init.d/apache2 reload
+We've switched from apache to nginx.
+There's an example config in nginx/journalisted.com
 
 
 PHP
@@ -181,7 +102,6 @@ Site Config
 -----------
 
  $ cp conf/general.example conf/general
- $ cp conf/httpd.conf web/.htaccess
 
 Check settings in conf/general. In particular, check the postgresql port
 number against your postgresql.conf

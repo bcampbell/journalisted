@@ -1,0 +1,65 @@
+DATABASE SETUP
+--------------
+
+These notes apply to Postgres 9.2 (from apt.postgresql.org) on Ubuntu
+Precise. Applies mostly to other versions of pg and ubuntu/debian...
+but bound to be a few differences here and there.
+
+Assumes we're running a database called "jl", with a postgres user
+called "jl" and a unix account with the username "jl".
+
+
+
+Set up Postgres for UTF8 encoding
+---------------------------------
+
+On Ubuntu, the default postgres cluster is set up for SQL_ASCII encoding.
+An easy way to switch to UTF-8 is to drop the cluster just after installation
+and recreate it:
+
+$ sudo -u postgres pg_dropcluster --stop 9.2 main
+$ sudo -u postgres pg_createcluster -e UTF-8 9.2 main
+
+
+GOTCHA: pg_createcluster will use the default locale. SSH forwards your
+local locale LC_* vars over to remote sessions by default. If you're in
+a different country to the server this might not be what you want.
+eg I'm in New Zealand (en_NZ) but server should be UK locale (en_GB)
+pg_createcluster does have a --locale option, but it doesn't work as of
+postgresql 9.2
+(see http://www.postgresql.org/message-id/5195FA83.9010604@imos.net ).
+Workaround is to manually set your locale before invoking pg_createcluster
+eg:
+
+ $ export LANG=en_GB.utf-8
+ $ export LC_ALL=en_GB.utf-8
+
+
+
+
+Create the postgres user and database
+-------------------------------------
+
+$ sudo -u postgres createuser --no-superuser --no-createrole --createdb jl
+$ sudo -u postgres createdb -O jl -E utf8 jl
+
+(or $ sudo -u postgres createdb -O jl -E utf8 -T template0 jl
+if your cluster is still set to SQL_ASCII)
+
+
+Authentication
+--------------
+
+The "jl" unix user should have access to the "jl" postgres user by
+virtue of sharing the same name.
+However, you'd usually want to add another user who can connect and use
+the "jl" postgresq user. You can set up a jldev group to add such users
+like this (to let unix account "ben" connect to the jl postgres account):
+
+add to pg_ident.conf:
+jldev           ben                     jl
+
+add to pg_hba.conf (at the top):
+local   jl          jl peer map=jldev
+
+
