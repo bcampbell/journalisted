@@ -34,36 +34,30 @@ def Extract(html, context, **kw):
     doc = lxml.html.fromstring(html)
     doc.make_links_absolute(context['srcurl'])
 
-    main_div = doc.cssselect('.editorialSection')[0]
+    try:
+        art_div = doc.cssselect('article')[0]
+    except IndexError as e:
+        if '/motors/reviews/' in context['srcurl']:
+            ukmedia.DBUG2("SKIP old-format motor review %s\n" %(context['srcurl'],))
+            return None
+        else:
+            raise
 
-    headlinetxt = unicode(main_div.cssselect('.mainHeadline')[0].text_content())
+    headlinetxt = unicode(art_div.cssselect('header h1')[0].text_content())
     headlinetxt = u' '.join(headlinetxt.split())
     art['title'] = headlinetxt
 
-    byline = main_div.cssselect('.byline')[0]
+    art['byline'] = u''
+    authors = art_div.cssselect('header .author')
+    if len(authors)>0:
+        art['byline'] = ukmedia.FromHTMLOneLine(authors[0].text_content())
 
-    pubdatetxt = byline.cssselect('.pubDate')[0].text_content().strip()
-    pubdate = ukmedia.ParseDateTime(pubdatetxt)
-    art['pubdate'] = pubdate
+    pubdatetxt = art_div.cssselect('.published')[0].text_content().strip()
+    art['pubdate'] = ukmedia.ParseDateTime(pubdatetxt)
 
-    content_div = main_div.cssselect('.KonaBody')[0]
+    content_div = art_div.cssselect('.KonaBody')[0]
     art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(content_div)))
     art['description'] = ukmedia.FirstPara( art['content'] )
-
-
-    bylinetxt = unicode(byline.text_content())
-    bylinetxt = re.compile(r'\s*Published.*', re.I).sub(u'',bylinetxt)
-    bylinetxt = u' '.join(bylinetxt.split())
-
-
-    if bylinetxt == u'':
-        # opinion section often has "blahblahblah writes Fred Bloggs" paras after byline but before content. sigh.
-        foo = u' '.join([p.text_content() for p in main_div.cssselect('.editorialSectionLeft > p')]).strip()
-        m = re.compile(r'writes\s+((?:[a-z]{2,}\s+){1,2}[a-z]{2,})\s*$',re.I).search(foo)
-        if m:
-            bylinetxt = m.group(1)
-
-    art['byline'] = bylinetxt
 
     if '/scotland-on-sunday/' in art['srcurl']:
         art['srcorgname'] = u'scotlandonsunday'
@@ -75,44 +69,29 @@ def Extract(html, context, **kw):
 
 
 
-def FindSections():
-    # use nav bar to get a list of section pages
-    page_url = "http://www.scotsman.com"
-    html = ukmedia.FetchURL(page_url)
-    doc = lxml.html.fromstring(html)
-    doc.make_links_absolute(page_url)
 
-    sections = set()
-    links = doc.cssselect('#navSearchBar a')
-    for l in links:
-
-        url = l.get('href')
-        # TODO: overly restrictive, but hey. Could allow other sections.
-        if '/the-scotsman/' in url or '/scotland-on-sunday/' in url:
-            sections.add(url)
-    return sections
-
+art_url_pat = re.compile('.*/([a-z0-9_]+-){1,}[0-9]+$', re.I)
 
 def FindArticles():
-    sections = FindSections()
+    sections = set( ("http://www.scotsman.com/",))
+    sections_seen = set(sections)
+    err_404_cnt = 0
+
     arts = set()
 
-    art_url_pat = re.compile('.*/([a-z0-9_]+-){1,}[0-9]+$', re.I)
-
-    # scan the sections for articles
-    err_404_cnt = 0
-    for section_url in sections:
+    while len(sections)>0:
+        section_url = sections.pop()
         try:
             html = ukmedia.FetchURL(section_url)
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             # allow a few 404s
             if e.code == 404:
-                ukmedia.DBUG2("ERR fetching %s (404)\n" %(section_url,))
+                ukmedia.DBUG("ERR fetching %s (404)\n" %(section_url,))
                 err_404_cnt += 1
                 if err_404_cnt < 5:
                     continue
             raise
-        
+
         try:
             doc = lxml.html.fromstring(html)
             doc.make_links_absolute(section_url)
@@ -120,20 +99,44 @@ def FindArticles():
             ukmedia.DBUG("ERROR parsing %s: %s\n" %(section_url, e))
             continue
 
-        section_arts = set()
-        for a in doc.cssselect('#mainContent a'):
-            url = a.get('href',None)
-            if art_url_pat.search(url) is None:
+
+        # check nav bars forsections to scan
+        for navlink in doc.cssselect('#level1nav a, #navigationTier a'):
+            url = navlink.get('href')
+            if url in sections_seen:
+                continue
+            o = urlparse.urlparse( url )
+            if o.hostname not in ('www.scotsman.com',):
                 continue
 
+            blacklisted_sections = ()
+            if [foo for foo in blacklisted_sections if foo in url]:
+                continue
+
+            # section is new and looks ok - queue for scanning
+            #ukmedia.DBUG( "Queue section %s\n" % (url,))
+            sections.add(url)
+            sections_seen.add(url)
+
+        # now scan this section page for article links
+        section_arts = set()
+        for a in doc.cssselect('body a'):
+            url = a.get('href',None)
             if url is None:
                 continue
+            if art_url_pat.search(url) is None:
+                continue
+            o = urlparse.urlparse( url )
+            if o.hostname not in ('www.scotsman.com',):
+                continue
+
             section_arts.add(url)
 
         ukmedia.DBUG("%s: found %d articles\n" % (section_url,len(section_arts)) )
         arts.update(section_arts)
 
     return [ContextFromURL(url) for url in arts]
+
 
 
 
@@ -157,5 +160,11 @@ def ContextFromURL( url ):
 
 
 if __name__ == "__main__":
+    #arts = FindArticles()
+    #print( "Found %d article links\n"%(len(arts),))
+    #for art in arts:
+    #    print art['srcurl']
+    #    ukmedia.FetchURL(art['srcurl'])
+
     ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 
