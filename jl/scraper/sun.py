@@ -15,7 +15,9 @@
 #
 
 import re
+import urllib   # for urlencode
 import urllib2
+import ConfigParser
 import sys
 import traceback
 from datetime import date,datetime
@@ -215,7 +217,33 @@ def ContextFromURL( url ):
     return context
 
 
+def Prep():
+    """ Perform a login """
+
+    # credentials in config file
+    THESUN_CONFIG_FILE = '../conf/thesun.ini'
+    config = ConfigParser.ConfigParser()
+    config.read(THESUN_CONFIG_FILE)
+    username = config.defaults()[ 'username' ]
+    password = config.defaults()[ 'password' ]
+
+
+    ukmedia.DBUG2( "Logging in as %s\n" % (username,) )
+    postdata = urllib.urlencode({
+        'username':username,
+        'password':password,
+    #   'keepMeLoggedIn':'false'
+        })
+    req = urllib2.Request( "https://login.thesun.co.uk/", postdata );
+    resp = urllib2.urlopen( req )
+    ukmedia.DBUG2( "Login returned %s %s\n" % (resp.getcode(),resp.geturl()) )
+
+    # the login request always returns 200. We know it works if it redirects
+    # us to the sun front page
+    if 'login.thesun.co.uk' in resp.geturl():
+       raise Exception("Login failed.") 
+
 
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=150 )
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=150, prep=Prep )
 
