@@ -23,7 +23,9 @@ from datetime import datetime, timedelta, date
 import sys
 import os
 import urlparse
+import urllib
 import urllib2
+import ConfigParser
 
 import site
 site.addsitedir("../pylib")
@@ -920,7 +922,36 @@ def FindArticlesFromArchive():
 
     return found
 
+
+def Prep():
+    """ Perform a login """
+
+    # credentials in config file
+    CONFIG_FILE = '../conf/telegraph.ini'
+    config = ConfigParser.ConfigParser()
+    config.read(CONFIG_FILE)
+    email = config.defaults()[ 'email' ]
+    password = config.defaults()[ 'password' ]
+
+
+    ukmedia.DBUG2( "Logging in as %s\n" % (email,) )
+    postdata = urllib.urlencode({
+        'email':email,
+        'password':password,
+        })
+    req = urllib2.Request( "https://auth.telegraph.co.uk/sam-ui/login.htm", postdata );
+    resp = urllib2.urlopen( req )
+    ukmedia.DBUG2( "Login returned %s %s\n" % (resp.getcode(),resp.geturl()) )
+
+    # the login request always returns 200. We know it works if it redirects
+    # us to our account page.
+    if '/customer-portal/myaccount/index.html' not in resp.geturl():
+        raise Exception("Login failed.") 
+
+
+
 if __name__ == "__main__":
+    #ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200, prep=Prep )
     ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=200 )
 
 
