@@ -712,6 +712,10 @@ ul.newList li a:focus {-moz-outline-style: none;}
   padding: 8px 16px;
 }
 
+.box .foot {
+  padding: 8px 16px;
+}
+
 /* force foot sections to expand to enclose floated elements */
 .foot:after {
     content: ".";
@@ -1434,5 +1438,11 @@ a.public-profile-location {
 .promotional { padding: 0.4em;
   font-size: 110%;
   text-align: center;
+}
+
+
+.faqlink {
+    float: right;
+    font-size: small;
 }
 

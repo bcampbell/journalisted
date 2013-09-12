@@ -875,7 +875,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     </ul>
   </div>
   <div class="foot">
-    <small>(<a href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
+    <a class="faqlink" href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">What's this?</a>
   </div>
 </div>
 
@@ -894,7 +894,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php } ?>
   </ul>
 <?php } else { ?>
-  <span class="not-known"><?= $prettyname ?> has not added any journalists</span>
+  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
 <?php } ?>
  </div>
  <div class="foot">
