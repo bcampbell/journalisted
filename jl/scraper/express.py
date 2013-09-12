@@ -57,8 +57,10 @@ def ScrubFunc( context, entry ):
     if o.hostname != "www.express.co.uk":
         if 'feedsportal.com' in o.hostname:
             context['srcurl'] = entry.guid
+        elif 'feedproxy.google.com' in o.hostname:
+            context['srcurl'] = entry.guid
         else:
-            ukmedia.DBUG2("IGNORE %s\n", url)
+            ukmedia.DBUG2("IGNORE %s\n" %(url,))
             return None
 
     return context

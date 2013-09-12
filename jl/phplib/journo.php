@@ -358,9 +358,12 @@ function journo_calcMonthlyStats( $journo )
     $num_months = 12;
 
 
+
+    $tz = new DateTimeZone("UTC");
+
     // fetch data in range [$start,$end)
-    $start = date_create( "-" . ($num_months-1) . " months" )->format( 'Y-m-01' );
-    $end = date_create( "+1 month" )->format( 'Y-m-01' );
+    $start = date_create( "-" . ($num_months-1) . " months", $tz )->format( 'Y-m-01' );
+    $end = date_create( "+1 month", $tz )->format( 'Y-m-01' );
 
     // TODO: include other_articles!
     $sql = <<<EOT
@@ -381,7 +384,7 @@ EOT;
     $stats = array();
     for( $i=$num_months-1; $i>=0; --$i )
     {
-        $dt = new DateTime( "-$i months" );
+        $dt = new DateTime( "-$i months", $tz );
         $stats[ $dt->format('Y-m') ] = array( 'num_articles'=>0, 'avg_words'=>0 );
     }
 

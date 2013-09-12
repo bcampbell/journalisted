@@ -171,6 +171,8 @@ class CachedResponse(StringIO.StringIO):
         return self.headers
     def geturl(self):
         return self.url
+    def getcode(self):
+        return self.code
 
 
 
