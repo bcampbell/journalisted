@@ -351,8 +351,8 @@ function DoConfirmationEmail()
 
     /* send out a confirmation email */
     $url = OPTION_BASE_URL . "/login?t={$token}";
-
-    $values = rabx_unserialise(stash_get_extra($q_stash));
+    $ex = stash_get_extra($q_stash);
+    $values = rabx_unserialise($ex);
     $body = "Please click on the link below to confirm your email address.\n" .
         "{$values['reason_email']}\n" .
         "\n" .
