@@ -11,5 +11,5 @@ cd ../scraper
 feedfiles=`find $FEEDS_DIR -name "*.feeds" | shuf`
 
 # use xargs to run multiple processes
-echo $feedfiles | xargs -n1 -P2 ./genericscrape -a 24 -s
+echo $feedfiles | xargs -n1 -P4 ./genericscrape -a 24 -s
 

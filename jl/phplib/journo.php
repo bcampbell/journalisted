@@ -171,7 +171,7 @@ function journo_guessContactDetails( &$journo, $guessed_main_org )
     }
 
     $phone = db_getOne( "SELECT phone FROM pub_phone WHERE pub_id=?", $org );
-    $prettyname = db_getRow( "SELECT prettyname FROM organisation WHERE id=?", $org );
+    $prettyname = db_getOne( "SELECT prettyname FROM organisation WHERE id=?", $org );
 
     return array(
         'orgname' => $prettyname,

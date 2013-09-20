@@ -335,7 +335,7 @@ function Tabulate( $rows, $columns=null, $colfunc='Tabulate_defaultformat' ) {
 <tbody>
 <?php foreach( $rows as $row ) { ?>
   <tr>
-    <?php foreach( $columns as $col ) { ?><td><?php echo call_user_func( $colfunc, &$row, $col, $prevrow ); ?></td><?php } ?>
+    <?php foreach( $columns as $col ) { ?><td><?php echo call_user_func( $colfunc, $row, $col, $prevrow ); ?></td><?php } ?>
   </tr>
 <?php $prevrow=$row; } ?>
 
