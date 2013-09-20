@@ -108,6 +108,8 @@
     description - (only set if kind='')
 
  $similar_journos - list of journos who write similar articles
+ $admired - journos admired by this one
+ $admired_by - journos who admire this one
 
  $can_edit_page - TRUE if journo is logged in and can edit this page
 
@@ -339,7 +341,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
         <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
         <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">&raquo; More about this article</a><br/> <?php } ?>
     </li>
 <?php ++$n; if( $n>=$MAX_ARTICLES ) break; } ?>
 <?php if( !$articles ) { ?>
@@ -368,7 +370,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="monthly-stats">
-  <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#stats-disclaimer">*</a></sup></h3></div>
+  <div class="head"><h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#stats-disclaimer">*</a></sup></h3></div>
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder"></div>
@@ -716,15 +718,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 <div class="sidebar">
 
-<a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
-
-<div class="box subscribe-newsletter">
-  <div class="head"><h3>journa<i>listed</i> weekly</h3></div>
-  <div class="body">
-    <p>To receive the journa<i>listed</i> digest every Tuesday via email, <a href="/weeklydigest">subscribe here</a></p>
-  </div>
-  <div class="foot"></div>
-</div>
 
 <?php if( $is_editor ) { ?>
 <div class="box">
@@ -736,28 +729,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 <?php } ?>
 
-<div class="box actions you-can-also">
-  <div class="head"><h3>You can also...</h3></div>
+<div class="box box-journo-stats">
+<div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
-    <ul>
-      <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add <?= $prettyname ?>'s articles to my daily alerts</a></li>
-      <li class="print-page"><a href="#" onclick="javascript:window.print(); return false;" >Print this page</a></li>
-      <li class="forward-profile"><a href="/forward?journo=<?= $ref ?>">Forward profile to a friend</a></li>
-<?php if( !$can_edit_page ) { ?>
-      <li class="claim-profile">
-        <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
-<?php } ?>
-<?php if( $can_edit_page ) { ?>
-      <li class="import-linkedin">
-        <a href="/profile_import?ref=<?= $ref ?>">Import profile data from linkedin</a></li>
-<?php } ?>
-    </ul>
   </div>
   <div class="foot"></div>
 </div>
 
 <?php if($twitter_id) { ?>
-<div class="box twitter">
+<div class="box box-twitter">
   <div class="head"><h3>On Twitter</h3></div>
   <div class="body">
    <div id="twitter_profile"></div>
@@ -767,6 +747,47 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 <?php } ?>
+
+<div class="box box-recommended-journos">
+ <div class="head"><h3><?= $prettyname ?> recommends...</h3></div>
+ <div class="body">
+<?php if( $admired ) { ?>
+<span><?php if(count($admired)==1) { ?> 1 journalist:<?php } else { ?><?=count($admired)?> journalists:<?php } ?></span>
+  <ul>
+<?php foreach( $admired as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
+<?php } ?>
+ </div>
+ <div class="foot">
+<?php if( $can_edit_page ) { ?>
+  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
+<?php } ?>
+ </div>
+</div>
+
+
+<div class="box box-recommended-by-journos">
+ <div class="head"><h3><?= $prettyname ?> is recommended by...</h3></div>
+ <div class="body">
+<?php if( isset($admired_by) && $admired_by ) { ?>
+<span><?php if(count($admired_by)==1) { ?> 1 journalist:<?php } else { ?><?=count($admired_by)?> journalists:<?php } ?></span>
+  <ul>
+<?php foreach( $admired_by as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  <span class="not-known"><?= $prettyname ?> has not been recommended any journalists</span>
+<?php } ?>
+ </div>
+ <div class="foot">
+ </div>
+</div>
+
 
 <div class="box pingbacks">
   <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
@@ -879,42 +900,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   </div>
 </div>
 
+<a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
 
-
-
-
-<div class="box admired-journos">
- <div class="head"><h3>Journalists recommended by <?= $prettyname ?></h3></div>
- <div class="body">
-<?php if( $admired ) { ?>
-  <ul>
-<?php foreach( $admired as $a ) { ?>
-   <li><?=journo_link($a) ?></li>
-<?php } ?>
-  </ul>
-<?php } else { ?>
-  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
-<?php } ?>
- </div>
- <div class="foot">
-<?php if( $can_edit_page ) { ?>
-  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
-<?php } ?>
- </div>
-</div>
-
-
-<?php if( !$is_editor ) { ?>
-<div class="box mistake">
- <div class="head"><h3>Spotted a mistake?</h3></div>
- <div class="body">
- Have we got the wrong information about this journalist?
- <?= SafeMailTo( OPTION_TEAM_EMAIL, 'Let us know' ) ?>
- </div>
- <div class="foot"></div>
-</div>
-<?php } ?>
 
 </div> <!-- end sidebar -->
 

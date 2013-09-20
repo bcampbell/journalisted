@@ -1049,10 +1049,9 @@ ul.newList li a:focus {-moz-outline-style: none;}
 { color: #ffffff; }
 
 
-.box.admired-journos {
-  background-color: #deebf6;
-}
-.box.admired-journos .head
+/* .box-recommended-journos */
+.box-recommended-journos { background-color: #deebf6; }
+.box-recommended-journos .head
 {
   background: #005294;
   background: linear-gradient(#00589f,#005294);
@@ -1060,11 +1059,46 @@ ul.newList li a:focus {-moz-outline-style: none;}
   border-bottom: 1px solid #004073;
 }
 
-.box.admired-journos .head h2,
-.box.admired-journos .head h3,
-.box.admired-journos .head h4
+.box-recommended-journos .head h2,
+.box-recommended-journos .head h3,
+.box-recommended-journos .head h4 {
+    color: #ffffff;
+}
+
+/* .box-recommended-by-journos */
+.box-recommended-by-journos { background-color: #e7f3e3; }
+.box-recommended-by-journos .head {
+  background: #49a02b;
+  background: linear-gradient(#62bd3c,#49a02b);
+  background: -webkit-linear-gradient(#62bd3c,#49a02b);
+  border-bottom: 1px solid #408e26;
+}
+.box-recommended-by-journos .head h2,
+.box-recommended-by-journos .head h3,
+.box-recommended-by-journos .head h4 {
+    color: #ffffff;
+}
+
+/* .box-journo-stats */
+.box-journo-stats .head
+{
+  background: #7f2284;
+  background: linear-gradient(#92278f,#7f2284);
+  background: -webkit-linear-gradient(#92278f,#7f2284);
+  border-bottom: 1px solid #630460;
+}
+
+.box-journo-stats .head h2,
+.box-journo-stats .head h3,
+.box-journo-stats .head h4
 { color: #ffffff; }
 
+.box-journo-stats {
+  background-color: #f1e3f1;
+}
+
+
+/* */
 
 .box.mistake .head
 {
@@ -1081,15 +1115,33 @@ ul.newList li a:focus {-moz-outline-style: none;}
 	padding-bottom: 15px;
 }
 .box.mistake .head .h3 {
-
-	
 }
+
+
 
 /* twitter box - latest tweets + basic profile info */
-.box.twitter .head h3 {
-  background: url( "http://si0.twimg.com/images/dev/cms/intents/bird/bird_blue/bird_32_blue.png" ) right center no-repeat;
+/* .box-twitter */
+.box-twitter .head {
+  background: #0097e8;
+  background: linear-gradient(#02b3f6,#0097e8);
+  background: -webkit-linear-gradient(#02b3f6,#0097e8);
+  /*border-bottom: 1px solid #630460; */
+}
+
+.box-twitter .head h3 {
+  background: url( "/img/twitter.png" ) right center no-repeat;
   padding-right: 40px;
 }
+
+.box-twitter .head h2,
+.box-twitter .head h3,
+.box-twitter .head h4
+{ color: #ffffff; }
+
+.box-twitter {
+  background-color: #dff6fe;
+}
+
 
 #twitter_profile .screen_name {/* font-size: 125%;*/ }
 #twitter_profile img { float: left; margin-right: 4px; }

@@ -615,6 +615,14 @@ SELECT a.admired_name AS prettyname, j.ref, j.oneliner
 EOT;
     $data['admired'] = db_getAll( $sql, $journo['id'] );
 
+    /* journos who admire this one */
+    $sql = <<<EOT
+SELECT j.prettyname, j.ref, j.oneliner
+    FROM (journo_admired a LEFT JOIN journo j ON j.id=a.journo_id)
+    WHERE a.admired_id=?
+EOT;
+    $data['admired_by'] = db_getAll( $sql, $journo['id'] );
+
     $data['articles'] = journo_collectArticles( $journo );
     $data['more_articles'] = true;
 
@@ -657,18 +665,10 @@ EOT;
 
 function journo_collectScoring(&$journo) {
     $out = array();
-
-    $out['num_admirers'] = (int)db_getOne("SELECT count(*) FROM journo_admired WHERE admired_id=?", $journo['id']);
-    $out['num_alerts'] = (int)db_getOne("SELECT count(*) FROM alert WHERE journo_id=?", $journo['id']);
+    $out = db_getRow("SELECT num_alerts, num_admirers, num_views_week, score FROM journo_score WHERE journo_id=?", $journo['id']);
+//    $out['num_admirers'] = (int)db_getOne("SELECT count(*) FROM journo_admired WHERE admired_id=?", $journo['id']);
+//    $out['num_alerts'] = (int)db_getOne("SELECT count(*) FROM alert WHERE journo_id=?", $journo['id']);
     return $out;
-
-
-    // TODO: stash scoring data in separate journo_score table, with daily update
-
-    // TODO: need to maintain max alerts and max admirers for weighting.
-    // select max(cnt) from (select admired_id,count(*) as cnt from journo_admired where admired_id is not null group by admired_id order by count(*)) as foo;
-    //
-    //select max(cnt) from (select count(*) as cnt from alert group by journo_id) as foo;
 }
 
 
