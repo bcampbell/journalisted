@@ -150,7 +150,7 @@ $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
 
 $share_url = sprintf("http://%s/%s", OPTION_WEB_DOMAIN, $ref);
-$share_title = $prettyname;
+$share_title = sprintf("%s on Journalisted", $prettyname);
 
 
 /* build up a list of _current_ employers */
@@ -231,13 +231,14 @@ $links = array_filter( $links, 'is_not_pingback_link' );
   <div class="head">
     <h2><?= $prettyname; ?></h2>
     <div class="share-buttons">
-        <a class="share-button share-button-facebook" title="share on Facebook" href="#">facebook</a>
-        <a class="share-button share-button-twitter" title="share on Twitter" href="#">twitter</a>
-        <a class="share-button share-button-googleplus" title="share on Google+" href="#">googleplus</a>
-        <a class="share-button share-button-stumbleupon" title="share on Stumbleupon" href="http://www.stumbleupon.com/submit?url=<?= urlencode($share_url) ?>&title=<?= urlencode($share_title) ?>">stumbleupon</a>
-        <a class="share-button share-button-email" title="share via email" href="/forward?journo=<?= urlencode($ref); ?>">email</a>
-        <a class="share-button share-button-deadtree" title="print this page" href="#" onclick="javascript:window.print(); return false;" >print</a>
-        <a class="share-button share-button-rss" title="RSS feed" href="#">rss</a>
+      <a class="share-button share-button-facebook" title="Share via Facebook" href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($share_url) ?>">Facebook</a>
+      <a class="share-button share-button-twitter" title="Share via Twitter" href="http://twitter.com/share?url=<?= urlencode($share_url) ?>&text=<?= urlencode($share_title) ?>">Twitter</a>
+      <a class="share-button share-button-googleplus" title="Share via Google+" href="https://plus.google.com/share?url=<?= urlencode($share_url) ?>">Google+</a>
+<!--      <a class="share-button share-button-reddit" title="Share via Reddit" href="http://reddit.com/submit?url=<?= urlencode($share_url) ?>&title=<?= $share_title ?>">Reddit</a> -->
+      <a class="share-button share-button-stumbleupon" title="Share via Stumbleupon" href="http://www.stumbleupon.com/submit?url=<?= urlencode($share_url) ?>&title=<?= urlencode($share_title) ?>">Stumbleupon</a>
+      <a class="share-button share-button-email" title="Share via email" href="/forward?journo=<?= urlencode($ref); ?>">Email</a>
+      <a class="share-button share-button-deadtree" title="Print this page" href="#" onclick="javascript:window.print(); return false;" >Print</a>
+      <a class="share-button share-button-rss" title="RSS feed for <?= $prettyname ?>" href="<?= $rssurl ?>">RSS</a>
     </div>
   </div>
   <div class="body">

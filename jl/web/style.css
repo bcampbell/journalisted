@@ -1184,6 +1184,12 @@ ul.newList li a:focus {-moz-outline-style: none;}
   margin-top: 8px;
 }
 
+
+/****
+ * share buttons
+ * (replace text links with image sprite)
+ */
+
 .share-button {
 
     text-indent: -9999px;
@@ -1196,6 +1202,7 @@ ul.newList li a:focus {-moz-outline-style: none;}
 .share-button-facebook { background-position: -12px -10px; }
 .share-button-twitter { background-position: -37px -10px; }
 .share-button-googleplus { background-position: -60px -10px; }
+.share-button-reddit {} /* TODO */
 .share-button-email { background-position: -85px -10px; }
 .share-button-stumbleupon { background-position: -108px -10px; }
 .share-button-deadtree { background-position: -132px -10px; }
@@ -1212,6 +1219,9 @@ ul.newList li a:focus {-moz-outline-style: none;}
     filter: brightness(-20%);
     -webkit-filter: brightness(-20%);
 }
+
+
+/****/
 
 .photo img {
   box-shadow: 3px 3px 5px #888888;
