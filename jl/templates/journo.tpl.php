@@ -149,6 +149,10 @@
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
 
 
+$share_url = sprintf("http://%s/%s", OPTION_WEB_DOMAIN, $ref);
+$share_title = $prettyname;
+
+
 /* build up a list of _current_ employers */
 $current_employment = array();
 foreach( $employers as $emp ) {
@@ -224,7 +228,18 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="overview">
-  <div class="head"><h2><?= $prettyname; ?><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" class="rss"></a></h2></div>
+  <div class="head">
+    <h2><?= $prettyname; ?></h2>
+    <div class="share-buttons">
+        <a class="share-button share-button-facebook" title="share on Facebook" href="#">facebook</a>
+        <a class="share-button share-button-twitter" title="share on Twitter" href="#">twitter</a>
+        <a class="share-button share-button-googleplus" title="share on Google+" href="#">googleplus</a>
+        <a class="share-button share-button-stumbleupon" title="share on Stumbleupon" href="http://www.stumbleupon.com/submit?url=<?= urlencode($share_url) ?>&title=<?= urlencode($share_title) ?>">stumbleupon</a>
+        <a class="share-button share-button-email" title="share via email" href="/forward?journo=<?= urlencode($ref); ?>">email</a>
+        <a class="share-button share-button-deadtree" title="print this page" href="#" onclick="javascript:window.print(); return false;" >print</a>
+        <a class="share-button share-button-rss" title="RSS feed" href="#">rss</a>
+    </div>
+  </div>
   <div class="body">
 
     <div class="photo">

@@ -1165,15 +1165,52 @@ ul.newList li a:focus {-moz-outline-style: none;}
 	padding-bottom: 10px;
 	margin-bottom: 10px;
 }
-.rss {
-	float: right;
+
+.overview .head {
+    position: relative;
 }
+
+.overview .head .share-buttons {
+    position: absolute;
+    right: 0;
+    bottom: 8px;
+}
+
 .overview .photo {
   float: left;
 }
 
 .overview .photo a.edit {
   margin-top: 8px;
+}
+
+.share-button {
+
+    text-indent: -9999px;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-image: url("img/social.png");
+}
+
+.share-button-facebook { background-position: -12px -10px; }
+.share-button-twitter { background-position: -37px -10px; }
+.share-button-googleplus { background-position: -60px -10px; }
+.share-button-email { background-position: -85px -10px; }
+.share-button-stumbleupon { background-position: -108px -10px; }
+.share-button-deadtree { background-position: -132px -10px; }
+.share-button-rss { background-position: -156px -10px; }
+
+.share-button:hover {
+    filter: brightness(20%);
+    -webkit-filter: brightness(20%);
+}
+
+.share-button:active {
+    position: relative;
+    top: 1px;
+    filter: brightness(-20%);
+    -webkit-filter: brightness(-20%);
 }
 
 .photo img {
