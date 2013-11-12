@@ -244,7 +244,7 @@ function csv_defaultformat( &$row, $col, $prevrow=null ) {
     }
 }
 
-function Tabulate_defaultformat( &$row, $col, $prevrow=null ) {
+function Tabulate_defaultformat( $row, $col, $prevrow=null ) {
     $cell = $row[$col];
     if( $cell instanceof DateTime ) {
         return $cell->format( 'Y-m-d' );
