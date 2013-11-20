@@ -148,7 +148,7 @@ $data = unserialize($dummy_data[$n]);
 $data['can_edit_page'] = TRUE;
     $title = $data['prettyname'];
     $pageparams = array(
-     'rss'=>array( 'Recent Articles'=>journoRSS( $journo ) ),
+     'rss'=>array( 'Recent Articles'=>journoRSS( $data ) ),
       'head_extra_fn'=>'extra_head',
       'pingbacks'=>TRUE,
     );
