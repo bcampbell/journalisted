@@ -386,7 +386,8 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="monthly-stats">
-  <div class="head"><h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#stats-disclaimer">*</a></sup></h3></div>
+  <div class="head"><h3><?= $prettyname ?>'s published articles &ndash; last 12 months<sup>*</sup></h3></div>
+  <div class="stats-summary"><em><?= $num_articles ?></em> articles since <em><?= $first_pubdate ?></em> with an average of <em><?php printf( "%.0f", $wc_avg); ?></em> words</div>
   <div class="body">
 <?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder"></div>
@@ -399,10 +400,10 @@ $links = array_filter( $links, 'is_not_pingback_link' );
       <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
-    <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
-
+    
     <div id="stats-disclaimer">
-    <sup>*</sup><em>Please note that these statistics are based only on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a></em>.
+        <p><a href="/faq/what-are-column-inches">What are column inches?</a> <br />
+        <sup>*</sup>Please note that these statistics are based only on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.</p>
     </div>
 <?php
 // some random colours...
@@ -748,6 +749,12 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <div class="box box-journo-stats">
 <div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
+    <ul>
+      <li><strong>20</strong> <span>Profile views this week</span></li>
+      <li><strong>396</strong> <span>Followers</span></li>
+      <li><strong>15</strong> <span>Recommendations (by other journalists)</span></li>
+      <li><strong>1.5k</strong> <span>Twitter followers</span></li>
+    </ul>
   </div>
   <div class="foot"></div>
 </div>

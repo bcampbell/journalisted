@@ -13,22 +13,22 @@
     gatso_report_html();
     $contactemail = OPTION_TEAM_EMAIL;
 ?>
-  <ul>
-<li><a href="/about">About</a></li>
-<li><a href="/development">Development</a></li>
-<li><?= SafeMailto( $contactemail, 'Contact' );?></li>
-<li><a href="/faq">FAQs</a></li>
-<li><a href="/api">API</a></li>
-<li><a href="/faq/what-is-your-privacy-policy">Privacy</a></li>
+<ul>
+	<li><a href="/about">About</a></li>
+	<li><a href="/development">Development</a></li>
+	<li><?= SafeMailto( $contactemail, 'Contact' );?></li>
+	<li><a href="/faq">FAQs</a></li>
+	<li><a href="/api">API</a></li>
+	<li><a href="/faq/what-is-your-privacy-policy">Privacy</a></li>
 </ul>
 </div>
-&copy; 2007&ndash;<script type="text/javascript">
+&copy; <a href="http://www.mediastandardstrust.org">Media Standards Trust</a> 2007&ndash;<script type="text/javascript">
 <!--
 var now = (new Date().getFullYear()).toString();
 var theYear = now.substring(now.length, 2);
 document.writeln(theYear,"");
 // -->
-</script> <a href="http://www.mediastandardstrust.org">Media Standards Trust</a><br />
+</script> <br />
 
 
   </div>
