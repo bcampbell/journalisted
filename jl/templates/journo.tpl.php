@@ -387,9 +387,9 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 <div class="monthly-stats">
   <div class="head"><h3><?= $prettyname ?>'s published articles &ndash; last 12 months<sup>*</sup></h3></div>
+<?php if( !$quick_n_nasty ) { ?>
   <div class="stats-summary"><em><?= $num_articles ?></em> articles since <em><?= $first_pubdate ?></em> with an average of <em><?php printf( "%.0f", $wc_avg); ?></em> words</div>
   <div class="body">
-<?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder"></div>
 
     <ul>
@@ -452,11 +452,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     });
 </script>
 
-
-<?php } else { ?>
-    <p>(sorry, information not currently available)</p>
-<?php } ?>
   </div>
+<?php } else { ?>
+  <div class="stats-summary">
+    (sorry, information not currently available)
+  </div>
+  <div class="body">
+
+  </div>
+<?php } ?>
 </div>
 
 
