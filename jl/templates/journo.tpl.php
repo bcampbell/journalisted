@@ -760,7 +760,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
       <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
 <?php */ ?>
       <li><strong>1234</strong> <span>Profile views this week</span></li>
-      <li><strong><?= $scoring['num_alerts']; ?></strong> <span>Followers</span></li>
+      <li><strong><?= $num_alerts; ?></strong> <span>Followers</span></li>
       <li><strong><?= count($admired_by); ?></strong> <span>Recommendations (by other journalists)</span></li>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
     </ul>

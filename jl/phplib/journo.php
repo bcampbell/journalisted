@@ -622,6 +622,7 @@ SELECT j.prettyname, j.ref, j.oneliner
     WHERE a.admired_id=?
 EOT;
     $data['admired_by'] = db_getAll( $sql, $journo['id'] );
+    $data['num_alerts'] = (int)db_getOne("SELECT count(*) FROM alert WHERE journo_id=?", $journo['id']);
 
     $data['articles'] = journo_collectArticles( $journo );
     $data['more_articles'] = true;
@@ -654,22 +655,10 @@ EOT;
     $data['similar_journos'] = db_getAll( $sql, $journo['id'] );
 
 
-    /* collect journo score data */
-
-    $data['scoring'] = journo_collectScoring($journo);
-
     return $data;
 }
 
 
-
-function journo_collectScoring(&$journo) {
-    $out = array();
-    $out = db_getRow("SELECT num_alerts, num_admirers, num_views_week, score FROM journo_score WHERE journo_id=?", $journo['id']);
-//    $out['num_admirers'] = (int)db_getOne("SELECT count(*) FROM journo_admired WHERE admired_id=?", $journo['id']);
-//    $out['num_alerts'] = (int)db_getOne("SELECT count(*) FROM alert WHERE journo_id=?", $journo['id']);
-    return $out;
-}
 
 
 
