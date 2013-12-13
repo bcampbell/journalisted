@@ -1,6 +1,7 @@
 #!/bin/bash
 JL=/srv/vhost/journalisted.com/journalisted/jl
-
+ionice -c3 -p $$
+renice -n 10 -p $$
 cd $JL/bin
 echo "***** START indexer"
 time nice ./indexer -n 10000
