@@ -158,6 +158,9 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
 if( !array_key_exists('num_alerts',$data ) ) {
     $data['num_alerts'] = 0;
 }
+if( !array_key_exists('admired_by',$data ) ) {
+    $data['admired_by'] = array();
+}
 
 
 // some stuff we don't cache:
