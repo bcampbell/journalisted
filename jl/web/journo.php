@@ -153,11 +153,12 @@ if( strtolower( get_http_var('full') == 'yes' ) ) {
     }
 }
 
+// HACK:
 // fields that we've recently added, which might not be in cached versions
-if( !array_key_exists('fake',$data ) ) {
-    $data['fake'] = False;
-    $data['scoring'] = array('num_admirers'=>0, 'num_alerts'=>0);
+if( !array_key_exists('num_alerts',$data ) ) {
+    $data['num_alerts'] = 0;
 }
+
 
 // some stuff we don't cache:
 $data['can_edit_page'] = $can_edit_page;

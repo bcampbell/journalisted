@@ -142,9 +142,7 @@
 
 
 
- $scoring - array
-               num_alerts  - number of email alerts set on this journo
-               num_views_week - number of times this journo has been viewed this week
+ $num_alerts  - number of email alerts set on this journo
 */
 
 
