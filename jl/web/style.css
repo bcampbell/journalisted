@@ -1387,7 +1387,7 @@ a.donate:hover {
     text-decoration: none;
 }
 a.donate:focus {
-    background: url("/img/bigredbutton.png") no-repeat 0px -84px;
+    background: url("/img/bigredbutton.png") no-repeat 0px -104px;
     text-decoration: none;
 }
 /* position edit buttons in sidebar boxes */
