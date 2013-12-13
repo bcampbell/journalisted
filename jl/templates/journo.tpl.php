@@ -142,7 +142,9 @@
 
 
 
- $scoring - TODO!
+ $scoring - array
+               num_alerts  - number of email alerts set on this journo
+               num_views_week - number of times this journo has been viewed this week
 */
 
 
@@ -754,9 +756,12 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
     <ul>
-      <li><strong>20</strong> <span>Profile views this week</span></li>
-      <li><strong>396</strong> <span>Followers</span></li>
-      <li><strong>15</strong> <span>Recommendations (by other journalists)</span></li>
+<?php /* ?>
+      <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
+<?php */ ?>
+      <li><strong>1234</strong> <span>Profile views this week</span></li>
+      <li><strong><?= $scoring['num_alerts']; ?></strong> <span>Followers</span></li>
+      <li><strong><?= count($admired_by); ?></strong> <span>Recommendations (by other journalists)</span></li>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
     </ul>
   </div>
