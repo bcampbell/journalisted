@@ -142,7 +142,7 @@
 
 
 
- $scoring - TODO!
+ $num_alerts  - number of email alerts set on this journo
 */
 
 
@@ -387,9 +387,9 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 <div class="monthly-stats">
   <div class="head"><h3><?= $prettyname ?>'s published articles &ndash; last 12 months<sup>*</sup></h3></div>
+<?php if( !$quick_n_nasty ) { ?>
   <div class="stats-summary"><em><?= $num_articles ?></em> articles since <em><?= $first_pubdate ?></em> with an average of <em><?php printf( "%.0f", $wc_avg); ?></em> words</div>
   <div class="body">
-<?php if( !$quick_n_nasty ) { ?>
     <div id="monthly-stats-placeholder"></div>
 
     <ul>
@@ -452,11 +452,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     });
 </script>
 
-
-<?php } else { ?>
-    <p>(sorry, information not currently available)</p>
-<?php } ?>
   </div>
+<?php } else { ?>
+  <div class="stats-summary">
+    (sorry, information not currently available)
+  </div>
+  <div class="body">
+
+  </div>
+<?php } ?>
 </div>
 
 
@@ -750,9 +754,12 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
     <ul>
-      <li><strong>20</strong> <span>Profile views this week</span></li>
-      <li><strong>396</strong> <span>Followers</span></li>
-      <li><strong>15</strong> <span>Recommendations (by other journalists)</span></li>
+<?php /* ?>
+      <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
+<?php */ ?>
+      <li><strong>1234</strong> <span>Profile views this week</span></li>
+      <li><strong><?= $num_alerts; ?></strong> <span>Followers</span></li>
+      <li><strong><?= count($admired_by); ?></strong> <span>Recommendations (by other journalists)</span></li>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
     </ul>
   </div>
