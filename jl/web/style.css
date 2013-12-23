@@ -631,8 +631,11 @@ ul.newList li a:focus {
     border-radius: 5px;
     background: white;
     margin: 0;
-    padding: 0 12px 10px 12px;
+    padding: 0 12px 20px 12px;
     width: 600px;
+}
+.main .tab-content ul {
+    margin: 8px 0 0 0;
 }
 /* sidebar */
  .sidebar {
@@ -857,6 +860,9 @@ ul.art-list li {
     padding: 8px 0 16px 0;
     margin: 0;
 }
+ul.art-list li span {
+    padding: 8px 0 16px 0;
+}
 abbr.published {
     text-decoration: none;
     border: none;
@@ -901,15 +907,12 @@ a.missing {
     margin-top: 6px;
 }
 .not-public {
-    margin: 0px 0px 8px 0px;
-    padding: 8px;
+    margin: 0px 0px 15px 0px;
+    padding: 10px 20px;
     /*border-top: 4px solid #d77a00;
   border-bottom: 4px solid #d77a00;*/
-    border: 1px solid #d77a00;
-    background-color: #f8c64d;
+    background-color: #f4e217;
     color: #1a1a1a;
-    box-shadow: 0 0 5px #888888;
-    border-radius: 5px;
 }
 /* profile warnings to display as a banner across the top of the page... */
  .profile-warning p {
@@ -983,14 +986,14 @@ a.missing {
     margin: 0px;
     width: 160px;
     /* = 189-25-4 */
-    height: 21px;
+    height: 20px;
     /* = 25-7-0 */
     background: url("/img/searchbox_small.png") no-repeat;
     overflow: hidden;
     border: none;
     float: left;
     font-size: 11px;
-    color: #747474;
+    color: #666!important;
 }
 .journo-profile .search form input#findarticles {
     padding: 5px 4px 0px 25px;
@@ -1135,7 +1138,7 @@ a.missing {
   color: black;
 }
 .box-journo-stats li span { 
-  width: 230px;
+  width: 224px;
   float: right;
   text-align: left;
 }
@@ -1407,7 +1410,7 @@ a.donate:focus {
     height: 300px;
 }
 #stats-disclaimer {
-    padding: 4px;
+    padding: 4px 0 0 0;
     font-size:  11px;
     line-height: 110%;
 }

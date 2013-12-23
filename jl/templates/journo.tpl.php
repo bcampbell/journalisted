@@ -357,7 +357,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
         <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
         <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">&raquo; More about this article</a><br/> <?php } ?>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>"><span>&raquo;</span> More about this article</a><br/> <?php } ?>
     </li>
 <?php ++$n; if( $n>=$MAX_ARTICLES ) break; } ?>
 <?php if( !$articles ) { ?>
@@ -758,8 +758,8 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
       <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
 <?php */ ?>
       <li><strong>1234</strong> <span>Profile views this week</span></li>
-      <li><strong><?= $num_alerts; ?></strong> <span>Followers</span></li>
-      <li><strong><?= count($admired_by); ?></strong> <span>Recommendations (by other journalists)</span></li>
+      <li><strong><?= $num_alerts; ?>25 </strong> <span>Followers</span></li>
+      <li><strong><?= count($admired_by); ?></strong> <span>Recommendations from journalists</span></li>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
     </ul>
   </div>
