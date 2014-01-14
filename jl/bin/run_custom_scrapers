@@ -1,14 +1,11 @@
 #!/bin/bash
 JL=/srv/vhost/journalisted.com/journalisted/jl
-NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py mirror.py sun.py telegraph.py times.py scotsman.py skynews.py'
+NATIONAL_UK='bbcnews.py dailymail.py express.py ft.py guardian.py herald.py independent.py mirror.py sun.py telegraph.py times.py scotsman.py skynews.py'
 
 ionice -c3 -p $$
 renice -n 10 -p $$
 
 cd $JL/scraper
-
-# special case for the indy - use generic scraper
-./genericscrape -s www.independent.co.uk.feeds
 
 for p in $NATIONAL_UK
 do
