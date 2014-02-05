@@ -236,7 +236,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
       <a class="share-button share-button-googleplus" title="Share via Google+" href="https://plus.google.com/share?url=<?= urlencode($share_url) ?>">Google+</a>
 <!--      <a class="share-button share-button-reddit" title="Share via Reddit" href="http://reddit.com/submit?url=<?= urlencode($share_url) ?>&title=<?= $share_title ?>">Reddit</a> -->
       <a class="share-button share-button-stumbleupon" title="Share via Stumbleupon" href="http://www.stumbleupon.com/submit?url=<?= urlencode($share_url) ?>&title=<?= urlencode($share_title) ?>">Stumbleupon</a>
-      <a class="share-button share-button-email" title="Share via email" href="/forward?journo=<?= urlencode($ref); ?>">Email</a>
+<!--      <a class="share-button share-button-email" title="Share via email" href="/forward?journo=<?= urlencode($ref); ?>">Email</a> -->
       <a class="share-button share-button-deadtree" title="Print this page" href="#" onclick="javascript:window.print(); return false;" >Print</a>
       <a class="share-button share-button-rss" title="RSS feed for <?= $prettyname ?>" href="<?= $rssurl ?>">RSS</a>
     </div>
@@ -757,7 +757,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php /* ?>
       <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
 <?php */ ?>
-      <li><strong><?= $num_alerts; ?></strong> <span>Followers</span></li>
+      <li><strong><?= $num_alerts; ?></strong> <span>Followers (via email alert)</span></li>
       <li><strong><?= count($admired_by); ?></strong> <span>Recommendations from journalists</span></li>
 <?php /* ?>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
