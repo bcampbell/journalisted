@@ -757,16 +757,17 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <?php /* ?>
       <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
 <?php */ ?>
-      <li><strong>1234</strong> <span>Profile views this week</span></li>
-      <li><strong><?= $num_alerts; ?>25 </strong> <span>Followers</span></li>
+      <li><strong><?= $num_alerts; ?></strong> <span>Followers</span></li>
       <li><strong><?= count($admired_by); ?></strong> <span>Recommendations from journalists</span></li>
+<?php /* ?>
       <li><strong>1.5k</strong> <span>Twitter followers</span></li>
+<?php */ ?>
     </ul>
   </div>
   <div class="foot"></div>
 </div>
 
-<?php if($twitter_id) { ?>
+<?php if($twitter_id) { /* ?>
 <div class="box box-twitter">
   <div class="head"><h3>On Twitter</h3></div>
   <div class="body">
@@ -776,7 +777,7 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot">
   </div>
 </div>
-<?php } ?>
+<?php */ } ?>
 
 <div class="box box-recommended-journos">
  <div class="head"><h3><?= $prettyname ?> recommends...</h3></div>
