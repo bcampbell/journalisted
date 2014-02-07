@@ -143,6 +143,7 @@
 
 
  $num_alerts  - number of email alerts set on this journo
+ $num_views_week  - number of pageviews this journo has had this week
 */
 
 
@@ -754,9 +755,9 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 <div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
     <ul>
-<?php /* ?>
-      <li><strong><?= $scoring['num_views_week']; ?></strong> <span>Profile views this week</span></li>
-<?php */ ?>
+<?php if(array_key_exists('num_views_week', $GLOBALS)) { ?>
+    <li><strong><?= $num_views_week; ?></strong> <span>Profile views this week</span></li>
+<?php } ?>
       <li><strong><?= $num_alerts; ?></strong> <span>Followers (via email alert)</span></li>
       <li><strong><?= count($admired_by); ?></strong> <span>Recommendations from journalists</span></li>
 <?php /* ?>

@@ -1,0 +1,192 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+usage = """Usage: %prog [options] logfiles..."""
+
+desc = """tool to analyse logfiles for the last week and output a list of journos,
+sorted by number of pageviews.
+Our pageview rule: only one hit per journo per IP address per day is counted
+"""
+
+import re
+import operator
+import sys
+from datetime import datetime,date,timedelta
+import os
+import fileinput
+from optparse import OptionParser
+
+
+
+here = os.path.dirname(__file__)
+import site
+site.addsitedir(os.path.join(here,"../pylib"))
+from JL import DB,ukmedia
+
+import mysociety.config
+mysociety.config.set_file(os.path.join(here,"../conf/general"))
+
+
+default_log_path = "/srv/vhost/journalisted.com/logs"
+
+
+
+# things that look like journos but aren't.
+backlist_journos = ('apple-touch-icon-precomposed', 'apple-touch-icon')
+
+
+
+
+def main():
+    parser = OptionParser(description=desc,usage=usage)
+    parser.add_option("-d", "--dryrun", action="store_true", dest="dryrun")
+
+    parser.add_option("-l", "--logpath",
+        dest="log_path",
+        metavar="LOG_PATH",
+        help="location of logfiles",
+        default=default_log_path)
+
+    (options, args) = parser.parse_args()
+
+    logfiles = args
+    if len(logfiles)==0:
+        print('ERROR: no logfiles found.', file=sys.stderr)
+        sys.exit(1)
+
+
+
+
+    # default time range is last 7 days
+    end = datetime.utcnow()
+    start = end - timedelta(days=7)
+
+    src = fileinput.input(logfiles,openhook=fileinput.hook_compressed)
+    foo = parse_server_log(src)
+    foo = only_journos(foo)
+    foo = parse_time(foo)
+    foo = only_between(foo,start,end)
+
+
+    results = count_journos(foo)
+
+    if options.dryrun:
+        for (ref,cnt) in results:
+            print(ref,cnt)
+    else:
+        load_into_db(results)
+
+#    hits = analyse(src)
+#    for ref,cnt in hits:
+#        print("%s,%s" % (cnt,ref) )
+
+
+
+
+def count_journos(inp):
+    """ takes (host,time,ref) tuples, returns a sorted list of (journo,pageview) tuples """
+    accesses = set()
+    
+    for (host,t,ref) in inp:
+        # group by ip address, day and journo,
+        # so only count one hit per day per journo from each ip address
+        key = (host,t.date(), ref)
+        accesses.add(key)
+
+    # pass two: count how many accesses to each journo
+    counts = {}
+    for (host,day,req) in accesses:
+        counts[req] = counts.get(req,0) + 1
+
+    # pass three: sort the results (into a list of (journo_ref,hitcount) tuples)
+    # sorting not really necessary, but hey :-)
+    hits = sorted(counts.iteritems(), key=operator.itemgetter(1), reverse=True)
+
+    return hits
+
+
+def parse_server_log(raw_lines):
+    """ convert raw log file lines into (host,time,req) tuples """
+
+    # from http://www.seehuhn.de/blog/52
+    parts = [
+        r'(?P<host>\S+)',                   # host %h
+        r'\S+',                             # indent %l (unused)
+        r'(?P<user>\S+)',                   # user %u
+        r'\[(?P<time>.+)\]',                # time %t
+        r'"(?P<request>.+)"',               # request "%r"
+        r'(?P<status>[0-9]+)',              # status %>s
+        r'(?P<size>\S+)',                   # size %b (careful, can be '-')
+        r'"(?P<referer>.*)"',               # referer "%{Referer}i"
+        r'"(?P<agent>.*)"',                 # user agent "%{User-agent}i"
+    ]
+    # eg
+    # 66.249.75.112 - - [27/May/2013:00:00:00 +0100] "GET /qin-xie/rss HTTP/1.1" 200 3560 "-" "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_1 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8B117 Safari/6531.22.7 (compatible; Googlebot-Mobile/2.1; +http://www.google.com/bot.html)"
+
+    log_cracker = re.compile(r'\s+'.join(parts)+r'\s*\Z')
+
+    for line in raw_lines:
+        m = log_cracker.match(line)
+        assert m is not None
+        host = m.group('host')
+        t = m.group('time')
+        req = m.group('request')
+        yield (host,t,req)
+
+
+def only_journos(inp):
+    # extract journo ref from req, filtering out non-journo requests
+
+    # pattern to extract a journo ref from a GET request
+    journo_pat = re.compile("GET /([a-z]+[-][-a-z0-9]+).*",re.I)
+
+    for (host,t,req) in inp:
+        m = journo_pat.match(req)
+        if m is None:
+            continue
+        journo_ref = m.group(1)
+
+        if journo_ref in backlist_journos:
+            continue
+        yield (host,t,journo_ref)
+
+
+def parse_time(inp):
+    # my strptime doesn't support %z, so just strip the timezone
+    strip_tz = re.compile(r" [+-]([0-9])+$")
+    for (host,t,req) in inp:
+        t = strip_tz.sub("",t)
+        dt=datetime.strptime(t,"%d/%b/%Y:%H:%M:%S")
+        yield (host,dt,req)
+
+def only_between(inp,start,end):
+    for (host,t,req) in inp:
+        if t>=start and t<end:
+            yield (host,t,req)
+
+
+def load_into_db(results):
+    """ load (ref,count) pairs into the db """
+
+    load_cnt = 0
+    print("Loading into journo_pageviews (%d journos)" % (len(results),))
+    conn = DB.Connect()
+    c=conn.cursor()
+    c.execute("TRUNCATE journo_pageviews")
+    for (ref,cnt) in results:
+        c.execute("""SELECT id FROM journo WHERE ref=%s""", ref)
+        row = c.fetchone()
+        if row is None:
+            # journo not in db
+            continue
+        journo_id = int(row[0])
+        c.execute("""INSERT INTO journo_pageviews (journo_id,num_views_week) VALUES (%s,%s)""", (journo_id,cnt))
+        load_cnt += 1
+
+    c.close()
+    conn.commit()
+    print("done. loaded %d of %d" % (load_cnt,len(results),))
+
+if __name__ == "__main__":
+    main()
+
