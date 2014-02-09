@@ -1174,46 +1174,16 @@ a.missing {
     color: #ffffff;
 }
 .box-twitter {
+    /*
     background-color: #dff6fe;
+    */
 }
-#twitter_profile .screen_name {
-    /* font-size: 125%;*/
+
+.box-twitter .body {
+    /* let twitter widget have all the space */
+    /*padding: 0; */
 }
-#twitter_profile img {
-    float: left;
-    margin-right: 4px;
-}
-#twitter_profile span {
-    display:block;
-    float:left;
-    margin-right: 8px;
-}
-#twitter_profile span .count {
-    display: block;
-}
-#twitter_profile span .stat {
-    clear: both;
-    display: block;
-}
-#tweets {
-    clear: both;
-}
-.tweet_list {
-    list-style: none;
-    padding: 0px;
-    margin: 0px;
-}
-.tweet_list li {
-    border-top: 1px solid #cccccc;
-    padding-top: 4px;
-    margin-top: 8px;
-}
-.tweet_text {
-}
-.tweet_time {
-    font-style: italic;
-    font-size: 80%;
-}
+
 /* overview section on journo page */
  .overview {
     padding: 0px 8px 0 8px;

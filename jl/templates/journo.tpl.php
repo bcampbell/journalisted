@@ -768,17 +768,19 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
   <div class="foot"></div>
 </div>
 
-<?php if($twitter_id) { /* ?>
+<?php if($twitter_id) { ?>
+
 <div class="box box-twitter">
-  <div class="head"><h3>On Twitter</h3></div>
+<div class="head"><h3>On Twitter</h3></div>
   <div class="body">
-   <div id="twitter_profile"></div>
-   <div id="tweets"></div>
-     </div>
-  <div class="foot">
+  <a class="twitter-timeline" data-screen-name="<?=$twitter_id;?>" data-chrome="noborders nofooter" data-dnt="true" href="https://twitter.com/<?=$twitter_id;?>"  data-widget-id="432616151625891840">Tweets by @<?=$twitter_id;?></a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
   </div>
+  <div class="foot"></div>
 </div>
-<?php */ } ?>
+<?php } ?>
+
 
 <div class="box box-recommended-journos">
  <div class="head"><h3><?= $prettyname ?> recommends...</h3></div>
