@@ -108,6 +108,8 @@
     description - (only set if kind='')
 
  $similar_journos - list of journos who write similar articles
+ $admired - journos admired by this one
+ $admired_by - journos who admire this one
 
  $can_edit_page - TRUE if journo is logged in and can edit this page
 
@@ -140,11 +142,16 @@
 
 
 
- $scoring - TODO!
+ $num_alerts  - number of email alerts set on this journo
+ $num_views_week  - number of pageviews this journo has had this week
 */
 
 
 $MAX_ARTICLES = 5;  /* how many articles to show on journo page by default */
+
+
+$share_url = sprintf("http://%s/%s", OPTION_WEB_DOMAIN, $ref);
+$share_title = sprintf("%s on Journalisted", $prettyname);
 
 
 /* build up a list of _current_ employers */
@@ -222,7 +229,19 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="overview">
-  <div class="head"><h2><?= $prettyname; ?><a href="<?= $rssurl; ?>"><img src="/images/rss.gif" alt="RSS feed" border="0" class="rss"></a></h2></div>
+  <div class="head">
+    <h2><?= $prettyname; ?></h2>
+    <div class="share-buttons">
+      <a class="share-button share-button-facebook" title="Share via Facebook" href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode($share_url) ?>">Facebook</a>
+      <a class="share-button share-button-twitter" title="Share via Twitter" href="http://twitter.com/share?url=<?= urlencode($share_url) ?>&text=<?= urlencode($share_title) ?>">Twitter</a>
+      <a class="share-button share-button-googleplus" title="Share via Google+" href="https://plus.google.com/share?url=<?= urlencode($share_url) ?>">Google+</a>
+<!--      <a class="share-button share-button-reddit" title="Share via Reddit" href="http://reddit.com/submit?url=<?= urlencode($share_url) ?>&title=<?= $share_title ?>">Reddit</a> -->
+      <a class="share-button share-button-stumbleupon" title="Share via Stumbleupon" href="http://www.stumbleupon.com/submit?url=<?= urlencode($share_url) ?>&title=<?= urlencode($share_title) ?>">Stumbleupon</a>
+<!--      <a class="share-button share-button-email" title="Share via email" href="/forward?journo=<?= urlencode($ref); ?>">Email</a> -->
+      <a class="share-button share-button-deadtree" title="Print this page" href="#" onclick="javascript:window.print(); return false;" >Print</a>
+      <a class="share-button share-button-rss" title="RSS feed for <?= $prettyname ?>" href="<?= $rssurl ?>">RSS</a>
+    </div>
+  </div>
   <div class="body">
 
     <div class="photo">
@@ -339,7 +358,7 @@ $links = array_filter( $links, 'is_not_pingback_link' );
         <span class="publication"><?= $art['srcorgname']; ?>,</span>
         <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
         <?php if( $art['buzz'] ) { ?> (<?= $art['buzz']; ?>)<?php } ?><br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>"><span>&raquo;</span> More about this article</a><br/> <?php } ?>
     </li>
 <?php ++$n; if( $n>=$MAX_ARTICLES ) break; } ?>
 <?php if( !$articles ) { ?>
@@ -368,9 +387,10 @@ $links = array_filter( $links, 'is_not_pingback_link' );
 
 
 <div class="monthly-stats">
-  <div class="head"<h3><?= $prettyname ?>'s published articles - last 12 months<sup><a href="#stats-disclaimer">*</a></sup></h3></div>
-  <div class="body">
+  <div class="head"><h3><?= $prettyname ?>'s published articles &ndash; last 12 months<sup>*</sup></h3></div>
 <?php if( !$quick_n_nasty ) { ?>
+  <div class="stats-summary"><em><?= $num_articles ?></em> articles since <em><?= $first_pubdate ?></em> with an average of <em><?php printf( "%.0f", $wc_avg); ?></em> words</div>
+  <div class="body">
     <div id="monthly-stats-placeholder"></div>
 
     <ul>
@@ -381,10 +401,10 @@ $links = array_filter( $links, 'is_not_pingback_link' );
       <li>Shortest article: <?php printf( "%.0f", $wc_min/30); ?> column inches (<?php printf( "%.0f", $wc_min); ?> words)</li>
       <li>Longest article: <?php printf( "%.0f", $wc_max/30); ?> column inches (<?php printf( "%.0f", $wc_max); ?> words)</li>
     </ul>
-    <small>(<a href="/faq/what-are-column-inches">what are column inches?</a>)</small>
-
+    
     <div id="stats-disclaimer">
-    <sup>*</sup><em>Please note that these statistics are based only on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a></em>.
+        <p><a href="/faq/what-are-column-inches">What are column inches?</a> <br />
+        <sup>*</sup>Please note that these statistics are based only on articles published online in <a href="/faq/what-news-outlets-does-journalisted-cover">these publications</a>.</p>
     </div>
 <?php
 // some random colours...
@@ -433,11 +453,15 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     });
 </script>
 
-
-<?php } else { ?>
-    <p>(sorry, information not currently available)</p>
-<?php } ?>
   </div>
+<?php } else { ?>
+  <div class="stats-summary">
+    (sorry, information not currently available)
+  </div>
+  <div class="body">
+
+  </div>
+<?php } ?>
 </div>
 
 
@@ -716,15 +740,6 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 
 <div class="sidebar">
 
-<a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
-
-<div class="box subscribe-newsletter">
-  <div class="head"><h3>journa<i>listed</i> weekly</h3></div>
-  <div class="body">
-    <p>To receive the journa<i>listed</i> digest every Tuesday via email, <a href="/weeklydigest">subscribe here</a></p>
-  </div>
-  <div class="foot"></div>
-</div>
 
 <?php if( $is_editor ) { ?>
 <div class="box">
@@ -736,37 +751,77 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
 </div>
 <?php } ?>
 
-<div class="box actions you-can-also">
-  <div class="head"><h3>You can also...</h3></div>
+<div class="box box-journo-stats">
+<div class="head"><h3>Stats for <?=$prettyname?></h3></div>
   <div class="body">
     <ul>
-      <li class="add-alert"><a href="/alert?Add=1&amp;j=<?= $ref ?>">Add <?= $prettyname ?>'s articles to my daily alerts</a></li>
-      <li class="print-page"><a href="#" onclick="javascript:window.print(); return false;" >Print this page</a></li>
-      <li class="forward-profile"><a href="/forward?journo=<?= $ref ?>">Forward profile to a friend</a></li>
-<?php if( !$can_edit_page ) { ?>
-      <li class="claim-profile">
-        <a href="/profile?ref=<?= $ref ?>">Are you <?= $prettyname ?>?</a></li>
+<?php if(array_key_exists('num_views_week', $GLOBALS)) { ?>
+    <li><strong><?= $num_views_week; ?></strong> <span>Profile views this week</span></li>
 <?php } ?>
-<?php if( $can_edit_page ) { ?>
-      <li class="import-linkedin">
-        <a href="/profile_import?ref=<?= $ref ?>">Import profile data from linkedin</a></li>
-<?php } ?>
+      <li><strong><?= $num_alerts; ?></strong> <span>Followers (via email alert)</span></li>
+      <li><strong><?= count($admired_by); ?></strong> <span>Recommendations from journalists</span></li>
+<?php /* ?>
+      <li><strong>1.5k</strong> <span>Twitter followers</span></li>
+<?php */ ?>
     </ul>
   </div>
   <div class="foot"></div>
 </div>
 
 <?php if($twitter_id) { ?>
-<div class="box twitter">
-  <div class="head"><h3>On Twitter</h3></div>
+
+<div class="box box-twitter">
+<div class="head"><h3>On Twitter</h3></div>
   <div class="body">
-   <div id="twitter_profile"></div>
-   <div id="tweets"></div>
-     </div>
-  <div class="foot">
+  <a class="twitter-timeline" data-screen-name="<?=$twitter_id;?>" data-chrome="noborders nofooter" data-dnt="true" href="https://twitter.com/<?=$twitter_id;?>"  data-widget-id="432616151625891840">Tweets by @<?=$twitter_id;?></a>
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
   </div>
+  <div class="foot"></div>
 </div>
 <?php } ?>
+
+
+<div class="box box-recommended-journos">
+ <div class="head"><h3><?= $prettyname ?> recommends...</h3></div>
+ <div class="body">
+<?php if( $admired ) { ?>
+<span><?php if(count($admired)==1) { ?> 1 journalist:<?php } else { ?><?=count($admired)?> journalists:<?php } ?></span>
+  <ul>
+<?php foreach( $admired as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  <span class="not-known"><?= $prettyname ?> has not recommended any journalists</span>
+<?php } ?>
+ </div>
+ <div class="foot">
+<?php if( $can_edit_page ) { ?>
+  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
+<?php } ?>
+ </div>
+</div>
+
+
+<div class="box box-recommended-by-journos">
+ <div class="head"><h3><?= $prettyname ?> is recommended by...</h3></div>
+ <div class="body">
+<?php if( isset($admired_by) && $admired_by ) { ?>
+<span><?php if(count($admired_by)==1) { ?> 1 journalist:<?php } else { ?><?=count($admired_by)?> journalists:<?php } ?></span>
+  <ul>
+<?php foreach( $admired_by as $a ) { ?>
+   <li><?=journo_link($a) ?></li>
+<?php } ?>
+  </ul>
+<?php } else { ?>
+  <span class="not-known"><?= $prettyname ?> has not been recommended any journalists</span>
+<?php } ?>
+ </div>
+ <div class="foot">
+ </div>
+</div>
+
 
 <div class="box pingbacks">
   <div class="head"><h3>Blogposts about <?= $prettyname ?></h3></div>
@@ -875,46 +930,13 @@ foreach( $monthly_stats as $yearmonth=>$row ) {
     </ul>
   </div>
   <div class="foot">
-    <small>(<a href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">what's this?</a>)</small>
+    <a class="faqlink" href="/faq/how-does-journalisted-work-out-what-journalists-write-similar-stuff">What's this?</a>
   </div>
 </div>
 
+<a class="donate" href="http://www.justgiving.com/mediastandardstrust">Donate</a>
 
 
-
-
-
-<div class="box admired-journos">
- <div class="head"><h3>Journalists recommended by <?= $prettyname ?></h3></div>
- <div class="body">
-<?php if( $admired ) { ?>
-  <ul>
-<?php foreach( $admired as $a ) { ?>
-   <li><?=journo_link($a) ?></li>
-<?php } ?>
-  </ul>
-<?php } else { ?>
-  <span class="not-known"><?= $prettyname ?> has not added any journalists</span>
-<?php } ?>
- </div>
- <div class="foot">
-<?php if( $can_edit_page ) { ?>
-  <a class="edit" href="/profile_recommend?ref=<?= $ref ?>">edit</a>
-<?php } ?>
- </div>
-</div>
-
-
-<?php if( !$is_editor ) { ?>
-<div class="box mistake">
- <div class="head"><h3>Spotted a mistake?</h3></div>
- <div class="body">
- Have we got the wrong information about this journalist?
- <?= SafeMailTo( OPTION_TEAM_EMAIL, 'Let us know' ) ?>
- </div>
- <div class="foot"></div>
-</div>
-<?php } ?>
 
 </div> <!-- end sidebar -->
 

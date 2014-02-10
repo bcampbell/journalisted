@@ -462,7 +462,7 @@ for( $i=1; $i<=sizeof($tg_objs); ++$i ) {
 
 
 
-<div class="box admired-journos">
+<div class="box recommended-journos">
  <div class="head"><h3>Journalists more popular than <?= $prettyname ?></h3></div>
  <div class="body">
 <?php if( $admired ) { ?>

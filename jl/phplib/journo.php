@@ -622,7 +622,9 @@ SELECT j.prettyname, j.ref, j.oneliner
     WHERE a.admired_id=?
 EOT;
     $data['admired_by'] = db_getAll( $sql, $journo['id'] );
+
     $data['num_alerts'] = (int)db_getOne("SELECT count(*) FROM alert WHERE journo_id=?", $journo['id']);
+    $data['num_views_week'] = (int)db_getOne("SELECT num_views_week FROM journo_pageviews WHERE journo_id=?", $journo['id']);
 
     $data['articles'] = journo_collectArticles( $journo );
     $data['more_articles'] = true;

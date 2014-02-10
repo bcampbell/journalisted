@@ -40,6 +40,7 @@ journo_alias
 journo_admired
 journo_address
 journo_weblink
+journo_pageviews      - pageviews for the last 7 days, calculated from logfiles (see bin/update_journo_pageviews)
 
 organisation          - the organisations in the system (newspapers, bbc etc)
 pub_adr
