@@ -26,7 +26,6 @@ function search_getParams()
 
     $art_q = get_http_var( 'a' );
     $journo_q = get_http_var( 'j' );
-
     if( $art_q ) {
         $s['type'] = 'article';
         $s['q'] = $art_q;
@@ -34,15 +33,13 @@ function search_getParams()
         $s['type'] = 'journo';
         $s['q'] = $journo_q;
     } else {
-        // need this one to handle search forms with dropdown to select type of query
-        $s['type'] = strtolower( get_http_var( 'type', 'journo' ) );
+        $s['type'] = strtolower( get_http_var( 'type', '' ) );
         $s['q'] = get_http_var( 'q', '' );
     }
     $s['num'] = (int)get_http_var('num', 20 );
     $s['start'] = (int)get_http_var('start', '0' );
-    if( $s['type'] == 'article' ) {
-        $s['sort_order'] = get_http_var( 'o', 'date' );
-    }
+
+    $s['sort_order'] = get_http_var( 'o', 'date' );
 
     $s['by'] = get_http_var( 'by' );    // a journo ref
     $s['q_original'] = '';
@@ -62,10 +59,12 @@ function search_emit_onpage_form() {
   <div class="search">
     <form action="/search" method="get">
 <!--        <label for="q">Search articles</label> -->
+<!--
       <select name="type">
         <option value="journo"<?= ($s['type']=='journo')?' selected':'' ?>>Search journalists</option>
         <option value="article"<?= ($s['type']=='article')?' selected':'' ?>>Search articles</option>
       </select>
+-->
       <input type="text" value="<?= h($s['q']) ?>" id="q2" name="q" />
       <input type="submit" alt="search" value="Search" />
     </form>

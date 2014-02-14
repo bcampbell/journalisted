@@ -14,80 +14,51 @@ require_once '../../phplib/db.php';
 
 
 
-$s = search_getParams();
 
 
 
+function view() {
+    $s = search_getParams();
 
-if( $s['type']=='article' ) {
-    search_articles();
-} else {
-    search_journos();
+    $foo = array();
+    $journos = array();
+
+    if( $s['type']!='journo' ) {
+        $foo = search_articles($s);
+    } else {
+        $foo = array('articles'=>array(), 'total'=>0);
+    }
+
+    if( $s['type']!='article' ) {
+        $journos = search_journos($s);
+    }
+
+    // hackhackhack
+    if( $s['fmt'] == 'csv' ) {
+        search_articles_output_csv($articles);
+        return;
+    }
+
+    tmpl($s, $journos,$foo['articles'], $foo['total']);
 }
 
 
 
-function search_journos() {
+function search_journos($s) {
 
-    $s = search_getParams();
     $query = $s['q'];
-
-    page_header( "Search Journalists", array('search_params'=>$s) );
 
     $journos = array();
     if( $query )
         $journos = journo_FuzzyFind( $query );
 
-?>
-<div class="main search-results">
-<?php if( $query ) { ?>
-  <div class="head">
-    <b>Search Results:</b> <span class="count"><?= sizeof($journos) ?> journalists</span> like <span class="query"><?= h($query) ?></span>
-  </div>
-
-  <div class="body">
-<?php if( $journos ) { ?>
-<ul>
-<?php   foreach( $journos as $j ) { ?>
-  <li><?= journo_link($j); ?></li>
-<?php   } ?>
-</ul>
-<?php } ?>
-  </div>
-
-<?php } else { /* blank query */?>
-<div class="head"></div>
-<div class="body"></div>
-<?php } ?>
-
-<div class="foot">
-<?php search_emit_onpage_form(); ?>
-</div>
-</div>  <!-- end main -->
-<?php
-    page_footer();
+    return $journos;
 }
 
 
-function search_articles()
+function search_articles($s)
 {
-    $s = search_getParams();
     $query = $s['q'];
-    if( !$query ) {
-        page_header( "Search Articles", array('search_params'=>$s) );
-?>
-<div class="main search-results">
- <div class="head"></div>
- <div class="body"></div>
- <div class="foot">
-<?php search_emit_onpage_form(); ?>
- </div>
-</div> <!-- end main -->
-<?php
-        page_footer();
-        return;
-    }
-
 
     $num_per_page = $s['num'];
     $start = $s['start'];
@@ -118,62 +89,7 @@ function search_articles()
     }
     unset( $art );
 
-
-    if( $s['fmt'] == 'csv' ) {
-        search_articles_output_csv($results);
-    }
-
-
-    page_header( "Search Articles", array('search_params'=>$s) );
-
-
-
-?>
-<div class="main search-results">
-
-  <div class="head">
-<?php if( $results || $start>0 ) { ?>
-    <b>Search Results:</b> <?= $first ?>-<?= $last ?> of around <span class="count"><?= $total ?></span> articles matching <span class="query"><?= h($query) ?></span>
-<?php } else { ?>
-    <b>Search Results:</b> no articles matching <span class="query"><?= h($query) ?></span>
-
-<?php } ?>
-  </div>
-  <div class="body">
-<?php if( $results || $start>0 ) { ?>
-    <ul class="art-list">
-<?php
-    foreach( $results as $art ) {
-        $journolinks = array();
-        foreach( $art['journos'] as $j ) {
-            $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], h( $j['prettyname'] ) );
-        }
-?>
-      <li class="hentry">
-        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
-        <?php if( $journolinks ) { ?><small><?= implode( ', ', $journolinks ); ?></small><br/><?php } ?>
-        <span class="publication"><?= $art['srcorgname']; ?>,</span>
-        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
-        <br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
-      </li>
-<?php } ?>
-    </ul>
-  <div class="pager">
-<?php
-        search_emitPageControl( $s, $total );
-?>
-<?php } ?>
-  </div>
-
-  </div>
-  <div class="foot">
-<?php search_emit_onpage_form(); ?>
-  </div>
-</div> <!-- end main -->
-<?php
-
-    page_footer();
+    return array('articles'=>$results, 'total'=>$total);
 }
 
 
@@ -205,5 +121,97 @@ function search_articles_output_csv($results)
 }
 
 
+
+
+function tmpl($s, $journos, $articles, $total=69 )  {
+    page_header( "Search Results", array('search_params'=>$s) );
+
+?>
+<div class="main">
+
+<?php search_emit_onpage_form(); ?>
+
+
+<?php
+if( $s['type'] != 'article' ) {
+    /**** show journo results ****/
+?>
+
+<div class="search-results">
+  <div class="head">
+    <h4><?= sizeof($journos) ?> matching journalists</h4>
+  </div>
+
+  <div class="body">
+<?php if( $journos ) { ?>
+    <ul>
+<?php   foreach( $journos as $j ) { ?>
+      <li><?= journo_link($j); ?></li>
+<?php   } ?>
+    </ul>
+<?php } else { ?>
+    <br/>
+<?php } ?>
+  </div>
+  <div class="foot"></div>
+</div> <!-- end .search-results -->
+
+<?php } /**** end of journo results ****/ ?>
+
+
+<?php
+if( $s['type'] != 'article' ) {
+    /**** show article results ****/
+?>
+<div class="search-results">
+  <div class="head">
+    <h4>around <?= $total ?> matching articles</h4>
+  </div>
+
+  <div class="body">
+<?php if( $articles ) { ?>
+    <ul class="art-list hfeed">
+<?php
+    foreach( $articles as $art ) {
+        $journolinks = array();
+        foreach( $art['journos'] as $j ) {
+            $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], h( $j['prettyname'] ) );
+        }
+?>
+      <li class="hentry">
+        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
+        <?php if( $journolinks ) { ?><small><?= implode( ', ', $journolinks ); ?></small><br/><?php } ?>
+        <span class="publication"><?= $art['srcorgname']; ?>,</span>
+        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
+        <br/>
+        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
+      </li>
+<?php } ?>
+    </ul>
+<!--
+    <div class="pager">
+<?php search_emitPageControl( $s, $total ); ?>
+    </div>
+-->
+
+<?php } else { ?>
+    <br/>
+<? } ?>
+
+  </div>
+  <div class="foot"> </div>
+
+</div> <!-- end .search-results -->
+
+<?php } /**** end of article results ****/ ?>
+
+
+</div>  <!-- end .main -->
+<?php
+    page_footer();
+}
+
+
+view();
 
 ?>
