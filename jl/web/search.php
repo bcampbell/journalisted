@@ -3,11 +3,13 @@
 require_once '../conf/general';
 require_once '../phplib/page.php';
 /*require_once '../phplib/frontpage.php'; */
-require_once '../phplib/misc.php';
-require_once '../phplib/journo.php';
-require_once '../phplib/article.php';
-require_once '../phplib/xap.php';
-require_once '../phplib/search.php';
+//require_once '../phplib/misc.php';
+//require_once '../phplib/journo.php';
+//require_once '../phplib/article.php';
+//require_once '../phplib/xap.php';
+//require_once '../phplib/search.php';
+require_once '../phplib/journo_search.php';
+require_once '../phplib/article_search.php';
 require_once '../../phplib/db.php';
 
 
@@ -18,79 +20,39 @@ require_once '../../phplib/db.php';
 
 
 function view() {
-    $s = search_getParams();
 
-    $foo = array();
-    $journos = array();
+    $kind = get_http_var('type',"");
 
-    if( $s['type']!='journo' ) {
-        $foo = search_articles($s);
-    } else {
-        $foo = array('articles'=>array(), 'total'=>0);
+    $q = '';
+
+    $article_results = null;
+    if($kind!='journo') {
+        $as = new ArticleSearch($_GET);
+        $q = $as->q;    // hackhackhack
+        $article_results = $as->perform();
     }
 
-    if( $s['type']!='article' ) {
-        $journos = search_journos($s);
+    $journo_results = null;
+    if($kind!='article') {
+        $js = new JournoSearch($_GET);
+        $q = $js->q;    // hackhackhack
+        $journo_results = $js->perform();
     }
 
     // hackhackhack
-    if( $s['fmt'] == 'csv' ) {
-        search_articles_output_csv($articles);
+/*
+      if( $s['fmt'] == 'csv' ) {
+        search_articles_output_csv($article_results->data);
         return;
-    }
+      }
+*/
 
-    tmpl($s, $journos,$foo['articles'], $foo['total']);
+
+    tmpl($q,$journo_results,$article_results);
 }
 
 
 
-function search_journos($s) {
-
-    $query = $s['q'];
-
-    $journos = array();
-    if( $query )
-        $journos = journo_FuzzyFind( $query );
-
-    return $journos;
-}
-
-
-function search_articles($s)
-{
-    $query = $s['q'];
-
-    $num_per_page = $s['num'];
-    $start = $s['start'];
-    $sort_order = $s['sort_order'];
-
-/* temp hack */
-//$query = str_replace( '"', '', $query );
-
-
-    $results = array();
-    try {
-#        $journo_id = $journo ? $journo['id'] : null;
-        $journo_id = null;
-
-        $search = new XapSearch();
-        $search->set_query( $query, $journo_id );
-        $results = $search->run( $start, $num_per_page, $sort_order );
-    } catch (Exception $e) {
-        print $e->getMessage() . "\n";
-    }
-
-    $total = $search->total_results;
-    $first = $start+1;
-    $last = min( $start+$num_per_page, $total );
-
-    foreach( $results as &$art ) {
-        article_augment( $art );
-    }
-    unset( $art );
-
-    return array('articles'=>$results, 'total'=>$total);
-}
 
 
 // cheesy hackery to output an article search as csv
@@ -123,56 +85,62 @@ function search_articles_output_csv($results)
 
 
 
-function tmpl($s, $journos, $articles, $total=69 )  {
-    page_header( "Search Results", array('search_params'=>$s) );
+function tmpl($q, $journo_results, $article_results )  {
+    page_header( "Search Results" );
 
 ?>
 <div class="main">
 
-<?php search_emit_onpage_form(); ?>
+
+  <div class="search">
+    <form action="/search" method="get">
+      <input type="text" value="<?= h($q) ?>" id="q2" name="q" />
+      <input type="submit" alt="search" value="Search" />
+    </form>
+  </div>
 
 
 <?php
-if( $s['type'] != 'article' ) {
+if( $journo_results !== null ) {
     /**** show journo results ****/
 ?>
 
 <div class="search-results">
   <div class="head">
-    <h4><?= sizeof($journos) ?> matching journalists</h4>
+    <h4><?= $journo_results->total ?> matching journalists</h4>
   </div>
 
   <div class="body">
-<?php if( $journos ) { ?>
     <ul>
-<?php   foreach( $journos as $j ) { ?>
+<?php   foreach( $journo_results->data as $j ) { ?>
       <li><?= journo_link($j); ?></li>
 <?php   } ?>
     </ul>
-<?php } else { ?>
-    <br/>
-<?php } ?>
+
+    <? if ($journo_results->multi_page()) { ?>
+    <div class="paginator">page <?= $journo_results->paginator()->render(); ?></div>
+    <? } ?>
   </div>
-  <div class="foot"></div>
+  <div class="foot">
+  </div>
 </div> <!-- end .search-results -->
 
 <?php } /**** end of journo results ****/ ?>
 
 
 <?php
-if( $s['type'] != 'article' ) {
+if( $article_results !== null ) {
     /**** show article results ****/
 ?>
 <div class="search-results">
   <div class="head">
-    <h4>around <?= $total ?> matching articles</h4>
+    <h4>around <?= $article_results->total ?> matching articles</h4>
   </div>
 
   <div class="body">
-<?php if( $articles ) { ?>
     <ul class="art-list hfeed">
 <?php
-    foreach( $articles as $art ) {
+    foreach( $article_results->data as $art ) {
         $journolinks = array();
         foreach( $art['journos'] as $j ) {
             $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], h( $j['prettyname'] ) );
@@ -188,18 +156,12 @@ if( $s['type'] != 'article' ) {
       </li>
 <?php } ?>
     </ul>
-<!--
-    <div class="pager">
-<?php search_emitPageControl( $s, $total ); ?>
-    </div>
--->
-
-<?php } else { ?>
-    <br/>
-<? } ?>
-
+    <? if ($article_results->multi_page()) { ?>
+    <div class="paginator">page <?= $article_results->paginator()->render(); ?></div>
+    <? } ?>
   </div>
-  <div class="foot"> </div>
+  <div class="foot">
+  </div>
 
 </div> <!-- end .search-results -->
 

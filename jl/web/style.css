@@ -962,6 +962,8 @@ a.missing {
     font-size: 16px;
     font-style:  normal;
 }
+
+
 .search-results .search form {
     padding: 32px 64px;
     margin: 0px;
@@ -1457,30 +1459,19 @@ a.public-profile-location {
 }
 /* SEARCH PAGE */
 /* TODO: this should be default for .main (ie move padding from .main to .main>.body) */
- .main.search-results {
+.search-results {
     padding: 0px;
+    margin: 1em 0;
 }
-.main.search-results .body {
-    /* padding: 8px 16px 16px 16px; */
-}
-.main.search-results .head, .box .pager {
-    padding: 8px 8px 8px 30px;
-    margin: 0px;
-    height: 20px;
-    /* =34-8-8 */
-    line-height: 20px;
-    background-color: #eeeeee;
-}
-.pager {
-    padding: 5px 20px 5px 20px;
-    border: 1px solid #CCC;
+.search-results .body {
 }
 .search-results .head {
-    border-bottom: 1px solid #dddddd;
 }
-.box .pager {
-    border-top: 1px solid #dddddd;
+
+.search-results .head {
+    border-bottom: 1px solid #888;
 }
+
 .search-results .count, .search-results .query {
     font-weight: bold;
     color: #2352a1;
@@ -1490,9 +1481,28 @@ a.public-profile-location {
     list-style-image: none;
     padding: 0;
 }
-.pager .page-links {
-    float:right;
+
+/****
+ * paginator
+ */
+
+.paginator {
+    margin: 1em 0;
+    float: right;
 }
+
+.paginator a {
+    border: 1px solid #ccc;
+    padding: 2px 6px;
+    text-decoration: none;
+}
+
+.paginator a:hover {
+    background-color: #ccc;
+}
+
+.paginator span.this-page { border: none; padding: 2px 6px; }
+
 /* PROFILE-EDITING PAGES */
  .croptool form {
     width: 130px;
