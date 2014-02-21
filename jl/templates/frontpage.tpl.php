@@ -17,7 +17,7 @@
                 <div class="fudge1" >Find journalists and see what they're writing about</div>
                
                 <div class="row">
-                    <div class="col-5">
+                    <div class="col-6">
                         <div class="box box-recently-updated">
                             <div class="head"><h3>Recently updated profiles</h3></div>
                             <div class="body">
@@ -32,7 +32,7 @@
                             <div class="foot"></div>
                         </div>  <!-- end .box-recently-updated -->
                     </div>
-                    <div class="col-7">
+                    <div class="col-6">
                         <div class="exhort">
                             <h3>Are you a journalist? If so...<br/>
                                 Sign up or claim a profile - it's free</h3>

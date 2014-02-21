@@ -828,6 +828,7 @@ ul.newList li a:focus {
 /* page-specific hackery */
 .front-page .box-recently-updated {
     margin: 0 2em;
+    width: 28em;
 }
 
 
