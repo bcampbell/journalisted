@@ -37,10 +37,9 @@
                             <h3>Are you a journalist? If so...<br/>
                                 Sign up or claim a profile - it's free</h3>
                             <p class="fudge3">Creating a profile takes less than 3 minutes</p>
-                            <form>
-                                <input id="name" name="name" type="text" placeholder="name" value=""/>
-                                <input id="email" name="email" type="text" placeholder="email" value=""/>
-                                <input id="password" name="password" placeholder="password" type="password" value=""/>
+                            <form method="GET" action="/profile">
+                                <input type="hidden" name="action" value="lookup"/>
+                                <input type="text" id="fullname" name="fullname" value="" placeholder="your name" />
                                 <input class="btn btn-lg" type="submit" value="Create/claim profile" />
                             </form>
 
