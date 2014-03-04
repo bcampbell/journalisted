@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+#
+# Tool to populate a database with dummy news articles and journos
+#
+# Copyright (c) 2007 Media Standards Trust
+# Licensed under the Affero General Public License
+# (http://www.affero.org/oagpl.html)
+#
+
+
+import sys
+import re
+from datetime import datetime
+import sys
+import urlparse
+import urllib2
+from pprint import pprint
+import random
+
+from faker import Factory
+
+import site
+site.addsitedir("../pylib")
+from JL import ukmedia, ScraperUtils
+from JL import ArticleDB,Byline,Publication,Journo,Misc,DB
+
+site.addsitedir("../../pylib")
+import mysociety.config
+
+BASEURL = "http://www.non-existant-newspaper.com/"
+
+DUMMY_JOURNOS = [
+    u"Freida Jones",
+    u"Dr. Susie Medhurst",
+    u"Ari Stroman",
+    u"Everett Parker",
+    u"Karolann Kertzmann",
+    u"Vaughn Stoltenberg" ]
+
+def FakeArt():
+    """  """
+    art = {}
+
+    art['title'] = faker.bs().title()
+    url = BASEURL + re.sub("[^a-z]+","-",art['title'].lower())
+    art['srcurl'] = url
+    art['permalink'] = url
+
+    art['pubdate'] = faker.date_time_this_decade()
+    art['byline'] = random.choice(DUMMY_JOURNOS)
+
+    art['content'] = faker.text()
+    return art
+
+
+
+def ContextFromURL( url ):
+    """Set up for scraping a single article from a bare url"""
+    context = {
+        'srcurl': url,
+        'permalink': url,
+        'lastseen': datetime.now(),
+    }
+    return context
+
+
+def LoadArtIntoDB(store,art):
+    """ some fn like this should really be in ArticleDB? """
+    if 'srcorgname' in art and art['srcorgname'] is not None:
+        srcorg = Misc.GetOrgID( art[ 'srcorgname' ] )
+    else:
+        # no publication specified - look up using domain name
+        o = urlparse.urlparse(art['permalink'])
+        domain = o[1].lower()
+        srcorg = Publication.find_or_create(domain)
+    art['srcorg'] = srcorg
+
+
+    # resolve bylined authors to journo ids
+    expected_journo = None
+    authors = Byline.CrackByline(art['byline'])
+    attributed = []
+    for author in authors:
+        attributed.append(Journo.find_or_create(author, art, expected_journo))
+    art['journos'] = attributed
+
+#    if opts.test:
+#        ukmedia.PrettyDump( art )
+
+    article_id = store.upsert( art )
+
+    return article_id
+
+
+faker = Factory.create()
+
+def main():
+
+    dbname = mysociety.config.get('JL_DB_NAME')
+    assert dbname != "jl" # don't run against live db!
+
+    arts = []
+    for i in range(1000):
+        art = FakeArt()
+        arts.append(art)
+
+    store = ArticleDB.ArticleDB()
+    for art in arts:
+        LoadArtIntoDB(store,art)
+
+    DB.conn().commit()
+
+if __name__ == "__main__":
+    main()
