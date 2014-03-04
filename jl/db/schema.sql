@@ -2,18 +2,24 @@
 -- PostgreSQL database dump
 --
 
---SET client_encoding = 'SQL_ASCII';
+SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
-SET standard_conforming_strings = off;
+SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
-SET escape_string_warning = off;
 
 --
--- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: -
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
 --
 
-CREATE PROCEDURAL LANGUAGE plpgsql;
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 SET search_path = public, pg_catalog;
@@ -23,14 +29,14 @@ SET search_path = public, pg_catalog;
 --
 
 CREATE FUNCTION article_setjournomodified_onupdate() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     -- whenever article is modified, set the modified flag on any attributed jounos
     UPDATE journo SET modified=true WHERE id IN (SELECT journo_id FROM journo_attr WHERE article_id=NEW.id);
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -38,6 +44,7 @@ $$
 --
 
 CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -50,8 +57,7 @@ CREATE FUNCTION article_update_total_bloglinks() RETURNS trigger
 
         RETURN new;
     END
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -59,6 +65,7 @@ $$
 --
 
 CREATE FUNCTION article_update_total_comments() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
@@ -75,8 +82,7 @@ CREATE FUNCTION article_update_total_comments() RETURNS trigger
 
         RETURN new;
     END
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -84,13 +90,13 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_ondelete() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -98,13 +104,13 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_oninsert() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -112,14 +118,14 @@ $$
 --
 
 CREATE FUNCTION journo_setmodified_onupdate() RETURNS trigger
+    LANGUAGE plpgsql
     AS $$
 BEGIN
     UPDATE journo SET modified=true WHERE id=NEW.journo_id;
     UPDATE journo SET modified=true WHERE id=OLD.journo_id;
     return NULL;
 END;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 --
@@ -127,12 +133,12 @@ $$
 --
 
 CREATE FUNCTION ms_current_timestamp() RETURNS timestamp without time zone
+    LANGUAGE plpgsql
     AS $$
     begin
         return current_timestamp;
     end;
-$$
-    LANGUAGE plpgsql;
+$$;
 
 
 SET default_tablespace = '';
@@ -155,9 +161,10 @@ CREATE TABLE alert (
 --
 
 CREATE SEQUENCE alert_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -218,9 +225,10 @@ CREATE TABLE article_bloglink (
 --
 
 CREATE SEQUENCE article_bloglink_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -250,28 +258,29 @@ CREATE TABLE article_commentlink (
 
 CREATE TABLE article_content (
     id integer NOT NULL,
-    article_id integer,
+    article_id integer NOT NULL,
     content text DEFAULT ''::text NOT NULL,
-    scraped timestamp without time zone
+    scraped timestamp without time zone NOT NULL
 );
 
 
 --
--- Name: article_content_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+-- Name: article_content_id_seq1; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE article_content_id_seq
+CREATE SEQUENCE article_content_id_seq1
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
 --
--- Name: article_content_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+-- Name: article_content_id_seq1; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE article_content_id_seq OWNED BY article_content.id;
+ALTER SEQUENCE article_content_id_seq1 OWNED BY article_content.id;
 
 
 --
@@ -304,9 +313,10 @@ CREATE TABLE article_error (
 --
 
 CREATE SEQUENCE article_error_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -322,9 +332,10 @@ ALTER SEQUENCE article_error_id_seq OWNED BY article_error.id;
 --
 
 CREATE SEQUENCE article_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -346,9 +357,10 @@ CREATE TABLE article_image (
 --
 
 CREATE SEQUENCE article_image_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -407,9 +419,10 @@ CREATE TABLE article_url (
 --
 
 CREATE SEQUENCE article_url_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -451,8 +464,8 @@ CREATE TABLE custompaper_criteria_journo (
 CREATE SEQUENCE custompaper_criteria_journo_id_seq
     START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -479,9 +492,10 @@ CREATE TABLE custompaper_criteria_text (
 --
 
 CREATE SEQUENCE custompaper_criteria_text_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -497,9 +511,10 @@ ALTER SEQUENCE custompaper_criteria_text_id_seq OWNED BY custompaper_criteria_te
 --
 
 CREATE SEQUENCE custompaper_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -545,9 +560,10 @@ CREATE TABLE event_log (
 --
 
 CREATE SEQUENCE event_log_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -563,7 +579,7 @@ ALTER SEQUENCE event_log_id_seq OWNED BY event_log.id;
 --
 
 CREATE TABLE htmlcache (
-    name character varying(10) NOT NULL,
+    name character varying(32) NOT NULL,
     content text,
     gentime timestamp without time zone DEFAULT now() NOT NULL
 );
@@ -587,9 +603,10 @@ CREATE TABLE image (
 --
 
 CREATE SEQUENCE image_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -640,9 +657,10 @@ CREATE TABLE journo_address (
 --
 
 CREATE SEQUENCE journo_address_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -670,9 +688,10 @@ CREATE TABLE journo_admired (
 --
 
 CREATE SEQUENCE journo_admired_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -735,9 +754,10 @@ CREATE TABLE journo_awards (
 --
 
 CREATE SEQUENCE journo_awards_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -767,9 +787,10 @@ CREATE TABLE journo_bio (
 --
 
 CREATE SEQUENCE journo_bio_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -798,9 +819,10 @@ CREATE TABLE journo_books (
 --
 
 CREATE SEQUENCE journo_books_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -833,9 +855,10 @@ CREATE TABLE journo_education (
 --
 
 CREATE SEQUENCE journo_education_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -865,9 +888,10 @@ CREATE TABLE journo_email (
 --
 
 CREATE SEQUENCE journo_email_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -901,9 +925,10 @@ CREATE TABLE journo_employment (
 --
 
 CREATE SEQUENCE journo_employment_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -919,9 +944,10 @@ ALTER SEQUENCE journo_employment_id_seq OWNED BY journo_employment.id;
 --
 
 CREATE SEQUENCE journo_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -944,9 +970,10 @@ CREATE TABLE journo_jobtitle (
 --
 
 CREATE SEQUENCE journo_jobtitle_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -977,9 +1004,10 @@ CREATE TABLE journo_other_articles (
 --
 
 CREATE SEQUENCE journo_other_articles_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -988,6 +1016,36 @@ CREATE SEQUENCE journo_other_articles_id_seq
 --
 
 ALTER SEQUENCE journo_other_articles_id_seq OWNED BY journo_other_articles.id;
+
+
+--
+-- Name: journo_pageviews; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_pageviews (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    num_views_week integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: journo_pageviews_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_pageviews_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_pageviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_pageviews_id_seq OWNED BY journo_pageviews.id;
 
 
 --
@@ -1006,9 +1064,10 @@ CREATE TABLE journo_phone (
 --
 
 CREATE SEQUENCE journo_phone_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1036,9 +1095,10 @@ CREATE TABLE journo_photo (
 --
 
 CREATE SEQUENCE journo_photo_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1047,6 +1107,39 @@ CREATE SEQUENCE journo_photo_id_seq
 --
 
 ALTER SEQUENCE journo_photo_id_seq OWNED BY journo_photo.id;
+
+
+--
+-- Name: journo_score; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE journo_score (
+    id integer NOT NULL,
+    journo_id integer NOT NULL,
+    num_alerts integer DEFAULT 0 NOT NULL,
+    num_admirers integer DEFAULT 0 NOT NULL,
+    num_views_week integer DEFAULT 0 NOT NULL,
+    score real DEFAULT 0.0 NOT NULL
+);
+
+
+--
+-- Name: journo_score_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE journo_score_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: journo_score_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE journo_score_id_seq OWNED BY journo_score.id;
 
 
 --
@@ -1080,9 +1173,10 @@ CREATE TABLE journo_weblink (
 --
 
 CREATE SEQUENCE journo_weblink_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1104,9 +1198,10 @@ CREATE TABLE link (
 --
 
 CREATE SEQUENCE link_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1135,9 +1230,10 @@ CREATE TABLE missing_articles (
 --
 
 CREATE SEQUENCE missing_articles_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1171,9 +1267,10 @@ CREATE TABLE news (
 --
 
 CREATE SEQUENCE news_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1206,9 +1303,10 @@ CREATE TABLE organisation (
 --
 
 CREATE SEQUENCE organisation_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1231,9 +1329,10 @@ CREATE TABLE person (
 --
 
 CREATE SEQUENCE person_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1262,9 +1361,10 @@ CREATE TABLE person_permission (
 --
 
 CREATE SEQUENCE person_permission_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1300,9 +1400,10 @@ CREATE TABLE pub_adr (
 --
 
 CREATE SEQUENCE pub_adr_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1329,9 +1430,10 @@ CREATE TABLE pub_alias (
 --
 
 CREATE SEQUENCE pub_alias_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1358,9 +1460,10 @@ CREATE TABLE pub_domain (
 --
 
 CREATE SEQUENCE pub_domain_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1387,9 +1490,10 @@ CREATE TABLE pub_email_format (
 --
 
 CREATE SEQUENCE pub_email_format_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1416,9 +1520,10 @@ CREATE TABLE pub_phone (
 --
 
 CREATE SEQUENCE pub_phone_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1444,9 +1549,10 @@ CREATE TABLE pub_set (
 --
 
 CREATE SEQUENCE pub_set_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1473,9 +1579,10 @@ CREATE TABLE pub_set_map (
 --
 
 CREATE SEQUENCE pub_set_map_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1502,9 +1609,10 @@ CREATE TABLE recently_viewed (
 --
 
 CREATE SEQUENCE recently_viewed_id_seq
+    START WITH 1
     INCREMENT BY 1
-    NO MAXVALUE
     NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
 
@@ -1576,252 +1684,266 @@ CREATE TABLE token (
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE alert ALTER COLUMN id SET DEFAULT nextval('alert_id_seq'::regclass);
+ALTER TABLE ONLY alert ALTER COLUMN id SET DEFAULT nextval('alert_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_bloglink_id_seq'::regclass);
+ALTER TABLE ONLY article_bloglink ALTER COLUMN id SET DEFAULT nextval('article_bloglink_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE article_content ALTER COLUMN id SET DEFAULT nextval('article_content_id_seq'::regclass);
+ALTER TABLE ONLY article_content ALTER COLUMN id SET DEFAULT nextval('article_content_id_seq1'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE article_error ALTER COLUMN id SET DEFAULT nextval('article_error_id_seq'::regclass);
+ALTER TABLE ONLY article_error ALTER COLUMN id SET DEFAULT nextval('article_error_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE article_image ALTER COLUMN id SET DEFAULT nextval('article_image_id_seq'::regclass);
+ALTER TABLE ONLY article_image ALTER COLUMN id SET DEFAULT nextval('article_image_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE article_url ALTER COLUMN id SET DEFAULT nextval('article_url_id_seq'::regclass);
+ALTER TABLE ONLY article_url ALTER COLUMN id SET DEFAULT nextval('article_url_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE custompaper ALTER COLUMN id SET DEFAULT nextval('custompaper_id_seq'::regclass);
+ALTER TABLE ONLY custompaper ALTER COLUMN id SET DEFAULT nextval('custompaper_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE custompaper_criteria_journo ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_journo_id_seq'::regclass);
+ALTER TABLE ONLY custompaper_criteria_journo ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_journo_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE custompaper_criteria_text ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_text_id_seq'::regclass);
+ALTER TABLE ONLY custompaper_criteria_text ALTER COLUMN id SET DEFAULT nextval('custompaper_criteria_text_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE event_log ALTER COLUMN id SET DEFAULT nextval('event_log_id_seq'::regclass);
+ALTER TABLE ONLY event_log ALTER COLUMN id SET DEFAULT nextval('event_log_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE image ALTER COLUMN id SET DEFAULT nextval('image_id_seq'::regclass);
+ALTER TABLE ONLY image ALTER COLUMN id SET DEFAULT nextval('image_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_address ALTER COLUMN id SET DEFAULT nextval('journo_address_id_seq'::regclass);
+ALTER TABLE ONLY journo_address ALTER COLUMN id SET DEFAULT nextval('journo_address_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_admired ALTER COLUMN id SET DEFAULT nextval('journo_admired_id_seq'::regclass);
+ALTER TABLE ONLY journo_admired ALTER COLUMN id SET DEFAULT nextval('journo_admired_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_awards ALTER COLUMN id SET DEFAULT nextval('journo_awards_id_seq'::regclass);
+ALTER TABLE ONLY journo_awards ALTER COLUMN id SET DEFAULT nextval('journo_awards_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_bio ALTER COLUMN id SET DEFAULT nextval('journo_bio_id_seq'::regclass);
+ALTER TABLE ONLY journo_bio ALTER COLUMN id SET DEFAULT nextval('journo_bio_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_books ALTER COLUMN id SET DEFAULT nextval('journo_books_id_seq'::regclass);
+ALTER TABLE ONLY journo_books ALTER COLUMN id SET DEFAULT nextval('journo_books_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_education ALTER COLUMN id SET DEFAULT nextval('journo_education_id_seq'::regclass);
+ALTER TABLE ONLY journo_education ALTER COLUMN id SET DEFAULT nextval('journo_education_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_email ALTER COLUMN id SET DEFAULT nextval('journo_email_id_seq'::regclass);
+ALTER TABLE ONLY journo_email ALTER COLUMN id SET DEFAULT nextval('journo_email_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_employment ALTER COLUMN id SET DEFAULT nextval('journo_employment_id_seq'::regclass);
+ALTER TABLE ONLY journo_employment ALTER COLUMN id SET DEFAULT nextval('journo_employment_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_jobtitle ALTER COLUMN id SET DEFAULT nextval('journo_jobtitle_id_seq'::regclass);
+ALTER TABLE ONLY journo_jobtitle ALTER COLUMN id SET DEFAULT nextval('journo_jobtitle_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_other_articles ALTER COLUMN id SET DEFAULT nextval('journo_other_articles_id_seq'::regclass);
+ALTER TABLE ONLY journo_other_articles ALTER COLUMN id SET DEFAULT nextval('journo_other_articles_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_phone ALTER COLUMN id SET DEFAULT nextval('journo_phone_id_seq'::regclass);
+ALTER TABLE ONLY journo_pageviews ALTER COLUMN id SET DEFAULT nextval('journo_pageviews_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE journo_photo ALTER COLUMN id SET DEFAULT nextval('journo_photo_id_seq'::regclass);
+ALTER TABLE ONLY journo_phone ALTER COLUMN id SET DEFAULT nextval('journo_phone_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE link ALTER COLUMN id SET DEFAULT nextval('link_id_seq'::regclass);
+ALTER TABLE ONLY journo_photo ALTER COLUMN id SET DEFAULT nextval('journo_photo_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE missing_articles ALTER COLUMN id SET DEFAULT nextval('missing_articles_id_seq'::regclass);
+ALTER TABLE ONLY journo_score ALTER COLUMN id SET DEFAULT nextval('journo_score_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE news ALTER COLUMN id SET DEFAULT nextval('news_id_seq'::regclass);
+ALTER TABLE ONLY link ALTER COLUMN id SET DEFAULT nextval('link_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE person ALTER COLUMN id SET DEFAULT nextval('person_id_seq'::regclass);
+ALTER TABLE ONLY missing_articles ALTER COLUMN id SET DEFAULT nextval('missing_articles_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE person_permission ALTER COLUMN id SET DEFAULT nextval('person_permission_id_seq'::regclass);
+ALTER TABLE ONLY news ALTER COLUMN id SET DEFAULT nextval('news_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_adr ALTER COLUMN id SET DEFAULT nextval('pub_adr_id_seq'::regclass);
+ALTER TABLE ONLY person ALTER COLUMN id SET DEFAULT nextval('person_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_alias ALTER COLUMN id SET DEFAULT nextval('pub_alias_id_seq'::regclass);
+ALTER TABLE ONLY person_permission ALTER COLUMN id SET DEFAULT nextval('person_permission_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_domain ALTER COLUMN id SET DEFAULT nextval('pub_domain_id_seq'::regclass);
+ALTER TABLE ONLY pub_adr ALTER COLUMN id SET DEFAULT nextval('pub_adr_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_email_format ALTER COLUMN id SET DEFAULT nextval('pub_email_format_id_seq'::regclass);
+ALTER TABLE ONLY pub_alias ALTER COLUMN id SET DEFAULT nextval('pub_alias_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_phone ALTER COLUMN id SET DEFAULT nextval('pub_phone_id_seq'::regclass);
+ALTER TABLE ONLY pub_domain ALTER COLUMN id SET DEFAULT nextval('pub_domain_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_set ALTER COLUMN id SET DEFAULT nextval('pub_set_id_seq'::regclass);
+ALTER TABLE ONLY pub_email_format ALTER COLUMN id SET DEFAULT nextval('pub_email_format_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE pub_set_map ALTER COLUMN id SET DEFAULT nextval('pub_set_map_id_seq'::regclass);
+ALTER TABLE ONLY pub_phone ALTER COLUMN id SET DEFAULT nextval('pub_phone_id_seq'::regclass);
 
 
 --
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE recently_viewed ALTER COLUMN id SET DEFAULT nextval('recently_viewed_id_seq'::regclass);
+ALTER TABLE ONLY pub_set ALTER COLUMN id SET DEFAULT nextval('pub_set_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY pub_set_map ALTER COLUMN id SET DEFAULT nextval('pub_set_map_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY recently_viewed ALTER COLUMN id SET DEFAULT nextval('recently_viewed_id_seq'::regclass);
 
 
 --
@@ -1961,11 +2083,11 @@ ALTER TABLE ONLY event_log
 
 
 --
--- Name: htmlcache_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: htmlcache_pkey1; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY htmlcache
-    ADD CONSTRAINT htmlcache_pkey PRIMARY KEY (name);
+    ADD CONSTRAINT htmlcache_pkey1 PRIMARY KEY (name);
 
 
 --
@@ -2057,6 +2179,14 @@ ALTER TABLE ONLY journo_other_articles
 
 
 --
+-- Name: journo_pageviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_pageviews
+    ADD CONSTRAINT journo_pageviews_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: journo_phone_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -2078,6 +2208,14 @@ ALTER TABLE ONLY journo_photo
 
 ALTER TABLE ONLY journo
     ADD CONSTRAINT journo_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: journo_score_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY journo_score
+    ADD CONSTRAINT journo_score_pkey PRIMARY KEY (id);
 
 
 --
@@ -2257,6 +2395,13 @@ ALTER TABLE ONLY token
 
 
 --
+-- Name: alert_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX alert_journo_id_idx ON alert USING btree (journo_id);
+
+
+--
 -- Name: alert_person_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -2310,6 +2455,13 @@ CREATE INDEX article_error_submitted_by_idx ON article_error USING btree (submit
 --
 
 CREATE INDEX article_error_url_idx ON article_error USING btree (url);
+
+
+--
+-- Name: article_id_srcorg_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX article_id_srcorg_idx ON article USING btree (id, srcorg);
 
 
 --
@@ -2411,6 +2563,20 @@ CREATE INDEX articles_needs_indexing_idx ON article USING btree (needs_indexing)
 
 
 --
+-- Name: journo_admired_admired_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_admired_admired_id_idx ON journo_admired USING btree (admired_id);
+
+
+--
+-- Name: journo_admired_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_admired_journo_id_idx ON journo_admired USING btree (journo_id);
+
+
+--
 -- Name: journo_attr_article_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -2467,6 +2633,27 @@ CREATE INDEX journo_other_articles_journo_id_idx ON journo_other_articles USING 
 
 
 --
+-- Name: journo_pageviews_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_pageviews_journo_id_idx ON journo_pageviews USING btree (journo_id);
+
+
+--
+-- Name: journo_score_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_score_journo_id_idx ON journo_score USING btree (journo_id);
+
+
+--
+-- Name: journo_score_score_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX journo_score_score_idx ON journo_score USING btree (score);
+
+
+--
 -- Name: journo_similar_journo_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -2519,470 +2706,329 @@ CREATE INDEX requeststash_whensaved_idx ON requeststash USING btree (whensaved);
 -- Name: article_update_total_bloglinks_on_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER article_update_total_bloglinks_on_delete
-    AFTER DELETE ON article_bloglink
-    FOR EACH ROW
-    EXECUTE PROCEDURE article_update_total_bloglinks();
+CREATE TRIGGER article_update_total_bloglinks_on_delete AFTER DELETE ON article_bloglink FOR EACH ROW EXECUTE PROCEDURE article_update_total_bloglinks();
 
 
 --
 -- Name: article_update_total_bloglinks_on_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER article_update_total_bloglinks_on_insert
-    AFTER INSERT ON article_bloglink
-    FOR EACH ROW
-    EXECUTE PROCEDURE article_update_total_bloglinks();
+CREATE TRIGGER article_update_total_bloglinks_on_insert AFTER INSERT ON article_bloglink FOR EACH ROW EXECUTE PROCEDURE article_update_total_bloglinks();
 
 
 --
 -- Name: article_update_total_comments_on_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER article_update_total_comments_on_delete
-    AFTER DELETE ON article_commentlink
-    FOR EACH ROW
-    EXECUTE PROCEDURE article_update_total_comments();
+CREATE TRIGGER article_update_total_comments_on_delete AFTER DELETE ON article_commentlink FOR EACH ROW EXECUTE PROCEDURE article_update_total_comments();
 
 
 --
 -- Name: article_update_total_comments_on_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER article_update_total_comments_on_insert
-    AFTER INSERT ON article_commentlink
-    FOR EACH ROW
-    EXECUTE PROCEDURE article_update_total_comments();
+CREATE TRIGGER article_update_total_comments_on_insert AFTER INSERT ON article_commentlink FOR EACH ROW EXECUTE PROCEDURE article_update_total_comments();
 
 
 --
 -- Name: article_update_total_comments_on_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER article_update_total_comments_on_update
-    AFTER UPDATE ON article_commentlink
-    FOR EACH ROW
-    EXECUTE PROCEDURE article_update_total_comments();
+CREATE TRIGGER article_update_total_comments_on_update AFTER UPDATE ON article_commentlink FOR EACH ROW EXECUTE PROCEDURE article_update_total_comments();
 
 
 --
 -- Name: journo_address_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_address_delete
-    AFTER DELETE ON journo_address
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_address_delete AFTER DELETE ON journo_address FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_address_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_address_insert
-    AFTER INSERT ON journo_address
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_address_insert AFTER INSERT ON journo_address FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_address_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_address_update
-    AFTER UPDATE ON journo_address
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_address_update AFTER UPDATE ON journo_address FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_admired_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_admired_delete
-    AFTER DELETE ON journo_admired
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_admired_delete AFTER DELETE ON journo_admired FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_admired_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_admired_insert
-    AFTER INSERT ON journo_admired
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_admired_insert AFTER INSERT ON journo_admired FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_admired_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_admired_update
-    AFTER UPDATE ON journo_admired
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_admired_update AFTER UPDATE ON journo_admired FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_attr_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_attr_delete
-    AFTER DELETE ON journo_attr
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_attr_delete AFTER DELETE ON journo_attr FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_attr_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_attr_insert
-    AFTER INSERT ON journo_attr
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_attr_insert AFTER INSERT ON journo_attr FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_attr_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_attr_update
-    AFTER UPDATE ON journo_attr
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_attr_update AFTER UPDATE ON journo_attr FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_awards_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_awards_delete
-    AFTER DELETE ON journo_awards
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_awards_delete AFTER DELETE ON journo_awards FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_awards_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_awards_insert
-    AFTER INSERT ON journo_awards
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_awards_insert AFTER INSERT ON journo_awards FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_awards_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_awards_update
-    AFTER UPDATE ON journo_awards
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_awards_update AFTER UPDATE ON journo_awards FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_bio_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_bio_delete
-    AFTER DELETE ON journo_bio
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_bio_delete AFTER DELETE ON journo_bio FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_bio_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_bio_insert
-    AFTER INSERT ON journo_bio
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_bio_insert AFTER INSERT ON journo_bio FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_bio_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_bio_update
-    AFTER UPDATE ON journo_bio
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_bio_update AFTER UPDATE ON journo_bio FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_books_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_books_delete
-    AFTER DELETE ON journo_books
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_books_delete AFTER DELETE ON journo_books FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_books_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_books_insert
-    AFTER INSERT ON journo_books
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_books_insert AFTER INSERT ON journo_books FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_books_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_books_update
-    AFTER UPDATE ON journo_books
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_books_update AFTER UPDATE ON journo_books FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_education_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_education_delete
-    AFTER DELETE ON journo_education
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_education_delete AFTER DELETE ON journo_education FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_education_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_education_insert
-    AFTER INSERT ON journo_education
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_education_insert AFTER INSERT ON journo_education FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_education_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_education_update
-    AFTER UPDATE ON journo_education
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_education_update AFTER UPDATE ON journo_education FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_email_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_email_delete
-    AFTER DELETE ON journo_email
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_email_delete AFTER DELETE ON journo_email FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_email_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_email_insert
-    AFTER INSERT ON journo_email
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_email_insert AFTER INSERT ON journo_email FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_email_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_email_update
-    AFTER UPDATE ON journo_email
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_email_update AFTER UPDATE ON journo_email FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_employment_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_employment_delete
-    AFTER DELETE ON journo_employment
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_employment_delete AFTER DELETE ON journo_employment FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_employment_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_employment_insert
-    AFTER INSERT ON journo_employment
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_employment_insert AFTER INSERT ON journo_employment FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_employment_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_employment_update
-    AFTER UPDATE ON journo_employment
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_employment_update AFTER UPDATE ON journo_employment FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_other_articles_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_other_articles_delete
-    AFTER DELETE ON journo_other_articles
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_other_articles_delete AFTER DELETE ON journo_other_articles FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_other_articles_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_other_articles_insert
-    AFTER INSERT ON journo_other_articles
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_other_articles_insert AFTER INSERT ON journo_other_articles FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_other_articles_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_other_articles_update
-    AFTER UPDATE ON journo_other_articles
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_other_articles_update AFTER UPDATE ON journo_other_articles FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_phone_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_phone_delete
-    AFTER DELETE ON journo_phone
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_phone_delete AFTER DELETE ON journo_phone FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_phone_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_phone_insert
-    AFTER INSERT ON journo_phone
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_phone_insert AFTER INSERT ON journo_phone FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_phone_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_phone_update
-    AFTER UPDATE ON journo_phone
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_phone_update AFTER UPDATE ON journo_phone FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_photo_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_photo_delete
-    AFTER DELETE ON journo_photo
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_photo_delete AFTER DELETE ON journo_photo FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_photo_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_photo_insert
-    AFTER INSERT ON journo_photo
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_photo_insert AFTER INSERT ON journo_photo FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_photo_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_photo_update
-    AFTER UPDATE ON journo_photo
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_photo_update AFTER UPDATE ON journo_photo FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_similar_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_similar_delete
-    AFTER DELETE ON journo_similar
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_similar_delete AFTER DELETE ON journo_similar FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_similar_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_similar_insert
-    AFTER INSERT ON journo_similar
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_similar_insert AFTER INSERT ON journo_similar FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_similar_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_similar_update
-    AFTER UPDATE ON journo_similar
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_similar_update AFTER UPDATE ON journo_similar FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
 -- Name: journo_weblink_delete; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_weblink_delete
-    AFTER DELETE ON journo_weblink
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_ondelete();
+CREATE TRIGGER journo_weblink_delete AFTER DELETE ON journo_weblink FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_ondelete();
 
 
 --
 -- Name: journo_weblink_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_weblink_insert
-    AFTER INSERT ON journo_weblink
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_oninsert();
+CREATE TRIGGER journo_weblink_insert AFTER INSERT ON journo_weblink FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_oninsert();
 
 
 --
 -- Name: journo_weblink_update; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER journo_weblink_update
-    AFTER UPDATE ON journo_weblink
-    FOR EACH ROW
-    EXECUTE PROCEDURE journo_setmodified_onupdate();
+CREATE TRIGGER journo_weblink_update AFTER UPDATE ON journo_weblink FOR EACH ROW EXECUTE PROCEDURE journo_setmodified_onupdate();
 
 
 --
@@ -3306,6 +3352,14 @@ ALTER TABLE ONLY journo_other_articles
 
 
 --
+-- Name: journo_pageviews_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_pageviews
+    ADD CONSTRAINT journo_pageviews_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
 -- Name: journo_phone_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3327,6 +3381,14 @@ ALTER TABLE ONLY journo_photo
 
 ALTER TABLE ONLY journo_photo
     ADD CONSTRAINT journo_photo_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
+
+
+--
+-- Name: journo_score_journo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY journo_score
+    ADD CONSTRAINT journo_score_journo_id_fkey FOREIGN KEY (journo_id) REFERENCES journo(id) ON DELETE CASCADE;
 
 
 --
