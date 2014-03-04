@@ -155,6 +155,10 @@ ul {
     padding: 0.5em 1em;
 }
 
+a.btn:visited {
+    color: #222;
+}
+
 .btn:hover {
     text-decoration: none;
     background: #F8C64B;
@@ -813,17 +817,18 @@ ul.newList li a:focus {
 }
 
 /* more fudge to get form right */
-.exhort input {
+.exhort input#fullname {
     display: block;
     margin: 0.5em 0;
     padding: 0.2em;
 }
 
-
+/*
 .exhort input.btn {
     margin-top: 1.75em;
     padding: 0.5em 2em;
 }
+*/
 
 /* page-specific hackery */
 .front-page .box-recently-updated {

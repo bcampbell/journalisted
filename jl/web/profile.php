@@ -95,79 +95,24 @@ if( $action == 'lookup' ) {
 /* page to lookup and see if journo already has an entry */
 function showLookupPage()
 {
-    page_header( "lookup" );
 
     $fullname = get_http_var( 'fullname','' );
-
-?>
-<div class="main">
-<div class="head"></div>
-<div class="body">
-<p>You might already have a profile on journa<i>listed</i></p>
-<p>Let's take a look...</p>
-<form method="get" action="/profile">
- <label for="fullname">My name is:</label>
- <input type="text" name="fullname" id="fullname" value="<?= h($fullname) ?>" />
- <input type="hidden" name="action" value="lookup" />
- <input type="submit" value="<?= ($fullname=='')?"Search":"Search again" ?>" />
-</form>
-<?php
-
+    $matching_journos = array();
     if( $fullname ) {
         $matching_journos = journo_FuzzyFind( $fullname );
-        $uniq=0;
-
-        if( $matching_journos ) {
-
-?>
-<form method="get" action="/profile">
-<p>Are you one of these people?</p>
-
-<?php foreach( $matching_journos as $j ) { ?>
-<input type="radio" id="ref_<?= $uniq ?>" name="ref" value="<?= $j['ref'] ?>" />
-<label for="ref_<?= $uniq ?>"><?= $j['prettyname']; ?> (<?= $j['oneliner'] ?>)</label>
-<br/>
-<?php ++$uniq; } ?>
-<input type="hidden" name="action" value="claim" />
-<input type="submit" value="Yes, that's me" />
-</form>
-
-or...
-
-<?php
-
-        } else {
-            /* searched, found no matches */
-?>
-<p>Sorry, we couldn't find any profiles matching your name.</p>
-<?php
-        }
-?>
-<form method="get" action="/profile">
-  <input type="hidden" name="action" value="create" />
-  <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
-  <input type="submit" value="Create a new profile for me, <?= h($fullname)?>" />
-</form>
-<?php
     }
-?>
-</div>
-<div class="foot"></div>
-</div> <!-- end main -->
-<?php
-    page_footer();
+
+    if( sizeof($matching_journos)>0) {
+        page_header( "lookup" );
+        {
+            include "../templates/profile_lookup.tpl.php";
+        }
+        page_footer();
+    } else {
+        // no matches - just go ahead and create it
+        showCreatePage();
+    }
 }
-
-
-
-/*
-    $login_reasons = array(
-        'reason_web' => "Edit your page on Journalisted",
-        'reason_email' => "Edit your page on Journalisted",
-        'reason_email_subject' => "Edit your page on Journalisted"
-    );
-*/
-
 
 
 
@@ -336,7 +281,7 @@ function showClaimPage( $journo )
 //    }
 
     if( !$P->has_password() ) {
-        // we'll use an password from which submits to /account instead of here.
+        // we'll use an password form which submits to /account instead of here.
         $passwordbox = new PasswordBox( '/account' );
     }
 
