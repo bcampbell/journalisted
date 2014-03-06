@@ -11,51 +11,52 @@ require_once '../../phplib/db.php';
 require_once '../../phplib/utility.php';
 
 
-$action = strtolower( get_http_var( 'action' ) );
+/*
+* VIEWS
+*/
 
-if( $action == 'lookup' ) {
-    showLookupPage();
-} else if( $action == 'claim' ) {
-    $ref = strtolower( get_http_var( 'ref' ) );
-    showClaimPage($ref);
-} else if( $action == 'create' ) {
-    showCreatePage();
-} else {
-    header("HTTP/1.0 404 Not Found");
-    return;
+// entry point
+function view() {
+    $action = strtolower( get_http_var( 'action' ) );
+
+    if( $action == 'lookup' ) {
+        view_lookup();
+    } else if( $action == 'claim' ) {
+        view_claim();
+    } else if( $action == 'create' ) {
+        view_create();
+    } else {
+        header("HTTP/1.0 404 Not Found");
+    }
 }
 
 
 
 /* page to lookup and see if journo already has an entry */
-function showLookupPage()
+function view_lookup()
 {
-
     $fullname = get_http_var( 'fullname','' );
+    $fullname = trim( $fullname );
+    $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
+
     $matching_journos = array();
     if( $fullname ) {
         $matching_journos = journo_FuzzyFind( $fullname );
     }
 
     if( sizeof($matching_journos)>0) {
-        page_header( "lookup" );
-        {
-            include "../templates/profile_lookup.tpl.php";
-        }
-        page_footer();
+        tmpl_lookup($fullname, $matching_journos);
     } else {
         // no matches - just go ahead and create it
-        showCreatePage();
+        // TODO: show confirmation/fixup page
+        view_create();
     }
 }
 
 
 
 
-
-
-
-function showCreatePage()
+function view_create()
 {
     // we need them logged on first
     $P = person_register(array(
@@ -64,12 +65,47 @@ function showCreatePage()
         'reason_email_subject' => 'Register on Journalisted'
     ));
 
-    $fullname = get_http_var( 'fullname' );
+    $fullname = get_http_var('fullname');
+    $fullname = trim( $fullname );
+    $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
+    $confirm = get_http_var('confirm');
+
     if( !$fullname )
     {
-        showLookupPage();
+        header("Location: /");
         return;
     }
+
+
+    // have they already created a profile?
+    // if so, just redirect them there
+    {
+        $sql = <<<EOT
+SELECT j.ref,j.prettyname
+   FROM (journo j INNER JOIN person_permission perm ON perm.journo_id=j.id)
+   WHERE perm.person_id=? AND perm.permission='edit';
+EOT;
+        $journo = db_getRow( $sql, $P->id);
+        // TODO: compare prettyname?
+        if($journo) {
+            header("Location: /{$journo['ref']}");
+            return;
+        }
+    }
+
+    // is name insane?
+    if(!is_name_sensible($fullname) && !$confirm) {
+        // show confirmation page
+
+        // suggest capitalisation?
+        $s = "";
+        if(ucwords(strtolower($fullname))!=$fullname) {
+            $s = ucwords($fullname);
+        }
+        tmpl_create_confirm($fullname,$s);
+        return;
+    }
+
     $journo = journo_create( $fullname );
 
     // link user to journo
@@ -86,13 +122,11 @@ function showCreatePage()
 
     // just redirect to /account page.
     header("Location: /account?welcome=1");
-    exit();
 }
 
 
-function showClaimPage($ref)
+function view_claim()
 {
-    /* claiming a specific journo? */
     $ref = strtolower( get_http_var( 'ref' ) );
 
     $iamwhoisay = get_http_var( "iamwhoisay" );
@@ -121,14 +155,7 @@ function showClaimPage($ref)
     $foo = db_getAll( "SELECT journo_id FROM person_permission WHERE journo_id=? AND permission='edit'", $journo['id'] );
     if( $foo ) {
         // uhoh...
-        page_header("");
-?>
-<div class="main">
-<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>...</p>
-<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know' );?></p>
-</div>
-<?php
-        page_footer();
+        tmpl_already_claimed($journo);
         return;
     }
 
@@ -153,7 +180,65 @@ function showClaimPage($ref)
         // we'll use an password form which submits to /account instead of here.
         $passwordbox = new PasswordBox( '/account' );
     }
+    tmpl_welcome($journo,$passwordbox);
+}
 
+
+/*
+ * TEMPLATES
+ */
+
+function tmpl_lookup($fullname, $matching_journos) {
+    page_header( "lookup" );
+    {
+        include "../templates/profile_lookup.tpl.php";
+    }
+    page_footer();
+}
+
+
+function tmpl_create_confirm($fullname, $suggested="") {
+    page_header("");
+?>
+<div class="main">
+    <h3>Confirm profile creation...</h3>
+    <p>
+    Create profile with name <strong><?= h($fullname)?></strong>?
+    <?php if($suggested) { ?>
+    (perhaps you meant <em><?= h($suggested) ?></em>?)
+    <?php } ?>
+    </p>
+    <form action="/create_profile" method="GET">
+        <input type="hidden" name="confirm" value="yes" />
+        <input type="hidden" name="action" value="create" />
+        <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
+
+        <input class="btn" type="submit" value="Create" />
+        <a href="/">no, go back!</a>
+    </form>
+
+
+</div>
+<?php
+    page_footer();
+}
+
+
+
+function tmpl_already_claimed($journo) {
+    page_header("");
+?>
+<div class="main">
+<p>Sorry - someone has already claimed to be <?= $journo['prettyname'] ?>...</p>
+<p>If you are the <em>real</em> <?= $journo['prettyname'] ?>, please <?= SafeMailto( OPTION_TEAM_EMAIL, 'let us know' );?></p>
+</div>
+<?php
+    page_footer();
+}
+
+
+
+function tmpl_welcome($journo,$passwordbox) {
     page_header("");
 ?>
 <div class="main">
@@ -174,7 +259,10 @@ function showClaimPage($ref)
 }
 
 
-function toSlug( $s )
+
+// HELPERS
+
+function toRef( $s )
 {
     $s = trim( $s );
     $s = preg_replace( '/\s+/', ' ', $s );  // collapse spaces
@@ -196,11 +284,17 @@ function journo_create( $fullname )
     $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
 
     // TODO: should deal with name titles/suffixes ("Dr." etc) but not a big deal
-    $ref = toSlug( $fullname );
+    $ref = toRef( $fullname );
+
+    // special case to deal with one-word names
+    if(strpos($ref,'-') === FALSE) {
+        $ref .= "-1";
+    }
+
     // make sure ref is unique
     $i=1;
     while( db_getOne( "SELECT id FROM journo WHERE ref=?", $ref ) ) {
-        $ref = toSlug( $fullname ) . "-" . $i++;
+        $ref = toRef( $fullname ) . "-" . $i++;
     }
 
 
@@ -265,5 +359,20 @@ function person_register($template_data, $email = null, $name = null, $person_if
     header("Location: /login?action=register&stash=$st$send_email_part$email_part$name_part");
     exit();
 }
+
+function is_name_sensible($fullname) {
+    $parts = explode( ' ', $fullname );
+    if(sizeof($parts)<2 || sizeof($parts)>3) {
+        return false;
+    }
+    if(ucwords(strtolower($fullname))!=$fullname) {
+        return false;
+    }
+
+    // looks ok
+    return true;
+}
+
+view();
 
 ?>
