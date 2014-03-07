@@ -94,8 +94,7 @@
 
 <div id="content">
 
-<?php /*
-<div class="box promotional">
-<em>Help test our new site, <a href="http://unsourced.org">unsourced.org</a>, and discover the real sources behind the news</em>
-</div>
-*/ ?>
+  <div class="">
+      <a class="crosspromo" href="http://churnalism.com">New <img src="/img/promo/churnalism_icon.png"/> Churnalism web site and browser extensions,&nbsp;&nbsp;&nbsp; <strong>Check articles for press release churn while you browse!</strong></a>
+  </div>
+
