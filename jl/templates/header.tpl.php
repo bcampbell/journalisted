@@ -95,6 +95,6 @@
 <div id="content">
 
   <div class="">
-      <a class="crosspromo" href="http://churnalism.com">New <img src="/img/promo/churnalism_icon.png"/> Churnalism web site and browser extensions,&nbsp;&nbsp;&nbsp; <strong>Check articles for press release churn while you browse!</strong></a>
+      <a class="crosspromo" href="http://churnalism.com">New <img src="/img/promo/churnalism_icon.png"/> Churnalism web site and browser extensions.&nbsp;&nbsp;&nbsp; <strong>Check articles for press release churn while you browse!</strong></a>
   </div>
 
