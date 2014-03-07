@@ -13,7 +13,7 @@
         <form method="get" action="/create_profile">
             <input type="hidden" name="action" value="claim" />
             <input type="hidden" name="ref" value="<?= $j['ref'] ?>" />
-            <input class="btn" type="submit" value="Claim existing profile" />
+            <input class="btn" id="claim" type="submit" value="Claim existing profile" />
             <input type="checkbox" name="iamwhoisay" id="iamwhoisay" value="yes" />
             <label for="iamwhoisay">I confirm that I <strong>am</strong> really this person</label>
         </form>
@@ -29,7 +29,7 @@
             <?php ++$uniq; } ?>
             <input type="hidden" name="action" value="claim" />
             <br/>
-            <input class="btn" type="submit" value="Claim existing profile" />
+            <input class="btn" id="claim" type="submit" value="Claim existing profile" />
             <input type="checkbox" name="iamwhoisay" id="iamwhoisay" value="yes" />
             <label for="iamwhoisay">I confirm that I <strong>am</strong> really this person</label>
         </form>
@@ -45,5 +45,29 @@
     <div class="foot"></div>
 </div>
 </div> <!-- end main -->
+
+<script language="javascript" type="text/javascript">
+    /* disable submit button until inputs are sensible */
+    var rethinkSubmit = function() {
+        var valid = true;
+        if( !$('#iamwhoisay').is(":checked")) {
+            valid = false;
+        }
+        if($('input[name="ref"]').size()>1) {
+            // check that a radio button is picked
+            if(!$('input[name="ref"]:checked').val()) {
+                valid = false;
+            }
+        }
+        if(valid) {
+            $('#claim').removeAttr('disabled');
+        } else {
+            $('#claim').attr('disabled', 'disabled');
+        }
+
+    };
+    $('#iamwhoisay, input[name="ref"]').change(rethinkSubmit);
+    rethinkSubmit();
+</script>
 <?php
 

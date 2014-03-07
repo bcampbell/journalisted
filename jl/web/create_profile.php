@@ -133,10 +133,10 @@ function view_claim()
     $ref = strtolower( get_http_var( 'ref' ) );
 
     $iamwhoisay = get_http_var( "iamwhoisay" );
-    if( !$ref || !$iamwhoisay ) {
-        // go back to claim selection
+    if( !$iamwhoisay ) {
+        // no confirmation box ticked...
+        header("Location: /");
     }
-
 
     $journo = db_getRow( "SELECT * FROM journo WHERE ref=?", $ref );
     if( !$journo ) {
@@ -192,7 +192,7 @@ function view_claim()
  */
 
 function tmpl_lookup($fullname, $matching_journos) {
-    page_header( "lookup" );
+    page_header( "lookup");
     {
         include "../templates/profile_lookup.tpl.php";
     }
