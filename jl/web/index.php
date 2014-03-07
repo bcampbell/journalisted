@@ -17,46 +17,12 @@ require_once '../phplib/article.php';
 
 
 
-function extra_head()
-{
-?>
-<script language="javascript" type="text/javascript">
-    $(document).ready( function () {
-        // equalHeight() by Rob Glazebrook
-        function equalHeight(group) {
-            var tallest = 0;
-            group.each(function() {
-                var thisHeight = $(this).height();
-                if(thisHeight > tallest) {
-                    tallest = thisHeight;
-                }
-            });
-            group.height(tallest);
-        }
-        equalHeight( $(".recently-viewed .body,.recently-updated .body,.most-blogged .body") );
-/*        equalHeight( $(".box.thisweek,.box.tobias") ); */
-    });
-</script>
-<?php
-}
 
 
 
 function view()
 {
-
-
-    // setup for placeholder text in input forms
-    $head_extra = <<<EOT
-      <script type="text/javascript" language="JavaScript">
-        window.onload=function() {
-          activatePlaceholders();
-        }
-      </script>
-EOT;
-
-
-    page_header( "", array( 'menupage'=>'cover', 'head_extra_fn'=>"extra_head" ) );
+    page_header("", array('menupage'=>'cover'));
 
     // get most-recently-updated journos from event log
     $recently_updated  = array();
