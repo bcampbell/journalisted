@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
 # Tool to populate a database with dummy news articles and journos
+# all articles are from "non-existant-newspaper.com"
+#
 #
 # Copyright (c) 2007 Media Standards Trust
 # Licensed under the Affero General Public License
@@ -29,15 +31,7 @@ import mysociety.config
 
 BASEURL = "http://www.non-existant-newspaper.com/"
 
-DUMMY_JOURNOS = [
-    u"Freida Jones",
-    u"Dr. Susie Medhurst",
-    u"Ari Stroman",
-    u"Everett Parker",
-    u"Karolann Kertzmann",
-    u"Vaughn Stoltenberg" ]
-
-def FakeArt():
+def FakeArt(journo_names):
     """  """
     art = {}
 
@@ -47,7 +41,7 @@ def FakeArt():
     art['permalink'] = url
 
     art['pubdate'] = faker.date_time_this_decade()
-    art['byline'] = random.choice(DUMMY_JOURNOS)
+    art['byline'] = random.choice(journo_names)
 
     art['content'] = faker.text()
     return art
@@ -99,9 +93,16 @@ def main():
     dbname = mysociety.config.get('JL_DB_NAME')
     assert dbname != "jl" # don't run against live db!
 
+    num_journos = 2000
+    num_articles = 5000
+
+    journo_names = []
+    for i in range(num_journos):
+        journo_names.append(faker.name())
+
     arts = []
-    for i in range(1000):
-        art = FakeArt()
+    for i in range(num_articles):
+        art = FakeArt(journo_names)
         arts.append(art)
 
     store = ArticleDB.ArticleDB()
