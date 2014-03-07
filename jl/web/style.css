@@ -1541,11 +1541,30 @@ a.public-profile-location {
 .register-now .get-in-touch {
     font-size: 150%;
 }
-.promotional {
-    padding: 0.4em;
-    font-size: 110%;
+
+.crosspromo {
+    display:block;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 16px;
     text-align: center;
+    background-color: #3276b1;
+    color: #fff;
+    text-decoration: none;
 }
+
+.crosspromo:visited { color: #fff; }
+.crosspromo:hover {
+    color: #fff;
+    background-color: #3e91d7;
+    text-decoration: none;
+}
+
+.crosspromo img {
+    vertical-align:middle;
+}
+
+
 .faqlink {
     float: right;
     font-size: 11px;
