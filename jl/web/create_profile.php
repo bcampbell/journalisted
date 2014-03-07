@@ -1,5 +1,9 @@
 <?php
 
+//
+// page for creating or claiming profiles
+//
+
 require_once '../conf/general';
 require_once '../phplib/page.php';
 require_once '../phplib/journo.php';
@@ -58,24 +62,35 @@ function view_lookup()
 
 function view_create()
 {
-    // we need them logged on first
-    $P = person_register(array(
-        'reason_web' => "Register to create a profile",
-        'reason_email' => "Register on Journalisted to create a profile",
-        'reason_email_subject' => 'Register on Journalisted'
-    ));
-
     $fullname = get_http_var('fullname');
     $fullname = trim( $fullname );
     $fullname = preg_replace( '/\s+/', ' ', $fullname );  // collapse spaces
-    $confirm = get_http_var('confirm');
-
     if( !$fullname )
     {
         header("Location: /");
         return;
     }
 
+    $confirm = get_http_var('confirm');
+    // is name insane?
+    if(!is_name_sensible($fullname) && !$confirm) {
+        // show confirmation page
+
+        // suggest capitalisation?
+        $s = "";
+        if(ucwords(strtolower($fullname))!=$fullname) {
+            $s = ucwords($fullname);
+        }
+        tmpl_create_confirm($fullname,$s);
+        return;
+    }
+
+    // we need them logged on first
+    $P = person_register(array(
+        'reason_web' => "Register to create a profile",
+        'reason_email' => "Register on Journalisted to create a profile",
+        'reason_email_subject' => 'Register on Journalisted'
+    ));
 
     // have they already created a profile?
     // if so, just redirect them there
@@ -93,18 +108,6 @@ EOT;
         }
     }
 
-    // is name insane?
-    if(!is_name_sensible($fullname) && !$confirm) {
-        // show confirmation page
-
-        // suggest capitalisation?
-        $s = "";
-        if(ucwords(strtolower($fullname))!=$fullname) {
-            $s = ucwords($fullname);
-        }
-        tmpl_create_confirm($fullname,$s);
-        return;
-    }
 
     $journo = journo_create( $fullname );
 
@@ -213,7 +216,7 @@ function tmpl_create_confirm($fullname, $suggested="") {
         <input type="hidden" name="action" value="create" />
         <input type="hidden" name="fullname" value="<?= h($fullname) ?>" />
 
-        <input class="btn" type="submit" value="Create" />
+        <input class="btn" type="submit" value="Create profile" />
         <a href="/">no, go back!</a>
     </form>
 
