@@ -9,8 +9,37 @@ need.
 TODO: schema.sql and basedata.sql need refreshing.
 
 
-RESTORING DB
------------
+create dummy db
+---------------
+
+Useful to have a dummy database for testing. Rough steps:
+
+create dummy db owned by jl user
+$ sudo -u postgres createdb -O jl -E utf8 dummyjl
+
+test that you can connect as jl user
+$ psql -U jl dummyjl
+
+most likely you'll need to fiddle with permissions:
+$ sudoedit /etc/postgresql/9.2/main/pg_hba.conf
+$ sudo /etc/init.d/postgresql reload
+
+load the schema:
+$ cat schema.sql | psql -U jl dummyjl
+
+change conf/general to use dummyjl (set OPTION_JL_DB_NAME)
+
+create some fake data:
+$ cd ../hacks
+$ ./generate-junk
+
+Create a user then give admin rights:
+$ psql -U jl dummyjl
+> insert into person_permission (person_id,permission) values (1,'admin');
+
+
+notes on restoring db
+---------------------
 
 There is an annoying issue with plpgsql language support during restore:
 
