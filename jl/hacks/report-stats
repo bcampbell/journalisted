@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+#
+# generate various stats about the JL database
+#
+
+import sys
+#from optparse import OptionParser
+#import logging
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+def main():
+
+
+    c = DB.conn().cursor()
+
+    
+    c.execute("SELECT COUNT(*) AS num_active_journos FROM journo WHERE status='a'")
+    print "active journos: ", int(c.fetchone()['num_active_journos'])
+
+    art_threshold = 10
+    sql = """SELECT count(*) from (SELECT j.id,count(*) FROM (journo j INNER JOIN journo_attr attr ON j.id=attr.journo_id) GROUP BY j.id HAVING count(*) >= %s) as foo;"""
+    c.execute(sql, (art_threshold,))
+
+    print "active journos with >%d articles: %d" % (art_threshold,int(c.fetchone()['count']))
+    # SELECT srcorg,count(*) as cnt FROM article GROUP BY srcorg HAVING count(*) > 1000 order by count(*) desc;
+
+    c.execute("SELECT COUNT(*) as cnt FROM person")
+    print "user accounts: ", int(c.fetchone()['cnt'])
+
+    c.execute("SELECT COUNT(DISTINCT journo_id) AS cnt FROM person_permission WHERE permission='edit'")
+    print "claimed journos: ", int(c.fetchone()['cnt'])
+
+    c.execute("SELECT COUNT(*) AS cnt FROM alert")
+    print "number of alerts: ", int(c.fetchone()['cnt'])
+
+    c.execute("SELECT COUNT(DISTINCT person_id) AS cnt FROM alert")
+    print "number of users who have set up alerts: ", int(c.fetchone()['cnt'])
+
+    c.execute("SELECT COUNT(DISTINCT journo_id) AS cnt FROM alert")
+    print "number of journos covered by alerts: ", int(c.fetchone()['cnt'])
+
+    c.execute("SELECT COUNT(*) AS cnt FROM article WHERE status='a'")
+    print "number of articles: ", int(c.fetchone()['cnt'])
+
+if __name__ == "__main__":
+    main()
+
