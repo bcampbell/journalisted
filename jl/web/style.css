@@ -394,9 +394,12 @@ form dl {
  #header {
     margin: 0;
     padding: 0;
-    height: 144px;
-    background: #cc0e0e url("/img/header_bg.png") repeat-x left bottom;
+    height: 140px;
+    background: #cc0e0e;
+    background: linear-gradient(#e10000, #cc0e0e);
+    box-shadow: 0 0 5px #888888;
 }
+
 #header .inner {
     position: relative;
     width: 995px;
