@@ -21,17 +21,17 @@ require_once '../../phplib/db.php';
 
 function view() {
     // parse the search params
-    $kind = get_http_var('type',null);
+    $kind = get_http_var('type',"");
     $q = get_http_var('q');
 
-    if(is_null($kind)) {
-        $j = get_http_var('j',null);
-        $a = get_http_var('a',null);
-        if(!is_null($j)) {
+    if(!$kind) {
+        $j = get_http_var('j',"");
+        $a = get_http_var('a',"");
+        if($j) {
             $q = $j;
             $kind = 'journo';
         }
-        if(!is_null($a)) {
+        if($a) {
             $q = $a;
             $kind = 'article';
         }
@@ -46,9 +46,10 @@ function view() {
         $q .= " author:" . $by;
     }
 
+    $sort_order = get_http_var('o');
     $article_results = null;
     if($kind!='journo') {
-        $as = new ArticleSearch($q,$art_page,'p');
+        $as = new ArticleSearch($q,$sort_order,$art_page,'p');
         $article_results = $as->perform();
     }
 
@@ -66,7 +67,7 @@ function view() {
       }
 */
 
-    tmpl($q,$journo_results,$article_results);
+    tmpl($q,$kind,$sort_order,$journo_results,$article_results);
 }
 
 
@@ -103,91 +104,9 @@ function search_articles_output_csv($results)
 
 
 
-function tmpl($q, $journo_results, $article_results )  {
+function tmpl($q,$kind,$sort_order,$journos, $arts)  {
     page_header( "Search Results" );
-
-?>
-<div class="main">
-
-
-  <div class="search">
-    <form action="/search" method="get">
-      <input type="text" value="<?= h($q) ?>" id="q2" name="q" />
-      <input type="submit" alt="search" value="Search" />
-    </form>
-  </div>
-
-
-<?php
-if( $journo_results !== null ) {
-    /**** show journo results ****/
-?>
-
-<div class="search-results">
-  <div class="head">
-    <h4><?= $journo_results->total ?> matching journalists</h4>
-  </div>
-
-  <div class="body">
-    <ul>
-<?php   foreach( $journo_results->data as $j ) { ?>
-      <li><?= journo_link($j); ?></li>
-<?php   } ?>
-    </ul>
-
-    <? if ($journo_results->multi_page()) { ?>
-    <div class="paginator">page <?= $journo_results->paginator()->render(); ?></div>
-    <? } ?>
-  </div>
-  <div class="foot">
-  </div>
-</div> <!-- end .search-results -->
-
-<?php } /**** end of journo results ****/ ?>
-
-
-<?php
-if( $article_results !== null ) {
-    /**** show article results ****/
-?>
-<div class="search-results">
-  <div class="head">
-    <h4>around <?= $article_results->total ?> matching articles</h4>
-  </div>
-
-  <div class="body">
-    <ul class="art-list hfeed">
-<?php
-    foreach( $article_results->data as $art ) {
-        $journolinks = array();
-        foreach( $art['journos'] as $j ) {
-            $journolinks[] = sprintf( "<a href=\"%s\">%s</a>", '/'.$j['ref'], h( $j['prettyname'] ) );
-        }
-?>
-      <li class="hentry">
-        <h4 class="entry-title"><a class="extlink" href="<?= $art['permalink']; ?>"><?= $art['title']; ?></a></h4>
-        <?php if( $journolinks ) { ?><small><?= implode( ', ', $journolinks ); ?></small><br/><?php } ?>
-        <span class="publication"><?= $art['srcorgname']; ?>,</span>
-        <abbr class="published" title="<?= $art['iso_pubdate']; ?>"><?= $art['pretty_pubdate']; ?></abbr>
-        <br/>
-        <?php if( $art['id'] ) { ?> <a href="<?= article_url($art['id']);?>">More about this article</a><br/> <?php } ?>
-      </li>
-<?php } ?>
-    </ul>
-    <? if ($article_results->multi_page()) { ?>
-    <div class="paginator">page <?= $article_results->paginator()->render(); ?></div>
-    <? } ?>
-  </div>
-  <div class="foot">
-  </div>
-
-</div> <!-- end .search-results -->
-
-<?php } /**** end of article results ****/ ?>
-
-
-</div>  <!-- end .main -->
-<?php
+    include "../templates/search.tpl.php";
     page_footer();
 }
 

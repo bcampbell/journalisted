@@ -13,12 +13,12 @@ class ArticleSearch
     public $sort_order;
     public $page_var;
 
-    function __construct($query,$page,$page_var='p') {
+    function __construct($query,$sort_order,$page,$page_var='p') {
         $this->q = $query;
         $this->page = $page;
         $this->per_page = 20;
         $this->page_var = $page_var;
-
+        $this->sort_order = $sort_order;
     }
 
     function perform() {

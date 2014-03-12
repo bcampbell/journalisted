@@ -33,9 +33,7 @@ class Paginator
         if($pagenum == $this->page) {
             return sprintf('<span class="this-page">%d</span>', $pagenum+1);
         }
-        $params = array_merge($_GET, array($this->page_var=>$pagenum));
-        list($path) = explode("?", $_SERVER["REQUEST_URI"], 2);
-        $url = $path . "?" . http_build_query($params);
+        $url = modify_url(array($this->page_var=>$pagenum));
         // TODO: rel="next/prev" etc...
         return sprintf( '<a href="%s">%d</a>', $url, $pagenum+1);
     }
