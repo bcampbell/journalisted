@@ -5,28 +5,20 @@ require_once(__DIR__."/article.php");
 
 class ArticleSearch
 {
-    public $q;
+    public $q;      // the query string
+    public $page;   // current page
+
     public $per_page;
-    public $page;
 
     public $sort_order;
+    public $page_var;
 
-    function __construct($reqvars=array()) {
-        $this->q = '';
+    function __construct($query,$page,$page_var='p') {
+        $this->q = $query;
+        $this->page = $page;
         $this->per_page = 20;
-        $this->page = 0;
+        $this->page_var = $page_var;
 
-        if(array_key_exists('j',$reqvars)) {
-            $this->q = $reqvars['j'];
-        } elseif(array_key_exists('q',$reqvars)) {
-            $this->q = $reqvars['q'];
-        }
-        if(array_key_exists('p',$reqvars)) {
-            $this->page = $reqvars['p'];
-        }
-        if(array_key_exists('by',$reqvars)) {
-            $this->q .= " author:" . $reqvars['by'];
-        }
     }
 
     function perform() {
@@ -51,7 +43,7 @@ class ArticleSearch
         }
         unset( $art );
 
-        return new ArticleSearchResults($this, $results, $total);
+        return new ArticleSearchResults($results, $total, $this->page_var, $this->per_page);
     }
 
 //    function description() {
@@ -62,12 +54,14 @@ class ArticleSearch
 class ArticleSearchResults {
     public $total;  // total number of results
     public $data;   // subset of results
-    public $search; // the original Search
+    public $per_page; // num of results per page
+    public $page_var;
 
     private $pager;
 
-    function __construct($search, $data,$total) {
-        $this->search = $search;
+    function __construct($data,$total,$page_var, $per_page) {
+        $this->per_page = $per_page;
+        $this->page_var = $page_var;
         $this->data = $data;
         $this->total = $total;
         $this->pager = null;
@@ -75,7 +69,7 @@ class ArticleSearchResults {
 
     function paginator() {
         if($this->pager === null) {
-            $this->pager = new Paginator($this->total, $this->search->per_page, 'p');
+            $this->pager = new Paginator($this->total, $this->per_page, $this->page_var);
         }
         return $this->pager;
     }

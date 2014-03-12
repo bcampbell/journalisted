@@ -4,31 +4,30 @@ require_once(__DIR__."/journo.php");
 
 class JournoSearch
 {
+
     public $q;
+    public $page_var;
     public $per_page;
     public $page;
 
-    function __construct($reqvars=array()) {
-        $this->q = '';
-        $this->per_page = 20;
+    function __construct($query, $page, $page_var='jp') {
+        $this->q = $query;
         $this->page = 0;
+        $this->per_page = 20;
+        $this->page_var = $page_var;
 
-        if(array_key_exists('j',$reqvars)) {
-            $this->q = $reqvars['j'];
-        } elseif(array_key_exists('q',$reqvars)) {
-            $this->q = $reqvars['q'];
-        }
-        if(array_key_exists('jp',$reqvars)) {
-            $this->page = $reqvars['jp'];
-        }
     }
 
     function perform() {
         $journos = array();
-        if( $this->q )
+        if( $this->q ) {
             $journos = journo_FuzzyFind($this->q);
+        }
+        $total = sizeof($journos);
         $offset = $this->page * $this->per_page;
-        return new JournoSearchResults($this, array_slice( $journos, $offset, $this->per_page), sizeof($journos));
+        $journos = array_slice( $journos, $offset, $this->per_page);
+
+        return new JournoSearchResults($journos, $total, $this->page_var, $this->per_page);
     }
 
 //    function description() {
@@ -39,12 +38,14 @@ class JournoSearch
 class JournoSearchResults {
     public $total;  // total number of results
     public $data;   // subset of results
-    public $search; // the original Search
+    public $per_page; // num of results per page
+    public $page_var;
 
     private $pager;
 
-    function __construct($search, $data,$total) {
-        $this->search = $search;
+    function __construct($data,$total,$page_var, $per_page) {
+        $this->per_page = $per_page;
+        $this->page_var = $page_var;
         $this->data = $data;
         $this->total = $total;
         $this->pager = null;
@@ -52,7 +53,7 @@ class JournoSearchResults {
 
     function paginator() {
         if($this->pager === null) {
-            $this->pager = new Paginator($this->total, $this->search->per_page, 'jp');
+            $this->pager = new Paginator($this->total, $this->per_page,  $this->page_var);
         }
         return $this->pager;
     }

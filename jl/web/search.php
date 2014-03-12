@@ -20,22 +20,41 @@ require_once '../../phplib/db.php';
 
 
 function view() {
+    // parse the search params
+    $kind = get_http_var('type',null);
+    $q = get_http_var('q');
 
-    $kind = get_http_var('type',"");
+    if(is_null($kind)) {
+        $j = get_http_var('j',null);
+        $a = get_http_var('a',null);
+        if(!is_null($j)) {
+            $q = $j;
+            $kind = 'journo';
+        }
+        if(!is_null($a)) {
+            $q = $a;
+            $kind = 'article';
+        }
+    }
 
-    $q = '';
+    $art_page = get_http_var('p',0);
+    $journo_page = get_http_var('jp',0);
+
+    // special 'by' param for article searches
+    $by = get_http_var('by',"");
+    if($by && $kind !='journo' ) {
+        $q .= " author:" . $by;
+    }
 
     $article_results = null;
     if($kind!='journo') {
-        $as = new ArticleSearch($_GET);
-        $q = $as->q;    // hackhackhack
+        $as = new ArticleSearch($q,$art_page,'p');
         $article_results = $as->perform();
     }
 
     $journo_results = null;
     if($kind!='article') {
-        $js = new JournoSearch($_GET);
-        $q = $js->q;    // hackhackhack
+        $js = new JournoSearch($q,$journo_page,'jp');
         $journo_results = $js->perform();
     }
 
@@ -46,7 +65,6 @@ function view() {
         return;
       }
 */
-
 
     tmpl($q,$journo_results,$article_results);
 }
