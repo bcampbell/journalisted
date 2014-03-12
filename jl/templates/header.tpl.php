@@ -84,6 +84,7 @@
         <form action="/search" method="get">
           <input type="text" value="" id="q" name="q" />
           <input type="submit" alt="search" value="Search" />
+          <input type="hidden" name="type" value="journo" />
         </form>
       </div>
       <div style="clear:both;"></div>
