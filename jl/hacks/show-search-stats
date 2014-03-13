@@ -62,17 +62,30 @@ def main():
 
     journo_cnt = 0
     art_cnt=0
+    art_by_cnt=0
+    journo_inbound_cnt = 0
+    art_inbound_cnt=0
 
     for l in foo:
         req = l[REQ]
-        if "type=journo" in req or "?j=" in req or "&j=" in req:
+        if "type=journo" in req:
             journo_cnt += 1
-        elif "type=article" in req or "?a=" in req or "&a=" in req:
+        elif "?j=" in req or "&j=" in req:
+            journo_inbound_cnt += 1
+        elif "by=" in req:
+            art_by_cnt += 1
+        elif "type=article" in req:
             art_cnt += 1
+        elif "?a=" in req or "&a=" in req:
+            art_inbound_cnt += 1
 
-    print( journo_cnt, "journo searches")
-    print( art_cnt, "article searches")
+    print( journo_cnt, "type=journo searches")
+    print( art_cnt, "type=article searches")
+    print( art_by_cnt, "author-specific article searches")
+    print( journo_inbound_cnt, "journo j= searches")
+    print( art_inbound_cnt, "article a= searches")
 
+    print( journo_cnt + art_by_cnt+ journo_inbound_cnt + art_cnt + art_inbound_cnt, "total")
 #    hits = analyse(src)
 #    for ref,cnt in hits:
 #        print("%s,%s" % (cnt,ref) )
