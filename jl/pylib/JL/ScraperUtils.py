@@ -77,10 +77,10 @@ def unique_articles( arts ):
 
 
 canonical_url_pats = [
-    re.compile(r'<link\s+[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)"', re.DOTALL|re.IGNORECASE),
-    re.compile(r'<link\s+[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical"', re.DOTALL|re.IGNORECASE),
+    re.compile(r'<link\s+[^>]*rel\s*=\s*"canonical"[^>]*href\s*=\s*"(.*?)"', re.IGNORECASE),
+    re.compile(r'<link\s+[^>]*href\s*=\s*"(.*?)"[^>]*rel\s*=\s*"canonical"', re.IGNORECASE),
     # opengraph url property (makes huge "og:" namespace assumptions but hey :-)
-    re.compile(r'<meta\s+property\s*=\s*"og:url"\s+content="(.*?)"\s*/>', re.DOTALL|re.IGNORECASE),
+    re.compile(r'<meta\s+property\s*=\s*"og:url"\s+content="(.*?)"\s*/>', re.IGNORECASE),
     ]
 
 def extract_canonical_url(html, base_url):
