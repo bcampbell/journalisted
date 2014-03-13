@@ -16,7 +16,8 @@ time nice ./comment-updater -n 500
 #cd $JL/misc_scrapers
 #echo "***** START icerocket-scraper"
 #time nice ./icerocket-scraper
-
+echo "***** START update_journo_pageviews"
+time ./update_journo_pageviews `find /srv/vhost/journalisted.com/logs -type f -mtime -10 -name "access.log*"`
 echo "***** DONE!"
 
 
