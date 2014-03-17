@@ -62,23 +62,23 @@ def main():
             if opts.verbose:
                 print("BAD (art_id=%s urlid=%s): %s" %(row['article_id'],row['id'],desc(row['url'])))
             bork_cnt += 1
-    print( "article_url: %d bad urls:",bork_cnt)
+    print( "article_url: %d bad urls:"%(bork_cnt,))
 
-
-    bork_cnt = 0
-    if opts.verbose:
-        print("checking article table...")
-    c.execute("""SELECT id,srcurl,permalink FROM article""")
-    for row in c:
-        if not check(row['srcurl']):
-            if opts.verbose:
-                print("BAD srcurl (art_id=%s): %s" %(row['id'],desc(row['srcurl'])))
-            bork_cnt += 1
-        if not check(row['permalink']):
-            if opts.verbose:
-                print("BAD permalink (art_id=%s): %s" %(row['id'],desc(row['permalink'])))
-            bork_cnt += 1
-    print( "article: %d bad urls:",bork_cnt)
+    if 0:
+        bork_cnt = 0
+        if opts.verbose:
+            print("checking article table...")
+        c.execute("""SELECT id,srcurl,permalink FROM article""")
+        for row in c:
+            if not check(row['srcurl']):
+                if opts.verbose:
+                    print("BAD srcurl (art_id=%s): %s" %(row['id'],desc(row['srcurl'])))
+                bork_cnt += 1
+            if not check(row['permalink']):
+                if opts.verbose:
+                    print("BAD permalink (art_id=%s): %s" %(row['id'],desc(row['permalink'])))
+                bork_cnt += 1
+        print( "article: %d bad urls:"% (bork_cnt,))
 
 
 
