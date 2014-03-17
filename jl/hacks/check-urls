@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+usage = """Usage: %prog [options] logfiles..."""
+
+desc = """tool check for invalid urls in database"""
+
+# tool to check validity of urls in the database
+
+
+import re
+#import sys
+#import string
+#from datetime import datetime
+from optparse import OptionParser
+import urlparse
+from pprint import pprint
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+
+urlcharpat = re.compile(r'''^[-._~:/?#@!$&'()*+,;=a-zA-Z0-9%]+$''', re.IGNORECASE)
+
+
+def check(url):
+    # quick check - any invalid characters in url?
+    if urlcharpat.match(url) is None:
+        return False
+
+    o = urlparse.urlparse(url)
+    if o.scheme.lower() not in ('http','https'):
+        return False
+
+    if o.netloc == '':
+        return False
+
+    return True
+
+def desc(url):
+    if len(url) < 60:
+        return url.encode('string-escape')
+    else:
+        return '"%s ... %s" (%d chars)' % (url[:20].encode('string-escape'), url[-20:].encode('string-escape'), len(url))
+
+def main():
+    parser = OptionParser(description=desc,usage=usage)
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose")
+    (opts, args) = parser.parse_args()
+
+    conn = DB.conn()
+    c = conn.cursor()
+
+    bork_cnt = 0
+    if opts.verbose:
+        print("checking article_url table...")
+    c.execute("""SELECT id,article_id,url FROM article_url""")
+    for row in c:
+        url = row['url']
+        if not check(url):
+            if opts.verbose:
+                print("BAD (art_id=%s urlid=%s): %s" %(row['article_id'],row['id'],desc(row['url'])))
+            bork_cnt += 1
+    print( "article_url: %d bad urls:",bork_cnt)
+
+
+    bork_cnt = 0
+    if opts.verbose:
+        print("checking article table...")
+    c.execute("""SELECT id,srcurl,permalink FROM article""")
+    for row in c:
+        if not check(row['srcurl']):
+            if opts.verbose:
+                print("BAD srcurl (art_id=%s): %s" %(row['id'],desc(row['srcurl'])))
+            bork_cnt += 1
+        if not check(row['permalink']):
+            if opts.verbose:
+                print("BAD permalink (art_id=%s): %s" %(row['id'],desc(row['permalink'])))
+            bork_cnt += 1
+    print( "article: %d bad urls:",bork_cnt)
+
+
+
+if __name__ == "__main__":
+    main()
+
+
