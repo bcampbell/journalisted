@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+# tool to check validity of urls in the database
+
+
+import re
+#import sys
+#import string
+#from datetime import datetime
+#from optparse import OptionParser
+#import urlparse
+from pprint import pprint
+
+import site
+site.addsitedir("../pylib")
+from JL import DB
+
+
+urlcharpat = re.compile(r'''^[-._~:/?#@!$&'()*+,;=a-zA-Z0-9%]+$''', re.IGNORECASE)
+
+
+
+trinmirrpat = re.compile(r'''^(([-._~:/?#@!$&'()*+,;=a-zA-Z0-9%]+?)[.](htm|html))">.*$''', re.DOTALL|re.IGNORECASE)
+
+def is_url_valid(url):
+    if urlcharpat.match(url) is not None:
+        return True
+    else:
+        return False
+
+def main():
+    conn = DB.conn()
+    c = conn.cursor()
+    c2 = conn.cursor()
+
+    bork_cnt = 0
+    zapped_cnt = 0
+    updated_cnt = 0
+
+    c.execute("""SELECT id,article_id,url FROM article_url""")
+    for row in c:
+        url = row['url']
+        if is_url_valid(url):
+            continue
+
+        bork_cnt += 1
+
+        # check to see if we can just trim off the crap (like all the trinity-mirror ones)
+        fixed_url = None
+        m = trinmirrpat.match(url)
+        if m is None:
+            continue
+        # yep, looks fixable...
+        fixed_url = m.group(1)
+
+
+        # double check it
+        if not is_url_valid(fixed_url):
+            print "uhoh... discard bad fix", art_id,fixed_url
+            continue
+
+
+
+        # already got the fixed one?
+        #print "check ",row['id'],fixed_url
+        art_id = row['article_id']
+        c2.execute("SELECT id FROM article_url WHERE article_id=%s AND url=%s", (art_id, fixed_url))
+        foo = c2.fetchone()
+        if foo is not None:
+            # it's already in there
+            # so just delete the borked one
+            zapped_cnt += 1
+            print "D",art_id,fixed_url        
+            c2.execute("DELETE FROM article_url WHERE id=%s",(row['id'],))
+        else:
+            # not got it - update the borked one with the fixed one
+            print "U",art_id,fixed_url        
+            c2.execute("UPDATE article_url SET url=%s WHERE id=%s",(fixed_url, row['id']))
+            updated_cnt += 1
+
+        # replace the (almost certainly borked) permalink
+        c2.execute("UPDATE article SET permalink=%s WHERE id=%s",(fixed_url, art_id))
+
+
+    conn.commit()
+
+
+    print "bork_cnt:",bork_cnt
+    print "zapped_cnt:",zapped_cnt
+    print "updated_cnt:",updated_cnt
+
+
+if __name__ == "__main__":
+    main()
+
+
