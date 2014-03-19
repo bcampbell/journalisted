@@ -3,8 +3,6 @@
 # Tool to discover journos who write about similar things
 # Uses the xapian database to find matches, and puts results in the journo_similar table in the postgres db
 #
-# TODO: no guarantee that inactive journos won't be included in similar lists...
-#       (if they are still in the xapian db)
 #
 #
 
@@ -92,12 +90,19 @@ def DoJourno( j ):
 
     if options.verbose:
         print "  %d similar journos" %(len(similar))
+
+
     c = conn.cursor()
     c.execute( "DELETE FROM journo_similar WHERE journo_id=%s", (j['id']) )
     for (other_id,score) in similar:
 #        if options.verbose:
 #            print "  ",score,ref
-
+        # filter out non-existant or inactive journos
+        c.execute("SELECT id FROM journo WHERE id=%s AND status='a'", (other_id,))
+        if c.fetchone() is None:
+            print "SKIP missing/inactive journo %s (for %s)" %(other_id, j['id'])
+            continue
+        # add the association
         c.execute( "INSERT INTO journo_similar (journo_id, other_id, score) VALUES (%s, %s, %s)", (j['id'],other_id,score) )
     c.execute( "UPDATE journo SET last_similar=NOW() WHERE id=%s", (j['id']) )
 
