@@ -475,4 +475,14 @@ function array_to_object($src_array, $fields) {
     return $ob;
 }
 
+
+
+// create a url based on the current GET request, but with specified
+// parameters updated/added
+function modify_url($new_params) {
+    $params = array_merge($_GET, $new_params);
+    list($path) = explode("?", $_SERVER["REQUEST_URI"], 2);
+    $url = $path . "?" . http_build_query($params);
+    return $url;
+}
 ?>

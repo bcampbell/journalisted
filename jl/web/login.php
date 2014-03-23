@@ -390,7 +390,7 @@ function RegisterForm_Emit($errs = array())
 </dl>
 
 <p>
-<input type="submit" name="registersubmit" value="Continue" />
+<input class="btn" type="submit" name="registersubmit" value="Continue" />
 </p>
 
 </form>

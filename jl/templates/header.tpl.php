@@ -9,7 +9,6 @@
  $js_files - list of extra javascript files to include
  $head_extra - extra stuff to plonk in the <head> block
  $mnpage - name of active menu page (for showing active menu tab)
- $search - search parameters
 */
 
 
@@ -35,7 +34,6 @@
   <link rel="canonical" href="<?= $canonical_url ?>" />
 <?php } ?>
   <script type="text/javascript" src="/js/jquery-1.3.2.min.js"></script>
-  <script type="text/javascript" src="/js/jquery.stylish-select.min.js"></script>
   <script type="text/javascript" src="/js/jl-util.js"></script>
 <?php foreach( $js_files as $f ) { ?>
   <script type="text/javascript" src="<?= $f ?>"></script>
@@ -43,10 +41,6 @@
 <?= $head_extra; ?>
   <script type="text/javascript" language="JavaScript">
         addLoadEvent( activatePlaceholders );
-
-    $(document).ready( function() {
-        $('#header .search select').sSelect();
-        });
   </script>
 </head>
 
@@ -86,14 +80,10 @@
         </ul>
       </div>
       <div class="search">
-        <form action="/search" method="get">
-<!--        <label for="q">Search articles</label> -->
-          <select id="win-xp" name="type">
-            <option value="journo"<?= ($search['type']=='journo')?' selected':'' ?>>Search journalists</option>
-            <option value="article"<?= ($search['type']=='article')?' selected':'' ?>>Search articles</option>
-          </select>
-          <input type="text" value="<?= h($search['q']) ?>" id="q" name="q" />
+        <form action="/search" method="GET">
+          <input type="text" value="" id="q" name="q" />
           <input type="submit" alt="search" value="Search" />
+          <input type="hidden" name="type" value="" />
         </form>
       </div>
       <div style="clear:both;"></div>
