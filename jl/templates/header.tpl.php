@@ -9,7 +9,6 @@
  $js_files - list of extra javascript files to include
  $head_extra - extra stuff to plonk in the <head> block
  $mnpage - name of active menu page (for showing active menu tab)
- $search - search parameters
 */
 
 
@@ -81,10 +80,10 @@
         </ul>
       </div>
       <div class="search">
-        <form action="/search" method="get">
+        <form action="/search" method="GET">
           <input type="text" value="" id="q" name="q" />
           <input type="submit" alt="search" value="Search" />
-          <input type="hidden" name="type" value="journo" />
+          <input type="hidden" name="type" value="" />
         </form>
       </div>
       <div style="clear:both;"></div>
