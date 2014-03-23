@@ -48,13 +48,13 @@ function view() {
 
     $sort_order = get_http_var('o');
     $article_results = null;
-    if($kind!='journo') {
+    if($q!="" && $kind!='journo') {
         $as = new ArticleSearch($q,$sort_order,$art_page,'p');
         $article_results = $as->perform();
     }
 
     $journo_results = null;
-    if($kind!='article') {
+    if($q!="" && $kind!='article') {
         $js = new JournoSearch($q,$journo_page,'jp');
         $journo_results = $js->perform();
     }
