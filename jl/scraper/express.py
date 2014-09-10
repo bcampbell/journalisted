@@ -70,7 +70,7 @@ def FindArticles():
     """Look for recent articles"""
 
     rssfeeds = FindRSSFeeds()
-    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'express', ScrubFunc)
+    found = ScraperUtils.FindArticlesFromRSS( rssfeeds, u'express', ScrubFunc,maxerrors=20)
     return found
 
 
