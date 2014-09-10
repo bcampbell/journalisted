@@ -44,40 +44,46 @@ def Extract_MainSite( html, context ):
     parser = lxml.html.HTMLParser(encoding='utf-8')
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
-    article_div = doc.cssselect('.article-page .article')[0]
+
+    article_div = doc.cssselect('[itemtype="http://schema.org/Article"]')[0]
     #print lxml.html.tostring(article_div)
     #return None
 
 
-    header_div = article_div.cssselect('.article-header')[0]
+    h1 = article_div.cssselect('[itemprop~="headline"]')[0]
 
-    h1 = header_div.cssselect('h1')[0]
     art['title'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(h1)))
 
-    for li in header_div.cssselect('ul.tools li'):
-        txt = li.text_content()
-        if re.search(r'\d{4}',txt):
-            # it's a date
-            art['pubdate'] = ukmedia.ParseDateTime(txt)
-        elif 'By' in txt:
-            # it's a byline (should use rel=author)
-            art['byline'] = u' '.join(txt.split())
+    art['byline'] = u''
+    authors = article_div.cssselect('a[rel~="author"]')
+    if len(authors)>0:
+        ukmedia.FromHTMLOneLine(authors[0].text_content())
+        art['byline'] = u', '.join([ukmedia.FromHTMLOneLine(lxml.html.tostring(a)) for a in authors])
+    else:
+        authors = article_div.cssselect('li.author')
+        if len(authors)>0:
+            art['byline'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(authors[0])))
 
-    if not 'pubdate' in art:
-        foo = header_div.cssselect('time[itemprop="datePublished"]')[0]
-        art['pubdate'] = ukmedia.ParseDateTime(foo.get('datetime'))
+    pubdatetxt = u''
+    pubdates = article_div.cssselect('time[itemprop~="datePublished"]')
+    if len(pubdates)>0:
+        art['pubdate'] = ukmedia.ParseDateTime(pubdates[0].get('datetime'))
+    else:
+        foo = doc.cssselect('meta[property="article:published_time"]')[0]
+        art['pubdate'] = ukmedia.ParseDateTime(foo.get('content'))
 
 
-    body_div = article_div.cssselect('.body')[0]
+    body_div = article_div.cssselect('[itemprop~="articleBody"]')[0]
+
+    # cruft removal
+    for cruft in body_div.cssselect('[data-widget]'):
+        cruft.drop_tree()
+
     art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
     art['description'] = ukmedia.FirstPara( art['content'] )
     art['srcorgname'] = u'mirror'   # to avoid clash with sundaymirror in pub_domain table (TODO: merge both into "Mirror Online")
 
     return art
-
-
-
-
 
 
 

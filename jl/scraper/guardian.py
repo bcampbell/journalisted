@@ -794,26 +794,30 @@ def Extract( html, context, **kw ):
     for cruft in contentdiv.findAll( 'div', {'class': 'send'} ):
         cruft.extract()
 
-    art['images'] = []
-    caption_pat = re.compile( ur"(.*)\s*(?:photograph:|photographs:|photo:|photos:)\s*(.*)\s*$", re.UNICODE|re.IGNORECASE )
-    # images
-    for figure in contentdiv.findAll( 'figure' ):
-        img = figure.img
-        img_url = img['src']
-        figcaption = figure.find( 'figcaption' )
-        t = u''
-        if figcaption:
-            t = figcaption.renderContents( None )
-            t = ukmedia.FromHTMLOneLine(t)
-        m = caption_pat.match( t )
-        cap = u''
-        cred = u''
-        if m:
-            cap = m.group(1)
-            cred = m.group(2)
+    for cruft in contentdiv.findAll( 'div', {'class': 'email-subscription-promo__description'} ):
+        cruft.extract()
 
-        art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
-        figure.extract()
+
+    if 0:
+        art['images'] = []
+        caption_pat = re.compile( ur"(.*)\s*(?:photograph:|photographs:|photo:|photos:)\s*(.*)\s*$", re.UNICODE|re.IGNORECASE )
+        for figure in contentdiv.findAll( 'figure' ):
+            img = figure.img
+            img_url = img['src']
+            figcaption = figure.find( 'figcaption' )
+            t = u''
+            if figcaption:
+                t = figcaption.renderContents( None )
+                t = ukmedia.FromHTMLOneLine(t)
+            m = caption_pat.match( t )
+            cap = u''
+            cred = u''
+            if m:
+                cap = m.group(1)
+                cred = m.group(2)
+
+            art['images'].append( { 'url': img_url, 'caption': cap, 'credit': cred } )
+            figure.extract()
 
     # long articles have a folding part
 
@@ -950,11 +954,7 @@ def ContextFromURL( url ):
 
     context['srcorgname'] = u'guardian'
 
-    if WhichFormat( url ) == 'newformat' and not url.startswith('file:'):
-        # force whole article on single page
-        context['srcurl'] = url + '?page=all'
-    else:
-        context['srcurl'] = url
+    context['srcurl'] = url
 
     context['lastseen'] = datetime.now()
 

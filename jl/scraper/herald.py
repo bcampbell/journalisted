@@ -36,7 +36,7 @@ def Extract(html, context, **kw):
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
     title = doc.cssselect('.sht-body .article-title')[0]
-    art['title'] = unicode( title.text_content() )
+    art['title'] = unicode( title.text_content() ).strip()
 
     try:
         byline = doc.cssselect('#article-byline')[0]

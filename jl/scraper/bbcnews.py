@@ -12,6 +12,7 @@ from datetime import datetime
 import sys
 import urlparse
 import lxml.html
+import urllib2
 
 import site
 site.addsitedir("../pylib")
@@ -407,6 +408,15 @@ def FindArticles():
                 raise
             ukmedia.DBUG('%s: %s\n' % (page_url,str(e)))
             continue
+        except UnicodeEncodeError, e:
+            err_cnt += 1
+            if err_cnt >= max_errs:
+                ukmedia.DBUG('error count exceeded - BAILING\n')
+                raise
+            ukmedia.DBUG('%s: %s\n' % (page_url,str(e)))
+            continue
+
+
         doc = lxml.html.fromstring(html)
         doc.make_links_absolute(page_url)
 

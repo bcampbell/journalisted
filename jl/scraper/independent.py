@@ -47,7 +47,7 @@ def FindArticles():
 def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat):
     sections = set( (start_page,))
     sections_seen = set(sections)
-    err_404_cnt = 0
+    http_err_cnt = 0
     fetch_cnt = 0
 
     arts = set()
@@ -59,11 +59,11 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
             fetch_cnt += 1
             html = ukmedia.FetchURL(section_url)
         except urllib2.HTTPError as e:
-            # allow a few 404s
-            if e.code == 404:
-                ukmedia.DBUG("ERR fetching %s (404)\n" %(section_url,))
-                err_404_cnt += 1
-                if err_404_cnt < 5:
+            # allow a few http errors...
+            if e.code in (404,500):
+                ukmedia.DBUG("ERR fetching %s (%d)\n" %(section_url,e.code))
+                http_err_cnt += 1
+                if http_err_cnt < 5:
                     continue
             raise
 

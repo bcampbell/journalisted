@@ -91,3 +91,10 @@ Log changes made due to website changes here!
 2013-09-09 sun: navbar changes
 2014-01-14 independent: new custom scraper
 2014-08-22 dailymail: new format
+2014-09-10 guardian: disable image extraction
+2014-09-10 bbc: fix unicode and missing import errors
+2014-09-10 herald: trim leading/trailing whitespace from titles
+2014-09-10 independent: increase fault tolerance (500s)
+2014-09-10 mirror: new format
+2014-09-10 express: increase fault tolerance (to missing feeds)
+
