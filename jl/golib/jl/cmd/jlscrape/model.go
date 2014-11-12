@@ -65,7 +65,7 @@ func createPublication(tx *sql.Tx, pub *arts.Publication) (int, error) {
 }
 
 // return id of new article
-func insertArticle(tx *sql.Tx, art *arts.Article, expectedRef string) (int, error) {
+func insertArticle(tx *sql.Tx, art *arts.Article, pubID int) (int, error) {
 	var artID int
 
 	now := time.Now()
@@ -75,18 +75,6 @@ func insertArticle(tx *sql.Tx, art *arts.Article, expectedRef string) (int, erro
 	lastCommentCheck := now
 	pubDate := art.Published
 
-	// find or create publication
-	pubID, err := findPublication(tx, art.Publication.Domain)
-	if err == sql.ErrNoRows {
-		// not found - create a new one
-		pubID, err = createPublication(tx, &art.Publication)
-		fmt.Printf("new publication %d\n", pubID)
-	}
-
-	if err != nil {
-		return 0, err
-	}
-
 	permalink := art.CanonicalURL
 	if permalink == "" {
 		permalink = art.URLs[0]
@@ -95,7 +83,7 @@ func insertArticle(tx *sql.Tx, art *arts.Article, expectedRef string) (int, erro
 
 	// TODO: need to be a bit more picky about dates...
 
-	err = tx.QueryRow(`INSERT INTO article(title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, wordcount, last_comment_check ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+	err := tx.QueryRow(`INSERT INTO article(title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, wordcount, last_comment_check ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
 		art.Headline,
 		"",
 		"", // TODO: grab first para
@@ -120,7 +108,6 @@ func insertArticle(tx *sql.Tx, art *arts.Article, expectedRef string) (int, erro
 		}
 	}
 
-	fmt.Printf("new article %d\n", artID)
 	// insert content
 	if art.Content != "" {
 		_, err := tx.Exec(`INSERT INTO article_content (article_id, content,scraped) VALUES ( $1,$2,$3 )`, artID, art.Content, lastScraped)
@@ -141,51 +128,78 @@ func insertArticle(tx *sql.Tx, art *arts.Article, expectedRef string) (int, erro
 	// commentlinks
 	// TODO: tags
 
-	// find/create journos
-	journoIDs := []int{}
-	for _, author := range art.Authors {
-		j, err := resolveJourno(tx, &author, pubID, expectedRef)
-		if err == ErrAmbiguousJourno {
-			// LOG WARNING HERE
-			continue
-		} else if err != nil {
-			return 0, err
-		}
-
-		var journoID int
-		if j == nil {
-			// create a new journo
-			journoID, err = createJourno(tx, &author)
-			if err != nil {
-				return 0, err
-			}
-			fmt.Printf("Created new journo %d\n", journoID)
-		} else {
-			journoID = j.ID
-		}
-		journoIDs = append(journoIDs, journoID)
-
-	}
-
-	// link journos to article
-	for _, jid := range journoIDs {
-		// journo_attr
-		_, err := tx.Exec("INSERT INTO journo_attr (journo_id,article_id) VALUES ($1,$2)", jid, artID)
-		if err != nil {
-			return 0, err
-		}
-
-		// TODO: apply journo activation policy
-
-		// clear the html cache for that journos page
-		cacheName := fmt.Sprintf("j%s", jid)
-		_, err = tx.Exec("DELETE FROM htmlcache WHERE name=$1", cacheName)
-		if err != nil {
-			return 0, err
-		}
-	}
-
 	return artID, nil
+}
+
+func updateArticle(tx *sql.Tx, artID int, art *arts.Article, pubID int) error {
+	now := time.Now()
+	//	firstSeen := now
+	lastSeen := now
+	lastScraped := now
+	lastCommentCheck := now
+	pubDate := art.Published
+
+	permalink := art.CanonicalURL
+	if permalink == "" {
+		permalink = art.URLs[0]
+	}
+	srcURL := permalink
+
+	// TODO: need to be a bit more picky about dates...
+	_, err := tx.Exec(`UPDATE article SET (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, wordcount, last_comment_check) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) WHERE id=$12`,
+		art.Headline,
+		"",
+		"", // TODO: grab first para
+		lastScraped,
+		pubDate,
+		lastSeen,
+		permalink,
+		srcURL,
+		pubID,
+		sql.NullInt64{0, false}, // TODO: wordcount
+		lastCommentCheck,
+		artID)
+	if err != nil {
+		return err
+	}
+
+	// URLs
+	_, err = tx.Exec(`DELETE FROM article_url WHERE article_id=$1`, artID)
+	if err != nil {
+		return err
+	}
+	for _, u := range art.URLs {
+		_, err = tx.Exec(`INSERT INTO article_url (article_id, url) VALUES ($1,$2)`, artID, u)
+		if err != nil {
+			return err
+		}
+	}
+
+	// replace content
+	_, err = tx.Exec(`DELETE FROM article_content WHERE article_id=$1`, artID)
+	if err != nil {
+		return err
+	}
+	if art.Content != "" {
+		_, err = tx.Exec(`INSERT INTO article_content (article_id, content,scraped) VALUES ( $1,$2,$3 )`,
+			artID,
+			art.Content,
+			lastScraped)
+		if err != nil {
+			return err
+		}
+	}
+
+	// queue it for xapian indexing
+	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, artID)
+	tx.Exec(`INSERT INTO article_needs_indexing (article_id) VALUES ($1)`, artID)
+
+	// TODO:
+	// article_image
+	// article_commentlink
+	// article_tag
+
+	return nil
 }
 
 func pgMarkers(start, cnt int) []string {

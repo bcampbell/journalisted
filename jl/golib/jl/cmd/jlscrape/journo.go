@@ -146,13 +146,13 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 
 	// TODO: if author has unique identifier (rel-author, email, twitter etc), use that to look them up first
 
-	fmt.Printf("resolveJourno(%s)\n", author.Name)
+	//fmt.Printf("resolveJourno(%s)\n", author.Name)
 	candidates, err := findJournoByName(tx, author.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf(" => %d candidates with matching name\n", len(candidates))
+	//fmt.Printf(" => %d candidates with matching name\n", len(candidates))
 	if len(candidates) == 0 {
 		return nil, nil
 	}
@@ -161,7 +161,7 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 	if expectedRef != "" {
 		for _, c := range candidates {
 			if expectedRef == c.Ref {
-				fmt.Printf(" => got expectedRef\n")
+				//fmt.Printf(" => got expectedRef\n")
 				return c, nil // gotcha
 			}
 		}
@@ -172,7 +172,7 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 	for _, c := range candidates {
 		params = append(params, c.ID)
 	}
-	fmt.Printf("params: %v\n", params)
+	//fmt.Printf("params: %v\n", params)
 	sql := "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE a.srcorg=$1 AND attr.journo_id IN (" + pgMarkerList(2, len(candidates)) + ")"
 	rows, err := tx.Query(sql, params...)
 	if err != nil {
@@ -190,10 +190,10 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	fmt.Printf("matching: %v\n", matching)
+	//fmt.Printf("matching: %v\n", matching)
 
 	if len(matching) == 0 {
-		fmt.Printf("No journo found for %s\n", author.Name)
+		//fmt.Printf("No journo found for %s\n", author.Name)
 		return nil, nil
 	}
 
@@ -209,4 +209,21 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 
 	// shouldn't get this far
 	return nil, nil
+}
+
+func journoUpdateActivation(tx *sql.Tx, journoID int) error {
+	const activationThreshold = 2
+
+	var cnt int
+	err := tx.QueryRow(`SELECT COUNT(*) FROM journo_attr ja INNER JOIN article a ON (a.id=ja.article_id AND a.status='a') WHERE ja.journo_id=$1`, journoID).Scan(&cnt)
+	if err != nil {
+		return err
+	}
+	if cnt >= activationThreshold {
+		_, err = tx.Exec(`UPDATE journo SET status='a' WHERE id=$1 AND status='i'`, journoID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
