@@ -15,6 +15,15 @@ function scrape_ScrapeURL( $url, $expected_ref=null )
 
 	putenv("JL_DEBUG=2");
 
+    $db_uri = sprintf("postgres://%s:%s@%s:%s/%s",
+        OPTION_JL_DB_USER,
+        OPTION_JL_DB_PASS,
+        OPTION_JL_DB_HOST,
+        OPTION_JL_DB_PORT,
+        OPTION_JL_DB_NAME);
+
+    putenv("JL_DB_URI={$db_uri}");
+
 	$cmd = $JLBIN . "/jlscrape";
     if(!is_null($expected_ref))
         $cmd .= ' -j ' . $expected_ref;
