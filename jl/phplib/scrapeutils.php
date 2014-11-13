@@ -15,7 +15,7 @@ function scrape_ScrapeURL( $url, $expected_ref=null )
 
 	putenv("JL_DEBUG=2");
 
-	$cmd = $JLBIN . "/articlescraper";
+	$cmd = $JLBIN . "/jlscrape";
     if(!is_null($expected_ref))
         $cmd .= ' -j ' . $expected_ref;
 	$cmd .= ' ' . escapeshellarg( $url );

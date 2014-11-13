@@ -35,9 +35,11 @@ var opts = struct {
 	test           bool
 	forceRescrape  bool
 	expectedJourno string
+	dbURI          string // eg "postgres://jl@localhost/jl?sslmode=disable"
 }{}
 
 func main() {
+	flag.StringVar(&opts.dbURI, "db", "", `Database URI eg "postgres://jl@localhost/jl" (if unset, uses $JL_DB_URI)`)
 	flag.BoolVar(&opts.verbose, "v", false, "info to stderr ")
 	flag.BoolVar(&opts.test, "t", false, "test only - don't commit to db")
 	flag.BoolVar(&opts.forceRescrape, "f", false, "force rescrape of articles already in db")
@@ -50,7 +52,15 @@ func main() {
 	}
 
 	// connect to db
-	connStr := "postgres://jl@localhost/jl?sslmode=disable"
+	connStr := opts.dbURI
+	if connStr == "" {
+		connStr = os.Getenv("JL_DB_URI")
+	}
+	if connStr == "" {
+		fmt.Fprintf(os.Stderr, "ERROR: no db uri (use -db flag or JL_DB_URI environment var\n")
+		os.Exit(1)
+	}
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
