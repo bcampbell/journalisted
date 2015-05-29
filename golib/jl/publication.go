@@ -2,21 +2,24 @@ package jl
 
 import (
 	"database/sql"
-	"github.com/bcampbell/arts/arts"
 	"regexp"
 	"strings"
 )
 
 type Publication struct {
-	ID         int
-	ShortName  string
+	ID        int
+	ShortName string
+	// PrettyName is the canonical human-readable name for the publication
 	PrettyName string
-	SortName   string
-	HomeURL    string
-	Domains    []string
+	// SortName used for presentation in lists.
+	// Usually remove leading "The" for more natural ordering.
+	SortName string
+	HomeURL  string
+	Domains  []string
 }
 
-func findPublication(tx *sql.Tx, domain string) (int, error) {
+// returns sql.ErrNoRows if not found
+func FindPublication(tx *sql.Tx, domain string) (int, error) {
 	// TODO (maybe) match both www. and non www. versions?
 	//domain = strings.ToLower(domain)
 	var pubID int
@@ -39,67 +42,40 @@ func strippedDomain(d string) string {
 	return stripWWWPat.ReplaceAllString(d, "")
 }
 
-// TODO: use JL publication instead of arts.Publication
-func createPublication(tx *sql.Tx, pub *arts.Publication) (int, error) {
-	prettyName := pub.Name
-	if prettyName == "" {
-		prettyName = strippedDomain(pub.Domain)
+func CreatePublication(tx *sql.Tx, domain, name string) (*Publication, error) {
+	pub := &Publication{}
+	pub.Domains = []string{domain}
+	if name == "" {
+		name = strippedDomain(domain)
 	}
-	shortName := genShortName(prettyName)
+	pub.PrettyName = name
+	pub.ShortName = genShortName(pub.PrettyName)
 
 	// strip leading "the"s for more natural sort order
-	sortName := strings.ToLower(prettyName)
-	sortName = stripThePat.ReplaceAllLiteralString(prettyName, "")
+	pub.SortName = stripThePat.ReplaceAllLiteralString(strings.ToLower(pub.PrettyName), "")
 
-	homeURL := "http://" + pub.Domain
+	pub.HomeURL = "http://" + domain
 
-	var pubID int
-	err := tx.QueryRow(`INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, $1,$2,$3,$4) RETURNING id`, shortName, prettyName, sortName, homeURL).Scan(&pubID)
+	err := tx.QueryRow(`INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, $1,$2,$3,$4) RETURNING id`,
+		pub.ShortName,
+		pub.PrettyName,
+		pub.SortName,
+		pub.HomeURL).Scan(&pub.ID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	_, err = tx.Exec(`INSERT INTO pub_domain (pub_id,domain) VALUES ($1, $2)`, pubID, pub.Domain)
+	for _, domain := range pub.Domains {
+		_, err = tx.Exec(`INSERT INTO pub_domain (pub_id,domain) VALUES ($1, $2)`, pub.ID, domain)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = tx.Exec(`INSERT INTO pub_alias (pub_id,alias) VALUES ($1, $2)`, pub.ID, pub.PrettyName)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	_, err = tx.Exec(`INSERT INTO pub_alias (pub_id,alias) VALUES ($1, $2)`, pubID, prettyName)
-	if err != nil {
-		return 0, err
-	}
-
-	return pubID, nil
-}
-
-func createPublication(tx *sql.Tx, pub *arts.Publication) (int, error) {
-	prettyName := pub.Name
-	if prettyName == "" {
-		prettyName = strippedDomain(pub.Domain)
-	}
-	shortName := genShortName(prettyName)
-
-	// strip leading "the"s for more natural sort order
-	sortName := strings.ToLower(prettyName)
-	sortName = stripThePat.ReplaceAllLiteralString(prettyName, "")
-
-	homeURL := "http://" + pub.Domain
-
-	var pubID int
-	err := tx.QueryRow(`INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, $1,$2,$3,$4) RETURNING id`, shortName, prettyName, sortName, homeURL).Scan(&pubID)
-	if err != nil {
-		return 0, err
-	}
-
-	_, err = tx.Exec(`INSERT INTO pub_domain (pub_id,domain) VALUES ($1, $2)`, pubID, pub.Domain)
-	if err != nil {
-		return 0, err
-	}
-
-	_, err = tx.Exec(`INSERT INTO pub_alias (pub_id,alias) VALUES ($1, $2)`, pubID, prettyName)
-	if err != nil {
-		return 0, err
-	}
-
-	return pubID, nil
+	return pub, nil
 }

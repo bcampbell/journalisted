@@ -37,7 +37,7 @@ type Article struct {
 }
 
 // sets the id of the article
-func insertArticle(tx *sql.Tx, art *Article, pubID int) error {
+func InsertArticle(tx *sql.Tx, art *Article, pubID int) error {
 	var artID int
 
 	// TODO: find/create publication if publication id is 0
@@ -91,7 +91,7 @@ func insertArticle(tx *sql.Tx, art *Article, pubID int) error {
 	return nil
 }
 
-func updateArticle(tx *sql.Tx, artID int, art *Article) error {
+func UpdateArticle(tx *sql.Tx, artID int, art *Article) error {
 	_, err := tx.Exec(`UPDATE article SET (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, wordcount) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) WHERE id=$12`,
 		art.Title,
 		art.Byline,
@@ -160,7 +160,7 @@ func pgMarkerList(start, cnt int) string {
 	return strings.Join(out, ",")
 }
 
-func findArticles(tx *sql.Tx, urls []string) ([]int, error) {
+func FindArticles(tx *sql.Tx, urls []string) ([]int, error) {
 	out := []int{}
 	sql := `SELECT DISTINCT article_id FROM article_url WHERE url IN (` + pgMarkerList(1, len(urls)) + `)`
 

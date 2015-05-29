@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/bcampbell/arts/arts"
 	"github.com/dotcypress/phonetics"
 	"github.com/lib/pq"
 	"regexp"
@@ -16,15 +15,16 @@ import (
 var ErrAmbiguousJourno = errors.New("Ambiguous journo")
 
 type Journo struct {
-	ID                 int
-	Ref                string
-	Prettyname         string
-	Lastname           string
-	Firstname          string
-	Created            time.Time
-	Status             string
-	Oneliner           string
-	LastSimilar        pq.NullTime
+	ID          int
+	Ref         string
+	Prettyname  string
+	Lastname    string
+	Firstname   string
+	Created     time.Time
+	Status      string
+	Oneliner    string
+	LastSimilar pq.NullTime
+	// Modified flag to indicate journo changed - handled by triggers in DB
 	Modified           bool
 	FirstnameMetaphone string
 	LastnameMetaphone  string
@@ -33,10 +33,56 @@ type Journo struct {
 	Fake               bool
 }
 
+// create a brand new journo from a name
+func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
+	// hit the DB to generate a unique ref
+	ref, err := uniqRef(tx, baseRef(name))
+	if err != nil {
+		return nil, err
+	}
+
+	//
+	j := &Journo{}
+	j.Ref = ref
+	j.Prettyname = name
+	j.Firstname, j.Lastname = splitName(name)
+	j.FirstnameMetaphone = phonetics.EncodeMetaphone(j.Firstname)
+	j.LastnameMetaphone = phonetics.EncodeMetaphone(j.Lastname)
+
+	err = insertJourno(tx, j)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: future: fill out journo_alias table, and also rel-author links etc to help resolution...
+	return j, nil
+}
+
+// updates j.ID and j.Created
+func insertJourno(tx *sql.Tx, j *Journo) error {
+
+	err := tx.QueryRow(`INSERT INTO journo (id,prettyname,lastname,firstname,created,status,oneliner,last_similar,firstname_metaphone,lastname_metaphone,admin_notes,admin_tags,fake) VALUES (DEFAULT,$1,$2,$3,NOW(),$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,created`,
+		j.Ref,
+		j.Prettyname,
+		j.Lastname,
+		j.Firstname,
+		j.Status,
+		j.Oneliner,
+		j.LastSimilar,
+		j.FirstnameMetaphone,
+		j.LastnameMetaphone,
+		j.AdminNotes,
+		j.AdminTags,
+		j.Fake).Scan(&j.ID, &j.Created)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var refCleanser = regexp.MustCompile(`[^-a-z ]`)
 
 // generate a journo ref from a name
-// eg
 func baseRef(name string) string {
 	ref := strings.ToLower(toASCII(name))
 	ref = refCleanser.ReplaceAllLiteralString(ref, " ")
@@ -47,6 +93,7 @@ func baseRef(name string) string {
 }
 
 // get firstname and lastname
+// TODO: cope with prefixes (Mr,Dr) and suffixs (BSc)
 func splitName(n string) (string, string) {
 
 	parts := strings.Fields(n)
@@ -81,35 +128,7 @@ func uniqRef(tx *sql.Tx, baseRef string) (string, error) {
 	return ref, nil
 }
 
-func createJourno(tx *sql.Tx, journo *arts.Author) (int, error) {
-	ref, err := uniqRef(tx, baseRef(journo.Name))
-	if err != nil {
-		return 0, err
-	}
-
-	prettyName := journo.Name
-	firstName, lastName := splitName(journo.Name)
-	firstNameMetaphone := phonetics.EncodeMetaphone(firstName)
-	lastNameMetaphone := phonetics.EncodeMetaphone(lastName)
-
-	var journoID int
-	err = tx.QueryRow(`INSERT INTO journo (id,ref,prettyname,firstname,lastname,firstname_metaphone,lastname_metaphone,created) VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,NOW()) RETURNING id`,
-		ref,
-		prettyName,
-		firstName,
-		lastName,
-		firstNameMetaphone,
-		lastNameMetaphone).Scan(&journoID)
-	if err != nil {
-		return 0, err
-	}
-
-	// TODO: future: fill out journo_alias table, and also rel-author links etc to help resolution...
-
-	return journoID, nil
-}
-
-func findJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
+func FindJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
 	// TODO: use journo_alias table to do lookup!
 	// KLUDGE ALERT: we're using refs to look up journos. This sucks, but
 	// we're stuck with it until we transition over to a properly-populated journo_alias table
@@ -142,12 +161,12 @@ func findJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
 	return out, nil
 }
 
-func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef string) (*Journo, error) {
+func ResolveJourno(tx *sql.Tx, name string, pubID int, expectedRef string) (*Journo, error) {
 
 	// TODO: if author has unique identifier (rel-author, email, twitter etc), use that to look them up first
 
-	//fmt.Printf("resolveJourno(%s)\n", author.Name)
-	candidates, err := findJournoByName(tx, author.Name)
+	//fmt.Printf("resolveJourno(%s)\n", name)
+	candidates, err := FindJournoByName(tx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +212,7 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 	//fmt.Printf("matching: %v\n", matching)
 
 	if len(matching) == 0 {
-		//fmt.Printf("No journo found for %s\n", author.Name)
+		//fmt.Printf("No journo found for %s\n", name)
 		return nil, nil
 	}
 
@@ -211,7 +230,7 @@ func resolveJourno(tx *sql.Tx, author *arts.Author, pubID int, expectedRef strin
 	return nil, nil
 }
 
-func journoUpdateActivation(tx *sql.Tx, journoID int) error {
+func JournoUpdateActivation(tx *sql.Tx, journoID int) error {
 	const activationThreshold = 2
 
 	var cnt int
