@@ -33,6 +33,13 @@ type Journo struct {
 	Fake               bool
 }
 
+type UnresolvedJourno struct {
+	Name string
+	//	Email     string
+	//	Twitter   string
+	//	RelAuthor string
+}
+
 // create a brand new journo from a name
 func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
 	// hit the DB to generate a unique ref
@@ -43,6 +50,7 @@ func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
 
 	//
 	j := &Journo{}
+	j.Status = "i"
 	j.Ref = ref
 	j.Prettyname = name
 	j.Firstname, j.Lastname = splitName(name)
@@ -60,7 +68,7 @@ func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
 // updates j.ID and j.Created
 func insertJourno(tx *sql.Tx, j *Journo) error {
 
-	err := tx.QueryRow(`INSERT INTO journo (id,prettyname,lastname,firstname,created,status,oneliner,last_similar,firstname_metaphone,lastname_metaphone,admin_notes,admin_tags,fake) VALUES (DEFAULT,$1,$2,$3,NOW(),$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id,created`,
+	err := tx.QueryRow(`INSERT INTO journo (id,ref,prettyname,lastname,firstname,created,status,oneliner,last_similar,firstname_metaphone,lastname_metaphone,admin_notes,admin_tags,fake) VALUES (DEFAULT,$1,$2,$3,$4,NOW(),$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id,created`,
 		j.Ref,
 		j.Prettyname,
 		j.Lastname,
@@ -74,7 +82,7 @@ func insertJourno(tx *sql.Tx, j *Journo) error {
 		j.AdminTags,
 		j.Fake).Scan(&j.ID, &j.Created)
 	if err != nil {
-		return err
+		return fmt.Errorf("insertJourno failed: %s", err)
 	}
 
 	return nil
@@ -140,7 +148,6 @@ func FindJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
 		refs = append(refs, fmt.Sprintf("%s-%d", r, i))
 	}
 
-	// TODO: probably no reason fill out most of these fields...
 	sql := `SELECT id,ref,prettyname,lastname,firstname,created,status,oneliner,last_similar,modified,firstname_metaphone, lastname_metaphone, admin_notes, admin_tags,fake FROM journo WHERE ref IN (` + pgMarkerList(1, len(refs)) + `)`
 	rows, err := tx.Query(sql, refs...)
 	if err != nil {
@@ -161,12 +168,12 @@ func FindJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
 	return out, nil
 }
 
-func ResolveJourno(tx *sql.Tx, name string, pubID int, expectedRef string) (*Journo, error) {
+func ResolveJourno(tx *sql.Tx, details *UnresolvedJourno, pubID int, expectedRef string) ([]*Journo, error) {
 
 	// TODO: if author has unique identifier (rel-author, email, twitter etc), use that to look them up first
 
 	//fmt.Printf("resolveJourno(%s)\n", name)
-	candidates, err := FindJournoByName(tx, name)
+	candidates, err := FindJournoByName(tx, details.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -181,53 +188,61 @@ func ResolveJourno(tx *sql.Tx, name string, pubID int, expectedRef string) (*Jou
 		for _, c := range candidates {
 			if expectedRef == c.Ref {
 				//fmt.Printf(" => got expectedRef\n")
-				return c, nil // gotcha
+				return []*Journo{c}, nil // gotcha
 			}
 		}
 	}
 
-	// any candidates written for this publication before?
-	params := []interface{}{pubID}
-	for _, c := range candidates {
-		params = append(params, c.ID)
+	if pubID != 0 {
+		candidates, err = filterJournosByPubID(tx, candidates, pubID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	//fmt.Printf("matching: %v\n", matching)
+
+	return candidates, nil
+}
+
+// filterJournosByPubID takes a list of journos and a publication ID
+// and returns a list of the journos who have previous articles
+// with that publication.
+func filterJournosByPubID(tx *sql.Tx, journos []*Journo, pubID int) ([]*Journo, error) {
+	params := []interface{}{}
+	params = append(params, pubID)
+	for _, j := range journos {
+		params = append(params, j.ID)
 	}
 	//fmt.Printf("params: %v\n", params)
-	sql := "SELECT DISTINCT attr.journo_id FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id ) WHERE a.srcorg=$1 AND attr.journo_id IN (" + pgMarkerList(2, len(candidates)) + ")"
+	sql := `SELECT DISTINCT attr.journo_id
+        FROM ( journo_attr attr INNER JOIN article a ON a.id=attr.article_id )
+        WHERE a.srcorg=$1
+           AND attr.journo_id IN (` + pgMarkerList(2, len(journos)) + `)`
 	rows, err := tx.Query(sql, params...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	matching := []int{}
+	matching := map[int]struct{}{}
 	for rows.Next() {
 		var id int
 		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		matching = append(matching, id)
+		matching[id] = struct{}{}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	//fmt.Printf("matching: %v\n", matching)
 
-	if len(matching) == 0 {
-		//fmt.Printf("No journo found for %s\n", name)
-		return nil, nil
-	}
-
-	if len(matching) > 1 {
-		return nil, ErrAmbiguousJourno
-	}
-
-	for _, c := range candidates {
-		if c.ID == matching[0] {
-			return c, nil // gotcha!
+	//
+	out := []*Journo{}
+	for _, j := range journos {
+		if _, got := matching[j.ID]; got {
+			out = append(out, j)
 		}
 	}
-
-	// shouldn't get this far
-	return nil, nil
+	return out, nil
 }
 
 func JournoUpdateActivation(tx *sql.Tx, journoID int) error {

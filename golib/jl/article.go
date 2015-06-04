@@ -2,11 +2,14 @@ package jl
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/lib/pq"
 	"strings"
 	"time"
 )
+
+var ErrNoArticle = errors.New("article not found")
 
 type Article struct {
 	ID          int // 0 = no ID assigned (ie not yet in DB)
@@ -26,6 +29,7 @@ type Article struct {
 	WordCount   sql.NullInt64
 	Status      rune
 
+	Authors []*Journo
 	/*
 	   // do we really need these in the struct?
 	   TotalBlogLinks int
@@ -36,11 +40,29 @@ type Article struct {
 	*/
 }
 
-// sets the id of the article
-func InsertArticle(tx *sql.Tx, art *Article, pubID int) error {
+// InsertArticle loads a new article into the database.
+// art.ID is set to the newly-minted id.
+// Requires the Publication has already been resolved
+// Journos must be resolved
+func InsertArticle(tx *sql.Tx, art *Article) error {
 	var artID int
 
-	// TODO: find/create publication if publication id is 0
+	// some sanity checks:
+	if art.ID != 0 {
+		return fmt.Errorf("Article ID already set")
+	}
+	if art.Publication == nil {
+		return fmt.Errorf("Publication not set")
+	}
+	if art.Publication.ID == 0 {
+		return fmt.Errorf("Publication ID not set")
+	}
+
+	for _, journo := range art.Authors {
+		if journo.ID == 0 {
+			return fmt.Errorf("journo missing ID")
+		}
+	}
 
 	err := tx.QueryRow(`INSERT INTO article(title, byline, description, lastscraped, pubdate, firstseen, lastseen, permalink, srcurl, srcorg, wordcount, last_comment_check ) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
 		art.Title,
@@ -53,8 +75,9 @@ func InsertArticle(tx *sql.Tx, art *Article, pubID int) error {
 		art.Permalink,
 		art.SrcURL,
 		art.Publication.ID,
-		// TODO: wordcount
-		sql.NullInt64{0, false}).Scan(&artID)
+		sql.NullInt64{0, false},
+		pq.NullTime{},
+	).Scan(&artID)
 	if err != nil {
 		return err
 	}
@@ -75,7 +98,24 @@ func InsertArticle(tx *sql.Tx, art *Article, pubID int) error {
 		}
 	}
 
-	// queue it for xapian indexing
+	// link authors
+	for _, journo := range art.Authors {
+		// journo_attr
+		_, err = tx.Exec("INSERT INTO journo_attr (journo_id,article_id) VALUES ($1,$2)", journo.ID, artID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// apply journo activation policy
+	for _, journo := range art.Authors {
+		err = JournoUpdateActivation(tx, journo.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// queue article for xapian indexing
 	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, artID)
 	tx.Exec(`INSERT INTO article_needs_indexing (article_id) VALUES ($1)`, artID)
 
@@ -86,13 +126,16 @@ func InsertArticle(tx *sql.Tx, art *Article, pubID int) error {
 
 	// commentlinks
 	// TODO: tags
+	// TODO: wordcount
 
 	art.ID = artID
 	return nil
 }
 
-func UpdateArticle(tx *sql.Tx, artID int, art *Article) error {
-	_, err := tx.Exec(`UPDATE article SET (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, wordcount) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) WHERE id=$12`,
+func UpdateArticle(tx *sql.Tx, art *Article) error {
+	panic("Not implemented!!!")
+	panic("TODO: sanity checks")
+	_, err := tx.Exec(`UPDATE article SET (title, byline, description, lastscraped, pubdate, lastseen, permalink, srcurl, srcorg, wordcount) = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) WHERE id=$11`,
 		art.Title,
 		art.Byline,
 		art.Description,
@@ -103,31 +146,31 @@ func UpdateArticle(tx *sql.Tx, artID int, art *Article) error {
 		art.SrcURL,
 		art.Publication.ID,
 		art.WordCount,
-		artID)
+		art.ID)
 	if err != nil {
 		return err
 	}
 
 	// URLs
-	_, err = tx.Exec(`DELETE FROM article_url WHERE article_id=$1`, artID)
+	_, err = tx.Exec(`DELETE FROM article_url WHERE article_id=$1`, art.ID)
 	if err != nil {
 		return err
 	}
 	for _, u := range art.URLs {
-		_, err = tx.Exec(`INSERT INTO article_url (article_id, url) VALUES ($1,$2)`, artID, u)
+		_, err = tx.Exec(`INSERT INTO article_url (article_id, url) VALUES ($1,$2)`, art.ID, u)
 		if err != nil {
 			return err
 		}
 	}
 
 	// replace content
-	_, err = tx.Exec(`DELETE FROM article_content WHERE article_id=$1`, artID)
+	_, err = tx.Exec(`DELETE FROM article_content WHERE article_id=$1`, art.ID)
 	if err != nil {
 		return err
 	}
 	if art.Content != "" {
 		_, err = tx.Exec(`INSERT INTO article_content (article_id, content,scraped) VALUES ( $1,$2,$3 )`,
-			artID,
+			art.ID,
 			art.Content,
 			art.LastScraped)
 		if err != nil {
@@ -135,9 +178,10 @@ func UpdateArticle(tx *sql.Tx, artID int, art *Article) error {
 		}
 	}
 
+	panic("TODO: update journo links")
 	// queue it for xapian indexing
-	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, artID)
-	tx.Exec(`INSERT INTO article_needs_indexing (article_id) VALUES ($1)`, artID)
+	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, art.ID)
+	tx.Exec(`INSERT INTO article_needs_indexing (article_id) VALUES ($1)`, art.ID)
 
 	// TODO:
 	// article_image
@@ -160,7 +204,27 @@ func pgMarkerList(start, cnt int) string {
 	return strings.Join(out, ",")
 }
 
-func FindArticles(tx *sql.Tx, urls []string) ([]int, error) {
+// FindArticle returns the id of the article matching any of the given urls
+// If no article is found, ErrNoArticle is returned.
+// If there are mulitple matches (shouldn't happen!) an error is returned
+func FindArticle(tx *sql.Tx, urls []string) (int, error) {
+	ids, err := findArticles(tx, urls)
+	if err != nil {
+		return 0, err
+	}
+
+	n := len(ids)
+	switch {
+	case n > 1:
+		return 0, fmt.Errorf("Multiple matching articles, id: %v", urls)
+	case n == 1:
+		return ids[0], nil // yay.
+	default: // n==0
+		return 0, ErrNoArticle
+	}
+}
+
+func findArticles(tx *sql.Tx, urls []string) ([]int, error) {
 	out := []int{}
 	sql := `SELECT DISTINCT article_id FROM article_url WHERE url IN (` + pgMarkerList(1, len(urls)) + `)`
 

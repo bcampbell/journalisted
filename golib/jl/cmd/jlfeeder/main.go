@@ -67,15 +67,16 @@ func doIt(location string, sinceID int) error {
 
 	client := slurp.NewSlurper(location)
 
+	stats := loadStats{}
 	// grab and process in batches
 	for {
 		filt := &slurp.Filter{
 			SinceID:  sinceID,
 			Count:    10,
-			PubCodes: []string{"guardian"},
+			PubCodes: []string{"herald"},
 		}
 		incoming := client.Slurp(filt)
-		arts := []*jl.Article{}
+		arts := []*slurp.Article{}
 		for msg := range incoming {
 			if msg.Error != "" {
 				fmt.Printf("ERROR: %s\n", msg.Error)
@@ -83,19 +84,29 @@ func doIt(location string, sinceID int) error {
 				if msg.Article.ID > sinceID {
 					sinceID = msg.Article.ID
 				}
-				art := convertArt(msg.Article)
 				//fmt.Printf("%s (%s)\n", art.Title, art.Permalink)
-				arts = append(arts, art)
+				arts = append(arts, msg.Article)
 			} else {
 				fmt.Printf("WARN empty message...\n")
 			}
 		}
 
-		// add them
-		for _, art := range arts {
-			fmt.Printf("%s %s\n", art.Title, art.Permalink)
+		if len(arts) > 0 {
+			// load the batch into the db
+			tx, err := db.Begin()
+			if err != nil {
+				return err
+			}
+			err = loadBatch(tx, arts, &stats)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+			// TODO: commit!
+			tx.Rollback()
 		}
-
+		break
+		// end of articles?
 		if len(arts) < filt.Count {
 			break
 		}
@@ -104,117 +115,61 @@ func doIt(location string, sinceID int) error {
 	return nil
 }
 
-func processArticle(tx *sql.Tx, art *jl.Article, expectedJourno string) (int, error) {
-
-	// recheck database in case scraping yielded new urls
-	found, err := jl.FindArticles(tx, art.URLs)
-	if err != nil {
-		return 0, err
-	}
-	// TODO: should merge in newly-discovered URLs?
-
-	if len(found) > 1 {
-		// not quite sure if there's anything we can do here...
-		// TODO: maybe article_url table should have unique constraint upon url?
-		return 0, fmt.Errorf("Multiple matching articles in db, id: %v", found)
-	}
-
-	if len(found) > 0 && !opts.forceRescrape {
-		return 0, fmt.Errorf("already got [a%d]", found[0])
-	}
-
-	// find or create publication
-	// TODO: handle updating publication with new info?
-
-	/*
-			pubID, err := jl.FindPublication(tx, art.Publication.Domains[0])
-			if err == sql.ErrNoRows {
-				// not found - create a new one
-				pubID, err = jl.CreatePublication(tx, art.Publication)
-				//fmt.Printf("new publication [%d] %s\n", pubID, art.Publication.Domain)
-			}
-			if err != nil {
-				return 0, err
-			}
-
-		//create/update article
-		var artID int
-		if len(found) == 0 {
-			artID, err = jl.InsertArticle(tx, art, pubID)
-		} else {
-			artID = found[0]
-			err = jl.UpdateArticle(tx, artID, art, pubID)
-		}
-		if err != nil {
-			return 0, err
-		}
-
-		// find/create journos
-		journoIDs := []int{}
-		for _, author := range jl.Authors {
-			j, err := jl.ResolveJourno(tx, &author, pubID, expectedJourno)
-			if err == jl.ErrAmbiguousJourno {
-				// LOG WARNING HERE
-				continue
-			} else if err != nil {
-				return 0, err
-			}
-
-			var journoID int
-			if j == nil {
-				// create a new journo
-				journoID, err = jl.CreateJourno(tx, &author)
-				if err != nil {
-					return 0, err
-				}
-				fmt.Printf("new journo [j%d] %s\n", journoID, author.Name)
-			} else {
-				journoID = j.ID
-			}
-			journoIDs = append(journoIDs, journoID)
-
-		}
-
-		// link journos to article
-		if len(found) > 0 {
-			_, err = tx.Exec("DELETE FROM journo_attr WHERE article_id=$1", artID)
-			if err != nil {
-				return 0, err
-			}
-		}
-		for _, jid := range journoIDs {
-			// journo_attr
-			_, err = tx.Exec("INSERT INTO journo_attr (journo_id,article_id) VALUES ($1,$2)", jid, artID)
-			if err != nil {
-				return 0, err
-			}
-
-			// apply journo activation policy
-			err = journoUpdateActivation(tx, jid)
-			if err != nil {
-				return 0, err
-			}
-
-			// clear the html cache for that journos page
-			cacheName := fmt.Sprintf("j%s", jid)
-			_, err = tx.Exec("DELETE FROM htmlcache WHERE name=$1", cacheName)
-			if err != nil {
-				return 0, err
-			}
-		}
-
-		// log it
-		bylineBits := make([]string, len(journoIDs))
-		for i, jid := range journoIDs {
-			bylineBits[i] = fmt.Sprintf("[j%d]", jid)
-		}
-		fmt.Printf("new [a%d] \"%s\" (%s)\n", artID, art.Headline, strings.Join(bylineBits, ","))
-		return artID, nil
-	*/
-	return 0, fmt.Errorf("NOT IMPLEMENTED YET!")
+type loadStats struct {
+	NewCnt   int
+	Reloaded int
+	Skipped  int
+	ErrCnt   int
 }
 
-func convertArt(src *slurp.Article) *jl.Article {
+// load a batch of articles into the database
+func loadBatch(tx *sql.Tx, rawArts []*slurp.Article, stats *loadStats) error {
+	for _, raw := range rawArts {
+		art, authors := convertArt(raw)
+		// already got the article?
+		foundID, err := jl.FindArticle(tx, art.URLs)
+
+		if err != nil && err != jl.ErrNoArticle {
+			errLog.Printf(err.Error())
+			stats.ErrCnt++
+			// TODO: implement abort here if too many errors?
+			continue
+		}
+
+		rescrape := false
+		if err == nil {
+			// article was found
+			if opts.forceRescrape {
+				rescrape = true
+				art.ID = foundID
+			} else {
+				// skip this one. already got it.
+				// TODO: possible that we've got new URLs to add...
+				stats.Skipped++
+				continue
+			}
+		}
+
+		err = stash(tx, art, authors, "")
+		if err != nil {
+			errLog.Printf(err.Error())
+			stats.ErrCnt++
+			continue
+		}
+
+		if rescrape {
+			stats.Reloaded++
+			infoLog.Printf("reloaded %s %s\n", art.Title, art.Permalink)
+		} else {
+			stats.NewCnt++
+			infoLog.Printf("new %s %s\n", art.Title, art.Permalink)
+		}
+	}
+	return nil
+}
+
+// convertArt converts a slurped article into jl form
+func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 
 	bestURL := src.CanonicalURL
 	if bestURL == "" {
@@ -257,6 +212,15 @@ func convertArt(src *slurp.Article) *jl.Article {
 		Status:    'a',
 	}
 	copy(art.URLs, src.URLs)
-	return art
 
+	// authors
+	authors := []*jl.UnresolvedJourno{}
+	for _, a := range src.Authors {
+		u := &jl.UnresolvedJourno{
+			Name: a.Name,
+			// TODO: Email, rel-author, twitter, etc..
+		}
+		authors = append(authors, u)
+	}
+	return art, authors
 }
