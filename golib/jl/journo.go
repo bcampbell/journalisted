@@ -14,25 +14,44 @@ import (
 //var ErrNoMatchingJourno = errors.New("No matching journo")
 var ErrAmbiguousJourno = errors.New("Ambiguous journo")
 
+// Journo is the in-memory representation of a journo in the db
 type Journo struct {
-	ID          int
-	Ref         string
-	Prettyname  string
-	Lastname    string
-	Firstname   string
-	Created     time.Time
-	Status      string
-	Oneliner    string
+	// ID is the unique id in the db
+	// An ID of 0 indicates the journo data is not yet in the db.
+	ID int
+	// Ref is a slug for the journo (eg "fred-smith-1")
+	Ref string
+	// Prettyname is the name to display
+	Prettyname string
+	Lastname   string
+	Firstname  string
+	// Created is the time the journo was added to the db
+	Created time.Time
+	// Status is one of:
+	// "a" active
+	// "i" inactive (not yet met criteria for public display)
+	// others?
+	Status string
+	// Oneliner is a human-readable description of the journo, usually
+	// generated automatically based upon the publications they've written
+	// for, and/or any biographical data on file
+	Oneliner string
+	// LastSimilar is the time of the last 'other-journos-who-write-about-
+	// similar-stuff' run
 	LastSimilar pq.NullTime
 	// Modified flag to indicate journo changed - handled by triggers in DB
-	Modified           bool
+	Modified bool
+	// FirstnameMetaphone is a metaphone encoding of Firstname, for fuzzy matching
 	FirstnameMetaphone string
-	LastnameMetaphone  string
-	AdminNotes         string
-	AdminTags          string
-	Fake               bool
+	// LastnameMetaphone is a metaphone encoding of Lastname, for fuzzy matching
+	LastnameMetaphone string
+	AdminNotes        string
+	AdminTags         string
+	// Fake is set true for known-fake journalists
+	Fake bool
 }
 
+// UnresolvedJourno for data used to search for journos
 type UnresolvedJourno struct {
 	Name string
 	//	Email     string
@@ -40,7 +59,7 @@ type UnresolvedJourno struct {
 	//	RelAuthor string
 }
 
-// create a brand new journo from a name
+// CreateJourno creates a brand new journo in the database, given a name
 func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
 	// hit the DB to generate a unique ref
 	ref, err := uniqRef(tx, baseRef(name))

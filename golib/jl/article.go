@@ -11,24 +11,46 @@ import (
 
 var ErrNoArticle = errors.New("article not found")
 
+// Article is the in-memory representation of an article in the db
 type Article struct {
-	ID          int // 0 = no ID assigned (ie not yet in DB)
-	Title       string
-	Byline      string
+	// ID is the unique article ID in the db.
+	// An ID of 0 indicates the article data is not yet in the db.
+	ID int
+	// Title is the headline of the article
+	Title string
+	// Byline is the raw byline (deprecated)
+	Byline string
+	// Description is the short summary of the article,
+	// often the first paragraph or 50 words or whatever.
 	Description string
-	Content     string
-	PubDate     pq.NullTime
-	FirstSeen   time.Time // not null
-	LastSeen    time.Time // not null
-	Permalink   string
-	SrcURL      string
+	// Content is the main text of the article (formatted
+	// with a subset of HTML)
+	Content string
+	// PubDate is the date of publication, if known
+	PubDate   pq.NullTime
+	FirstSeen time.Time // not null
+	LastSeen  time.Time // not null
+	// Permalink is the canonical URL
+	Permalink string
+
+	SrcURL string
+	// URLs is a list of all known urls for the article
 	URLs        []string
 	Publication *Publication // SrcOrg      int
 	//    SrcID   string
+
+	//
 	LastScraped pq.NullTime
 	WordCount   sql.NullInt64
-	Status      rune
 
+	// Status can be:
+	// 'a' active
+	// 'h' hidden
+	// 'd' duplicate (deprecated)
+	// others?
+	Status rune
+
+	// Authors is the list of journos credited with writing this article
 	Authors []*Journo
 	/*
 	   // do we really need these in the struct?
@@ -41,9 +63,9 @@ type Article struct {
 }
 
 // InsertArticle loads a new article into the database.
-// art.ID is set to the newly-minted id.
-// Requires the Publication has already been resolved
-// Journos must be resolved
+// Upon success, art.ID is set to the newly-minted id.
+// Requires the Publication has already been resolved.
+// Journos must also be resolved.
 func InsertArticle(tx *sql.Tx, art *Article) error {
 	var artID int
 
