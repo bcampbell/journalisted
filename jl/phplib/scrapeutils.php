@@ -15,9 +15,9 @@ function scrape_ScrapeURL( $url, $expected_ref=null )
 
 	putenv("JL_DEBUG=2");
 
-    $db_uri = sprintf("postgres://%s:%s@%s:%s/%s",
+    // TODO: this is a bit brittle. should check which opts are set
+    $db_uri = sprintf("user=%s host=%s port=%s dbname=%s sslmode=disable",
         OPTION_JL_DB_USER,
-        OPTION_JL_DB_PASS,
         OPTION_JL_DB_HOST,
         OPTION_JL_DB_PORT,
         OPTION_JL_DB_NAME);
