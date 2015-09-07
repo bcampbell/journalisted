@@ -1,9 +1,9 @@
 DATABASE SETUP
 --------------
 
-These notes apply to Postgres 9.2 (from apt.postgresql.org) on Ubuntu
-Precise. Applies mostly to other versions of pg and ubuntu/debian...
-but bound to be a few differences here and there.
+These notes apply to Postgres 9.4 on debian 8 (Jessie).
+Applies mostly to other versions of pg and ubuntu/debian,
+but bound to be a few differences here and there...
 
 Assumes we're running a database called "jl", with a postgres user
 called "jl" and a unix account with the username "jl".
@@ -13,13 +13,10 @@ called "jl" and a unix account with the username "jl".
 Set up Postgres for UTF8 encoding
 ---------------------------------
 
-On Ubuntu, the default postgres cluster is set up for SQL_ASCII encoding.
+On Ubuntu & Debian, the default postgres cluster is set up for SQL_ASCII
+encoding.
 An easy way to switch to UTF-8 is to drop the cluster just after installation
-and recreate it:
-
-$ sudo -u postgres pg_dropcluster --stop 9.2 main
-$ sudo -u postgres pg_createcluster -e UTF-8 9.2 main
-
+and recreate it using pg_dropcluster/pg_createcluster.
 
 GOTCHA: pg_createcluster will use the default locale. SSH forwards your
 local locale LC_* vars over to remote sessions by default. If you're in
@@ -31,16 +28,18 @@ postgresql 9.2
 Workaround is to manually set your locale before invoking pg_createcluster
 eg:
 
- $ export LANG=en_GB.utf-8
- $ export LC_ALL=en_GB.utf-8
+    $ export LANG=en_GB.utf-8
+    $ export LC_ALL=en_GB.utf-8
 
+    $ sudo -u postgres pg_dropcluster --stop 9.4 main
+    $ sudo -u postgres pg_createcluster -e UTF-8 9.4 main
 
 
 
 Create the postgres user and database
 -------------------------------------
 
-$ sudo -u postgres createuser --no-superuser --no-createrole --createdb jl
+$ sudo -u postgres createuser jl
 $ sudo -u postgres createdb -O jl -E utf8 jl
 
 (or $ sudo -u postgres createdb -O jl -E utf8 -T template0 jl
