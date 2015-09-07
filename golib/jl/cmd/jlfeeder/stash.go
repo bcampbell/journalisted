@@ -7,7 +7,7 @@ import (
 	//	"github.com/lib/pq"
 	//	"time"
 	"errors"
-	"strings"
+	//	"strings"
 )
 
 // TODO: handle updating publication with new info?
@@ -43,7 +43,7 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 			return fmt.Errorf("InsertArticle failed: %s\n", err)
 		}
 	} else {
-		panic("uhoh")
+		panic("uhoh") // TODO!
 		err = jl.UpdateArticle(tx, art)
 		if err != nil {
 			return err
@@ -97,12 +97,6 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 		*/
 	}
 
-	// log it
-	bylineBits := make([]string, len(art.Authors))
-	for i, j := range art.Authors {
-		bylineBits[i] = j.Ref
-	}
-	fmt.Printf("new [a%d] \"%s\" (%s)\n", art.ID, art.Title, strings.Join(bylineBits, ","))
 	return nil
 }
 

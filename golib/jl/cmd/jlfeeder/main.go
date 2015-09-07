@@ -4,12 +4,16 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/bcampbell/htmlutil"
 	"github.com/bcampbell/journalisted/golib/jl"
 	"github.com/lib/pq"
+	"golang.org/x/net/html"
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"semprini/scrapeomat/slurp"
+	"strings"
 	"time"
 )
 
@@ -17,16 +21,23 @@ var opts = struct {
 	dbURI         string
 	verbose       bool
 	forceRescrape bool
+	serverBase    string
+	sinceIDFile   string
 }{}
 
 var infoLog *log.Logger
 var warnLog *log.Logger
 var errLog *log.Logger
 
+// cheesy wordcount (TODO: improve!)
+var wordPat *regexp.Regexp = regexp.MustCompile(`\w+`)
+
 func main() {
 	flag.StringVar(&opts.dbURI, "db", "", `Database URI eg "postgres://jl@localhost/jl" (if unset, uses $JL_DB_URI)`)
+	flag.StringVar(&opts.serverBase, "server", "http://localhost:12345", `base URL of slurp server`)
 	flag.BoolVar(&opts.verbose, "v", false, `verbose`)
 	flag.BoolVar(&opts.forceRescrape, "force", false, `force rescrape`)
+	flag.StringVar(&opts.sinceIDFile, "sinceid", "", `file to track since_id with ""=none`)
 	flag.Parse()
 
 	if opts.verbose {
@@ -37,7 +48,7 @@ func main() {
 	warnLog = log.New(os.Stderr, "", 0)
 	errLog = log.New(os.Stderr, "", 0)
 
-	err := doIt("http://localhost:12345", 0)
+	err := doIt()
 	if err != nil {
 		panic(err)
 	}
@@ -58,38 +69,61 @@ func openDB(connStr string) (*sql.DB, error) {
 	return db, nil
 }
 
-func doIt(location string, sinceID int) error {
+func doIt() error {
+
+	var sinceID int
+	var err error
+	if opts.sinceIDFile != "" {
+		sinceID, err = getSinceID(opts.sinceIDFile)
+		if err != nil {
+			return err
+		}
+		infoLog.Printf("%s: since_id is %d\n", opts.sinceIDFile, sinceID)
+	}
+
 	db, err := openDB(opts.dbURI)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-
-	client := slurp.NewSlurper(location)
-
 	stats := loadStats{}
+
+	defer func() {
+		db.Close()
+
+		if opts.sinceIDFile != "" && stats.HighID != 0 {
+			putSinceID(opts.sinceIDFile, stats.HighID)
+			infoLog.Printf("%s: new since_id is %d\n", opts.sinceIDFile, sinceID)
+		}
+
+	}()
+
+	client := slurp.NewSlurper(opts.serverBase)
+
 	// grab and process in batches
 	for {
 		filt := &slurp.Filter{
 			SinceID:  sinceID,
-			Count:    10,
-			PubCodes: []string{"herald"},
+			Count:    30,
+			PubCodes: []string{"guardian", "dailymail"},
 		}
+		infoLog.Printf("slurp %v...\n", filt)
 		incoming := client.Slurp(filt)
 		arts := []*slurp.Article{}
 		for msg := range incoming {
 			if msg.Error != "" {
-				fmt.Printf("ERROR: %s\n", msg.Error)
+				errLog.Printf(msg.Error)
 			} else if msg.Article != nil {
+				//infoLog.Printf("bing %s\n", msg.Article.CanonicalURL)
 				if msg.Article.ID > sinceID {
 					sinceID = msg.Article.ID
 				}
 				//fmt.Printf("%s (%s)\n", art.Title, art.Permalink)
 				arts = append(arts, msg.Article)
 			} else {
-				fmt.Printf("WARN empty message...\n")
+				warnLog.Printf("empty message\n")
 			}
 		}
+		infoLog.Printf("batch received (%d arts)\n", len(arts))
 
 		if len(arts) > 0 {
 			// load the batch into the db
@@ -104,6 +138,8 @@ func doIt(location string, sinceID int) error {
 			}
 			// TODO: commit!
 			tx.Rollback()
+
+			sinceID = stats.HighID
 		}
 		break
 		// end of articles?
@@ -111,6 +147,8 @@ func doIt(location string, sinceID int) error {
 			break
 		}
 
+		// FORCE BREAK FOR NOW!
+		break
 	}
 	return nil
 }
@@ -120,6 +158,8 @@ type loadStats struct {
 	Reloaded int
 	Skipped  int
 	ErrCnt   int
+	// highest article ID encountered so far
+	HighID int
 }
 
 // load a batch of articles into the database
@@ -156,13 +196,24 @@ func loadBatch(tx *sql.Tx, rawArts []*slurp.Article, stats *loadStats) error {
 			stats.ErrCnt++
 			continue
 		}
+		// log it
+		bylineBits := make([]string, len(art.Authors))
+		for i, j := range art.Authors {
+			bylineBits[i] = j.Ref
+		}
+		infoLog.Printf("%d: new [a%d] %s (%s)\n", raw.ID, art.ID, art.Permalink, strings.Join(bylineBits, ","))
 
 		if rescrape {
 			stats.Reloaded++
-			infoLog.Printf("reloaded %s %s\n", art.Title, art.Permalink)
+			//infoLog.Printf("reloaded %s %s\n", art.Title, art.Permalink)
 		} else {
 			stats.NewCnt++
-			infoLog.Printf("new %s %s\n", art.Title, art.Permalink)
+			//infoLog.Printf("new %s %s\n", art.Title, art.Permalink)
+		}
+
+		// record highest serverside ID encountered so far
+		if raw.ID > stats.HighID {
+			stats.HighID = raw.ID
 		}
 	}
 	return nil
@@ -170,6 +221,7 @@ func loadBatch(tx *sql.Tx, rawArts []*slurp.Article, stats *loadStats) error {
 
 // convertArt converts a slurped article into jl form
 func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
+	now := time.Now()
 
 	bestURL := src.CanonicalURL
 	if bestURL == "" {
@@ -190,7 +242,26 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 		pubDate.Valid = true
 	} // else pubDate is NULL
 
-	now := time.Now()
+	wordCnt := sql.NullInt64{0, false}
+	rawTxt := ""
+	if src.Content != "" {
+		// parse and render to raw text
+		doc, err := html.Parse(strings.NewReader(src.Content))
+		if err == nil {
+			rawTxt = htmlutil.RenderNode(doc)
+		}
+	}
+
+	if rawTxt != "" {
+		// count words
+		cnt := len(wordPat.FindAllString(rawTxt, -1))
+		if cnt > 0 {
+			wordCnt = sql.NullInt64{int64(cnt), true}
+		}
+
+		// extract tags
+		//tags := jl.ExtractTags(rawText)
+	}
 
 	art := &jl.Article{
 		ID:          0, // note: we generate our own IDs at the JL end
@@ -207,8 +278,7 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 		Publication: pub,
 		LastScraped: pq.NullTime{now, true},
 
-		// TODO: WORDCOUNT!!!!
-		WordCount: sql.NullInt64{0, false},
+		WordCount: wordCnt,
 		Status:    'a',
 	}
 	copy(art.URLs, src.URLs)
