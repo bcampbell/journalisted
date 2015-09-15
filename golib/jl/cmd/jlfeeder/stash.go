@@ -14,7 +14,7 @@ import (
 
 var ErrAmbiguousJourno = errors.New("Ambiguous Journo")
 
-func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expectedJournoRef string) error {
+func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expectedJournoRef string, logPrefix string) error {
 
 	var err error
 	// sanity checks
@@ -29,7 +29,10 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 		if err == jl.ErrNoPub {
 			// not found - create a new one
 			err = jl.InsertPublication(tx, art.Publication)
-			infoLog.Printf("new publication [%d] %s\n", art.Publication.ID, art.Publication.ShortName)
+			if err != nil {
+				return err
+			}
+			infoLog.Printf("%snew publication [%d] %s\n", logPrefix, art.Publication.ID, art.Publication.ShortName)
 		}
 		if err != nil {
 			return err
@@ -53,15 +56,20 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 	// find/create journos
 
 	journos := []*jl.Journo{}
+
+	// de-dupe (just in case!)
+	authors = jl.UniqUnresolvedJournos(authors)
 	for _, author := range authors {
-		j, err := sussJourno(tx, author, art.Publication.ID, expectedJournoRef)
+		j, err := sussJourno(tx, author, art.Publication.ID, expectedJournoRef, logPrefix)
 		if err == ErrAmbiguousJourno {
 			// TODO: need a better mechanism to notify ambiguous journos!
 			// maybe a new database table?
-			warnLog.Printf("[a%d] %s\n", art.ID, err)
+			warnLog.Printf("%sAmbiguous Journo (%s) \n", logPrefix, author.Name)
 			continue
 		} else if err != nil {
-			return fmt.Errorf("sussJourno() failed: %s\n", err)
+			warnLog.Printf("%s%s (%s) \n", logPrefix, err, author.Name)
+			//
+			continue
 		}
 		journos = append(journos, j)
 	}
@@ -78,7 +86,7 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 		// journo_attr
 		_, err = tx.Exec("INSERT INTO journo_attr (journo_id,article_id) VALUES ($1,$2)", j.ID, art.ID)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to attribute journo (j%d to a%d): %s", j.ID, art.ID, err)
 		}
 
 		// apply journo activation policy
@@ -101,7 +109,7 @@ func stash(tx *sql.Tx, art *jl.Article, authors []*jl.UnresolvedJourno, expected
 }
 
 // find or create a journo
-func sussJourno(tx *sql.Tx, author *jl.UnresolvedJourno, pubID int, expectedJournoRef string) (*jl.Journo, error) {
+func sussJourno(tx *sql.Tx, author *jl.UnresolvedJourno, pubID int, expectedJournoRef string, logPrefix string) (*jl.Journo, error) {
 
 	prospects, err := jl.ResolveJourno(tx, author, pubID, expectedJournoRef)
 	if err != nil {
@@ -120,6 +128,6 @@ func sussJourno(tx *sql.Tx, author *jl.UnresolvedJourno, pubID int, expectedJour
 	if err != nil {
 		return nil, err
 	}
-	infoLog.Printf("new journo [j%d] %s\n", newJourno.ID, newJourno.Prettyname)
+	infoLog.Printf("%snew journo [j%d] %s\n", logPrefix, newJourno.ID, newJourno.Prettyname)
 	return newJourno, nil
 }

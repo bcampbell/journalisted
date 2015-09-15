@@ -60,6 +60,8 @@ type Article struct {
 	   LastCommentCheck
 	   LastSimilar
 	*/
+
+	Tags []Tag
 }
 
 // InsertArticle loads a new article into the database.
@@ -97,7 +99,7 @@ func InsertArticle(tx *sql.Tx, art *Article) error {
 		art.Permalink,
 		art.SrcURL,
 		art.Publication.ID,
-		sql.NullInt64{0, false},
+		art.WordCount,
 		pq.NullTime{},
 	).Scan(&artID)
 	if err != nil {
@@ -137,6 +139,13 @@ func InsertArticle(tx *sql.Tx, art *Article) error {
 		}
 	}
 
+	// Tags
+	for _, t := range art.Tags {
+		_, err := tx.Exec(`INSERT INTO article_tag (article_id, tag, freq) VALUES ($1,$2,$3)`, artID, t.Name, t.Freq)
+		if err != nil {
+			return err
+		}
+	}
 	// queue article for xapian indexing
 	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, artID)
 	tx.Exec(`INSERT INTO article_needs_indexing (article_id) VALUES ($1)`, artID)
@@ -147,7 +156,6 @@ func InsertArticle(tx *sql.Tx, art *Article) error {
 	// TODO: images into article_image table?
 
 	// commentlinks
-	// TODO: tags
 	// TODO: wordcount
 
 	art.ID = artID
@@ -200,6 +208,8 @@ func UpdateArticle(tx *sql.Tx, art *Article) error {
 		}
 	}
 
+	panic("TODO: update tags")
+
 	panic("TODO: update journo links")
 	// queue it for xapian indexing
 	tx.Exec(`DELETE FROM article_needs_indexing WHERE article_id=$1`, art.ID)
@@ -208,7 +218,6 @@ func UpdateArticle(tx *sql.Tx, art *Article) error {
 	// TODO:
 	// article_image
 	// article_commentlink
-	// article_tag
 
 	return nil
 }

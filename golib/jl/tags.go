@@ -18,6 +18,12 @@ type Tag struct {
 	Freq int
 }
 
+type TagsByName []Tag
+
+func (a TagsByName) Len() int           { return len(a) }
+func (a TagsByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a TagsByName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
 // extract a list of terms (tags) from text
 func ExtractTagsFromText(rawTxt string) []Tag {
 

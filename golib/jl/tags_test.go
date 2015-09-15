@@ -3,6 +3,7 @@ package jl
 import (
 	"fmt"
 	//	"testing"
+	"sort"
 )
 
 func ExampleExtractTagsFromText() {
@@ -16,15 +17,17 @@ func ExampleExtractTagsFromText() {
 	}
 
 	for _, txt := range txts {
-		// TODO: need to sort results for comparison...
-		fmt.Println(ExtractTagsFromText(txt))
+		// need to sort results for comparison...
+		tags := ExtractTagsFromText(txt)
+		sort.Sort(TagsByName(tags))
+		fmt.Println(tags)
 	}
 
 	// Output:
 	// [{fred bloggs 1} {smith 1}]
-	// [{imf 1]]
-	// [{foobar 3]]
+	// [{imf 1}]
+	// [{foobar 3}]
 	// [{josé ricardo álvarez 1}]
-	// [{institute 1} {october 1} {union 1} {concerned scientists 1} {wednesday 1} {exxonmobile 1} {bp 1} {shell 1} {peabody energy 1} {climate deception dossiers 1}]
-	// [{osborne 1} {margaret thatcher 1} {britain 1} {greece 1} {having 1}]
+	// [{bp 1} {climate deception dossiers 1} {concerned scientists 1} {exxonmobil 1} {institute 1} {october 1} {peabody energy 1} {shell 1} {union 1} {wednesday 1}]
+	// [{britain 1} {greece 1} {having 1} {margaret thatcher 1} {osborne 1}]
 }

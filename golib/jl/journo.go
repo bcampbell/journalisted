@@ -59,10 +59,32 @@ type UnresolvedJourno struct {
 	//	RelAuthor string
 }
 
+func UniqUnresolvedJournos(journos []*UnresolvedJourno) []*UnresolvedJourno {
+	out := []*UnresolvedJourno{}
+	for _, a := range journos {
+		dupe := false
+		for _, b := range out {
+			if strings.ToLower(a.Name) == strings.ToLower(b.Name) {
+				dupe = true
+				break
+			}
+		}
+		if !dupe {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
 // CreateJourno creates a brand new journo in the database, given a name
 func CreateJourno(tx *sql.Tx, name string) (*Journo, error) {
+	base := baseRef(name)
+	if base == "" {
+		return nil, fmt.Errorf(`can't use journo name "%s"`, name)
+	}
+
 	// hit the DB to generate a unique ref
-	ref, err := uniqRef(tx, baseRef(name))
+	ref, err := uniqRef(tx, base)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +129,7 @@ func insertJourno(tx *sql.Tx, j *Journo) error {
 	return nil
 }
 
-var refCleanser = regexp.MustCompile(`[^-a-z ]`)
+var refCleanser = regexp.MustCompile(`[^a-z ]`)
 
 // generate a journo ref from a name
 func baseRef(name string) string {
@@ -137,8 +159,12 @@ func splitName(n string) (string, string) {
 func uniqRef(tx *sql.Tx, baseRef string) (string, error) {
 	var ref string
 	var suffix int
+
+	// site currently requires refs to have a '-' in them
+	forceSuffix := !strings.ContainsRune(baseRef, '-')
+
 	for {
-		if suffix == 0 {
+		if suffix == 0 && !forceSuffix {
 			ref = baseRef
 		} else {
 			ref = fmt.Sprintf("%s-%d", baseRef, suffix)
@@ -162,6 +188,10 @@ func FindJournoByName(tx *sql.Tx, name string) ([]*Journo, error) {
 
 	// check first 20 possible refs.
 	r := baseRef(name)
+	if r == "" {
+		return []*Journo{}, nil
+	}
+
 	refs := []interface{}{r}
 	for i := 1; i < 20; i++ {
 		refs = append(refs, fmt.Sprintf("%s-%d", r, i))

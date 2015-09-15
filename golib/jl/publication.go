@@ -90,19 +90,27 @@ func strippedDomain(d string) string {
 	return stripWWWPat.ReplaceAllString(d, "")
 }
 
-func CreatePublication(tx *sql.Tx, domain, name string) (*Publication, error) {
+// NewPublication builds a publication from a domainname and (optional) prettyname
+func NewPublication(domain string, prettyName string) *Publication {
+	if prettyName == "" {
+		prettyName = strippedDomain(domain)
+	}
 	pub := &Publication{}
 	pub.Domains = []string{domain}
-	if name == "" {
-		name = strippedDomain(domain)
-	}
-	pub.PrettyName = name
+	pub.PrettyName = prettyName
 	pub.ShortName = genShortName(pub.PrettyName)
 
 	// strip leading "the"s for more natural sort order
 	pub.SortName = stripThePat.ReplaceAllLiteralString(strings.ToLower(pub.PrettyName), "")
 
 	pub.HomeURL = "http://" + domain
+
+	return pub
+}
+
+// TODO: is this used?
+func CreatePublication(tx *sql.Tx, domain, name string) (*Publication, error) {
+	pub := NewPublication(domain, name)
 
 	err := tx.QueryRow(`INSERT INTO organisation (id,shortname,prettyname,sortname,home_url) VALUES (DEFAULT, $1,$2,$3,$4) RETURNING id`,
 		pub.ShortName,

@@ -37,11 +37,11 @@ func main() {
 	flag.StringVar(&opts.serverBase, "server", "http://localhost:12345", `base URL of slurp server`)
 	flag.BoolVar(&opts.verbose, "v", false, `verbose`)
 	flag.BoolVar(&opts.forceRescrape, "force", false, `force rescrape`)
-	flag.StringVar(&opts.sinceIDFile, "sinceid", "", `file to track since_id with ""=none`)
+	flag.StringVar(&opts.sinceIDFile, "sinceid", "", `file to track since_id with (""=none)`)
 	flag.Parse()
 
 	if opts.verbose {
-		infoLog = log.New(os.Stderr, "", 0)
+		infoLog = log.New(os.Stdout, "", 0)
 	} else {
 		infoLog = log.New(ioutil.Discard, "", 0)
 	}
@@ -90,6 +90,7 @@ func doIt() error {
 	defer func() {
 		db.Close()
 
+		infoLog.Println(stats.summary())
 		if opts.sinceIDFile != "" && stats.HighID != 0 {
 			putSinceID(opts.sinceIDFile, stats.HighID)
 			infoLog.Printf("%s: new since_id is %d\n", opts.sinceIDFile, sinceID)
@@ -103,8 +104,8 @@ func doIt() error {
 	for {
 		filt := &slurp.Filter{
 			SinceID:  sinceID,
-			Count:    30,
-			PubCodes: []string{"guardian", "dailymail"},
+			Count:    2000,
+			PubCodes: []string{},
 		}
 		infoLog.Printf("slurp %v...\n", filt)
 		incoming := client.Slurp(filt)
@@ -125,22 +126,22 @@ func doIt() error {
 		}
 		infoLog.Printf("batch received (%d arts)\n", len(arts))
 
-		if len(arts) > 0 {
-			// load the batch into the db
+		for _, art := range arts {
 			tx, err := db.Begin()
 			if err != nil {
 				return err
 			}
-			err = loadBatch(tx, arts, &stats)
+			err = loadArt(tx, art, &stats)
 			if err != nil {
 				tx.Rollback()
-				return err
+				// TODO: check error count against threshold here!
+				continue
 			}
-			// TODO: commit!
-			tx.Rollback()
+			tx.Commit()
 
 			sinceID = stats.HighID
 		}
+		// FORCE BREAK FOR NOW!
 		break
 		// end of articles?
 		if len(arts) < filt.Count {
@@ -162,59 +163,67 @@ type loadStats struct {
 	HighID int
 }
 
-// load a batch of articles into the database
-func loadBatch(tx *sql.Tx, rawArts []*slurp.Article, stats *loadStats) error {
-	for _, raw := range rawArts {
-		art, authors := convertArt(raw)
-		// already got the article?
-		foundID, err := jl.FindArticle(tx, art.URLs)
+func (stats *loadStats) summary() string {
 
-		if err != nil && err != jl.ErrNoArticle {
-			errLog.Printf(err.Error())
-			stats.ErrCnt++
-			// TODO: implement abort here if too many errors?
-			continue
-		}
+	return fmt.Sprintf("%d new, %d skipped, %d errors", stats.NewCnt, stats.Skipped, stats.ErrCnt)
+}
 
-		rescrape := false
-		if err == nil {
-			// article was found
-			if opts.forceRescrape {
-				rescrape = true
-				art.ID = foundID
-			} else {
-				// skip this one. already got it.
-				// TODO: possible that we've got new URLs to add...
-				stats.Skipped++
-				continue
-			}
-		}
+// convert and load an article into the database
+func loadArt(tx *sql.Tx, rawArt *slurp.Article, stats *loadStats) error {
+	art, authors := convertArt(rawArt)
+	// already got the article?
+	foundID, err := jl.FindArticle(tx, art.URLs)
 
-		err = stash(tx, art, authors, "")
-		if err != nil {
-			errLog.Printf(err.Error())
-			stats.ErrCnt++
-			continue
-		}
-		// log it
-		bylineBits := make([]string, len(art.Authors))
-		for i, j := range art.Authors {
-			bylineBits[i] = j.Ref
-		}
-		infoLog.Printf("%d: new [a%d] %s (%s)\n", raw.ID, art.ID, art.Permalink, strings.Join(bylineBits, ","))
+	if err != nil && err != jl.ErrNoArticle {
+		errLog.Printf(err.Error())
+		stats.ErrCnt++
+		return err
+	}
 
-		if rescrape {
-			stats.Reloaded++
-			//infoLog.Printf("reloaded %s %s\n", art.Title, art.Permalink)
+	rescrape := false
+	if err == nil {
+		// article was found
+		if opts.forceRescrape {
+			rescrape = true
+			art.ID = foundID
 		} else {
-			stats.NewCnt++
-			//infoLog.Printf("new %s %s\n", art.Title, art.Permalink)
+			// skip this one. already got it.
+			// TODO: possible that we've got new URLs to add...
+			stats.Skipped++
+			// bump the since_id
+			if rawArt.ID > stats.HighID {
+				stats.HighID = rawArt.ID
+			}
+			return nil
 		}
+	}
 
-		// record highest serverside ID encountered so far
-		if raw.ID > stats.HighID {
-			stats.HighID = raw.ID
-		}
+	logPrefix := fmt.Sprintf("%d: ", rawArt.ID)
+
+	err = stash(tx, art, authors, "", logPrefix)
+	if err != nil {
+		errLog.Printf("%sError: %s\n", logPrefix, err.Error())
+		stats.ErrCnt++
+		return err
+	}
+	// log it
+	bylineBits := make([]string, len(art.Authors))
+	for i, j := range art.Authors {
+		bylineBits[i] = j.Ref
+	}
+	infoLog.Printf("%snew [a%d] %s (%s)\n", logPrefix, art.ID, art.Permalink, strings.Join(bylineBits, ","))
+
+	if rescrape {
+		stats.Reloaded++
+		//infoLog.Printf("reloaded %s %s\n", art.Title, art.Permalink)
+	} else {
+		stats.NewCnt++
+		//infoLog.Printf("new %s %s\n", art.Title, art.Permalink)
+	}
+
+	// record highest serverside ID encountered so far
+	if rawArt.ID > stats.HighID {
+		stats.HighID = rawArt.ID
 	}
 	return nil
 }
@@ -228,12 +237,7 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 		bestURL = src.URLs[0]
 	}
 
-	pub := &jl.Publication{
-		ID:         0, // unresolved
-		ShortName:  src.Publication.Code,
-		PrettyName: src.Publication.Name,
-		Domains:    []string{src.Publication.Domain},
-	}
+	pub := jl.NewPublication(src.Publication.Domain, src.Publication.Name)
 
 	var pubDate pq.NullTime
 	t, err := time.Parse(time.RFC3339, src.Published)
@@ -252,6 +256,7 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 		}
 	}
 
+	tags := []jl.Tag{}
 	if rawTxt != "" {
 		// count words
 		cnt := len(wordPat.FindAllString(rawTxt, -1))
@@ -259,8 +264,7 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 			wordCnt = sql.NullInt64{int64(cnt), true}
 		}
 
-		// extract tags
-		//tags := jl.ExtractTags(rawText)
+		tags = jl.ExtractTagsFromText(rawTxt)
 	}
 
 	art := &jl.Article{
@@ -280,6 +284,7 @@ func convertArt(src *slurp.Article) (*jl.Article, []*jl.UnresolvedJourno) {
 
 		WordCount: wordCnt,
 		Status:    'a',
+		Tags:      tags,
 	}
 	copy(art.URLs, src.URLs)
 
