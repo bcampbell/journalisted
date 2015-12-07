@@ -66,6 +66,7 @@ function admPageHeader( $title = '', $extra_head_fn=null )
 
 $(document).ready(function() {
     $(".journo-lookup").autocomplete("ajax-ref-lookup.php");
+/*
     $(".journo-info").toptip({
         'fetch': function(trigger,tip) {
             var txt = trigger.attr('href') || trigger.html();
@@ -77,7 +78,7 @@ $(document).ready(function() {
             }
         }
         });
-
+*/
     });
 </script>
 
