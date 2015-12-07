@@ -94,7 +94,7 @@
 
 <div id="content">
 
-  <div class="">
-      <a class="crosspromo" href="http://churnalism.com">New <img src="/img/promo/churnalism_icon.png"/> Churnalism web site and browser extensions.&nbsp;&nbsp;&nbsp; <strong>Check articles for press release churn while you browse!</strong></a>
-  </div>
-
+    <div class="crosspromo">
+        journalisted is a non-profit public service site whose funding has come to an end.<br/>
+        If you know how we can sustain journalisted into 2016 please <a href="mailto:contact@mediastandardstrust.org">contact us</a>.
+    </div>
