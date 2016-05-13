@@ -8,6 +8,7 @@ import (
 	"github.com/bcampbell/journalisted/golib/jl"
 	"github.com/lib/pq"
 	"golang.org/x/net/html"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -99,6 +100,7 @@ func doIt() error {
 	}()
 
 	client := slurp.NewSlurper(opts.serverBase)
+	lastID := sinceID
 
 	// grab and process in batches
 	for {
@@ -107,22 +109,21 @@ func doIt() error {
 			Count:    2000,
 			PubCodes: []string{},
 		}
-		infoLog.Printf("slurp %v...\n", filt)
-		incoming := client.Slurp(filt)
 		arts := []*slurp.Article{}
-		for msg := range incoming {
-			if msg.Error != "" {
-				errLog.Printf(msg.Error)
-			} else if msg.Article != nil {
-				//infoLog.Printf("bing %s\n", msg.Article.CanonicalURL)
-				if msg.Article.ID > sinceID {
-					sinceID = msg.Article.ID
-				}
-				//fmt.Printf("%s (%s)\n", art.Title, art.Permalink)
-				arts = append(arts, msg.Article)
-			} else {
-				warnLog.Printf("empty message\n")
+		infoLog.Printf("slurp %v...\n", filt)
+		stream := client.Slurp2(filt)
+		for {
+			wireArt, err := stream.Next()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
 			}
+			if wireArt.ID > lastID {
+				lastID = wireArt.ID
+			}
+			arts = append(arts, wireArt)
+			receivedCnt += 1
 		}
 		infoLog.Printf("batch received (%d arts)\n", len(arts))
 
@@ -139,17 +140,12 @@ func doIt() error {
 			}
 			tx.Commit()
 
-			sinceID = stats.HighID
 		}
-		// FORCE BREAK FOR NOW!
-		break
 		// end of articles?
 		if len(arts) < filt.Count {
 			break
 		}
 
-		// FORCE BREAK FOR NOW!
-		break
 	}
 	return nil
 }
