@@ -97,4 +97,7 @@ Log changes made due to website changes here!
 2014-09-10 independent: increase fault tolerance (500s)
 2014-09-10 mirror: new format
 2014-09-10 express: increase fault tolerance (to missing feeds)
+2016-05-19 independent: new layout
+2016-05-19 express: new layout
+2016-05-20 guardian: rss feeds gone + new layout
 
