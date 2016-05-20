@@ -25,6 +25,7 @@ import Journo
 import Misc
 
 import feedparser
+import lxml.html
 
 from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, CacheHandler
 
@@ -495,4 +496,86 @@ SELECT j.id,j.ref,j.prettyname
     return ", ".join( [ "[j%d %s]" % (int(row['id']),row['prettyname']) for row in rows ] )
 
 
+
+def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat):
+    """ find article links by iterating through navigation links
+    
+    start_page              - url of inital location
+    navsel                  - css selector string to match nav links (eg "#siteheader nav a")
+    domain_whitelist        - accepted domains (reject anything else)
+    blacklisted_sections    - reject any sections with urls containing any of these strings (eg ['/topic/',] )
+    art_url_pat             - regex string to match article URLs
+    """
+    sections = set( (start_page,))
+    sections_seen = set(sections)
+    http_err_cnt = 0
+    fetch_cnt = 0
+
+    arts = set()
+
+    while len(sections)>0:
+        section_url = sections.pop()
+
+        try:
+            fetch_cnt += 1
+            html = ukmedia.FetchURL(section_url)
+        except urllib2.HTTPError as e:
+            # allow a few http errors...
+            if e.code in (404,500):
+                ukmedia.DBUG("ERR fetching %s (%d)\n" %(section_url,e.code))
+                http_err_cnt += 1
+                if http_err_cnt < 5:
+                    continue
+            raise
+
+        try:
+            doc = lxml.html.fromstring(html)
+            doc.make_links_absolute(section_url)
+        except lxml.etree.XMLSyntaxError as e:
+            ukmedia.DBUG("ERROR parsing %s: %s\n" %(section_url, e))
+            continue
+
+
+        # check nav bars for sections to scan
+        for navlink in doc.cssselect(navsel):
+            url = navlink.get('href')
+            o = urlparse.urlparse( url )
+            if o.hostname not in domain_whitelist:
+                continue
+            # strip fragment
+            url = urlparse.urlunparse((o[0],o[1],o[2],o[3],o[4],''))
+
+            if url in sections_seen:
+                continue
+
+            sections_seen.add(url)
+
+            if [foo for foo in blacklisted_sections if foo in url]:
+                ukmedia.DBUG2("IGNORE %s\n" %(url, ))
+                continue
+
+            # section is new and looks ok - queue for scanning
+            #ukmedia.DBUG( "Queue section %s\n" % (url,))
+            sections.add(url)
+
+        # now scan this section page for article links
+        section_arts = set()
+        for a in doc.cssselect('body a'):
+            url = a.get('href',None)
+            if url is None:
+                continue
+            if art_url_pat.search(url) is None:
+                continue
+            o = urlparse.urlparse( url )
+            if o.hostname not in domain_whitelist:
+                continue
+
+            section_arts.add(url)
+
+        ukmedia.DBUG("%s: found %d articles\n" % (section_url,len(section_arts) ) )
+        arts.update(section_arts)
+
+    ukmedia.DBUG("crawl finished: %d articles (from %d fetches)\n" % (len(arts),fetch_cnt,) )
+
+    return list(arts)
 

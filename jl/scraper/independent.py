@@ -25,13 +25,15 @@ from pprint import pprint
 def FindArticles():
     start_page = "http://www.independent.co.uk"
     #.../slug-id.html
-    art_url_pat = re.compile('.*/([a-z0-9_]+-){1,}([a-z0-9_]+)-[0-9]+.html$', re.I)
-    navsel = "#navigation a"
+
+    # eg http://www.independent.co.uk/news/education/education-news/term-time-holidays-number-of-pupils-taking-unauthorised-time-off-school-soars-a7038521.html
+    art_url_pat = re.compile(r"^.*/[^/]+-[^/]+[.]html$", re.I)
+    navsel = "#masthead nav a"
     nav_blacklist = ['/biography/',]
     domain_whitelist = ('www.independent.co.uk',)
     article_blacklist = ['/biography/','/voices/iv-drip/', '/voices/debate/']
 
-    urls = GenericFindArtLinks(start_page,domain_whitelist,navsel,nav_blacklist,art_url_pat)
+    urls = ScraperUtils.GenericFindArtLinks(start_page,domain_whitelist,navsel,nav_blacklist,art_url_pat)
     arts = []
     for url in urls:
         good = True
@@ -43,80 +45,6 @@ def FindArticles():
 
     return arts
 
-
-def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat):
-    sections = set( (start_page,))
-    sections_seen = set(sections)
-    http_err_cnt = 0
-    fetch_cnt = 0
-
-    arts = set()
-
-    while len(sections)>0:
-        section_url = sections.pop()
-
-        try:
-            fetch_cnt += 1
-            html = ukmedia.FetchURL(section_url)
-        except urllib2.HTTPError as e:
-            # allow a few http errors...
-            if e.code in (404,500):
-                ukmedia.DBUG("ERR fetching %s (%d)\n" %(section_url,e.code))
-                http_err_cnt += 1
-                if http_err_cnt < 5:
-                    continue
-            raise
-
-        try:
-            doc = lxml.html.fromstring(html)
-            doc.make_links_absolute(section_url)
-        except lxml.etree.XMLSyntaxError as e:
-            ukmedia.DBUG("ERROR parsing %s: %s\n" %(section_url, e))
-            continue
-
-
-        # check nav bars for sections to scan
-        for navlink in doc.cssselect(navsel):
-            url = navlink.get('href')
-            o = urlparse.urlparse( url )
-            if o.hostname not in domain_whitelist:
-                continue
-            # strip fragment
-            url = urlparse.urlunparse((o[0],o[1],o[2],o[3],o[4],''))
-
-            if url in sections_seen:
-                continue
-
-            sections_seen.add(url)
-
-            if [foo for foo in blacklisted_sections if foo in url]:
-                ukmedia.DBUG2("IGNORE %s\n" %(url, ))
-                continue
-
-            # section is new and looks ok - queue for scanning
-            #ukmedia.DBUG( "Queue section %s\n" % (url,))
-            sections.add(url)
-
-        # now scan this section page for article links
-        section_arts = set()
-        for a in doc.cssselect('body a'):
-            url = a.get('href',None)
-            if url is None:
-                continue
-            if art_url_pat.search(url) is None:
-                continue
-            o = urlparse.urlparse( url )
-            if o.hostname not in domain_whitelist:
-                continue
-
-            section_arts.add(url)
-
-        ukmedia.DBUG("%s: found %d articles\n" % (section_url,len(section_arts) ) )
-        arts.update(section_arts)
-
-    ukmedia.DBUG("crawl finished: %d articles (from %d fetches)\n" % (len(arts),fetch_cnt,) )
-
-    return list(arts)
 
 
 
@@ -139,32 +67,33 @@ def Extract(html, context, **kw):
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
     doc.make_links_absolute(art['srcurl'])
 
-    main_div = doc.cssselect('#main')[0]
+    article = doc.cssselect('[itemtype="http://schema.org/NewsArticle"], [itemtype="http://schema.org/Review"]')[0]
 
-    h1s = main_div.cssselect('h1.title')
-    if not h1s:
-        # eg /voices/ section
-        h1s = doc.cssselect('#top h1.title')
-    art['title'] = u' '.join(unicode(h1s[0].text_content()).split())
+    h1 = article.cssselect('[itemprop="headline"]')[0]
 
-    bylines = main_div.cssselect('.articleByTimeLocation .byline .authorName')
-    if not bylines:
-        # eg /voices/ section
-        bylines = doc.cssselect('#top .articleByline .author a')
+    art['title'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(h1)))
 
-    if bylines:
-        art['byline'] = pretty_join([unicode(b.text_content()).strip() for b in bylines])
-    else:
-        art['byline'] = u''
+    art['byline'] = u''
+    authors = article.cssselect('[itemprop="author"]')
+    if len(authors)>0:
+        parts = [ukmedia.FromHTMLOneLine(a[0].text_content()) for a in authors]
+        art['byline'] = u', '.join(parts)
 
-    pubdate_txt = doc.cssselect('meta[property="article:published_time"]')[0].get('content')
-    art['pubdate'] = ukmedia.ParseDateTime(pubdate_txt)
 
-    content_divs = main_div.cssselect('.articleContent')
-    txt = u" ".join([unicode(lxml.html.tostring(div)) for div in content_divs])
-    art['content'] = ukmedia.SanitiseHTML(txt)
+    pubdatetxt = u''
+    pubdates = article.cssselect('header time')
+    if len(pubdates)>0:
+        art['pubdate'] = ukmedia.ParseDateTime(pubdates[0].get('datetime'))
 
+    body_div = article.cssselect('[itemprop~="articleBody"], [itemprop~="reviewBody"]')[0]
+
+    # cruft removal
+    for cruft in body_div.cssselect('.inline-pipes-list, #gigya-share-btns-2'):
+        cruft.drop_tree()
+
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
     art['description'] = ukmedia.FirstPara( art['content'] )
+    art['srcorgname'] = u'independent'
 
 
     return art

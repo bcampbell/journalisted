@@ -97,8 +97,11 @@ def Extract(html, context, **kw):
     headline = u" ".join(headline.strip().split()) 
     art['title'] = headline
 
-    byline = unicode(art_element.cssselect('.publish-info .author')[0].text_content())
-    byline = u" ".join(byline.strip().split()) 
+    byline = u''
+    authors = art_element.cssselect('.publish-info .author')
+    if len(authors)>0:
+        byline = unicode(authors[0].text_content())
+        byline = u" ".join(byline.strip().split()) 
     dt = art_element.cssselect('.publish-info time')[0]
     art['pubdate'] = ukmedia.ParseDateTime(dt.get('datetime'))
     art['byline']=byline
