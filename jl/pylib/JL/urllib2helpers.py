@@ -57,6 +57,12 @@ class CollectingRedirectHandler(urllib2.HTTPRedirectHandler):
         return response
 
 
+    # HTTPS support
+
+    https_response = http_response
+    https_error_301 = https_error_302 = https_error_303 = https_error_307 = http_error_301
+
+
 # ThrottlingProcessor and CacheHandler by Staffan Malmgren <staffan@tomtebo.org>
 #http://code.activestate.com/recipes/491261-caching-and-throttling-for-urllib2/
 # (under the PSF license)
