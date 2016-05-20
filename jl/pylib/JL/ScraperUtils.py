@@ -151,6 +151,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option("-f", "--force", action="store_true", dest="force_rescrape", help="force rescrape of article if already in DB")
     parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
     parser.add_option('-j', '--expected_journo', dest="expected_journo", help="journo ref to help resolve ambiguous cases (eg 'fred-bloggs-1')")
+    parser.add_option('-d', '--discover', action="store_true", dest="discover", help="discover articles, dump list to stdout and exit")
  
     (opts, args) = parser.parse_args()
 
@@ -169,7 +170,11 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
         for url in args:
             found.append(context_from_url(url))
 
-    scrape_articles(found, extract, opts)
+    if opts.discover:
+        for a in found:
+            print( a['permalink']);
+    else:
+        scrape_articles(found, extract, opts)
 
 
 
