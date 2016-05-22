@@ -16,7 +16,6 @@ import re
 from datetime import datetime
 import sys
 import urlparse
-import urllib2
 import lxml.html
 from pprint import pprint
 

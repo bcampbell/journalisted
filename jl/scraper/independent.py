@@ -6,7 +6,6 @@
 
 import re
 import urllib   # for urlencode
-import urllib2
 import ConfigParser
 import sys
 import traceback
