@@ -12,10 +12,10 @@ import re
 from datetime import datetime
 import time
 import random
-import cookielib
+#import cookielib
 import urlparse
 import urllib2
-
+import contextlib
 import ukmedia
 import DB
 import ArticleDB
@@ -33,10 +33,12 @@ from urllib2helpers import CollectingRedirectHandler, ThrottlingProcessor, Cache
 
 
 
-def build_uber_opener(throttle_delay=1, cookiejar=None):
+def build_uber_opener(cookiejar=None):
     """ build a super url opener which handles redirects, throttling, caching, cookies... """
 
     handlers = []
+
+    throttle_delay = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
 
     if os.getenv('JL_USE_CACHE','false').lower() not in ('0', 'false','off'):
         handlers.append(CacheHandler(".jlcache"))
@@ -55,11 +57,10 @@ def build_uber_opener(throttle_delay=1, cookiejar=None):
     return urllib2.build_opener(*handlers)
 
 
-# install our uber url handler to collect redirects and throttle request rate
-cookiejar = cookielib.LWPCookieJar()
-fetch_interval = float( os.getenv( 'JL_FETCH_INTERVAL' ,'1' ) )
-opener = build_uber_opener(throttle_delay=fetch_interval, cookiejar=cookiejar)
-urllib2.install_opener(opener)
+# install a default url handler which throttles and handles JL_FETCH_INTERVAL and JL_USE_CACHE
+#cookiejar = cookielib.LWPCookieJar()
+default_opener = build_uber_opener(cookiejar=None)
+urllib2.install_opener(default_opener)
 
 
 
@@ -138,13 +139,16 @@ def tidy_url(url):
 
 
 
-def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None ):
+def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=None, sesh=None ):
     """ a commandline frontend and loop for scrapers to use """
 
     usage = """usage: %prog [options] <urls>
 
     If no <urls> are provided, the scraper will scan the site for
     articles and try to scrape them all.
+
+    If you need cookies (eg for paywall login) pass in a custom url opener via sesh.
+
     """
 
     parser = OptionParser(usage=usage)
@@ -155,6 +159,9 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option('-d', '--discover', action="store_true", dest="discover", help="discover articles, dump list to stdout and exit")
  
     (opts, args) = parser.parse_args()
+
+    if sesh is None:
+        sesh = default_opener
 
     # scraper might need to do a login
     if prep is not None:
@@ -175,12 +182,11 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
         for a in found:
             print( a['permalink']);
     else:
-        scrape_articles(found, extract, opts)
+        scrape_articles(found, extract, opts, sesh=sesh)
 
 
 
-# TODO: convert opts to kwargs
-def scrape_articles( found, extract, opts):
+def scrape_articles( found, extract, opts, sesh = None):
     """Scrape list of articles, return error counts.
 
     found -- list of article contexts to scrape
@@ -190,7 +196,12 @@ def scrape_articles( found, extract, opts):
         test
         force_rescrape
         etc...
+    sesh -- url opener (None for default)
     """
+
+    if sesh is None:
+        sesh = default_opener
+
 
     extralogging = False
     max_errors = getattr(opts,'max_errors',0)
@@ -235,23 +246,23 @@ def scrape_articles( found, extract, opts):
 
 
             #ukmedia.DBUG2( u"fetching %s\n" % (context['srcurl']) )
-            resp = urllib2.urlopen( context['srcurl'] )
+            #with sesh.open(context['srcurl']) as resp:
+            with contextlib.closing(sesh.open(context['srcurl'])) as resp:
+                # is the server sending an charset encoding?
+                kwargs = {}
+                content_type = resp.info().getheader('Content-Type','')
+                m = re.compile(r';\s*charset\s*=\s*([^;]*)', re.I).search(content_type)
+                if m:
+                    kwargs['encoding'] = m.group(1)
 
-            # is the server sending an charset encoding?
-            kwargs = {}
-            content_type = resp.info().getheader('Content-Type','')
-            m = re.compile(r';\s*charset\s*=\s*([^;]*)', re.I).search(content_type)
-            if m:
-                kwargs['encoding'] = m.group(1)
+                # grab the content
+                html = resp.read()
 
-            # grab the content
-            html = resp.read()
-
-            # add any URLs we were redirected via...
-            for code,url in resp.redirects:
-                known_urls.add(url)
-                if code==301:    # permanant redirect
-                    context['permalink'] = url
+                # add any URLs we were redirected via...
+                for code,url in resp.redirects:
+                    known_urls.add(url)
+                    if code==301:    # permanant redirect
+                        context['permalink'] = url
 
             # check html for a rel="canonical" link:
             canonical_url = extract_canonical_url(html, context['permalink'])
@@ -416,12 +427,16 @@ def FindArticlesFromRSS( rssfeeds, srcorgname, mungefunc, maxerrors=5 ):
 
 
 
-def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None ):
+def ReadFeed( feedname, feedurl, srcorgname, mungefunc=None, sesh=None ):
     """fetch a list of articles from an RSS feed"""
 
     foundarticles = []
     ukmedia.DBUG2( "feed '%s' (%s)\n" % (feedname,feedurl) )
-    stream = urllib2.urlopen(feedurl)
+
+    if sesh is None:
+        sesh = default_opener
+
+    stream = sesh.open(feedurl)
     r = feedparser.parse(stream)
 
     #debug:     print r.version;

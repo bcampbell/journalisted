@@ -45,7 +45,9 @@ else:
 
 debuglevel = int( os.getenv( 'JL_DEBUG' ,'0' ) )
 
-defaulttimeout=120  # socket timeout, in secs
+defaulttimeout=20  # socket timeout, in secs
+
+socket.setdefaulttimeout(defaulttimeout);
 
 def MonthNumber( name ):
     monthlookup = {
@@ -480,9 +482,13 @@ def BylineOMatic2(para):
     #import pdb; pdb.set_trace()  # for debugging failures
 
 
-def FetchURL( url, timeout=defaulttimeout, cacheDirName='cache' ):
+# deprecated - use custom url opener instead
+# this will just use whatever we've installed via urllib2.install_opener()
+def FetchURL( url, timeout=defaulttimeout ):
     resp = urllib2.urlopen(url, data=None, timeout=timeout)
-    return resp.read()
+    out = resp.read()
+    resp.close()
+    return out
 
 
 
