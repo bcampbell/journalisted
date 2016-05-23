@@ -40,9 +40,19 @@ def Extract( html, context, **kw ):
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
 
-    print( lxml.html.tostring(doc) )
-    return None
+#    print( lxml.html.tostring(doc) )
+#    return None
 
+
+    met = doc.cssselect('meta[name="DCSext.Content_Type"]')
+    if len(met) > 0:
+        kind = met[0].get('content').lower()
+        if kind in ['index','gallery','video', 'travel-destinations' ]:
+            ukmedia.DBUG2("SKIP '%s' page %s\n" % (kind,art['srcurl'],))
+            return None
+
+        if kind != "story":
+            ukmedia.DBUG("WARN: pagetype is '%s' (not 'story'): %s\n" % (kind, art['srcurl']))
 
 
     article = doc.cssselect('[itemtype*="schema.org/Article"], [itemtype*="schema.org/NewsArticle"], [itemtype*="schema.org/Review"]')[0]
@@ -59,7 +69,7 @@ def Extract( html, context, **kw ):
 
 
     pubdatetxt = u''
-    pubdates = article.cssselect('header .article-date time[itemprop~="datePublished"]')
+    pubdates = article.cssselect('time[itemprop~="datePublished"]')
     if len(pubdates)>0:
         art['pubdate'] = ukmedia.ParseDateTime(pubdates[0].get('datetime'))
     body_div = article.cssselect('[itemprop*="articleBody"], [itemprop*="reviewBody"]')[0]
