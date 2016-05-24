@@ -484,12 +484,14 @@ def BylineOMatic2(para):
 
 # deprecated - use custom url opener instead
 # this will just use whatever we've installed via urllib2.install_opener()
-def FetchURL( url, timeout=defaulttimeout ):
-    resp = urllib2.urlopen(url, data=None, timeout=timeout)
+def FetchURL( url, timeout=defaulttimeout, sesh=None ):
+    if sesh is None:
+        resp = urllib2.urlopen(url, data=None, timeout=timeout)
+    else:
+        resp = sesh.open(url, data=None, timeout=timeout)
     out = resp.read()
     resp.close()
     return out
-
 
 
 

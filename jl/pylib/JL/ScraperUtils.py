@@ -14,6 +14,15 @@ import time
 import random
 #import cookielib
 import urlparse
+
+# NOTE: would be nicer to migrate from urllib2 to requests for our http traffic,
+# but it's a little fiddly because:
+#  1) need to research how to hook in to provide rate throttling (and caching, as per JL_USE_CACHE=1)
+#  2) we'd use sessions to differentiate between cookie-preserving and non-cookie-preserving, and
+#     there doesn't seem to be a way in requests to ignore cookies in sessions, short of writing
+#     our own dummy cookiejar implementation (not too hard, but research required).
+#
+# So, for now, sticking with crufty old urllib2 and all the stuff we've built on top of it.
 import urllib2
 import contextlib
 import ukmedia
@@ -165,13 +174,13 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
 
     # scraper might need to do a login
     if prep is not None:
-        prep()
+        prep(sesh)
 
     if len(args) == 0:
         # do a full scraper run: discover articles and scrape 'em.
         # expect lots of errors for a lot of sites.
 
-        found = find_articles()
+        found = find_articles(sesh=sesh)
     else:
         # urls passed in as params
         found = []
