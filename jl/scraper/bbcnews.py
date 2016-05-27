@@ -383,7 +383,7 @@ def Extract_tableless(html,context):
 
 
 
-def FindArticles():
+def FindArticles(sesh):
     """ crawl the bbc news site for articles """
 
     root_url = "http://www.bbc.co.uk/news/"

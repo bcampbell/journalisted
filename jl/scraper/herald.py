@@ -110,7 +110,7 @@ def ScrubFunc( context, entry ):
     context['srcid'] = CalcSrcID( url )
     return context
 
-def FindArticles():
+def FindArticles(sesh):
     """Gather articles to scrape from the herald website. """
     feeds = FindRSSFeeds()
     found = ScraperUtils.FindArticlesFromRSS( feeds, u'herald', ScrubFunc, maxerrors=20 )

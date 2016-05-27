@@ -172,7 +172,7 @@ def ContextFromURL( url ):
     return context
 
 
-def FindArticles():
+def FindArticles(sesh):
     """Look for recent articles"""
 
     rssfeeds = FindRSSFeeds()

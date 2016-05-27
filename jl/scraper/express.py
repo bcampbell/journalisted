@@ -65,7 +65,7 @@ def ScrubFunc( context, entry ):
     return context
 
 
-def FindArticles():
+def FindArticles(sesh):
     """Look for recent articles"""
 
     rssfeeds = FindRSSFeeds()

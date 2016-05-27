@@ -21,7 +21,7 @@ from pprint import pprint
 
 
 
-def FindArticles():
+def FindArticles(sesh):
     start_page = "http://www.independent.co.uk"
     #.../slug-id.html
 

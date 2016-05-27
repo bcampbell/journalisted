@@ -111,7 +111,7 @@ def ScrubFunc( context, entry ):
     return context
 
 
-def FindArticles():
+def FindArticles(sesh):
     """ get a set of articles to scrape from the rss feeds """
 
     articles = ScraperUtils.FindArticlesFromRSS( blog_feeds, u'skynews', ScrubFunc )

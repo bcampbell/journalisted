@@ -521,7 +521,7 @@ SELECT j.id,j.ref,j.prettyname
 
 
 
-def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat):
+def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat, sesh=None):
     """ find article links by iterating through navigation links
     
     start_page              - url of inital location
@@ -542,10 +542,10 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
 
         try:
             fetch_cnt += 1
-            html = ukmedia.FetchURL(section_url)
+            html = ukmedia.FetchURL(section_url,sesh=sesh)
         except urllib2.HTTPError as e:
             # allow a few http errors...
-            if e.code in (404,500):
+            if e.code in (404,500,302):
                 ukmedia.DBUG("ERR fetching %s (%d)\n" %(section_url,e.code))
                 http_err_cnt += 1
                 if http_err_cnt < 5:
@@ -596,7 +596,7 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
 
             section_arts.add(url)
 
-        ukmedia.DBUG("%s: found %d articles\n" % (section_url,len(section_arts) ) )
+        ukmedia.DBUG2("%s: found %d articles\n" % (section_url,len(section_arts) ) )
         arts.update(section_arts)
 
     ukmedia.DBUG("crawl finished: %d articles (from %d fetches)\n" % (len(arts),fetch_cnt,) )

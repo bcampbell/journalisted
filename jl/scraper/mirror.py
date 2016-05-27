@@ -163,7 +163,7 @@ def ContextFromURL( url ):
 
 
 
-def FindArticles():
+def FindArticles(sesh):
 
     home_url = "http://www.mirror.co.uk"
     html = ukmedia.FetchURL(home_url) 

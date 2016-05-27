@@ -24,6 +24,9 @@ import sys
 import urllib
 import urllib2
 import urlparse
+import cookielib
+import contextlib
+import ConfigParser
 import lxml.html
 
 import site
@@ -31,73 +34,79 @@ site.addsitedir("../pylib")
 from BeautifulSoup import BeautifulSoup,BeautifulStoneSoup
 from JL import ukmedia, ScraperUtils
 
+cj = cookielib.LWPCookieJar()
 
+def dumpcookies():
+    global cj
+    print("--- cookies ---");
+    for cookie in cj:
+        print( cookie.output() )
+    print("--- ------- ---");
 
-def FetchRSSFeeds( masterpage='http://www.ft.com/intl/rss' ):
-    feeds = []
+def FindArticles(sesh):
+    """ get current active articles by scanning each section page """
 
-    f = urllib2.urlopen( masterpage )
-    html = f.read()
-    f.close()
+    start_page="http://www.ft.com/"
 
-    soup = BeautifulSoup( html )
+    art_url_pat = re.compile(r"(.*/\\d{4}/\\d{2}.*/[^/]{4,}/$)|(.*/[-0-9a-f]{8,}.html$)", re.I)
+    navsel="nav.nav-ftcom a"
+    nav_blacklist = []
+    domain_whitelist = ('www.ft.com','blogs.ft.com')
+    article_blacklist = []
 
-    c = soup.find( 'div', {'class': re.compile(r'\beditorialSection\b')})
-    feedpat = re.compile( "http://.*/rss/.*" )
-    for a in c.findAll('a', href=feedpat):
-        url = a['href'] #urlparse.urljoin( masterpage, a['href'] )
-        o = urlparse.urlparse(url)
-        if o[1] not in ('www.ft.com','blogs.ft.com','feeds2.feedburner.com' ):
-            continue
+    urls = ScraperUtils.GenericFindArtLinks(start_page,domain_whitelist,navsel,nav_blacklist,art_url_pat,sesh=sesh)
+    arts = []
+    for url in urls:
+        good = True
+        for blacklisted in article_blacklist:
+            if blacklisted in url:
+                good = False
+        if good:
+            arts.append(ContextFromURL(url))
 
-        #a.img.extract()
-        name = ukmedia.FromHTML(a.renderContents(None))
-
-        # their blog RSS links used to be wrong
-#        if o[1] == 'blogs.ft.com':
-#            url = url.replace( '/rss.xml', '/feed/' )
-
-        feeds.append((name,url))
-    return feeds
+    return arts
 
 
 
 # file with our FT subscription details
 FT_CONFIG_FILE = '../conf/ft.conf'
 
-def Prep():
+def Prep(sesh):
     """ Prepare for scraping (by logging into FT with our user account) """ 
-    Login()
+
+    Login(sesh)
 
 
-def Login():
+def Login(sesh):
 
-    # parse config file to get our username/password
-    foo = open( FT_CONFIG_FILE, 'rt' ).read()
-    postvals = {}
-    for field in ('username', 'password'):
-        m = re.search( "^\\s*" + field + "\\s*=\\s*(.*?)\\s*(#.*)?$", foo, re.MULTILINE )
-        if m:
-            postvals[field] = m.group(1)
+    assert sesh is not None
+
+    config = ConfigParser.ConfigParser()
+    config.read( FT_CONFIG_FILE )
+    email = config.defaults()[ 'email' ]
+    pwd = config.defaults()[ 'password' ]
 
 
     # log on!
-    url="https://registration.ft.com/registration/barrier"
-    txdata = urllib.urlencode( postvals )
-    ukmedia.DBUG2( "Logging in to ft.com (as '%s')\n" % (postvals['username']) )    
-    req = urllib2.Request(url, txdata)
-    handle = urllib2.urlopen(req)
+    login_url="https://accounts.ft.com/login?location=http://www.ft.com/home"
+    postdata = urllib.urlencode({'email':email, 'password': pwd, 'rememberMe':'true', 'Sign In': ''})
 
-    # check for incorrect-login response
-    html = handle.read()
-    if html.find( "<h1 class=\"highLight\">Incorrect login details</h1>" ) != -1:
+    print(postdata)
+    dumpcookies()
+    ukmedia.DBUG2( "Logging in to ft.com (as '%s')\n" % (email,) )    
+    with contextlib.closing(sesh.open(login_url,postdata)) as resp:
+        foo = resp.read()
+        print("-"*80)
+        print(foo)
+        print("-"*80)
+        for code,url in resp.redirects:
+            ukmedia.DBUG2( " -> %s %s\n" % (code,url))
+        dest = resp.geturl()
+        ukmedia.DBUG2( "ended up at: %s\n" % ( dest,))
+    dumpcookies()
+    # TODO check for incorrect-login response
+    if 'accounts.ft.com' in dest:
         raise Exception, "Login failed - incorrect login details"
-
-    # cookiejar should now contain our credential cookies.
-
-#   print 'These are the cookies we have received so far :'
-#   for index, cookie in enumerate(cookiejar):
-#       print index, '  :  ', cookie
 
 
 def Extract(html, context, **kw):
@@ -287,135 +296,7 @@ def Extract_blog( html, context ):
 
 
 
-def Extract_blog_OLD( html, context ):
-    """ extract fn for FT blog entries """
-    art = context
-    soup = BeautifulSoup( html )
 
-    postdiv = soup.find( 'div', {'class':re.compile(r'\bpost\b')} )
-
-    h3 = postdiv.find( 'h3', {'class': re.compile('entry_header')} )
-    headline = h3.renderContents(None)
-    headline = ukmedia.FromHTML( headline )
-
-    # try and pull a byline from somewhere...
-    byline = u''
-    authorspan = postdiv.find( 'span', {'class':'author_title'} )
-    if authorspan:
-        byline = authorspan.renderContents(None)
-        byline = ukmedia.FromHTML( byline )
-
-
-    if byline == u'':
-        # sometimes an "About ...." box in sidebar
-        sidebar = soup.find( 'div', {'id':'sidebar'} )
-        if sidebar:
-            foo = sidebar.find( 'p', {'class':'author_info'} )
-            if foo:
-                if foo.find( 'strong' ):
-                    byline = foo.strong.renderContents(None)
-                    byline = ukmedia.FromHTML(byline)
-                    byline = byline.replace( u'About ', u'' )
-
-    # special case
-    if byline == u'Dear Lucy':
-        byline = u'Lucy Kellaway'
-
-    # if still no joy, try getting alt tag from blog title image
-    if byline == u'':
-        titleimage = soup.find( 'div', id="title_image" )
-        if titleimage:
-            byline = titleimage.a.img['alt']
-
-    # force to single line
-    byline = u' '.join( byline.split() )
-
-
-    dateh2 = postdiv.find( 'h2', {'class': re.compile('date_header') } )
-    datetxt = dateh2.renderContents( None ).strip()
-    pubdate = ukmedia.ParseDateTime( datetxt )
-
-    entrydiv = postdiv.find( 'div', {'class':'entry'} )
-    metap = entrydiv.find( 'p', {'class':'postmetadata'} )
-    metap.extract()
-
-    for cruft in entrydiv.findAll( 'span', {'id': re.compile('more-')} ):
-        cruft.extract()
-
-    content = entrydiv.renderContents(None)
-    desc = ukmedia.FirstPara( content )
-
-    art['title'] = headline
-    art['byline'] = byline
-    art['content'] = content
-    art['description'] = desc
-    art['pubdate'] = pubdate
-
-    return art
-
-
-def ScrubFunc( context, entry ):
-
-    url = context['srcurl']
-    o = urlparse.urlparse( url )
-
-    if o[1] == 'traxfer.ft.com':
-        url = entry.guid
-        o = urlparse.urlparse(url)
-    elif o[1] == 'feeds.feedburner.com':
-        # some of the FT feeds (the blogs?) redirect to feedburner.
-        # Luckily, the feedburner feeds have a special entry
-        # which contains the original link
-        # (we also have to do this in dailymail.py)
-        url = entry.feedburner_origlink
-        o = urlparse.urlparse( url )
-
-    if url == 'http://www.ft.com/dbpodcast':
-        return None
-
-    # don't scrape alphaville yet...
-    if o[1] == 'ftalphaville.ft.com':
-        return None
-
-    # scrub off ",dwp_uuid=...." part from url...
-    url = re.sub( ",dwp_uuid=[0-9a-fA-F\\-]+","",url )
-
-    context['srcurl'] = url
-    context['permalink'] = url
-
-    context['srcid'] = CalcSrcID( url )
-    return context
-
-
-def FindArticles():
-    """ get a set of articles to scrape from the rss feeds """
-    rssfeeds = FetchRSSFeeds()
-    # ft seems to have a bunch of dud feeds.
-    return ScraperUtils.FindArticlesFromRSS( rssfeeds, u'ft', ScrubFunc, maxerrors=10 )
-
-# pattern to extract unique id from FT article urls
-# eg
-# "http://www.ft.com/cms/s/8ca13fba-d80d-11dc-98f7-0000779fd2ac.html"
-# "http://www.ft.com/cms/s/0/6be90c0c-e0ab-11dc-b0d7-0000779fd2ac,dwp_uuid=89fe9472-9c7f-11da-8762-0000779e2340.html"
-art_idpat = re.compile( "/([^/]+)(,dwp_uuid=[0-9a-fA-F\\-]+)?[.]html" )
-# blog urls look like this:
-# http://blogs.ft.com/brusselsblog/2008/02/hanging-by-a-thhtml/
-blog_idpat = re.compile( "blogs.ft.com/(.*)$" )
-
-def CalcSrcID( url ):
-    """ generate a unique srcid from an ft url """
-    o = urlparse.urlparse( url )
-    if not re.match( "(\w+[.])?ft[.]com$", o[1] ):
-        return None
-
-    m = art_idpat.search( url )
-    if m:
-        return 'ft_' + m.group(1)
-    m = blog_idpat.search( url )
-    if m:
-        return 'ftblog_' + m.group(1)
-
-    return None
 
 
 def ContextFromURL( url ):
@@ -423,18 +304,16 @@ def ContextFromURL( url ):
     context = {}
     context['srcurl'] = url
     context['permalink'] = url
-    context['srcid'] = CalcSrcID( url )
     context['srcorgname'] = u'ft'
     context['lastseen'] = datetime.now()
 
-    # to clean the url...
-    context = ScrubFunc( context, None )
     return context
 
 
 
 
-
 if __name__ == "__main__":
-    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50, prep=Prep )
+    # create a url opener which remembers cookies (as well as throttling and all the other uber-opener stuff)
+    opener = ScraperUtils.build_uber_opener(cookiejar=cj)
+    ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50, prep=Prep, sesh=opener )
 

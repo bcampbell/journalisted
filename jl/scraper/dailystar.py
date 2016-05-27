@@ -63,7 +63,7 @@ def Extract( html, context ):
 	return art
 
 
-def FindArticles():
+def FindArticles(sesh):
 	""" Find articles by just grepping the front pages for links """
 	foundarticles = []
 	

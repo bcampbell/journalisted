@@ -50,10 +50,10 @@ def Prep(sesh):
 
 art_url_pat = re.compile(r"^.*/[^/]+-[^/]+$", re.I)
 
+base_url = "http://www.thetimes.co.uk"
 
 def FindArticles(sesh):
 
-    base_url = "http://www.thetimes.co.uk"
     past6days = base_url + "/past-six-days"
 
 
@@ -74,29 +74,37 @@ def FindArticles(sesh):
 
     link_threshold = len("http://www.thetimes.co.uk/past-six-daysPADPAD")
 
-
+    http_err_cnt = 0
     found = set()
     for sect_url in section_pages:
-        links = []
-        with contextlib.closing(sesh.open(sect_url)) as resp:
-            html = resp.read()
-            doc = lxml.html.fromstring(html)
-            doc.make_links_absolute(sect_url)
-            for a in doc.cssselect("a"):
-                u = a.get('href')
-                o = urlparse.urlparse( u )
-                if o.hostname != 'www.thetimes.co.uk':
+        try:
+            links = []
+            with contextlib.closing(sesh.open(sect_url)) as resp:
+                html = resp.read()
+                doc = lxml.html.fromstring(html)
+                doc.make_links_absolute(sect_url)
+                for a in doc.cssselect("a"):
+                    u = a.get('href')
+                    o = urlparse.urlparse( u )
+                    if o.hostname != 'www.thetimes.co.uk':
+                        continue
+                    # strip query, fragment
+                    u = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
+                    u = u.strip()
+                    if len(u) < link_threshold:     # probably a section link
+                        continue
+                    if art_url_pat.search(u):
+                        links.append(u)
+        except urllib2.HTTPError as e:
+            # allow a few http errors...
+            if e.code in (404,500):
+                ukmedia.DBUG("ERR fetching %s (%d)\n" %(sect_url,e.code))
+                http_err_cnt += 1
+                if http_err_cnt < 5:
                     continue
-                # strip query, fragment
-                u = urlparse.urlunparse( (o[0],o[1],o[2],'','','') );
-                u = u.strip()
-                if len(u) < link_threshold:     # probably a section link
-                    continue
-                if art_url_pat.search(u):
-                    print("ACCEPT %s\n" %(u,))
-                    links.append(u)
+            raise
 
-        ukmedia.DBUG2("%s (%d article links)\n" % (sect_url, len(links)))
+        ukmedia.DBUG2("%s: %d article links\n" % (sect_url, len(links)))
         for l in links:
             found.add(l)
 
@@ -110,8 +118,42 @@ def FindArticles(sesh):
 
 def Extract(html, context, **kw):
     art = context
-    art['srcorgname'] = u'times';
-    return None
+    enc='utf-8'
+    parser = lxml.html.HTMLParser(encoding=enc)
+    doc = lxml.html.document_fromstring(html, parser, base_url=base_url)
+
+    mainart= doc.cssselect('article.Article')[0]
+
+    h1 = mainart.cssselect('header h1')[0]
+    art['title'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(h1)))
+
+    foo = mainart.cssselect('.Article-body .Byline, header .Byline')
+    if len( foo) >0:
+        byline = foo[0]
+        art['byline'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(byline)))
+    else:
+        art['byline'] = u''
+
+    pubdate = mainart.cssselect('.Article-body .Dateline, header .Dateline')[0]
+    art['pubdate'] = ukmedia.ParseDateTime(ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(pubdate))))
+
+
+    body_div = mainart.cssselect('.Article-body .Article-content')[0]
+
+    # cruft removal
+    for cruft in body_div.cssselect('AD'):
+        cruft.drop_tree()
+
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
+    art['description'] = ukmedia.FirstPara( art['content'] )
+
+    pub = mainart.cssselect('.Article-body .Publication, header .Publication')[0]
+    pubtxt = unicode(lxml.html.tostring(pub)).strip().lower()
+    if 'sunday times' in pubtxt:
+        art['srcorgname'] = u'sundaytimes'
+    else:
+        art['srcorgname'] = u'times'
+    return art
 
 
 def TidyURL( url ):

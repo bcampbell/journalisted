@@ -90,7 +90,7 @@ def ContextFromURL( url ):
 
 
 
-def FindArticles():
+def FindArticles(sesh):
     """ get current active articles by scanning each section page """
 
 
