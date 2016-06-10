@@ -29,6 +29,11 @@ def Extract( html, context, **kw ):
     parser = lxml.html.HTMLParser(encoding='utf-8')
     doc = lxml.html.document_fromstring(html, parser, base_url=art['srcurl'])
 
+    #BBC has more than one layout...
+    if len(doc.cssselect('article.story'))>0:
+        return extract_sports(art,doc)
+
+
     og_type = doc.cssselect('head meta[property="og:type"]')
     if len(og_type)>0:
         foo = og_type[0].get('content')
@@ -59,6 +64,28 @@ def Extract( html, context, **kw ):
 
     art['srcorgname']=u'bbcnews'
     return art
+
+
+
+# layout used by sports (and others?)
+def extract_sports(art, doc):
+    article = doc.cssselect('article.story')[0]
+
+    h1 = article.cssselect('h1')[0]
+    art['title'] = ukmedia.FromHTMLOneLine(unicode(lxml.html.tostring(h1)))
+
+    byline = article.cssselect('.story__byline .gel-long-primer')[0]
+    art['byline'] = ukmedia.FromHTMLOneLine(byline.text_content())
+
+    dt = article.cssselect('.timestamp time')[0].get('data-timestamp')
+    art['pubdate'] = datetime.utcfromtimestamp(int(dt))
+
+    body_div = article.cssselect('.story-body')[0]
+    art['content'] = ukmedia.SanitiseHTML(unicode(lxml.html.tostring(body_div)))
+
+    art['srcorgname']=u'bbcnews'
+    return art
+
 
 def FindArticles(sesh):
     """ get current active articles by scanning each section page """
