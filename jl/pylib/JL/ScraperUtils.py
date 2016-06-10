@@ -166,6 +166,7 @@ def scraper_main( find_articles, context_from_url, extract, max_errors=20, prep=
     parser.add_option("-m", "--max_errors", type="int", default=max_errors, help="set num of errors allowed before quitting (default %d)" % (max_errors,))
     parser.add_option('-j', '--expected_journo', dest="expected_journo", help="journo ref to help resolve ambiguous cases (eg 'fred-bloggs-1')")
     parser.add_option('-d', '--discover', action="store_true", dest="discover", help="discover articles, dump list to stdout and exit")
+    parser.add_option('-r', '--raw', action="store_true", dest="raw", help="just fetch article, dump the raw data to stdout and exit")
  
     (opts, args) = parser.parse_args()
 
@@ -266,6 +267,11 @@ def scrape_articles( found, extract, opts, sesh = None):
 
                 # grab the content
                 html = resp.read()
+
+                if opts.raw:
+                    # just dump instead of processing
+                    print(html)
+                    continue
 
                 # add any URLs we were redirected via...
                 for code,url in resp.redirects:
@@ -521,15 +527,23 @@ SELECT j.id,j.ref,j.prettyname
 
 
 
-def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sections, art_url_pat, sesh=None):
+def GenericFindArtLinks(start_page, domain_whitelist, nav_sel, nav_blacklist=[], art_url_pat=None, article_blacklist=[],sesh=None):
     """ find article links by iterating through navigation links
     
     start_page              - url of inital location
-    navsel                  - css selector string to match nav links (eg "#siteheader nav a")
+    nav_sel                  - css selector string to match nav links (eg "#siteheader nav a")
     domain_whitelist        - accepted domains (reject anything else)
-    blacklisted_sections    - reject any sections with urls containing any of these strings (eg ['/topic/',] )
+    nav_blacklist           - reject any sections with urls containing any of these strings (eg ['/topic/',] )
     art_url_pat             - regex string to match article URLs
+    article_blacklist       - (optional) list of substrings or regexes of dud urls
+    sesh                    - (optional) the url opener to use to fetch pages
     """
+
+    assert art_url_pat is not None
+
+    if article_blacklist is None:
+        article_blacklist = []
+
     sections = set( (start_page,))
     sections_seen = set(sections)
     http_err_cnt = 0
@@ -542,6 +556,7 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
 
         try:
             fetch_cnt += 1
+            #ukmedia.DBUG2("fetch %s\n" % (section_url,))
             html = ukmedia.FetchURL(section_url,sesh=sesh)
         except urllib2.HTTPError as e:
             # allow a few http errors...
@@ -561,7 +576,7 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
 
 
         # check nav bars for sections to scan
-        for navlink in doc.cssselect(navsel):
+        for navlink in doc.cssselect(nav_sel):
             url = navlink.get('href')
             o = urlparse.urlparse( url )
             if o.hostname not in domain_whitelist:
@@ -574,7 +589,7 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
 
             sections_seen.add(url)
 
-            if [foo for foo in blacklisted_sections if foo in url]:
+            if [foo for foo in nav_blacklist if foo in url]:
                 ukmedia.DBUG2("IGNORE %s\n" %(url, ))
                 continue
 
@@ -599,7 +614,23 @@ def GenericFindArtLinks(start_page, domain_whitelist, navsel, blacklisted_sectio
         ukmedia.DBUG2("%s: found %d articles\n" % (section_url,len(section_arts) ) )
         arts.update(section_arts)
 
-    ukmedia.DBUG("crawl finished: %d articles (from %d fetches)\n" % (len(arts),fetch_cnt,) )
 
-    return list(arts)
+    # apply article blacklist to filter out duds
+    out = []
+    for url in arts:
+        good = True
+        for pat in article_blacklist:
+            try:
+                # assume regex...
+                if pat.search(url):
+                    good = False
+            except AttributeError:
+                # ...oops. treat as plain string
+                if pat in url:
+                    good = False
+        if good:
+            out.append(url)
+
+    ukmedia.DBUG("crawl finished: %d articles (from %d fetches)\n" % (len(out),fetch_cnt,) )
+    return out
 

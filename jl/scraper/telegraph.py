@@ -127,17 +127,15 @@ def FindArticles(sesh):
     domain_whitelist = ('www.telegraph.co.uk',)
     article_blacklist = [re.compile(pat,re.I) for pat in [ r'/page-\d+', r'/authors/' ] ]
 
-    urls = ScraperUtils.GenericFindArtLinks(start_page,domain_whitelist,navsel,nav_blacklist,art_url_pat)
-    arts = []
-    for url in urls:
-        good = True
-        for blacklisted in article_blacklist:
-            if blacklisted.search(url):
-                good = False
-        if good:
-            arts.append(ContextFromURL(url))
+    urls = ScraperUtils.GenericFindArtLinks(
+            start_page,
+            domain_whitelist,
+            navsel,
+            nav_blacklist,
+            art_url_pat,
+            article_blacklist=article_blacklist)
 
-    return arts
+    return [ ContextFromURL(u) for u in urls ]
 
 
 
