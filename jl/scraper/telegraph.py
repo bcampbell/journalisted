@@ -14,9 +14,6 @@
 #   or something. Appears to be a short timeout (<1 hour).
 # - more restrictive outside the UK? unsure, but suspect not.
 #
-# All the other data is available, so when we hit the paywall limit we just
-# stop including the actual article content... not great, but hey.
-#
 
 import re
 from datetime import datetime, timedelta, date
@@ -47,12 +44,13 @@ def Extract( html, context, **kw ):
     met = doc.cssselect('meta[name="DCSext.Content_Type"]')
     if len(met) > 0:
         kind = met[0].get('content').lower()
-        if kind in ['index','gallery','video', 'travel-destinations' ]:
-            ukmedia.DBUG2("SKIP '%s' page %s\n" % (kind,art['srcurl'],))
-            return None
+#        if kind in ['index','gallery','video', 'travel-hotel', 'travel-destinations' ]:
+#            ukmedia.DBUG2("SKIP '%s' page %s\n" % (kind,art['srcurl'],))
+#            return None
 
         if kind != "story":
-            ukmedia.DBUG("WARN: pagetype is '%s' (not 'story'): %s\n" % (kind, art['srcurl']))
+            ukmedia.DBUG2("SKIP '%s' page %s\n" % (kind,art['srcurl'],))
+            return None
 
 
     article = doc.cssselect('[itemtype*="schema.org/Article"], [itemtype*="schema.org/NewsArticle"], [itemtype*="schema.org/Review"]')[0]
@@ -63,15 +61,22 @@ def Extract( html, context, **kw ):
 
     art['byline'] = u''
     authors = article.cssselect('[itemprop~="author"]')
+    if len(authors)==0:
+        authors = article.cssselect('.byline .bylineBody')
+
     if len(authors)>0:
         parts = [ukmedia.FromHTMLOneLine(a[0].text_content()) for a in authors]
         art['byline'] = u', '.join(parts)
 
-
     pubdatetxt = u''
     pubdates = article.cssselect('time[itemprop~="datePublished"]')
     if len(pubdates)>0:
-        art['pubdate'] = ukmedia.ParseDateTime(pubdates[0].get('datetime'))
+        pubdatetxt = pubdates[0].get('datetime')
+    else:
+        pubdatetxt = article.cssselect('.publishedDate')[0].text_content()
+
+    art['pubdate'] = ukmedia.ParseDateTime(pubdatetxt)
+
     body_div = article.cssselect('[itemprop*="articleBody"], [itemprop*="reviewBody"]')[0]
 
     # cruft removal
