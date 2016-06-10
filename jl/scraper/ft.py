@@ -36,12 +36,6 @@ from JL import ukmedia, ScraperUtils
 
 cj = cookielib.LWPCookieJar()
 
-def dumpcookies():
-    global cj
-    print("--- cookies ---");
-    for cookie in cj:
-        print( cookie.output() )
-    print("--- ------- ---");
 
 def FindArticles(sesh):
     """ get current active articles by scanning each section page """
@@ -89,25 +83,19 @@ def Login(sesh):
 
     # log on!
     login_url="https://accounts.ft.com/login?location=http://www.ft.com/home"
+    #login_url = "http://jl.dev/poop"
     postdata = urllib.urlencode({'email':email, 'password': pwd, 'rememberMe':'true', 'Sign In': ''})
 
-    print(postdata)
-    dumpcookies()
     ukmedia.DBUG2( "Logging in to ft.com (as '%s')\n" % (email,) )    
     with contextlib.closing(sesh.open(login_url,postdata)) as resp:
-        foo = resp.read()
-        print("-"*80)
-        print(foo)
-        print("-"*80)
-        for code,url in resp.redirects:
-            ukmedia.DBUG2( " -> %s %s\n" % (code,url))
+        # print("CODE: %d\n",resp.code)
+        #for code,url in resp.redirects:
+        #    ukmedia.DBUG2( " -> %s %s\n" % (code,url))
         dest = resp.geturl()
-        ukmedia.DBUG2( "ended up at: %s\n" % ( dest,))
-    dumpcookies()
-    # TODO check for incorrect-login response
+        #ukmedia.DBUG2( "ended up at: %s\n" % ( dest,))
     if 'accounts.ft.com' in dest:
         raise Exception, "Login failed - incorrect login details"
-
+    ukmedia.DBUG2("logged in\n")
 
 def Extract(html, context, **kw):
     o = urlparse.urlparse( context['srcurl'] )
@@ -125,6 +113,12 @@ def Extract_article_new_cms( html, context ):
     art = context
     doc = lxml.html.fromstring(html)
 
+    drm = doc.cssselect('#DRMUpsell')
+    if len(drm) > 0:
+        ukmedia.DBUG("WARN skip truncated article (Not logged in) - %s\n" % (art['srcurl'],))
+        return None
+
+
     storyheader = doc.cssselect('.fullstoryHeader')[0]
     byline_txt = u''
     foo = storyheader.cssselect('.byline')
@@ -134,10 +128,10 @@ def Extract_article_new_cms( html, context ):
     #pubdate_txt = storyheader.cssselect('.lastUpdated')[0].text_content()
     pubdate_txt = storyheader.cssselect('.time')[0].text_content()
 
-    bod = doc.cssselect('.fullstoryBody')[0]
-    for foo in ('.storyTools','#ft-story-tools-bottom','.screen-copy','.story-package'):
-        for cruft in bod.cssselect(foo):
-            cruft.drop_tree()
+#    bod = doc.cssselect('.fullstoryBody')[0]
+    bod = doc.cssselect('#storyContent')[0]
+    for cruft in bod.cssselect('.insideArticleShare, .shareArt, .promobox, insideArticleRelatedTopics'):
+        cruft.drop_tree()
     content = unicode(lxml.html.tostring(bod))
     content = ukmedia.SanitiseHTML(content)
 
@@ -315,5 +309,17 @@ def ContextFromURL( url ):
 if __name__ == "__main__":
     # create a url opener which remembers cookies (as well as throttling and all the other uber-opener stuff)
     opener = ScraperUtils.build_uber_opener(cookiejar=cj)
+
+    # NOTE: login requires Referer!
+    opener.addheaders = [
+        ('User-Agent', "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0"),
+        ('Accept', "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
+#        ('Accept-Encoding', "gzip, deflate"),
+        ('Accept-Language', "en-US,en;q=0.5"),
+        ('Referer', "https://accounts.ft.com/login?location=http%3A%2F%2Fwww.ft.com%2Fhome%2Fasia" ),
+    ]
+
     ScraperUtils.scraper_main( FindArticles, ContextFromURL, Extract, max_errors=50, prep=Prep, sesh=opener )
+#    ukmedia.FetchURL("http://jl.dev/bob-smith", sesh=opener)
+
 
