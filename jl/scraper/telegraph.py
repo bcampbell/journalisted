@@ -66,6 +66,7 @@ def Extract( html, context, **kw ):
 
     if len(authors)>0:
         parts = [ukmedia.FromHTMLOneLine(a[0].text_content()) for a in authors]
+        parts = [part.strip().rstrip(',') for part in parts]
         art['byline'] = u', '.join(parts)
 
     pubdatetxt = u''
